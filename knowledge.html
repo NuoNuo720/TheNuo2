@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冷知识百宝箱</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+        
+        h1 {
+            color: #333;
+            margin: 30px 0;
+        }
+        
+        .knowledge-box {
+            background-color: white;
+            padding: 40px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            min-height: 150px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        #refreshBtn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #refreshBtn:hover {
+            background-color: #45a049;
+        }
+        .back-container {
+            position: fixed; /* 固定在视窗底部 */
+            bottom: 30px; /* 距离底部30px */
+            left: 50%; /* 水平居中 */
+            transform: translateX(-50%); /* 精确居中 */
+        }
+
+    </style>
+</head>
+<body>
+    <h1>冷知识百宝箱</h1>
+    
+    <div class="knowledge-box" id="knowledgeText">
+        点击下方按钮，获取一条冷知识~
+    </div>
+    
+    <button id="refreshBtn">刷新冷知识</button>
+
+    <script>
+        // 冷知识数据库
+        const knowledgeList = [
+            "蜂蜜永远不会变质，考古学家曾发现过3000年前的可食用蜂蜜。",
+            "企鹅的膝盖是存在的，只是被羽毛覆盖看不见。",
+            "草莓不是浆果，而香蕉是。",
+            "你无法同时打喷嚏并保持眼睛睁开。",
+            "章鱼有三颗心脏。",
+            "人民币纸币上的“中国人民银行”六个字，是马文蔚先生书写的。",
+            "打火机发明于火柴之前。",
+            "鳄鱼无法伸出舌头。",
+            "每根头发的寿命约为3-7年。",
+            "鸵鸟的眼睛比它的大脑还大。",
+            "键盘上的“F”和“J”键有小凸起，是为了方便盲打定位。",
+            "牛仔裤上的小口袋最初是用来装怀表的。",
+            "据说月半猫和奶龙是至交。",
+            "芦台一中厕所会不定期刷出蚊香 因此被作者称为'蚊香地mol'。",
+            "最好不要招惹自由电子。",
+            "sin²A-sin²B=sin(A+B)sin(A-B).",
+            "lead sb. to (doing) sth.",
+            "Can I trust you?",
+            "此去元知万事空，但悲不见九州同。",
+            "马太效应:强者愈强，弱者愈弱。",
+            "手表定理:如果有两块显示不同时间的手表，而它们都属于你，那么你无法准确知道时间。",
+            "水桶定理:团队能力往往受限于其最薄弱的环节。",
+            "Oh~Dream~",
+            "自由电子的微信头像是一个自由电子。",
+            "Ityz。",
+            "电子带负电。——自由电子",
+            "据说自由电子和奶龙有着密切的关系？",
+            "自由电子的政治拿过倒数第一。",
+            "Free e-.",
+            "自由电子并非'完全自由'，因为它/他受到原子核的'弱束缚'。",
+            "金属的颜色由自由电子'决定'。",
+            "自由电子的历史也拿过倒数第一。——自由电子",
+            "自由电子上化学课睡觉。",
+            "据说自由电子是半猫诺丷的绯闻男友？",
+            "半猫诺丷并不是一只半猫。"
+        ];
+
+        // 获取元素
+        const knowledgeText = document.getElementById('knowledgeText');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        // 刷新冷知识函数
+        function refreshKnowledge() {
+            // 随机获取一条冷知识
+            const randomIndex = Math.floor(Math.random() * knowledgeList.length);
+            knowledgeText.textContent = knowledgeList[randomIndex];
+        }
+
+        // 绑定按钮点击事件
+        refreshBtn.addEventListener('click', refreshKnowledge);
+        refreshKnowledge();
+    </script>
+    <div class="back-container">
+        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
+    </div>
+</body>
+</html>
+ 

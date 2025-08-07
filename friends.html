@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>好友系统 - 实时社交</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-title {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+
+        .username {
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            background: #555;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background: #777;
+        }
+
+        header {
+            text-align: center;
+            margin: 30px 0;
+            padding: 0 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-radius: 5px;
+            padding: 8px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .search-box i {
+            color: #999;
+            margin-right: 10px;
+        }
+
+        .search-box input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .friends-list {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .section-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-btn {
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .list-header {
+            display: grid;
+            grid-template-columns: 1fr 3fr 2fr 150px;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .friend-item {
+            display: grid;
+            grid-template-columns: 1fr 3fr 2fr 150px;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .friend-item:hover {
+            background-color: #f9fafc;
+        }
+
+        .friend-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .friend-info {
+            padding: 0 10px;
+        }
+
+        .friend-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .friend-status {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .status-online {
+            color: #2ecc71;
+        }
+
+        .status-offline {
+            color: #95a5a6;
+        }
+
+        .status-pending {
+            color: #f39c12;
+        }
+
+        .friend-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .message-btn {
+            color: #3498db;
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+        }
+
+        .accept-btn {
+            color: #2ecc71;
+        }
+
+        .reject-btn {
+            color: #e74c3c;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #95a5a6;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-title {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background-color: #f5f9fc;
+        }
+
+        .search-result-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+            padding: 10px;
+        }
+
+        /* 通知组件 */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #2ecc71;
+        }
+
+        .notification.error {
+            background-color: #e74c3c;
+        }
+
+        /* 实时通知 */
+        .realtime-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 4s forwards;
+            max-width: 300px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        /* 连接状态 */
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-connected {
+            background-color: #2ecc71;
+        }
+
+        .status-reconnecting {
+            background-color: #f39c12;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .list-header {
+                display: none;
+            }
+
+            .friend-item {
+                grid-template-columns: 60px 1fr auto;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <div class="navbar-title">
+            <i class="fas fa-users"></i>
+            实时好友系统
+        </div>
+        <div class="user-area" id="userArea">
+            <img src="" class="user-avatar" id="userAvatar" alt="用户头像">
+            <span class="username" id="usernameDisplay"></span>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> 退出
+            </button>
+        </div>
+    </div>
+
+    <header>
+        <h1>好友管理</h1>
+        <p>实时添加好友，与朋友一起互动</p>
+    </header>
+
+    <div class="container">
+        <div class="actions">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="搜索好友..." id="searchFriends">
+            </div>
+            <button class="btn btn-success" onclick="openAddFriendModal()">
+                <i class="fas fa-user-plus"></i> 添加好友
+            </button>
+        </div>
+
+        <div class="friends-list">
+            <div class="section-tabs">
+                <button class="tab-btn active" data-tab="friends">我的好友</button>
+                <button class="tab-btn" data-tab="requests">好友请求</button>
+                <button class="tab-btn" data-tab="pending">待对方同意</button>
+            </div>
+
+            <!-- 我的好友标签页 -->
+            <div class="tab-content active" id="friendsTab">
+                <div class="list-header">
+                    <div>头像</div>
+                    <div>好友信息</div>
+                    <div>添加时间</div>
+                    <div>操作</div>
+                </div>
+                <div class="empty-state" id="friendsEmptyState">
+                    <div class="empty-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div>你还没有添加任何好友</div>
+                </div>
+            </div>
+
+            <!-- 好友请求标签页 -->
+            <div class="tab-content" id="requestsTab">
+                <div class="list-header">
+                    <div>头像</div>
+                    <div>请求信息</div>
+                    <div>请求时间</div>
+                    <div>操作</div>
+                </div>
+                <div class="empty-state" id="requestsEmptyState">
+                    <div class="empty-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div>没有收到任何好友请求</div>
+                </div>
+            </div>
+
+            <!-- 待对方同意标签页 -->
+            <div class="tab-content" id="pendingTab">
+                <div class="list-header">
+                    <div>头像</div>
+                    <div>好友信息</div>
+                    <div>发送时间</div>
+                    <div>操作</div>
+                </div>
+                <div class="empty-state" id="pendingEmptyState">
+                    <div class="empty-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div>没有待对方同意的请求</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加好友模态框 -->
+    <div class="modal" id="addFriendModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAddFriendModal()">&times;</span>
+            <h2 class="modal-title">添加好友</h2>
+            
+            <div class="form-group">
+                <label class="form-label" for="friendUsername">搜索用户</label>
+                <input type="text" id="friendUsername" class="form-control" placeholder="请输入用户名搜索">
+                
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="friendMessage">验证消息</label>
+                <input type="text" id="friendMessage" class="form-control" placeholder="请输入验证消息">
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn" onclick="closeAddFriendModal()">取消</button>
+                <button class="btn btn-success" id="sendRequestBtn" onclick="sendFriendRequest()">发送请求</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 连接状态指示器 -->
+    <div class="connection-status">
+        <div class="status-indicator status-reconnecting" id="statusIndicator"></div>
+        <span id="connectionText">连接中...</span>
+    </div>
+
+    <!-- 通知组件 -->
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // 全局变量
+        let socket;
+        let currentUser;
+        let pendingRequests = new Map(); // 跟踪待处理的好友请求
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 检查登录状态
+            checkLoginStatus();
+            
+            // 绑定标签页切换事件
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+            
+            // 绑定搜索事件
+            document.getElementById('searchFriends').addEventListener('input', filterFriends);
+            document.getElementById('friendUsername').addEventListener('input', searchUsers);
+        });
+        
+        // 检查登录状态
+        function checkLoginStatus() {
+            // 从本地存储获取用户信息
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            
+            if (!userInfo.id || !userInfo.username) {
+                // 未登录，重定向到登录页
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 已登录，初始化
+            currentUser = userInfo;
+            updateUserDisplay();
+            initWebSocket();
+            loadFriendsData();
+        }
+        
+        // 更新用户显示
+        function updateUserDisplay() {
+            document.getElementById('usernameDisplay').textContent = currentUser.username;
+            document.getElementById('userAvatar').src = currentUser.avatar || `https://picsum.photos/seed/${currentUser.id}/200`;
+        }
+        
+        // 初始化WebSocket连接
+        function initWebSocket() {
+            // 根据当前协议选择ws或wss
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+            
+            // 关闭现有连接
+            if (socket) {
+                socket.close();
+            }
+            
+            // 创建新连接
+            socket = new WebSocket(`${protocol}//${host}/.netlify/functions/ws?userId=${currentUser.id}`);
+            
+            // 连接成功
+            socket.onopen = () => {
+                console.log('WebSocket连接已建立');
+                updateConnectionStatus(true);
+                showNotification('实时连接已建立', 'success');
+            };
+            
+            // 接收消息
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            // 连接关闭
+            socket.onclose = () => {
+                console.log('WebSocket连接已关闭');
+                updateConnectionStatus(false);
+                showNotification('实时连接已断开，正在重连...', 'error');
+                
+                // 自动重连
+                setTimeout(initWebSocket, 3000);
+            };
+            
+            // 连接错误
+            socket.onerror = (error) => {
+                console.error('WebSocket错误:', error);
+                showNotification('连接发生错误', 'error');
+            };
+        }
+        
+        // 处理WebSocket消息
+        function handleWebSocketMessage(data) {
+            console.log('收到实时消息:', data);
+            
+            switch (data.type) {
+                case 'friend_request':
+                    showRealTimeNotification(`收到来自 ${data.sender.username} 的好友请求`);
+                    loadFriendRequests();
+                    break;
+                case 'request_accepted':
+                    showRealTimeNotification(`${data.friend.username} 已接受你的好友请求`);
+                    loadFriendsList();
+                    loadPendingRequests();
+                    break;
+                case 'request_rejected':
+                    showRealTimeNotification(`${data.friend.username} 拒绝了你的好友请求`);
+                    loadPendingRequests();
+                    break;
+            }
+        }
+        
+        // 更新连接状态显示
+        function updateConnectionStatus(isConnected) {
+            const indicator = document.getElementById('statusIndicator');
+            const connectionText = document.getElementById('connectionText');
+            
+            if (isConnected) {
+                indicator.className = 'status-indicator status-connected';
+                connectionText.textContent = '已连接';
+            } else {
+                indicator.className = 'status-indicator status-reconnecting';
+                connectionText.textContent = '连接中...';
+            }
+        }
+        
+        // 加载所有好友数据
+        function loadFriendsData() {
+            loadFriendsList();
+            loadFriendRequests();
+            loadPendingRequests();
+        }
+        
+        // 加载好友列表
+        async function loadFriendsList() {
+            try {
+                const response = await fetch('/.netlify/functions/getFriends', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                
+                const friends = await response.json();
+                const friendsTab = document.getElementById('friendsTab');
+                const emptyState = document.getElementById('friendsEmptyState');
+                
+                // 清空现有列表（保留表头和空状态）
+                Array.from(friendsTab.children).forEach(child => {
+                    if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
+                        friendsTab.removeChild(child);
+                    }
+                });
+                
+                if (friends.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                // 添加好友项
+                friends.forEach(friend => {
+                    const friendItem = createFriendItem(friend);
+                    friendsTab.insertBefore(friendItem, emptyState);
+                });
+            } catch (error) {
+                console.error('加载好友列表失败:', error);
+                showNotification('加载好友列表失败', 'error');
+            }
+        }
+        
+        // 创建好友项
+        function createFriendItem(friend) {
+            const div = document.createElement('div');
+            div.className = 'friend-item';
+            div.dataset.id = friend.id;
+            
+            const statusClass = friend.isOnline ? 'status-online' : 'status-offline';
+            const statusText = friend.isOnline ? '在线' : '离线';
+            
+            // 格式化日期
+            const date = new Date(friend.addedAt);
+            const formattedDate = date.toLocaleString();
+            
+            div.innerHTML = `
+                <img src="${friend.avatar || `https://picsum.photos/seed/${friend.id}/200`}" 
+                     alt="${friend.username}" class="friend-avatar">
+                <div class="friend-info">
+                    <div class="friend-name">${friend.username}</div>
+                    <div class="friend-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="friend-joined">${formattedDate}</div>
+                <div class="friend-actions">
+                    <button class="action-btn message-btn" title="发送消息">
+                        <i class="fas fa-comment"></i>
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteFriend('${friend.id}')" title="删除好友">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        // 加载好友请求
+        async function loadFriendRequests() {
+            try {
+                const response = await fetch('/.netlify/functions/getFriendRequests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                
+                const requests = await response.json();
+                const requestsTab = document.getElementById('requestsTab');
+                const emptyState = document.getElementById('requestsEmptyState');
+                
+                // 清空现有列表
+                Array.from(requestsTab.children).forEach(child => {
+                    if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
+                        requestsTab.removeChild(child);
+                    }
+                });
+                
+                if (requests.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                // 添加请求项
+                requests.forEach(request => {
+                    const requestItem = createFriendRequestItem(request);
+                    requestsTab.insertBefore(requestItem, emptyState);
+                });
+            } catch (error) {
+                console.error('加载好友请求失败:', error);
+                showNotification('加载好友请求失败', 'error');
+            }
+        }
+        
+        // 创建好友请求项
+        function createFriendRequestItem(request) {
+            const div = document.createElement('div');
+            div.className = 'friend-item';
+            
+            const date = new Date(request.sentAt);
+            const formattedDate = date.toLocaleString();
+            
+            div.innerHTML = `
+                <img src="${request.sender.avatar || `https://picsum.photos/seed/${request.sender.id}/200`}" 
+                     alt="${request.sender.username}" class="friend-avatar">
+                <div class="friend-info">
+                    <div class="friend-name">${request.sender.username}</div>
+                    <div class="friend-status status-pending">${request.message || '请求添加你为好友'}</div>
+                </div>
+                <div class="friend-joined">${formattedDate}</div>
+                <div class="friend-actions">
+                    <button class="action-btn accept-btn" onclick="handleRequest('${request.id}', 'accept')" title="接受">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="action-btn reject-btn" onclick="handleRequest('${request.id}', 'reject')" title="拒绝">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        // 加载待同意请求
+        async function loadPendingRequests() {
+            try {
+                const response = await fetch('/.netlify/functions/getPendingRequests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                
+                const requests = await response.json();
+                const pendingTab = document.getElementById('pendingTab');
+                const emptyState = document.getElementById('pendingEmptyState');
+                
+                // 清空现有列表
+                Array.from(pendingTab.children).forEach(child => {
+                    if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
+                        pendingTab.removeChild(child);
+                    }
+                });
+                
+                if (requests.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                // 添加请求项
+                requests.forEach(request => {
+                    const requestItem = createPendingRequestItem(request);
+                    pendingTab.insertBefore(requestItem, emptyState);
+                });
+            } catch (error) {
+                console.error('加载待处理请求失败:', error);
+                showNotification('加载待处理请求失败', 'error');
+            }
+        }
+        
+        // 创建待同意请求项
+        function createPendingRequestItem(request) {
+            const div = document.createElement('div');
+            div.className = 'friend-item';
+            
+            const date = new Date(request.sentAt);
+            const formattedDate = date.toLocaleString();
+            
+            div.innerHTML = `
+                <img src="${request.recipient.avatar || `https://picsum.photos/seed/${request.recipient.id}/200`}" 
+                     alt="${request.recipient.username}" class="friend-avatar">
+                <div class="friend-info">
+                    <div class="friend-name">${request.recipient.username}</div>
+                    <div class="friend-status status-pending">等待对方同意</div>
+                </div>
+                <div class="friend-joined">${formattedDate}</div>
+                <div class="friend-actions">
+                    <button class="action-btn delete-btn" onclick="cancelRequest('${request.id}')" title="取消请求">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        // 搜索用户
+        let searchTimeout;
+        function searchUsers(e) {
+            const query = e.target.value.trim();
+            const resultsEl = document.getElementById('searchResults');
+            
+            if (query.length < 2) {
+                resultsEl.style.display = 'none';
+                return;
+            }
+            
+            // 防抖处理
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch('/.netlify/functions/searchUsers', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            query,
+                            excludeUserId: currentUser.id // 排除自己
+                        })
+                    });
+                    
+                    const users = await response.json();
+                    
+                    if (users.length === 0) {
+                        resultsEl.innerHTML = '<div class="search-result-item">未找到匹配用户</div>';
+                        resultsEl.style.display = 'block';
+                        return;
+                    }
+                    
+                    // 显示搜索结果
+                    let resultsHtml = '';
+                    users.forEach(user => {
+                        resultsHtml += `
+                            <div class="search-result-item" data-user-id="${user.id}">
+                                <img src="${user.avatar || `https://picsum.photos/seed/${user.id}/200`}" 
+                                     alt="${user.username}" class="search-result-avatar">
+                                <div>
+                                    <div>${user.username}</div>
+                                    <div class="friend-status ${user.isOnline ? 'status-online' : 'status-offline'}">
+                                        ${user.isOnline ? '在线' : '离线'}
+                                    </div>
+                                </div>
+                                <button class="btn btn-success add-btn" 
+                                        onclick="selectUser('${user.id}', '${user.username}')">
+                                    添加
+                                </button>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsEl.innerHTML = resultsHtml;
+                    resultsEl.style.display = 'block';
+                } catch (error) {
+                    console.error('搜索用户失败:', error);
+                    resultsEl.innerHTML = '<div class="search-result-item">搜索失败，请重试</div>';
+                    resultsEl.style.display = 'block';
+                }
+            }, 300);
+        }
+        
+        // 选择用户
+        let selectedUserId = null;
+        function selectUser(userId, username) {
+            selectedUserId = userId;
+            document.getElementById('friendUsername').value = username;
+            document.getElementById('searchResults').style.display = 'none';
+        }
+        
+        // 发送好友请求
+        async function sendFriendRequest() {
+            if (!selectedUserId) {
+                showNotification('请先选择一个用户', 'error');
+                return;
+            }
+            
+            if (pendingRequests.has(selectedUserId)) {
+                showNotification('请求正在发送中，请稍候', 'error');
+                return;
+            }
+            
+            // 标记为待处理
+            pendingRequests.set(selectedUserId, true);
+            const sendBtn = document.getElementById('sendRequestBtn');
+            const originalText = sendBtn.innerHTML;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发送中';
+            sendBtn.disabled = true;
+            
+            try {
+                const message = document.getElementById('friendMessage').value.trim() || '我想加你为好友';
+                
+                const response = await fetch('/.netlify/functions/addFriend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        senderId: currentUser.id,
+                        recipientId: selectedUserId,
+                        message: message
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification('好友请求已发送', 'success');
+                    closeAddFriendModal();
+                    loadPendingRequests();
+                } else {
+                    showNotification(result.error || '发送请求失败', 'error');
+                }
+            } catch (error) {
+                console.error('发送请求失败:', error);
+                showNotification('发送请求失败，请重试', 'error');
+            } finally {
+                // 恢复状态
+                pendingRequests.delete(selectedUserId);
+                sendBtn.innerHTML = originalText;
+                sendBtn.disabled = false;
+                selectedUserId = null;
+            }
+        }
+        
+        // 处理好友请求（接受/拒绝）
+        async function handleRequest(requestId, action) {
+            try {
+                const response = await fetch('/.netlify/functions/handleFriendRequest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        requestId: requestId,
+                        action: action,
+                        userId: currentUser.id
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification(
+                        action === 'accept' ? '已接受好友请求' : '已拒绝好友请求', 
+                        'success'
+                    );
+                    loadFriendRequests();
+                    if (action === 'accept') {
+                        loadFriendsList();
+                    }
+                } else {
+                    showNotification('操作失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('处理请求失败:', error);
+                showNotification('处理请求失败，请重试', 'error');
+            }
+        }
+        
+        // 取消请求
+        async function cancelRequest(requestId) {
+            try {
+                const response = await fetch('/.netlify/functions/cancelFriendRequest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        requestId: requestId,
+                        userId: currentUser.id
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('已取消好友请求', 'success');
+                    loadPendingRequests();
+                } else {
+                    showNotification('取消请求失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('取消请求失败:', error);
+                showNotification('取消请求失败，请重试', 'error');
+            }
+        }
+        
+        // 删除好友
+        async function deleteFriend(friendId) {
+            if (!confirm('确定要删除这个好友吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/.netlify/functions/deleteFriend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: currentUser.id,
+                        friendId: friendId
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('好友已删除', 'success');
+                    loadFriendsList();
+                } else {
+                    showNotification('删除好友失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('删除好友失败:', error);
+                showNotification('删除好友失败，请重试', 'error');
+            }
+        }
+        
+        // 过滤好友
+        function filterFriends(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const friendItems = document.querySelectorAll('#friendsTab .friend-item');
+            
+            friendItems.forEach(item => {
+                const friendName = item.querySelector('.friend-name').textContent.toLowerCase();
+                if (friendName.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // 切换标签页
+        function switchTab(tabName) {
+            // 移除所有active类
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 添加active类到当前标签
+            document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+        }
+        
+        // 打开添加好友模态框
+        function openAddFriendModal() {
+            document.getElementById('friendUsername').value = '';
+            document.getElementById('friendMessage').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            selectedUserId = null;
+            document.getElementById('addFriendModal').classList.add('active');
+        }
+        
+        // 关闭添加好友模态框
+        function closeAddFriendModal() {
+            document.getElementById('addFriendModal').classList.remove('active');
+        }
+        
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('userInfo');
+            if (socket) {
+                socket.close();
+            }
+            window.location.href = 'login.html';
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notification.className = 'notification';
+            notification.classList.add(type);
+            notificationText.textContent = message;
+            
+            // 显示图标
+            const icon = notification.querySelector('i');
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+            } else {
+                icon.className = 'fas fa-info-circle';
+            }
+            
+            notification.classList.add('show');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 显示实时通知
+        function showRealTimeNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'realtime-notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 4秒后自动移除
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

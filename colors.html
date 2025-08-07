@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色盲派对 - 色彩挑战游戏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        dark: '#1F2937'
+                    },
+                    fontFamily: {
+                        game: ['"Poppins"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .color-tile {
+                transition: all 0.2s ease;
+            }
+            .color-tile:hover {
+                transform: scale(1.05);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .pulse {
+                animation: pulse 1.5s infinite;
+            }
+            @keyframes pulse {
+                0%, 100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
+            }
+            .shake {
+                animation: shake 0.5s;
+            }
+            @keyframes shake {
+                0%, 100% {
+                    transform: translateX(0);
+                }
+                25% {
+                    transform: translateX(-10px);
+                }
+                75% {
+                    transform: translateX(10px);
+                }
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+        }
+    </style>
+    
+    <!-- 导入字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            touch-action: manipulation;
+            background-color: #f9fafb;
+        }
+        .tile-container {
+            display: grid;
+            grid-template-columns: repeat(var(--columns, 5), 1fr);
+            gap: clamp(8px, 2vw, 16px);
+        }
+        @media (max-width: 640px) {
+            .tile-container {
+                --columns: 4;
+            }
+        }
+        @media (max-width: 480px) {
+            .tile-container {
+                --columns: 3;
+            }
+        }
+        .back-container {
+            position: fixed; /* 固定在视窗底部 */
+            bottom: 30px; /* 距离底部30px */
+            left: 25%; /* 水平居中 */
+            transform: translateX(-50%); /* 精确居中 */
+            color:yellow;
+        }
+
+    </style>
+</head>
+<body class="font-game min-h-screen flex flex-col">
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow-md py-4 px-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa fa-paint-brush text-primary text-2xl"></i>
+                <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-dark">色盲派对</h1>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <i class="fa fa-trophy text-warning"></i>
+                    <span class="font-semibold">得分: <span id="score" class="text-primary">0</span></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa fa-clock-o text-danger"></i>
+                    <span class="font-semibold">时间: <span id="time" class="text-primary">30</span>s</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 主游戏区域 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 游戏状态显示 -->
+        <div class="mb-8 text-center">
+            <div class="inline-block px-6 py-3 bg-primary/10 rounded-full mb-4">
+                <h2 class="text-[clamp(1.2rem,2vw,1.5rem)] font-semibold text-primary">
+                    级别: <span id="level">1</span> - 找出不同的颜色
+                </h2>
+            </div>
+            <p class="text-gray-600 max-w-md mx-auto">
+                在下方色块中，有一个颜色与其他不同。快速找到并点击它！
+                难度会随着级别提升而增加。
+            </p>
+        </div>
+        
+        <!-- 游戏区域 -->
+        <div class="max-w-3xl mx-auto">
+            <!-- 颜色方块容器 -->
+            <div id="gameBoard" class="tile-container mb-8 fade-in"></div>
+            
+            <!-- 提示信息 -->
+            <div id="message" class="text-center py-4 px-6 rounded-lg mb-8 hidden"></div>
+            
+            <!-- 控制按钮 -->
+            <div class="flex flex-wrap justify-center gap-4">
+                <button id="startBtn" class="bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-8 rounded-full transition-all flex items-center gap-2 pulse">
+                    <i class="fa fa-play"></i>
+                    <span>开始游戏</span>
+                </button>
+                <button id="restartBtn" class="bg-warning hover:bg-warning/90 text-white font-semibold py-3 px-8 rounded-full transition-all flex items-center gap-2 hidden">
+                    <i class="fa fa-refresh"></i>
+                    <span>重新开始</span>
+                </button>
+                <button id="nextLevelBtn" class="bg-success hover:bg-success/90 text-white font-semibold py-3 px-8 rounded-full transition-all flex items-center gap-2 hidden">
+                    <i class="fa fa-arrow-right"></i>
+                    <span>下一级别</span>
+                </button>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 游戏说明 -->
+    <footer class="bg-dark text-white py-6 px-4">
+        <div class="container mx-auto text-center">
+            <h3 class="text-lg font-semibold mb-2">游戏说明</h3>
+            <p class="text-gray-300 max-w-md mx-auto mb-4">
+                这是一个考验色彩分辨能力的游戏，适合朋友间互相挑战。
+                每一级别都会生成一组相似的颜色，其中有一个颜色不同，
+                你需要在限定时间内找到它。
+            </p>
+            <div class="flex justify-center gap-6 text-sm text-gray-400">
+                <div>
+                    <i class="fa fa-keyboard-o mr-1"></i> 点击色块选择
+                </div>
+                <div>
+                    <i class="fa fa-signal mr-1"></i> 级别越高难度越大
+                </div>
+                <div>
+                    <i class="fa fa-users mr-1"></i> 适合多人竞赛
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- 游戏结束模态框 -->
+    <div id="gameOverModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden fade-in">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div class="mb-6">
+                <i class="fa fa-trophy text-6xl text-warning mb-4"></i>
+                <h2 class="text-2xl font-bold text-dark mb-2">游戏结束!</h2>
+                <p class="text-gray-600">你的最终成绩</p>
+            </div>
+            <div class="bg-gray-100 rounded-xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-gray-600">最高级别</span>
+                    <span id="finalLevel" class="text-xl font-bold text-primary">1</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">总得分</span>
+                    <span id="finalScore" class="text-xl font-bold text-primary">0</span>
+                </div>
+            </div>
+            <button id="playAgainBtn" class="bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-8 rounded-full transition-all w-full">
+                再玩一次
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            isPlaying: false,
+            level: 1,
+            score: 0,
+            timeLeft: 30,
+            timer: null,
+            tilesCount: 12, // 色块数量
+            targetIndex: -1 // 目标色块索引
+        };
+        
+        // DOM 元素
+        const gameBoard = document.getElementById('gameBoard');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const levelDisplay = document.getElementById('level');
+        const messageDisplay = document.getElementById('message');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const nextLevelBtn = document.getElementById('nextLevelBtn');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const finalLevelDisplay = document.getElementById('finalLevel');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        
+        // 初始化游戏
+        function initGame() {
+            setupEventListeners();
+            // 生成初始颜色板（非游戏状态）
+            generateColorTiles(true);
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+            nextLevelBtn.addEventListener('click', goToNextLevel);
+            playAgainBtn.addEventListener('click', restartGame);
+        }
+        
+        // 开始游戏
+        function startGame() {
+            gameState.isPlaying = true;
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.timeLeft = 30;
+            
+            updateGameInfo();
+            generateColorTiles();
+            
+            // 更新按钮状态
+            startBtn.classList.add('hidden');
+            restartBtn.classList.remove('hidden');
+            nextLevelBtn.classList.add('hidden');
+            
+            // 开始计时
+            startTimer();
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            // 清除计时器
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            
+            // 隐藏模态框
+            gameOverModal.classList.add('hidden');
+            
+            startGame();
+        }
+        
+        // 进入下一级别
+        function goToNextLevel() {
+            gameState.level++;
+            gameState.timeLeft = Math.max(10, 30 - (gameState.level - 1) * 2); // 随级别增加减少时间
+            gameState.tilesCount = Math.min(25, 12 + (gameState.level - 1)); // 随级别增加增加色块数量
+            
+            updateGameInfo();
+            generateColorTiles();
+            
+            // 更新按钮状态
+            nextLevelBtn.classList.add('hidden');
+            
+            // 开始计时
+            startTimer();
+        }
+        
+        // 开始计时器
+        function startTimer() {
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                timeDisplay.textContent = gameState.timeLeft;
+                
+                // 时间到，游戏结束
+                if (gameState.timeLeft <= 0) {
+                    endGame();
+                }
+                
+                // 最后5秒警告
+                if (gameState.timeLeft <= 5) {
+                    timeDisplay.classList.add('text-danger', 'animate-pulse');
+                } else {
+                    timeDisplay.classList.remove('text-danger', 'animate-pulse');
+                }
+            }, 1000);
+        }
+        
+        // 生成颜色方块
+        function generateColorTiles(isPreview = false) {
+            gameBoard.innerHTML = '';
+            
+            // 根据级别确定颜色差异程度
+            const difficulty = Math.max(5, 40 - (gameState.level - 1) * 3); // 数值越小差异越小，难度越大
+            
+            // 随机生成基础颜色的HSL值
+            const hue = Math.floor(Math.random() * 360);
+            const saturation = 50 + Math.floor(Math.random() * 30); // 50-80%
+            const lightness = 40 + Math.floor(Math.random() * 20); // 40-60%
+            
+            // 生成目标颜色（与基础颜色有差异）
+            let targetHue, targetSaturation, targetLightness;
+            
+            // 随机选择一个颜色属性进行变化（Hue, Saturation, Lightness）
+            const changeType = Math.floor(Math.random() * 3);
+            
+            switch (changeType) {
+                case 0: // 改变色相
+                    targetHue = (hue + difficulty) % 360;
+                    targetSaturation = saturation;
+                    targetLightness = lightness;
+                    break;
+                case 1: // 改变饱和度
+                    targetHue = hue;
+                    targetSaturation = Math.max(0, Math.min(100, saturation + difficulty));
+                    targetLightness = lightness;
+                    break;
+                case 2: // 改变亮度
+                    targetHue = hue;
+                    targetSaturation = saturation;
+                    targetLightness = Math.max(0, Math.min(100, lightness + difficulty));
+                    break;
+            }
+            
+            // 生成目标色块的索引
+            gameState.targetIndex = Math.floor(Math.random() * gameState.tilesCount);
+            
+            // 创建颜色方块
+            for (let i = 0; i < gameState.tilesCount; i++) {
+                const tile = document.createElement('div');
+                tile.classList.add('color-tile', 'rounded-lg', 'shadow-md', 'cursor-pointer', 'aspect-square');
+                
+                // 设置颜色
+                let color;
+                if (i === gameState.targetIndex) {
+                    color = `hsl(${targetHue}, ${targetSaturation}%, ${targetLightness}%)`;
+                } else {
+                    color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                }
+                
+                tile.style.backgroundColor = color;
+                
+                // 添加点击事件（预览模式不添加）
+                if (!isPreview) {
+                    tile.addEventListener('click', () => checkAnswer(i, tile));
+                }
+                
+                gameBoard.appendChild(tile);
+            }
+            
+            // 添加淡入动画
+            gameBoard.classList.remove('fade-in');
+            setTimeout(() => {
+                gameBoard.classList.add('fade-in');
+            }, 10);
+        }
+        
+        // 检查答案
+        function checkAnswer(index, tile) {
+            if (!gameState.isPlaying) return;
+            
+            // 清除计时器
+            clearInterval(gameState.timer);
+            
+            if (index === gameState.targetIndex) {
+                // 回答正确
+                tile.classList.add('ring-4', 'ring-success', 'ring-offset-2');
+                
+                // 计算得分（基于剩余时间）
+                const levelScore = Math.floor(100 * (gameState.timeLeft / 30) * gameState.level);
+                gameState.score += levelScore;
+                
+                // 显示成功消息
+                showMessage(`正确！获得 ${levelScore} 分`, 'success');
+                
+                // 更新分数
+                scoreDisplay.textContent = gameState.score;
+                
+                // 显示下一级按钮
+                nextLevelBtn.classList.remove('hidden');
+            } else {
+                // 回答错误，显示正确答案
+                tile.classList.add('ring-4', 'ring-danger', 'ring-offset-2', 'shake');
+                
+                // 高亮正确答案
+                const tiles = gameBoard.querySelectorAll('.color-tile');
+                tiles[gameState.targetIndex].classList.add('ring-4', 'ring-success', 'ring-offset-2');
+                
+                // 显示错误消息
+                showMessage('错误！再接再厉', 'danger');
+                
+                // 游戏结束
+                setTimeout(endGame, 1500);
+            }
+        }
+        
+        // 显示消息
+        function showMessage(text, type) {
+            messageDisplay.textContent = text;
+            messageDisplay.classList.remove('hidden', 'bg-success/20', 'text-success', 'bg-danger/20', 'text-danger');
+            
+            if (type === 'success') {
+                messageDisplay.classList.add('bg-success/20', 'text-success');
+            } else {
+                messageDisplay.classList.add('bg-danger/20', 'text-danger');
+            }
+        }
+        
+        // 更新游戏信息显示
+        function updateGameInfo() {
+            scoreDisplay.textContent = gameState.score;
+            timeDisplay.textContent = gameState.timeLeft;
+            levelDisplay.textContent = gameState.level;
+            timeDisplay.classList.remove('text-danger', 'animate-pulse');
+            messageDisplay.classList.add('hidden');
+        }
+        
+        // 结束游戏
+        function endGame() {
+            gameState.isPlaying = false;
+            clearInterval(gameState.timer);
+            
+            // 更新最终分数
+            finalLevelDisplay.textContent = gameState.level;
+            finalScoreDisplay.textContent = gameState.score;
+            
+            // 显示游戏结束模态框
+            gameOverModal.classList.remove('hidden');
+            
+            // 更新按钮状态
+            restartBtn.classList.add('hidden');
+            nextLevelBtn.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+        }
+        
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+    <div class="back-container">
+        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
+    </div>
+</body>
+</html>
+    

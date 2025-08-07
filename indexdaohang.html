@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能导航中心</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background-color: #3498db;
+            border-radius: 3px;
+        }
+
+        .subtitle {
+            color: #667580;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
+        }
+
+        .nav-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            opacity: 0;
+            transform: translateY(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: #3498db;
+        }
+
+        .nav-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #3498db;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            transition: color 0.3s ease;
+        }
+
+        .nav-card:hover .card-title {
+            color: #3498db;
+        }
+
+        .card-desc {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+            padding: 20px 0;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-title {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-title i {
+            font-size: 1.4em;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .username {
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: #555;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background: #777;
+            transform: translateY(-2px);
+        }
+
+        .login-link {
+            color: white;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .login-link:hover {
+            text-decoration: underline;
+            color: #3498db;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .close-modal:hover {
+            color: #e74c3c;
+            transform: rotate(90deg);
+        }
+
+        .profile-title {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-size: 1.5rem;
+        }
+
+        .profile-section {
+            margin-bottom: 20px;
+        }
+
+        .profile-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .profile-value {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+            word-break: break-all;
+        }
+
+        .avatar-upload-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .avatar-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            display: block;
+            border: 3px solid #3498db;
+            transition: box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .avatar-preview:hover {
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+        }
+
+        .upload-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .upload-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .save-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            transition: background-color 0.2s, transform 0.2s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .save-btn:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        #avatarInput {
+            display: none;
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f8d7da;
+            border-radius: 5px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .success-message {
+            color: #155724;
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #d4edda;
+            border-radius: 5px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #2ecc71;
+        }
+
+        .notification.error {
+            background-color: #e74c3c;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .navbar-title {
+                font-size: 1rem;
+            }
+
+            .username {
+                display: none;
+            }
+
+            .user-area {
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                margin-bottom: 20px;
+            }
+
+            .nav-card {
+                padding: 20px 15px;
+            }
+
+            .card-icon {
+                font-size: 36px;
+                margin-bottom: 15px;
+            }
+
+            .card-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏（含用户信息区域） -->
+    <div class="navbar">
+        <div class="navbar-title">
+            <i class="fas fa-compass"></i>
+            多功能导航中心
+        </div>
+        <div class="user-area" id="userArea">
+            <a href="indexlo.html" class="login-link">登录/注册</a>
+        </div>
+    </div>
+
+    <header>
+        <h1>功能导航中心</h1>
+        <p class="subtitle">探索各种实用工具和有趣功能，提升您的在线体验</p>
+    </header>
+
+    <div class="error-message" id="errorMsg"></div>
+    <div class="success-message" id="successMsg"></div>
+
+    <div class="container">
+        <div class="card-grid">
+            <!-- 冷知识百宝箱 -->
+            <div class="nav-card" onclick="navigateTo('knowledge.html')">
+                <div class="card-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h2 class="card-title">百宝箱</h2>
+                <p class="card-desc">探索各种有趣的冷知识和实用小技巧</p>
+            </div>
+
+            <!-- 调查问卷 -->
+            <div class="nav-card" onclick="showDisabledNotice('调查问卷')">
+                <div class="card-icon">
+                    <i class="fas fa-poll"></i>
+                </div>
+                <h2 class="card-title">调查问卷</h2>
+                <p class="card-desc">参与有趣的调查，了解更多人性的魅力</p>
+            </div>
+
+            <!-- 英语单词测试 -->
+            <div class="nav-card" onclick="navigateTo('words.html')">
+                <div class="card-icon">
+                    <i class="fas fa-spell-check"></i>
+                </div>
+                <h2 class="card-title">English words</h2>
+                <p class="card-desc">检验和提升你的英文单词储备量</p>
+            </div>
+
+            <!-- 更新公告 -->
+            <div class="nav-card" onclick="navigateTo('versions.html')">
+                <div class="card-icon">
+                    <i class="fas fa-newspaper"></i>
+                </div>
+                <h2 class="card-title">更新公告</h2>
+                <p class="card-desc">查看最新版本更新内容和功能预告</p>
+            </div>
+        
+            <!-- 小游戏合集 -->
+            <div class="nav-card" onclick="navigateTo('24gameinformation.html')">
+                <div class="card-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <h2 class="card-title">小游戏合集</h2>
+                <p class="card-desc">自由电子冒险[hot] 24点 扑克赛马 色盲派对...</p>
+            </div>
+            
+            <!-- 好友列表 -->
+            <div class="nav-card" onclick="navigateTo('friends.html')">
+                <div class="card-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h2 class="card-title">好友列表</h2>
+                <p class="card-desc">管理你的好友和联系人，一起互动</p>
+            </div>
+
+            <!-- 更多功能 -->
+            <div class="nav-card" onclick="showComingSoonNotice()">
+                <div class="card-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h2 class="card-title">更多功能</h2>
+                <p class="card-desc">持续更新中，即将上线更多实用工具</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 个人信息模态框 -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeProfileModal()">&times;</span>
+            <h2 class="profile-title">个人信息</h2>
+            
+            <div class="avatar-upload-section">
+                <img id="modalAvatar" class="avatar-preview" src="" alt="用户头像" onclick="document.getElementById('avatarInput').click()">
+                <button class="upload-btn">
+                    <i class="fas fa-upload"></i> 更换头像
+                </button>
+                <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarUpload(event)">
+            </div>
+            
+            <div class="profile-section">
+                <label class="profile-label">用户名</label>
+                <div id="usernameDisplay" class="profile-value"></div>
+            </div>
+            
+            <div class="profile-section">
+                <label class="profile-label">登录时间</label>
+                <div id="loginTimeDisplay" class="profile-value"></div>
+            </div>
+            
+            <div class="profile-section">
+                <label class="profile-label">账号状态</label>
+                <div id="accountStatus" class="profile-value">正常</div>
+            </div>
+            
+            <button class="save-btn" onclick="saveAvatar()">
+                <i class="fas fa-save"></i> 保存头像
+            </button>
+        </div>
+    </div>
+
+    <!-- 通知组件 -->
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <footer>
+        <p>多功能导航中心 &copy; 2025 | 持续更新中</p>
+    </footer>
+
+    <script>
+        // 页面加载时验证登录状态并初始化
+        window.onload = function() {
+            // 检查是否已登录
+            checkLoginStatus();
+            
+            // 初始化卡片动画
+            initCardAnimations();
+            
+            // 检查是否有登录成功的参数，显示欢迎信息
+            checkLoginParams();
+        };
+
+        // 检查URL参数，显示登录成功信息
+        function checkLoginParams() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('loginSuccess')) {
+                showNotification('欢迎回来！登录成功', 'success');
+            }
+        }
+
+        // 检查登录状态
+        function checkLoginStatus() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            
+            // 如果未登录，重定向到登录页
+            if (!userInfo.token || !userInfo.username) {
+                // 非登录页才重定向
+                if (!window.location.pathname.includes('indexlo.html')) {
+                    window.location.href = 'indexlo.html';
+                }
+                return;
+            }
+            
+            // 已登录，显示用户信息
+            updateUserDisplay(userInfo);
+        }
+
+        // 更新用户信息显示
+        function updateUserDisplay(userInfo) {
+            const userAreaEl = document.getElementById('userArea');
+            const avatarUrl = userInfo.avatar || 'https://picsum.photos/200';
+            
+            // 格式化登录时间
+            const loginTime = new Date(userInfo.loginTime);
+            const formattedTime = loginTime.toLocaleString();
+            
+            userAreaEl.innerHTML = `
+                <span class="username">${decodeURIComponent(userInfo.username)}</span>
+                <img src="${avatarUrl}" alt="用户头像" class="user-avatar" onclick="openProfileModal()">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </button>
+            `;
+            
+            // 初始化个人信息模态框
+            document.getElementById('modalAvatar').src = avatarUrl;
+            document.getElementById('usernameDisplay').textContent = decodeURIComponent(userInfo.username);
+            document.getElementById('loginTimeDisplay').textContent = formattedTime;
+        }
+
+        // 初始化卡片动画
+        function initCardAnimations() {
+            const cards = document.querySelectorAll('.nav-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * index);
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('mainUserInfo');
+                window.location.href = 'indexlo.html';
+            }
+        }
+
+        // 打开个人信息模态框
+        function openProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.style.display = 'flex';
+            // 触发动画
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        // 关闭个人信息模态框
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.remove('active');
+            // 等待动画完成后隐藏
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // 处理头像上传
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // 检查文件大小
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('图片大小不能超过5MB', 'error');
+                    return;
+                }
+                
+                // 检查文件类型
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    showNotification('只支持JPG、PNG和GIF格式的图片', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('modalAvatar').src = e.target.result;
+                    showNotification('图片已预览，点击保存生效', 'success');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    
+        // 保存头像
+        // 替换原saveAvatar函数
+        function saveAvatar() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            const newAvatar = document.getElementById('modalAvatar').src;
+    
+            // 更新本地存储
+            userInfo.avatar = newAvatar;
+            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+    
+            // 更新导航栏头像
+            document.querySelector('.user-avatar').src = newAvatar;
+    
+            // 保存到服务器
+            saveUserInfoToServer(userInfo);
+    
+            showNotification('头像已更新成功！', 'success');
+            closeProfileModal();
+        }
+
+        // 新增保存用户信息到服务器的函数
+        async function saveUserInfoToServer(userData) {
+            try {
+                const response = await fetch('/.netlify/functions/saveUserInfo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+        
+                if (!response.ok) {
+                    throw new Error('保存失败');
+                }
+        
+                console.log('用户信息已同步到服务器');
+            } catch (error) {
+                console.error('保存用户信息失败:', error);
+                showNotification('信息同步失败', 'error');
+            }
+        }
+    
+
+
+
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('profileModal');
+            if (event.target === modal) {
+                closeProfileModal();
+            }
+        }
+
+        // 导航到指定页面
+        function navigateTo(url) {
+            // 显示加载提示
+            showNotification('正在跳转...', 'info');
+            
+            // 延迟跳转，让用户看到提示
+            setTimeout(() => {
+                window.location.href = url;
+            }, 500);
+        }
+
+        // 显示功能已禁用提示
+        function showDisabledNotice(featureName) {
+            showNotification(`${featureName}功能暂时停用，敬请期待`, 'info');
+        }
+
+        // 显示即将上线提示
+        function showComingSoonNotice() {
+            showNotification('更多精彩功能正在开发中，敬请期待！', 'info');
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            // 设置通知内容和类型
+            notificationText.textContent = message;
+            notification.className = 'notification'; // 重置类名
+            notification.classList.add(type);
+            
+            // 显示通知
+            notification.classList.add('show');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

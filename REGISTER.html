@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body{
+            background-color:#f4f4f4;
+            font-family:Arial,sans-serif;
+            height:100vh;
+            margin:0;
+            padding:0;
+            display : flex;
+            justify-content:center;
+            align-items:center;
+        }
+        .container {
+            width:300px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color:#fff;
+            border-radius:8px;
+            padding : 20px;
+        }
+        h2{
+            text-align:center;
+            color:#333;
+            margin-bottom:20px;
+        }
+        label {
+            display:block;
+            margin-bottom:5px;
+            font-weight:bold;
+            color:#666;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] { /* 新增邮箱输入框样式 */
+            width:100%;
+            padding:10px;
+            margin-bottom:15px;
+            border:1px solid #ccc;
+            border-radius:4px;
+            box-sizing: border-box;
+        }
+        .links a:hover {
+            text-decoration:underline;
+        } 
+        .checkbox {
+            margin-bottom:15px;
+            color:#666;
+        }
+        button {
+            width:100%;
+            padding:10px;
+            background-color:#28a745;
+            color:#fff;
+            border:none;
+            border-radius:4px;
+            cursor:pointer;
+            font-size:16px;
+        }
+        button:hover {
+            background-color:#218838;
+        }
+        .links{
+            text-align:center;
+            margin-top:15px;
+        }
+        .links a {
+            color:#007bff;
+            text-decoration:none;
+            margin:0 5px;
+        }
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            background-color: #f8d7da;
+            display: none;
+        }
+        .tip { /* 新增提示文字样式（如密码要求） */
+            font-size: 12px;
+            color: #666;
+            margin: -12px 0 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-message" id="errorMsg"></div>
+        
+        <form id="registerForm">
+            <h2>注册</h2>
+            
+            <!-- 用户名 -->
+            <label for="username">用户名</label>
+            <input type="text" name="username" placeholder="请输入昵称" id="username" required>
+            
+            <!-- 邮箱（新增） -->
+            <label for="email">邮箱</label>
+            <input type="email" name="email" placeholder="请输入邮箱" id="email" required>
+            
+            <!-- 密码 + 提示文字 -->
+            <label for="password">密码</label>
+            <input type="password" name="password" placeholder="至少6位字符" id="password" required>
+            <div class="tip">密码长度至少6位</div>
+            
+            <!-- 密码确认（新增） -->
+            <label for="confirmPassword">确认密码</label>
+            <input type="password" name="confirmPassword" placeholder="再次输入密码" id="confirmPassword" required>
+            
+            <div class="checkbox">
+                <input type="checkbox" name="rememberMe" id="rememberMe">
+                <label for="rememberMe">记住用户名</label>
+            </div>
+            
+            <button type="submit">注册</button>
+        </form>
+        
+        <div class="links">
+            <a href="indexlo.html" id="loginLink">已有账号？去登录</a >
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // 自动填充记住的用户名
+            const savedUsername = localStorage.getItem('rememberedUsername');
+            if (savedUsername) {
+                document.getElementById('username').value = savedUsername;
+                document.getElementById('rememberMe').checked = true;
+            }
+        };
+
+        const registerForm = document.getElementById('registerForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        registerForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // 获取所有输入值
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            // 1. 基础非空验证
+            if (!username || !email || !password || !confirmPassword) {
+                showError('所有字段不能为空！');
+                return;
+            }
+
+            // 2. 邮箱格式验证（简单正则）
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|cn|net|org|edu|gov)$/;
+            if (!emailRegex.test(email)) {
+                showError('请输入有效的邮箱地址（支持 .com/.cn/.net 等常见域名）！');
+                return;
+            }
+
+            // 3. 密码长度验证
+            if (password.length < 6) {
+                showError('密码长度至少6位！');
+                return;
+            }
+
+            // 4. 密码确认验证
+            if (password !== confirmPassword) {
+                showError('两次输入的密码不一致！');
+                return;
+            }
+
+            // 5. 检查用户名/邮箱是否已注册
+            const token = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+
+            // 3. 发送数据到服务器（核心修改）
+            try {
+                const response = await fetch('http://localhost:3000/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // 告诉服务器发送的是JSON格式
+                    },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        password,
+                        token
+                    })
+                });
+
+                const result = await response.json();
+
+                // 4. 处理服务器响应
+                if (response.ok) {
+                    // 注册成功：处理"记住用户名"（仅本地记录，不影响服务器）
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedUsername', username);
+                    } else {
+                        localStorage.removeItem('rememberedUsername');
+                    }
+
+                    alert('注册成功！即将跳转到登录页');
+                    window.location.href = 'indexlo.html';
+                } else {
+                    // 注册失败：显示服务器返回的错误信息
+                    showError(result.message || '注册失败，请重试');
+                }
+            } catch (error) {
+                // 网络错误（如服务器未启动）
+                showError('无法连接到服务器，请检查服务器是否已启动');
+                console.error('注册请求错误：', error);
+            }
+        });
+
+        // 显示错误信息
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

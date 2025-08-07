@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>登录界面</title>
+        <meta charset="utf-8" /> <!-- 修复了这里的引号错误 -->
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <style>
+                body{
+                    background-color:#f4f4f4;
+                    font-family:Arial,sans-serif;
+                    height:100vh;
+                    color:pink;
+                    display : flex;
+                    justify-content:center;
+                    margin:0;
+                    padding:0;
+                    align-items:center;
+                }
+                .container {
+                    width:300px;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                    background-color:#fff;
+                    margin:10px auto;
+                    border-radius:8px;
+                    padding : 20px;
+                }
+                h2{
+                    text-align:center;
+                    color:#0000004d;
+                    margin-bottom:20px
+                }
+                label {
+                    display:block;
+                    margin-bottom:5px;
+                    font-weight:bold;
+                }
+                input[type="text"],input[type="password"] {
+                    width:100%;
+                    padding:10px;
+                    margin-bottom:15px; /* 修复了这里的分号缺失 */
+                    border:1px solid #ccc;
+                    border-radius:4px;
+                }
+                .links a:hover {
+                    text-decoration:underline; /* 修复了这里的拼写错误 underling→underline */
+                } 
+                .checkbox {
+                    margin-bottom:15px;
+                }
+                button {
+                    width:100%;
+                    padding:10px;
+                    background-color:#28a745;
+                    color:#fff;
+                    border:none;
+                    border-radius:4px;
+                    cursor:pointer;
+                }
+                button:hover {
+                    background-color:#218838;
+                }
+                .links{
+                    text-align:center;
+                    margin-top:15px;
+                }
+                .links a {
+                    color:#007bff;
+                    text-decoration:none;
+                }            
+                /* 新增错误提示样式 */
+                .error-message {
+                    color: #dc3545;
+                    text-align: center;
+                    margin: 10px 0;
+                    padding: 8px;
+                    border: 1px solid #f5c6cb;
+                    border-radius: 4px;
+                    background-color: #f8d7da;
+                    display: none;
+                }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- 新增错误提示区域 -->
+            <div class="error-message" id="errorMsg"></div>
+            
+            <!--登录表单-->
+            <form id="loginForm">
+                <h2>登录</h2>
+                <label for="username">用户名</label>
+                <input type="text" name="username" placeholder="请输入昵称" id="username" required>
+                <label for="password">密码</label>
+                <input type="password" name="password" placeholder="请输入密码" id="password" required> <!-- 去掉了这里的多余冒号 -->
+                <div class="checkbox">
+                    <input type="checkbox" name="rememberMe" id="rememberMe">
+                    <label for="rememberMe" >记住我</label>
+                </div>
+                <button type="submit">登录</button>
+            </form>
+            <div class='links'>
+                <br>
+                <a href="register.html" id="registerLink">注册新账号</a > <!-- 建议改为相对路径，方便本地测试 -->
+                <br>
+                <br>
+                <a href="#" id="forgotPasswordLink">忘记密码?</a >
+            </div>
+        </div>
+        <script>
+            // 注册链接跳转（建议用相对路径，和登录页放同一文件夹）
+            document.getElementById('registerLink').addEventListener('click',function(event) {
+                event.preventDefault();
+                window.location.href = "https://quiet-dango-95e7f8.netlify.app/"; // 假设注册页和登录页同名且在同一目录
+            });
+            
+            // 忘记密码功能
+            document.getElementById('forgotPasswordLink').addEventListener('click',function(event) {
+                event.preventDefault();
+                alert('跳转到找回密码页面(此功能正在开发中...)');
+            });
+            
+            // 登录表单提交逻辑
+            document.getElementById('loginForm').addEventListener('submit',function(event) {
+                event.preventDefault();
+                const username = document.getElementById('username').value.trim(); // 去掉前后空格
+                const password = document.getElementById('password').value;
+                const rememberMe = document.getElementById('rememberMe').checked;
+                const errorMsg = document.getElementById('errorMsg');
+
+                // 1. 非空验证
+                if (!username || !password) {
+                    showError(errorMsg, '用户名和密码不能为空！');
+                    return;
+                }
+
+                // 2. 从localStorage获取已注册的用户列表
+                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+
+                // 3. 查找是否有匹配的用户名
+                const matchedUser = users.find(user => user.username === username);
+
+                // 4. 验证逻辑
+                if (!matchedUser) {
+                    // 用户名未注册
+                    showError(errorMsg, '该账号未注册，请先注册！');
+                } else if (matchedUser.password !== password) {
+                    // 密码不匹配
+                    showError(errorMsg, '密码错误，请重新输入！');
+                } else {
+                    // 登录成功
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedUsername', username);
+                    } else {
+                        localStorage.removeItem('rememberedUsername');
+                    }
+                    function loginSuccess(username) {
+                        // 1. 生成简单Token（实际项目需后端返回JWT）
+                        const token = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2);
+  
+                        // 2. 存储用户信息到localStorage（登录页域名下）
+                        localStorage.setItem('userInfo', JSON.stringify({
+                            username: username,
+                            token: token,
+                            loginTime: new Date().getTime()
+                        }));
+  
+                        // 3. 携带Token跳转到主页面
+                        window.location.href = `https://reliable-biscochitos-300ad6.netlify.app/?token=${token}&username=${encodeURIComponent(username)}`;
+                    }
+                    alert('登录成功，欢迎回来！');
+                    window.location.href = "https://reliable-biscochitos-300ad6.netlify.app/"; // 跳转到你的主页/游戏导航页
+                }
+            });
+
+            // 页面加载时填充记住的用户名
+            window.onload = function() {
+                const rememberedUsername = localStorage.getItem('rememberedUsername');
+                if (rememberedUsername) {
+                    document.getElementById('username').value = rememberedUsername;
+                    document.getElementById('rememberMe').checked = true;
+                }
+            };
+
+            // 显示错误提示的函数
+            function showError(element, message) {
+                element.textContent = message;
+                element.style.display = 'block';
+                // 3秒后自动隐藏
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 3000);
+            }
+        </script>
+    </body>
+</html>

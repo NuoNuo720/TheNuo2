@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简易我的世界</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #1a1a1a;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            overflow:hidden;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .block-types {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .block-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .block-btn.selected {
+            outline: 3px solid #4CAF50;
+        }
+
+        #grass { background-color: #7CFC00; }
+        #dirt { background-color: #8B4513; }
+        #stone { background-color: #A9A9A9; }
+        #wood { background-color: #D2691E; }
+        #glass { background-color: rgba(173, 216, 230, 0.7); }
+
+        .world-container {
+            perspective: 1000px;
+        }
+
+        .world {
+            width: 450px;
+            height: 450px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(45deg) rotateZ(45deg);
+            transition: transform 0.5s ease;
+        }
+
+        .block {
+            width: 50px;
+            height: 50px;
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .block:hover {
+            transform: translateZ(5px);
+        }
+
+        .block-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .front {
+            transform: translateZ(25px);
+        }
+
+        .top {
+            transform: translateY(-25px) rotateX(90deg);
+        }
+
+        .right {
+            transform: translateX(25px) rotateY(90deg);
+        }
+
+        .info {
+            margin-top: 30px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .instructions {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        .back-container {
+            position: fixed; /* 固定在视窗底部 */
+            bottom: 30px; /* 距离底部30px */
+            left: 50%; /* 水平居中 */
+            transform: translateX(-50%); /* 精确居中 */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h1>Yourscraft</h1>
+        <p>选择方块类型，点击网格放置/移除方块</p >
+        <div class="block-types">
+            <button class="block-btn selected" id="grass" data-type="grass"></button>
+            <button class="block-btn" id="dirt" data-type="dirt"></button>
+            <button class="block-btn" id="stone" data-type="stone"></button>
+            <button class="block-btn" id="wood" data-type="wood"></button>
+            <button class="block-btn" id="glass" data-type="glass"></button>
+        </div>
+        <p>旋转视角: 按住鼠标拖动</p >
+    </div>
+
+    <div class="world-container">
+        <div class="world" id="world"></div>
+    </div>
+
+    <div class="info">
+        <h3>操作说明</h3>
+        <div class="instructions">
+            <p>1. 点击左侧方块按钮选择方块类型</p >
+            <p>2. 点击世界中的网格位置放置方块</p >
+            <p>3. 点击已放置的方块可将其移除</p >
+            <p>4. 按住鼠标拖动可旋转视角</p >
+        </div>
+    </div>
+
+    <script>
+        // 世界配置
+        const WORLD_SIZE = 9; // 9x9网格
+        const BLOCK_SIZE = 50;
+        let currentBlockType = 'grass';
+        let blocks = {}; // 存储方块数据: {x,y: {type}}
+        let isDragging = false;
+        let startX, startY;
+        let rotateX = 45;
+        let rotateZ = 45;
+
+        // DOM元素
+        const world = document.getElementById('world');
+        const blockButtons = document.querySelectorAll('.block-btn');
+
+        // 初始化世界网格
+        function initWorld() {
+            for (let x = 0; x < WORLD_SIZE; x++) {
+                for (let y = 0; y < WORLD_SIZE; y++) {
+                    // 创建网格点（用于点击放置方块）
+                    const gridPoint = document.createElement('div');
+                    gridPoint.className = 'grid-point';
+                    gridPoint.style.width = `${BLOCK_SIZE}px`;
+                    gridPoint.style.height = `${BLOCK_SIZE}px`;
+                    gridPoint.style.position = 'absolute';
+                    gridPoint.style.left = `${x * BLOCK_SIZE}px`;
+                    gridPoint.style.top = `${y * BLOCK_SIZE}px`;
+                    gridPoint.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    gridPoint.dataset.x = x;
+                    gridPoint.dataset.y = y;
+                    gridPoint.addEventListener('click', handleGridClick);
+                    world.appendChild(gridPoint);
+                }
+            }
+        }
+
+        // 处理方块类型选择
+        blockButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                blockButtons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                currentBlockType = btn.dataset.type;
+            });
+        });
+
+        // 处理网格点击（放置/移除方块）
+        function handleGridClick(e) {
+            const x = parseInt(e.target.dataset.x);
+            const y = parseInt(e.target.dataset.y);
+            const key = `${x},${y}`;
+
+            // 如果已有方块则移除
+            if (blocks[key]) {
+                const blockEl = document.querySelector(`.block[data-key="${key}"]`);
+                if (blockEl) blockEl.remove();
+                delete blocks[key];
+                return;
+            }
+
+            // 放置新方块
+            placeBlock(x, y, currentBlockType);
+        }
+
+        // 放置方块
+        function placeBlock(x, y, type) {
+            const key = `${x},${y}`;
+            blocks[key] = { type };
+
+            // 创建方块元素
+            const block = document.createElement('div');
+            block.className = 'block';
+            block.dataset.key = key;
+            block.style.left = `${x * BLOCK_SIZE}px`;
+            block.style.top = `${y * BLOCK_SIZE}px`;
+
+            // 定义方块颜色
+            const colors = {
+                grass: { front: '#7CFC00', top: '#228B22', right: '#32CD32' },
+                dirt: { front: '#8B4513', top: '#A0522D', right: '#CD853F' },
+                stone: { front: '#A9A9A9', top: '#C0C0C0', right: '#D3D3D3' },
+                wood: { front: '#D2691E', top: '#DEB887', right: '#CD853F' },
+                glass: { front: 'rgba(173, 216, 230, 0.7)', top: 'rgba(173, 216, 230, 0.5)', right: 'rgba(173, 216, 230, 0.6)' }
+            };
+
+            // 创建方块的三个面（前、上、右）
+            const faces = ['front', 'top', 'right'];
+            faces.forEach(face => {
+                const faceEl = document.createElement('div');
+                faceEl.className = `block-face ${face}`;
+                faceEl.style.backgroundColor = colors[type][face];
+                block.appendChild(faceEl);
+            });
+
+            // 添加点击事件（移除方块）
+            block.addEventListener('click', (e) => {
+                e.stopPropagation(); // 防止触发网格点击
+                block.remove();
+                delete blocks[key];
+            });
+
+            world.appendChild(block);
+        }
+
+        // 处理视角旋转
+        world.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            rotateZ += deltaX * 0.5;
+            rotateX -= deltaY * 0.5;
+            
+            // 限制旋转角度
+            rotateX = Math.max(20, Math.min(70, rotateX));
+            
+            world.style.transform = `rotateX(${rotateX}deg) rotateZ(${rotateZ}deg)`;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // 初始化游戏
+        initWorld();
+
+        // 预设一些方块
+        placeBlock(4, 4, 'grass');
+        placeBlock(5, 4, 'grass');
+        placeBlock(4, 5, 'dirt');
+        placeBlock(5, 5, 'stone');
+        placeBlock(3, 4, 'wood');
+    </script>
+    <div class="back-container">
+        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
+    </div>
+</body>
+</html>

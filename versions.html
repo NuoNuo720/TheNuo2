@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>更新公告 | 产品名称</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        .title-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .title-section h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .title-section p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        /* 最新版本卡片 */
+        .latest-update {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-left: 5px solid #3498db;
+        }
+        .latest-update .version {
+            font-size: 22px;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        .latest-update .date {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .update-content h4 {
+            font-size: 18px;
+            margin: 15px 0 10px;
+            color: #2c3e50;
+        }
+        .update-list {
+            list-style-position: inside;
+            padding-left: 10px;
+        }
+        .update-list li {
+            margin-bottom: 8px;
+            padding-left: 5px;
+        }
+        .update-list .new {
+            color: #27ae60;
+            font-weight: 500;
+        }
+        .update-list .fix {
+            color: #664178; /* 修正了多余的#符号 */
+        }
+        .update-list .optimize {
+            color: #9b59b6;
+        }
+        
+        /* 历史更新时间线 */
+        .history-section {
+            margin-top: 60px;
+        }
+        .history-section h3 {
+            font-size: 22px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background-color: #ecf0f1;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -34px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #3498db;
+            border: 3px solid #ecf0f1;
+        }
+        .timeline-item .version {
+            font-size: 18px;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        .timeline-item .date {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        .timeline-item .content {
+            font-size: 15px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 50px;
+            border-top: 1px solid #ecf0f1;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            .title-section h2 {
+                font-size: 24px;
+            }
+            .latest-update {
+                padding: 20px 15px;
+            }
+        }
+        .back-container {
+            position: fixed; /* 固定在视窗底部 */
+            bottom: 30px; /* 距离底部30px */
+            left: 50%; /* 水平居中 */
+            transform: translateX(-50%); /* 精确居中 */
+            color:blue;
+        }
+
+        /* 为返回按钮添加样式使其更美观 */
+        .back-to-home {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .back-to-home:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>产品更新公告</h1>
+    </header>
+    
+    <div class="container">
+        <div class="title-section">
+            <h2>我们一直在优化产品体验</h2>
+            <p>及时了解最新功能、问题修复和体验优化</p >
+        </div>
+        
+        <!-- 最新版本 -->
+        <div class="latest-update">
+            <div class="version">v1.7.1</div>
+            <div class="date">发布日期：2025年8月7日</div>
+            
+            <div class="update-content">
+                <h4>本次更新亮点</h4>
+                <ul class="update-list"> <!-- 修正了类名 -->
+                    <li class="fix">修复了账号内容不同步的问题</li>
+                    <li class="fix">修复了「更新公告栏」中的一些问题</li>
+                    <li class="optimize">优化了"导航"页面的一些功能</li>
+                    <li class="optimize">优化了「好友列表」功能，支持更多内容显示</li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 历史更新时间线 -->
+        <div class="history-section">
+            <h3>历史更新记录</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="version">v1.7.0.00~v1.7.0.03</div>
+                    <div class="date">发布日期：2025年8月7日</div>
+                    <div class="content">
+                        <ul class="update-list">
+                            <li class="new">更新个人信息系统，支持用户上传自定义头像</li>
+                            <li class="new">新增「好友列表」功能</li>
+                            <li class="new">「百宝箱」模式内容更新</li>
+                            <li class="fix">修复了更新公告栏部分有误的问题</li>
+                            <li class="optimize">优化了「自由电子冒险」模式的排行榜功能</li>
+                            <li class="optimize">优化了部分按钮描述</li>
+                            <li class="optimize">优化了移动端的游戏体验</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="timeline-item"> <!-- 修正了时间线嵌套结构 -->
+                    <div class="version">v1.6.0.00~v1.6.0.12</div>
+                    <div class="date">发布日期：2025年8月6日</div>
+                    <div class="content">
+                        <ul class="update-list">
+                            <li class="new">「自由电子冒险」模式新增剧情玩法和排行榜功能</li>
+                            <li class="new">「English words」模式单词库更新</li>
+                            <li class="new">「百宝箱」模式内容更新</li>
+                            <li class="fix">修复了更新公告栏部分有误的问题</li>
+                            <li class="fix">修复了「自由电子冒险」模式因剧情无法继续游戏的问题</li>
+                            <li class="fix">修复了「百宝箱」模式因剧情无法打开的问题</li>
+                            <li class="fix">修复了「English words」模式无法开始游戏的问题</li>
+                            <li class="optimize">优化了「自由电子冒险」模式的剧情</li>
+                            <li class="optimize">优化了各页面的布局</li>
+                            <li class="optimize">优化了一些返回导航的路径</li>
+                            <li class="optimize">优化了封面的排版和布局</li>
+                            <li class="optimize">优化了部分字体颜色</li>
+                            <li class="optimize">优化了移动端的游戏体验</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="version">v1.5.0.00~v1.5.2</div>
+                    <div class="date">发布日期：2025年8月5日</div>
+                    <div class="content">
+                        <p>v1.5.2</p>
+                        <ul class="update-list">
+                            <li class="new">新增「Yourscraft」和「色盲派对」模式</li>
+                            <li class="fix">修复了更新公告栏部分有误的问题</li>
+                            <li class="optimize">优化了部分字体颜色</li>
+                        </ul>
+                        <p>v1.5.1</p>
+                        <ul class="update-list">
+                            <li class="new">新增「24点」和「扑克赛马」模式</li>
+                            <li class="new">添加了「个人信息」</li>
+                            <li class="fix">修复了版本更新时间有误的问题</li>
+                            <li class="optimize">优化了对之前版本的描述</li>
+                        </ul>
+                        <p>v1.5.0.00~v1.5.0.04</p>
+                        <ul class="update-list">
+                            <li class="new">登录后显示个人账户</li>
+                            <li class="new">「百宝箱」模式内容更新</li>
+                            <li class="fix">修复了用户数据未正常显示的问题</li>
+                            <li class="fix">修复了更新公告中出现颜色错误及版本错误的问题</li>
+                            <li class="optimize">优化了"多功能导航总页面"的布局</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="timeline-item"> <!-- 添加了缺失的timeline-item容器 -->
+                    <div class="version">v1.4.0~v1.4.4.06</div>
+                    <div class="date">发布日期：2025年8月4日</div>
+                    
+                    <div class="content">
+                        <p>v1.4.4.00~v1.4.4.06</p>
+                        <ul class="update-list">
+                            <li class="new">「English words」模式单词库更新</li>
+                            <li class="fix">修复了「自由电子冒险」模式下得分与关卡数目异常的问题</li>
+                            <li class="fix">修复了注册账号页面丢失的问题</li>
+                            <li class="fix">修复了注册账号后出现无法登入情况的问题</li>
+                            <li class="optimize">优化了移动端「自由电子冒险」模式下的游戏体验</li>
+                            <li class="optimize">更改了「自由电子冒险」模式的图标</li>
+                            <li class="optimize">优化了"登录"与"注册"页面，支持使用个人账号登录</li>
+                        </ul>
+
+                        <p>v1.4.3.00~v1.4.3.01</p>
+                        <ul class="update-list">
+                        <li class="fix">修复了文字与图片排版错误的问题</li>
+                        </ul>
+                        <p>v1.4.2</p>
+                        <ul class="update-list">
+                            <li class="new">「English words」模式单词库更新</li>
+                            <li class="new">「自由电子冒险」模式更新</li>
+                            <li class="fix">修复了版本更新描述出现错误的问题</li>
+                        </ul>
+                        <p>v1.4.1</p>
+                        <ul class="update-list">
+                            <li class="new">添加了「更新公告栏」</li>
+                            <li class="new">「English words」模式单词库更新</li>
+                        </ul>
+                        <p>v1.4.0</p>
+                        <ul class="update-list">
+                            <li class="new">新增「English words」模式</li>
+                            <li class="fix">修复了部分情况下输入框无法聚焦的问题</li>
+                            <li class="optimize">调整了界面布局，提升移动端操作体验</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="version">v1.3.0~v1.3.7</div>
+                    <div class="date">发布日期：2025年8月3日</div>
+                    <div class="content">
+                        <ul class="update-list">
+                            <li class="new">添加了导航页面</li>
+                            <li class="new">新增「百宝箱」和「问卷调查」模式</li>
+                            <li class="new">「问卷调查」模式中新增"弹幕区"</li>
+                            <li class="optimize">将"表白"界面移至「问卷调查」模式</li>
+                            <li class="optimize">调整了注册页面的布局</li>
+                            <li class="optimize">优化了登录流程</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="version">v1.2.0~1.2.17</div>
+                    <div class="date">发布日期：2025年8月2日</div>
+                    <div class="content">
+                        <ul class="update-list">
+                            <li class="new">新增"Loading"界面</li>
+                            <li class="new">「问卷调查」模式中新增"选项"功能 </li>
+                            <li class="new">新增"登录"和"注册"界面</li>
+                            <li class="fix">修复了网页无法正常显示的问题</li>
+                            <li class="fix">修复了部分场景下无法跳转界面的问题</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="version">v1.1.0</div>
+                    <div class="date">发布日期：2025年8月1日</div>
+                    <div class="content">
+                        <ul class="update-list">
+                            <li class="new">公布"表白"界面，支持多人实时查看</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        © 2025 产品名称 版权所有 | 如有疑问请联系 3668417644@qq.com
+    </footer>
+    <div class="back-container">
+        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
+    </div>
+</body>
+</html>

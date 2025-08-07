@@ -1,0 +1,3 @@
+[build]
+  functions = "netlify/functions"  # 函数目录
+  publish = "."                   # 前端文件目录（根目录）

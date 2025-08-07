@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能导航总页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            color: #667580;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            padding: 20px 0;
+        }
+
+        .nav-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: #3498db;
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .card-desc {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+            padding: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>功能导航中心</h1>
+        <p class="subtitle">点击下方卡片进入对应功能页面</p >
+    </header>
+
+    <div class="container">
+        <div class="card-grid">
+            <!-- 冷知识百宝箱 -->
+            <div class="nav-card" onclick="window.location.href='knowledge.html'">
+                <div class="card-icon">📚</div>
+                <h2 class="card-title">百宝箱</h2>
+                <p class="card-desc">半猫小知识</p >
+            </div>
+
+            <!-- 郑宇轩 -->
+            <div class="nav-card" onclick="window.location.href='https://awebsitetopraisezyx.netlify.app/'">
+                <div class="card-icon">🔢</div>
+                <h2 class="card-title">调查问卷</h2>
+                <p class="card-desc">人性的魅力</p >
+            </div>
+
+            <!-- 记事本 -->
+            <div class="nav-card" onclick="window.location.href='words.html'">
+                <div class="card-icon">📝</div>
+                <h2 class="card-title">English words</h2>
+                <p class="card-desc">检验英文单词储备量</p >
+            </div>
+
+            <!-- 单位转换 -->
+            <div class="nav-card" onclick="window.location.href='versions.html'">
+                <div class="card-icon">🔄</div>
+                <h2 class="card-title">更新公告</h2>
+                <p class="card-desc">版本更新公告</p >
+            </div>
+            
+            <!-- 密码生成器 -->
+            <div class="nav-card" onclick="window.location.href='e.html'">
+                <div class="card-icon">⚡</div>
+                <h2 class="card-title">自由电子冒险</h2>
+                <p class="card-desc">自由电子冒险之旅！</p >
+            </div>
+            <!-- 24点小游戏 -->
+            <div class="nav-card" onclick="window.location.href='24game.html'">
+                <div class="card-icon">🎮</div>
+                <h2 class="card-title">24点游戏</h2>
+                <p class="card-desc">用4个数字算出24点</p >
+            </div>
+            <!-- 待添加功能 -->
+            <div class="nav-card" onclick="alert('功能开发中，敬请期待！')">
+                <div class="card-icon">🔧</div>
+                <h2 class="card-title">更多功能</h2>
+                <p class="card-desc">持续更新中，即将上线更多实用工具</p >
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>多功能导航中心 &copy; 2025</p >
+    </footer>
+
+    <script>
+        // 可添加页面加载动画或其他交互效果
+        document.addEventListener('DOMContentLoaded', () => {
+            // 页面加载完成后给卡片添加渐入效果
+            const cards = document.querySelectorAll('.nav-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * index);
+            });
+        });
+    </script>
+</body>
+</html>
+ 

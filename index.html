@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome.</title>
+  <style>
+        /* 重置默认样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* 封面容器样式 */
+        .cover-container {
+            width: 100%;
+            height: 100vh;
+            /* 使用你提供的封面图片作为背景 */
+            background: url('333.jpg') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 按钮样式 */
+        .enter-btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            color: #00004d;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            z-index: 3;
+        }
+
+        /* 按钮 hover 效果（可根据实际需求调整） */
+        .enter-btn:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+        .cover-container ul {
+            position:absolute;
+            top:70px;
+            left:42.5%;
+            transform:translateX(-50%);
+            z-index:2;
+            list-style:none;}
+        .cover-container li {
+            color:yellow;
+            font-size:16px;
+            margin-bottom:10px;
+            cursor:pointer;           
+        
+        
+
+        }
+        .aaa {
+            z-index=1}
+        .box{
+            width:300px;
+                    
+            background-color:rgba(0,0,0,0.2);
+            margin:10px auto;
+            border-radius:20px;
+            padding : 10px 0;}
+        h1{
+            position:relative;
+            color:#0000004d;
+            font-size:60px}
+        h1::before {
+            content:attr(data-text);
+            position:absolute;
+            overflow:hidden;
+            max-width:7em;
+            white-space:nowrap;
+            color:purple;
+            animation:loading 10s linear;
+        }
+        @keyframes loading {
+            0% {
+                max-width:0;
+            }
+        }
+        li:hover {
+            color:blue;
+            cursor:pointer;
+        }
+        li:hover:nth-child(3)::after {
+            content:"你干嘛~诶哟~";
+            margin-left:20px;
+                    
+        }
+        li:hover:first-child::after {
+            content:"半猫诺丷";
+            margin-left:20px;
+                    
+        }
+        li:hover:nth-child(2)::after {
+             content:"2025/8/1 at 5:30 P.M.";
+            margin-left:20px;
+                    
+        }
+        li:hover:nth-child(4)::after {
+            content:"正在开发中...";
+            margin-left:20px;
+                    
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 封面容器 -->
+    <div class="cover-container">
+        
+        <ul>
+            <li>开发者</li>
+            <li class="second">首次发布时间</li>
+            <li>篮球</li>
+            <li>更多</li>
+        </ul>
+        <h1 data-text="Loading...">Loading...</hi>
+        
+        <!-- 点击进入按钮，这里使用 JavaScript 实现跳转，你也可以直接用 a 标签的 href 属性 -->
+        <button class="enter-btn" onclick="goToWebsite()">[Come                  Here]</button>
+    
+    </div>
+    
+    <script>
+        // 跳转函数，替换下方的网址为你实际要跳转的网站地址
+        function goToWebsite() {
+            window.location.href = "indexlo.html"; 
+        }
+    </script>
+    
+
+
+</body>
+
+</html>
