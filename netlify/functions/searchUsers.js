@@ -32,9 +32,8 @@ exports.handler = async (event) => {
 
         // 解析请求参数
         const requestData = JSON.parse(event.body);
-        const { query = '', excludeUserId } = requestData; // 关键词默认空字符串
+        const { query = '', excludeUserId } = requestData;
 
-        // 只校验 excludeUserId（必须提供）
         if (!excludeUserId) {
             return {
                 statusCode: 400,
@@ -48,23 +47,25 @@ exports.handler = async (event) => {
         await client.connect();
         const db = client.db('userDB');
 
-        // 构建查询条件：空关键词时匹配所有用户，否则模糊匹配
+        // 构建查询条件
         const queryCondition = query 
-            ? { username: new RegExp(query, 'i') } // 模糊匹配
-            : {}; // 空对象匹配所有用户
+            ? { username: new RegExp(query, 'i') } 
+            : {};
 
-        // 排除当前用户，执行查询
+        // 关键修复：使用MongoDB默认的`_id`字段进行查询和投影
         const users = await db.collection('users')
             .find({
-                ...queryCondition, // 合并查询条件
-                id: { $ne: excludeUserId } // 排除当前用户
+                ...queryCondition,
+                // 排除当前用户（使用`_id`而非`id`）
+                _id: { $ne: excludeUserId } 
             })
-            .project({ id: 1, username: 1, avatar: 1, isOnline: 1 })
+            // 投影需要的字段（`_id`是MongoDB默认主键）
+            .project({ _id: 1, username: 1, avatar: 1, isOnline: 1 })
             .toArray();
 
-        // 格式化结果
+        // 格式化结果：将`_id`映射为前端需要的`id`
         const result = users.map(user => ({
-            id: user.id,
+            id: user._id.toString(), // 将ObjectId转为字符串
             username: user.username,
             avatar: user.avatar || '',
             isOnline: user.isOnline || false
