@@ -1,6 +1,5 @@
-{insert\_element\_0\_}
 const { MongoClient } = require('mongodb');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 let client;
 
@@ -13,14 +12,16 @@ async function connectToDatabase() {
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ message: 'Method Not Allowed' }) };
+    return { 
+      statusCode: 405, 
+      body: JSON.stringify({ message: 'Method Not Allowed' }) 
+    };
   }
 
   try {
     const db = await connectToDatabase();
     const { username, email, password, token } = JSON.parse(event.body);
 
-    
     const existingUser = await db.collection('users').findOne({
       $or: [{ username }, { email }]
     });
@@ -32,11 +33,9 @@ exports.handler = async (event) => {
       };
     }
 
-    
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    
     await db.collection('users').insertOne({
       username,
       email,
