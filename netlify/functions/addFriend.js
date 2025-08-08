@@ -37,7 +37,7 @@ exports.handler = async (event) => {
             recipientId,
             status: { $in: ['pending', 'accepted'] }  // 待处理或已接受的请求视为重复
         });
-
+        
         if (existingRequest) {
             return { 
                 statusCode: 400, 
@@ -45,13 +45,27 @@ exports.handler = async (event) => {
                 body: JSON.stringify({ error: '已发送好友请求' }) 
             };
         }
-
+        console.log('验证接收者存在性:', {
+            recipientId: recipientId,
+            queryCondition: { id: recipientId } // 打印查询条件
+        });
         // 检查接收者是否存在
         const recipientExists = await db.collection('users').findOne(
             { _id: recipientId },
             { projection: { _id: 1 } }
         );
-
+        console.log('接收者查询结果:', recipientExists);
+        if (!recipientExists) {
+            return { 
+                statusCode: 404, 
+                headers, 
+                body: JSON.stringify({ 
+                    error: '目标用户不存在',
+                    debug: `recipientId=${recipientId}, exists=${!!recipientExists}`,
+                    tip: '检查用户ID是否正确或是否存在于数据库'
+                }) 
+            };
+        }
         if (!recipientExists) {
             return { 
                 statusCode: 404, 
