@@ -618,6 +618,7 @@
 
         // 检查URL参数，显示登录成功信息
         function checkLoginParams() {
+            
             const params = new URLSearchParams(window.location.search);
             if (params.has('loginSuccess')) {
                 showNotification('欢迎回来！登录成功', 'success');
@@ -627,20 +628,32 @@
         // 检查登录状态
         function checkLoginStatus() {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            console.log("读取到的用户信息：", userInfoStr);
             // 如果未登录，重定向到登录页
-            if (!userInfo.token || !userInfo.username) {
-                // 非登录页才重定向
+            if (!userInfoStr) {
+                
                 if (!window.location.pathname.includes('indexlo.html')) {
                     window.location.href = 'indexlo.html';
                 }
                 return;
             }
-            
-            // 已登录，显示用户信息
-            updateUserDisplay(userInfo);
+            try {
+                const userInfo = JSON.parse(userInfoStr);
+                // 验证关键字段是否存在
+                if (!userInfo.token || !userInfo.username) {
+                  throw new Error("用户信息不完整");
+                }
+                // 已登录，显示用户信息
+                updateUserDisplay(userInfo);
+            } catch (err) {
+                console.error("用户信息解析失败：", err);
+                localStorage.removeItem('mainUserInfo');
+                if (!window.location.pathname.includes('indexlo.html')) {
+                  window.location.href = 'indexlo.html';
+                }
+            }
         }
-
         // 更新用户信息显示
         function updateUserDisplay(userInfo) {
             const userAreaEl = document.getElementById('userArea');
