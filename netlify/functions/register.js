@@ -12,9 +12,9 @@ async function connectToDatabase() {
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { 
-      statusCode: 405, 
-      body: JSON.stringify({ message: 'Method Not Allowed' }) 
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ message: '只支持POST请求' })
     };
   }
 
