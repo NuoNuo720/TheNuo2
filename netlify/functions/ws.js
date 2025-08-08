@@ -4,12 +4,24 @@ const dataStore = require('./dataStore');
 // WebSocket连接处理
 exports.handler = async (event, context) => {
   // 检查是否是WebSocket请求
+  const { userId, token } = event.queryStringParameters;
+  const user = await db.collection('users').findOne({ id: userId, token });
   if (!event.requestContext || !event.requestContext.webSocket) {
     return { statusCode: 400, body: '不是WebSocket请求' };
   }
-
+  if (!user) {
+    return { statusCode: 401, body: '未授权' };
+  }
   const { connectionId, routeKey, queryStringParameters } = event.requestContext.webSocket;
   const userId = queryStringParameters?.userId;
+  context.callbackWaitsForEmptyEventLoop = false;
+  const interval = setInterval(() => {
+    if (context.clientContext && context.clientContext.websocket) {
+      context.clientContext.websocket.send(JSON.stringify({ type: 'ping' }));
+    } else {
+      clearInterval(interval);
+    }
+  }, 30000);
 
   try {
     switch (routeKey) {
