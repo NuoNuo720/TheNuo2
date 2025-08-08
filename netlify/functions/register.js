@@ -20,7 +20,7 @@ exports.handler = async (event) => {
     const client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
     const db = client.db('userDB'); // 数据库名：userDB
-    const usersCollection = db.collection('user'); // 集合名：user
+    const usersCollection = db.collection('users'); // 集合名：users
 
     // 检查用户名是否已存在
     const existingUser = await usersCollection.findOne({ username });
