@@ -1,6 +1,5 @@
 const { MongoClient } = require('mongodb');
-const bcrypt = require('bcryptjs');
-
+const bcrypt = require('bcrypt');
 let client;
 
 async function connectToDatabase() {
@@ -36,7 +35,7 @@ exports.handler = async (event) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    await db.collection('users').insertOne({
+    await usersCollection.insertOne({
       username,
       email,
       password: hashedPassword,
