@@ -545,6 +545,7 @@
                     <div>添加时间</div>
                     <div>操作</div>
                 </div>
+                
                 <div class="empty-state" id="friendsEmptyState">
                     <div class="empty-icon">
                         <i class="fas fa-user-friends"></i>
@@ -561,6 +562,7 @@
                     <div>请求时间</div>
                     <div>操作</div>
                 </div>
+                <div id="pendingRequestsList" class="pending-requests-container">
                 <div class="empty-state" id="requestsEmptyState">
                     <div class="empty-icon">
                         <i class="fas fa-envelope"></i>
@@ -822,6 +824,7 @@
                 }
                 
                 const friends = await response.json();
+                currentFriends = friends;
                 const friendsTab = document.getElementById('friendsTab');
                 const emptyState = document.getElementById('friendsEmptyState');
                 
@@ -1003,17 +1006,21 @@
                 pendingRequests.forEach(request => {
                     const sentTime = new Date(request.sentAt).toLocaleString();
                     html += `
-                        <div class="pending-request-item" data-request-id="${request.id}">
+                        <div class="friend-item" data-request-id="${request.id}">
                             <img src="${request.recipient.avatar || `https://picsum.photos/seed/${request.recipient.id}/200`}" 
-                                 alt="${request.recipient.username}" class="request-avatar">
-                            <div class="request-info">
-                                <div class="request-username">${request.recipient.username}</div>
-                                <div class="request-time">发送于 ${sentTime}</div>
+                                 alt="${request.recipient.username}" class="friend-avatar">
+                            <div class="friend-info">
+                                <div class="friend-name">${request.recipient.username}</div>
+                                <div class="friend-status status-pending">等待对方同意</div>
                             </div>
-                            <button class="btn btn-danger cancel-btn" 
-                                    onclick="cancelFriendRequest('${request.id}', '${request.recipient.id}')">
-                                取消请求
-                            </button>
+                            <div class="friend-joined">${sentTime}</div>
+                            <div class="friend-actions">
+                                <!-- 修复：使用正确的函数名cancelRequest -->
+                                <button class="action-btn delete-btn" 
+                                        onclick="cancelRequest('${request.id}')" title="取消请求">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
@@ -1098,6 +1105,19 @@
                     let resultsHtml = '';
                     users.forEach(user => {
                         let actionButton;
+                        const hasPendingRequest = pendingRequestsMap.has(user.id);
+                        const isFriend = currentFriends.some(f => f.id === user.id);
+
+                        if (isFriend) {
+                            actionButton = '<span class="status-online">已是好友</span>';
+                        } else if (hasPendingRequest) {
+                            actionButton = '<span class="status-pending">请求已发送</span>';
+                        } else {
+                            actionButton = `<button class="btn btn-success add-btn" 
+                                            onclick="selectUser('${user.id}', '${user.username}')">
+                                            添加
+                                        </button>`;
+                        }
                         resultsHtml += `
                             <div class="search-result-item" data-user-id="${user.id}">
                                 <img src="${user.avatar || `https://picsum.photos/seed/${user.id}/200`}" 
@@ -1124,7 +1144,6 @@
         }
         
         // 选择用户
-        let selectedUserId = null;
         function selectUser(userId, username) {
             if (!userId) {
                 showNotification('用户ID获取失败', 'error');
