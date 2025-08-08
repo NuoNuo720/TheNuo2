@@ -22,6 +22,8 @@ exports.handler = async (event) => {
 
     // 2. 用bcrypt验证密码（关键修复：解密比对）
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log("输入的明文密码：", password);
+    console.log("密码比对结果：", isPasswordValid);
     if (!isPasswordValid) {
       await client.close();
       return { statusCode: 401, body: JSON.stringify({ error: '密码错误' }) };
