@@ -6,6 +6,7 @@
     <title>好友系统 - 实时社交</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -497,7 +498,7 @@
     <!-- 导航栏 -->
     <div class="navbar">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="index.html" class="navbar-title"> <!-- 假设主页面为index.html -->
+            <a href="index.html" class="navbar-title">
                 <i class="fas fa-home"></i> 主页
             </a>
             <div class="navbar-title">
@@ -656,23 +657,55 @@
             });
         });
         
-        // 检查登录状态
+        // 检查登录状态 - 增加用户ID检查
         function checkLoginStatus() {
             // 从本地存储获取用户信息
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
             const userInfoStr = localStorage.getItem('mainUserInfo');
             console.log("读取到的用户信息：", userInfoStr);
+            
             if (!userInfoStr) {
                 // 未登录，重定向到登录页
                 window.location.href = 'indexlo.html';
                 return;
             }
             
-            // 已登录，初始化
-            currentUser = userInfo;
-            updateUserDisplay();
-            initWebSocket();
-            loadFriendsData();
+            try {
+                const userInfo = JSON.parse(userInfoStr);
+                
+                // 检查是否包含必要的用户ID
+                if (!userInfo.id) {
+                    // 尝试从token提取ID或生成临时ID
+                    userInfo.id = generateUserIdFromToken(userInfo.token);
+                    // 保存更新后的用户信息
+                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                    showNotification('用户信息已更新，请刷新页面', 'info');
+                }
+                
+                // 已登录，初始化
+                currentUser = userInfo;
+                updateUserDisplay();
+                initWebSocket();
+                loadFriendsData();
+            } catch (error) {
+                console.error('解析用户信息失败:', error);
+                showNotification('用户信息无效，请重新登录', 'error');
+                localStorage.removeItem('mainUserInfo');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 2000);
+            }
+        }
+        
+        // 从token生成用户ID（临时解决方案）
+        function generateUserIdFromToken(token) {
+            // 简单哈希函数生成ID
+            let hash = 0;
+            for (let i = 0; i < token.length; i++) {
+                const char = token.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // 转换为32位整数
+            }
+            return 'user_' + Math.abs(hash);
         }
         
         // 更新用户显示
@@ -681,8 +714,14 @@
             document.getElementById('userAvatar').src = currentUser.avatar || `https://picsum.photos/seed/${currentUser.id}/200`;
         }
         
-        // 初始化WebSocket连接（优化版）
+        // 初始化WebSocket连接（修复userId问题）
         function initWebSocket() {
+            // 确保用户ID存在
+            if (!currentUser || !currentUser.id) {
+                showNotification('用户信息不完整，无法建立连接', 'error');
+                return;
+            }
+            
             // 避免重复连接
             if (socket && socket.readyState === WebSocket.OPEN) {
                 return;
@@ -697,8 +736,9 @@
                 socket.close(1000, '主动重连'); // 正常关闭码
             }
 
-            // 创建新连接 - 添加token验证
-            const wsUrl = `${protocol}//${host}/.netlify/functions/ws?userId=${currentUser.id}&token=${currentUser.token}`;
+            // 创建新连接 - 确保userId正确传递
+            const wsUrl = `${protocol}//${host}/.netlify/functions/ws?userId=${encodeURIComponent(currentUser.id)}&token=${encodeURIComponent(currentUser.token)}`;
+            console.log('WebSocket连接URL:', wsUrl);
             socket = new WebSocket(wsUrl);
             
             // 连接成功
@@ -716,7 +756,7 @@
                     const data = JSON.parse(event.data);
                     handleWebSocketMessage(data);
                 } catch (error) {
-                    console.error('解析WebSocket消息失败:', error);
+                    console.error('解析WebSocket消息失败:', error, '消息内容:', event.data);
                 }
             };
             
@@ -785,12 +825,17 @@
         
         // 加载所有好友数据
         function loadFriendsData() {
+            if (!currentUser || !currentUser.id) {
+                showNotification('用户信息不完整，无法加载数据', 'error');
+                return;
+            }
+            
             loadFriendsList();
             loadFriendRequests();
             loadPendingRequests();
         }
         
-        // 加载好友列表
+        // 加载好友列表 - 增加错误处理
         async function loadFriendsList() {
             try {
                 const response = await fetch('/.netlify/functions/getFriends', {
@@ -802,7 +847,28 @@
                     body: JSON.stringify({ userId: currentUser.id })
                 });
                 
-                const friends = await response.json();
+                // 检查HTTP响应状态
+                if (!response.ok) {
+                    console.error('加载好友列表失败，HTTP状态:', response.status);
+                    showNotification(`加载好友列表失败 (${response.status})`, 'error');
+                    
+                    // 处理404错误
+                    if (response.status === 404) {
+                        showNotification('服务未找到，请检查部署', 'error');
+                    }
+                    return;
+                }
+                
+                // 尝试解析响应
+                let friends;
+                try {
+                    friends = await response.json();
+                } catch (error) {
+                    console.error('解析好友列表失败:', error);
+                    showNotification('解析数据失败', 'error');
+                    return;
+                }
+                
                 const friendsTab = document.getElementById('friendsTab');
                 const emptyState = document.getElementById('friendsEmptyState');
                 
@@ -812,6 +878,11 @@
                         friendsTab.removeChild(child);
                     }
                 });
+                
+                // 确保friends是数组
+                if (!Array.isArray(friends)) {
+                    friends = [];
+                }
                 
                 if (friends.length === 0) {
                     emptyState.style.display = 'block';
@@ -865,7 +936,7 @@
             return div;
         }
         
-        // 加载好友请求
+        // 加载好友请求 - 增加错误处理
         async function loadFriendRequests() {
             try {
                 const response = await fetch('/.netlify/functions/getFriendRequests', {
@@ -877,7 +948,21 @@
                     body: JSON.stringify({ userId: currentUser.id })
                 });
                 
-                const requests = await response.json();
+                if (!response.ok) {
+                    console.error('加载好友请求失败，HTTP状态:', response.status);
+                    showNotification(`加载好友请求失败 (${response.status})`, 'error');
+                    return;
+                }
+                
+                let requests;
+                try {
+                    requests = await response.json();
+                } catch (error) {
+                    console.error('解析好友请求失败:', error);
+                    showNotification('解析数据失败', 'error');
+                    return;
+                }
+                
                 const requestsTab = document.getElementById('requestsTab');
                 const emptyState = document.getElementById('requestsEmptyState');
                 
@@ -887,6 +972,11 @@
                         requestsTab.removeChild(child);
                     }
                 });
+                
+                // 确保requests是数组
+                if (!Array.isArray(requests)) {
+                    requests = [];
+                }
                 
                 if (requests.length === 0) {
                     emptyState.style.display = 'block';
@@ -935,7 +1025,7 @@
             return div;
         }
         
-        // 加载待同意请求
+        // 加载待同意请求 - 增加错误处理
         async function loadPendingRequests() {
             try {
                 const response = await fetch('/.netlify/functions/getPendingRequests', {
@@ -947,7 +1037,21 @@
                     body: JSON.stringify({ userId: currentUser.id })
                 });
                 
-                const requests = await response.json();
+                if (!response.ok) {
+                    console.error('加载待处理请求失败，HTTP状态:', response.status);
+                    showNotification(`加载待处理请求失败 (${response.status})`, 'error');
+                    return;
+                }
+                
+                let requests;
+                try {
+                    requests = await response.json();
+                } catch (error) {
+                    console.error('解析待处理请求失败:', error);
+                    showNotification('解析数据失败', 'error');
+                    return;
+                }
+                
                 const pendingTab = document.getElementById('pendingTab');
                 const emptyState = document.getElementById('pendingEmptyState');
                 
@@ -957,6 +1061,11 @@
                         pendingTab.removeChild(child);
                     }
                 });
+                
+                // 确保requests是数组
+                if (!Array.isArray(requests)) {
+                    requests = [];
+                }
                 
                 if (requests.length === 0) {
                     emptyState.style.display = 'block';
@@ -1326,3 +1435,4 @@
     </script>
 </body>
 </html>
+    
