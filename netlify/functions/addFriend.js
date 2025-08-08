@@ -48,8 +48,8 @@ exports.handler = async (event) => {
 
         // 检查接收者是否存在
         const recipientExists = await db.collection('users').findOne(
-            { id: recipientId },
-            { projection: { id: 1 } }
+            { _id: recipientId },
+            { projection: { _id: 1 } }
         );
 
         if (!recipientExists) {
