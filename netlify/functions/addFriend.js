@@ -18,8 +18,15 @@ exports.handler = async (event) => {
   try {
     const db = await connectToDatabase();
     const { senderId, recipientId, message } = JSON.parse(event.body);
-
+    console.log('收到的请求参数:',{ senderId, recipientId, message })
     // 检查是否已发送请求
+    if (!senderId || !recipientId) {
+        console.error('缺少必要参数:', { senderId, recipientId });
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'senderId和recipientId为必填项' })
+        };
+    }
     const existingRequest = await db.collection('friendRequests').findOne({
       senderId,
       recipientId,
@@ -51,9 +58,10 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
+    console.error('解析请求体错误:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message })
+      body: JSON.stringify({ error: '请求格式错误，必须为JSON' })
     };
   }
 };
