@@ -36,7 +36,7 @@ exports.handler = async (event) => {
     await client.close();
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: '登录成功', username: user.username，token:user.token })
+      body: JSON.stringify({ message: '登录成功', username: user.username,token:user.token })
     };
 
   } catch (err) {
