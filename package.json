@@ -1,18 +1,4 @@
 {
-
-  "name": "my-node-api",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"  // 启动命令，云平台会自动执行
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "ws": "^8.14.2"  // 根据你代码中使用的依赖添加
-  }
-}
-
   "name": "social-app",
   "version": "1.0.0",
   "description": "",
@@ -24,8 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mongobd": "^0.0.1-security.0",
-    "ws": "^8.18.3"
+    "mongobd": "^0.0.1-security.0",  // 注意：可能是 "mongodb" 的拼写错误
+    "ws": "^8.18.3"                  // WebSocket 库，版本比第一个项目更新
   }
 }
-
