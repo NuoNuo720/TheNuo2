@@ -1068,15 +1068,16 @@
         
         // 搜索用户
         let searchTimeout;
+        // 1. 修改搜索用户结果中的按钮点击事件（添加防止冒泡处理）
         function searchUsers(e) {
             const query = e.target.value.trim();
             const resultsEl = document.getElementById('searchResults');
-            
+    
             if (query.length < 2) {
                 resultsEl.style.display = 'none';
                 return;
             }
-            
+    
             // 防抖处理
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(async () => {
@@ -1092,15 +1093,15 @@
                             excludeUserId: currentUser.id // 排除自己
                         })
                     });
-                    
+            
                     const users = await response.json();
-                    
+            
                     if (users.length === 0) {
                         resultsEl.innerHTML = '<div class="search-result-item">未找到匹配用户</div>';
                         resultsEl.style.display = 'block';
                         return;
                     }
-                    
+            
                     // 显示搜索结果
                     let resultsHtml = '';
                     users.forEach(user => {
@@ -1113,8 +1114,9 @@
                         } else if (hasPendingRequest) {
                             actionButton = '<span class="status-pending">请求已发送</span>';
                         } else {
+                            // 修复：添加onclick事件时使用转义，防止特殊字符问题
                             actionButton = `<button class="btn btn-success add-btn" 
-                                            onclick="selectUser('${user.id}', '${user.username}')">
+                                            onclick="selectUser('${user.id.replace(/'/g, "\\'")}', '${user.username.replace(/'/g, "\\'")}')">
                                             添加
                                         </button>`;
                         }
@@ -1132,9 +1134,27 @@
                             </div>
                         `;
                     });
-                    
+            
                     resultsEl.innerHTML = resultsHtml;
                     resultsEl.style.display = 'block';
+                    resultsEl.querySelectorAll('.add-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.stopPropagation(); // 防止事件冒泡到父元素
+                        });
+                    });
+                    // 添加点击搜索结果项也能选择用户
+                    resultsEl.querySelectorAll('.search-result-item').forEach(item => {
+                        if (!item.querySelector('.add-btn')) return;
+                
+                        item.addEventListener('click', (e) => {
+                            // 防止事件冒泡导致的问题
+                            e.stopPropagation();
+                            const userId = item.dataset.userId;
+                            const username = item.querySelector('div:first-child').textContent;
+                            selectUser(userId, username);
+                        });
+                    });
+            
                 } catch (error) {
                     console.error('搜索用户失败:', error);
                     resultsEl.innerHTML = '<div class="search-result-item">搜索失败，请重试</div>';
@@ -1142,44 +1162,52 @@
                 }
             }, 300);
         }
-        
-        // 选择用户
+
+        // 2. 增强selectUser函数的日志和验证
         function selectUser(userId, username) {
-            if (!userId) {
+            if (!userId || userId === 'undefined') {
                 showNotification('用户ID获取失败', 'error');
+                console.error('尝试选择用户但未获取到有效ID', {userId, username});
                 return;
             }
+    
+            // 存储选中的用户ID
             selectedUserId = userId;
             document.getElementById('friendUsername').value = username;
             document.getElementById('searchResults').style.display = 'none';
+    
+            // 显示选中状态的通知
+            showNotification(`已选择用户: ${username}`, 'info');
             console.log(`已选择用户：${username}，ID：${userId}`);
         }
-        
-        // 发送好友请求
+
+        // 3. 改进发送请求前的验证
         async function sendFriendRequest() {
-            if (!selectedUserId || selectedUserId === 'undefined') {
-                showNotification('请先选择一个用户', 'error');
+            // 更严格的验证
+            if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
+                showNotification('请先从搜索结果中选择一个用户', 'error');
+                console.error('发送请求失败：未选择有效用户', {selectedUserId});
                 return;
             }
-            
+    
             if (pendingRequests.has(selectedUserId)) {
                 showNotification('请求正在发送中，请稍候', 'error');
                 return;
             }
-            
+    
             // 标记为待处理
             pendingRequests.set(selectedUserId, true);
             const sendBtn = document.getElementById('sendRequestBtn');
             const originalText = sendBtn.innerHTML;
             sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发送中';
             sendBtn.disabled = true;
-            
+    
             try {
                 const message = document.getElementById('friendMessage').value.trim() || '我想加你为好友';
                 console.log('发送好友请求参数:',{
-                    senderId:currentUser.id,
-                    recipientId:selectedUserId,
-                    message:message
+                    senderId: currentUser.id,
+                    recipientId: selectedUserId,
+                    message: message
                 });
                 const response = await fetch('/.netlify/functions/addFriend', {
                     method: 'POST',
@@ -1193,9 +1221,11 @@
                         message: message
                     })
                 });
+        
                 console.log('请求状态:', response.status);
                 const result = await response.json();
                 console.log('请求结果:', result);
+        
                 if (response.ok) {
                     showNotification('好友请求已发送', 'success');
                     closeAddFriendModal();
@@ -1214,6 +1244,7 @@
                 selectedUserId = null;
             }
         }
+    
         
         // 处理好友请求（接受/拒绝）
         async function handleRequest(requestId, action) {
