@@ -1090,7 +1090,7 @@
                     let resultsHtml = '';
                     users.forEach(user => {
                         // 修复：添加用户信息存在性检查
-                        if (!user || !user.id) {
+                        if (!user) {
                             console.warn('无效的用户数据:', user);
                             return;
                         }
@@ -1105,7 +1105,9 @@
                             actionButton = '<span class="status-pending">请求已发送</span>';
                         } else {
                             // 安全处理用户ID和用户名
-                            const safeUserId = user.id ? user.id.replace(/'/g, "\\'") : '';
+                            const safeUserId = user.id ? user.id.replace(/'/g, "\\'") : 'unknown_' + Date.now();
+                            const hasPendingRequest = user.id ? pendingRequestsMap.has(user.id) : false;
+                            const isFriend = user.id ? currentFriends.some(f => f.id === user.id) : false;
                             const safeUsername = user.username ? user.username.replace(/'/g, "\\'") : '';
                             actionButton = `<button class="btn btn-success add-btn" 
                                             onclick="selectUser('${safeUserId}', '${safeUsername}')">
