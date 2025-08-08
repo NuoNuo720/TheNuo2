@@ -562,7 +562,6 @@
                     <div>请求时间</div>
                     <div>操作</div>
                 </div>
-                <div id="pendingRequestsList" class="pending-requests-container">
                 <div class="empty-state" id="requestsEmptyState">
                     <div class="empty-icon">
                         <i class="fas fa-envelope"></i>
@@ -636,6 +635,8 @@
         const POLL_INTERVAL_MS = 30000; // 30秒一次轮询
         let lastCheckTime = null; // 上次检查时间
         const pendingRequestsMap = new Map();
+        let searchTimeout; // 搜索防抖定时器
+        
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             // 检查登录状态
@@ -907,9 +908,10 @@
                 
                 const requests = await response.json();
                 const requestsTab = document.getElementById('requestsTab');
+                // 修复：正确获取空状态元素
                 const emptyState = document.getElementById('requestsEmptyState');
                 
-                // 清空现有列表
+                // 清空现有列表（保留表头和空状态）
                 Array.from(requestsTab.children).forEach(child => {
                     if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
                         requestsTab.removeChild(child);
@@ -963,7 +965,6 @@
             return div;
         }
         
-        // 加载待同意请求
         // 加载待处理请求列表
         async function loadPendingRequests() {
             if (!currentUser || !currentUser.id) {
@@ -989,56 +990,41 @@
 
                 console.log('加载待处理请求:', pendingRequests);
 
-                // 更新前端缓存的待处理请求（用于搜索时判断状态）
+                // 更新前端缓存的待处理请求
                 pendingRequestsMap.clear();
                 pendingRequests.forEach(req => {
                     pendingRequestsMap.set(req.recipient.id, true);
                 });
 
-                // 渲染待处理请求列表
-                const pendingListEl = document.getElementById('pendingRequestsList');
-                if (pendingRequests.length === 0) {
-                    pendingListEl.innerHTML = '<div class="no-requests">暂无待处理的好友请求</div>';
+                // 修复：正确获取待处理请求列表容器
+                const pendingTab = document.getElementById('pendingTab');
+                const emptyState = document.getElementById('pendingEmptyState');
+                
+                // 清空现有列表（保留表头和空状态）
+                Array.from(pendingTab.children).forEach(child => {
+                    if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
+                        pendingTab.removeChild(child);
+                    }
+                });
+                
+                if (!Array.isArray(pendingRequests) || pendingRequests.length === 0) {
+                    emptyState.style.display = 'block';
                     return;
                 }
-
-                let html = '';
+                
+                emptyState.style.display = 'none';
+                
+                // 添加请求项
                 pendingRequests.forEach(request => {
-                    const sentTime = new Date(request.sentAt).toLocaleString();
-                    html += `
-                        <div class="friend-item" data-request-id="${request.id}">
-                            <img src="${request.recipient.avatar || `https://picsum.photos/seed/${request.recipient.id}/200`}" 
-                                 alt="${request.recipient.username}" class="friend-avatar">
-                            <div class="friend-info">
-                                <div class="friend-name">${request.recipient.username}</div>
-                                <div class="friend-status status-pending">等待对方同意</div>
-                            </div>
-                            <div class="friend-joined">${sentTime}</div>
-                            <div class="friend-actions">
-                                <!-- 修复：使用正确的函数名cancelRequest -->
-                                <button class="action-btn delete-btn" 
-                                        onclick="cancelRequest('${request.id}')" title="取消请求">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                    const requestItem = createPendingRequestItem(request);
+                    pendingTab.insertBefore(requestItem, emptyState);
                 });
-
-                pendingListEl.innerHTML = html;
 
             } catch (error) {
                 console.error('加载待处理请求失败:', error);
                 showNotification(error.message || '获取待处理请求失败', 'error');
             }
         }
-
-        // 初始化：页面加载时调用
-        document.addEventListener('DOMContentLoaded', () => {
-            checkLoginStatus();
-            // 登录成功后会在checkLoginStatus中调用loadPendingRequests
-        });
-
         
         // 创建待同意请求项
         function createPendingRequestItem(request) {
@@ -1067,17 +1053,15 @@
         }
         
         // 搜索用户
-        let searchTimeout;
-        // 1. 修改搜索用户结果中的按钮点击事件（添加防止冒泡处理）
         function searchUsers(e) {
             const query = e.target.value.trim();
             const resultsEl = document.getElementById('searchResults');
-    
+
             if (query.length < 2) {
                 resultsEl.style.display = 'none';
                 return;
             }
-    
+
             // 防抖处理
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(async () => {
@@ -1105,6 +1089,12 @@
                     // 显示搜索结果
                     let resultsHtml = '';
                     users.forEach(user => {
+                        // 修复：添加用户信息存在性检查
+                        if (!user || !user.id) {
+                            console.warn('无效的用户数据:', user);
+                            return;
+                        }
+                        
                         let actionButton;
                         const hasPendingRequest = pendingRequestsMap.has(user.id);
                         const isFriend = currentFriends.some(f => f.id === user.id);
@@ -1114,9 +1104,11 @@
                         } else if (hasPendingRequest) {
                             actionButton = '<span class="status-pending">请求已发送</span>';
                         } else {
-                            // 修复：添加onclick事件时使用转义，防止特殊字符问题
+                            // 安全处理用户ID和用户名
+                            const safeUserId = user.id ? user.id.replace(/'/g, "\\'") : '';
+                            const safeUsername = user.username ? user.username.replace(/'/g, "\\'") : '';
                             actionButton = `<button class="btn btn-success add-btn" 
-                                            onclick="selectUser('${user.id.replace(/'/g, "\\'")}', '${user.username.replace(/'/g, "\\'")}')">
+                                            onclick="selectUser('${safeUserId}', '${safeUsername}')">
                                             添加
                                         </button>`;
                         }
@@ -1147,7 +1139,6 @@
                         if (!item.querySelector('.add-btn')) return;
                 
                         item.addEventListener('click', (e) => {
-                            // 防止事件冒泡导致的问题
                             e.stopPropagation();
                             const userId = item.dataset.userId;
                             const username = item.querySelector('div:first-child').textContent;
@@ -1162,8 +1153,8 @@
                 }
             }, 300);
         }
-
-        // 2. 增强selectUser函数的日志和验证
+        
+        // 选择用户
         function selectUser(userId, username) {
             if (!userId || userId === 'undefined') {
                 showNotification('用户ID获取失败', 'error');
@@ -1180,8 +1171,8 @@
             showNotification(`已选择用户: ${username}`, 'info');
             console.log(`已选择用户：${username}，ID：${userId}`);
         }
-
-        // 3. 改进发送请求前的验证
+        
+        // 发送好友请求
         async function sendFriendRequest() {
             // 更严格的验证
             if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
@@ -1243,8 +1234,8 @@
                 sendBtn.disabled = false;
                 selectedUserId = null;
             }
+            }
         }
-    
         
         // 处理好友请求（接受/拒绝）
         async function handleRequest(requestId, action) {
