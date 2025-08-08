@@ -1,67 +1,141 @@
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); // 新增：导入JWT模块
+const jwt = require('jsonwebtoken');
 
 exports.handler = async (event) => {
+  // 设置CORS headers，解决跨域问题
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST'
+  };
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: '只支持POST请求' }) };
+    return { 
+      statusCode: 405, 
+      headers,
+      body: JSON.stringify({ error: '只支持POST请求' }) 
+    };
   }
 
-  let client; // 声明在外部，确保finally能访问
+  let client;
   try {
-    const { username, password } = JSON.parse(event.body);
+    // 验证请求体是否存在
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '请求体不能为空' })
+      };
+    }
+
+    // 解析请求体，增加错误处理
+    let requestData;
+    try {
+      requestData = JSON.parse(event.body);
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '无效的JSON格式', details: parseError.message })
+      };
+    }
+
+    const { username, password } = requestData;
     
+    // 验证必要参数
+    if (!username || !password) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '用户名和密码不能为空' })
+      };
+    }
+
+    // 验证环境变量
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI环境变量未配置');
+    }
+    
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET环境变量未配置');
+    }
+
+    // 连接数据库
     client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
     
     const db = client.db('userDB');
     const usersCollection = db.collection('users');
 
-    // 1. 查询用户
+    // 查询用户
     const user = await usersCollection.findOne({ username });
     if (!user) {
-      return { statusCode: 401, body: JSON.stringify({ error: '用户名不存在' }) };
+      return { 
+        statusCode: 401, 
+        headers,
+        body: JSON.stringify({ error: '用户名不存在' }) 
+      };
     }
 
-    // 2. 验证密码（移除明文打印）
+    // 验证密码
+    if (!user.password) {
+      throw new Error('用户记录中缺少密码字段');
+    }
+    
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return { statusCode: 401, body: JSON.stringify({ error: '密码错误' }) };
+      return { 
+        statusCode: 401, 
+        headers,
+        body: JSON.stringify({ error: '密码错误' }) 
+      };
     }
 
-    // 3. 动态生成JWT令牌（核心修复）
+    // 生成JWT令牌
     const token = jwt.sign(
-      { userId: user._id.toString(), username: user.username }, // 存储用户ID和用户名
-      process.env.JWT_SECRET, // 使用环境变量中的密钥
-      { expiresIn: '24h' } // 设置过期时间（24小时）
+      { userId: user._id.toString(), username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
     );
 
-    // 4. 可选：更新数据库中的token（如果需要持久化）
+    // 更新数据库中的token
     await usersCollection.updateOne(
       { _id: user._id },
-      { $set: { token: token } }
+      { $set: { token: token, lastLogin: new Date() } }
     );
 
-    // 5. 返回成功结果
+    // 返回成功结果
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ 
         message: '登录成功', 
         username: user.username,
-        id: user._id.toString(), // 新增：返回用户ID（前端需要）
-        token: token // 返回新生成的token
+        id: user._id.toString(),
+        token: token
       })
     };
 
   } catch (err) {
+    console.error('登录处理错误:', err); // 记录详细错误到日志
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: '服务器错误', details: err.message })
+      headers,
+      body: JSON.stringify({ 
+        error: '服务器内部错误', 
+        // 生产环境可以去掉details，避免泄露敏感信息
+        details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+      })
     };
   } finally {
-    // 确保连接始终关闭（修复连接泄漏）
+    // 确保连接关闭
     if (client) {
-      await client.close();
+      try {
+        await client.close();
+      } catch (closeErr) {
+        console.error('关闭数据库连接错误:', closeErr);
+      }
     }
   }
 };

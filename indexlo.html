@@ -59,6 +59,10 @@
                 button:hover {
                     background-color:#218838;
                 }
+                button:disabled {
+                    background-color:#6c757d;
+                    cursor:not-allowed;
+                }
                 .links{
                     text-align:center;
                     margin-top:15px;
@@ -76,6 +80,30 @@
                     border-radius: 4px;
                     background-color: #f8d7da;
                     display: none;
+                }
+                .success-message {
+                    color: #155724;
+                    text-align: center;
+                    margin: 10px 0;
+                    padding: 8px;
+                    border: 1px solid #c3e6cb;
+                    border-radius: 4px;
+                    background-color: #d4edda;
+                    display: none;
+                }
+                .spinner {
+                    width: 16px;
+                    height: 16px;
+                    border: 2px solid rgba(255,255,255,.3);
+                    border-radius: 50%;
+                    border-top-color: white;
+                    animation: spin 1s ease-in-out infinite;
+                    display: inline-block;
+                    vertical-align: middle;
+                    margin-right: 8px;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
                 }
         </style>
     </head>
@@ -145,6 +173,7 @@
         </script>
         <div class="container">
             <div class="error-message" id="errorMsg"></div>
+            <div class="success-message" id="successMsg"></div>
             
             <form id="loginForm">
                 <h2>登录</h2>
@@ -156,7 +185,7 @@
                     <input type="checkbox" name="rememberMe" id="rememberMe">
                     <label for="rememberMe" >记住我</label>
                 </div>
-                <button type="submit">登录</button>
+                <button type="submit" id="loginBtn">登录</button>
             </form>
             <div class='links'>
                 <br>
@@ -177,14 +206,20 @@
                 alert('跳转到找回密码页面(此功能正在开发中...)');
             });
             
-            // 登录表单提交逻辑（核心修改：对接服务器）
+            // 登录表单提交逻辑
             document.getElementById('loginForm').addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value;
                 const rememberMe = document.getElementById('rememberMe').checked;
                 const errorMsg = document.getElementById('errorMsg');
-                console.log("前端发送的密码是:",password);
+                const successMsg = document.getElementById('successMsg');
+                const loginBtn = document.getElementById('loginBtn');
+                
+                // 隐藏所有消息
+                errorMsg.style.display = 'none';
+                successMsg.style.display = 'none';
+                
                 // 前端基础验证
                 if (!username || !password) {
                     showError(errorMsg, '用户名和密码不能为空！');
@@ -192,6 +227,12 @@
                 }
 
                 try {
+                    // 显示加载状态
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = '<span class="spinner"></span> 登录中...';
+                    
+                    console.log("前端发送的密码是:", password);
+                    
                     // 发送登录请求到服务器
                     const response = await fetch('/.netlify/functions/login', {
                         method: 'POST',
@@ -206,6 +247,10 @@
 
                     const result = await response.json();
 
+                    // 恢复按钮状态
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '登录';
+
                     // 处理服务器响应
                     if (response.ok) {
                         // 登录成功
@@ -216,22 +261,27 @@
                         }
                         loginSuccess(result);
                     } else {
-                        // 登录失败（用户名或密码错误）
-                        showError(errorMsg, result.message || '登录失败，请重试');
+                        // 登录失败
+                        if (response.status === 500) {
+                            showError(errorMsg, '服务器内部错误，请稍后再试或联系管理员');
+                        } else {
+                            showError(errorMsg, result.message || '登录失败，请检查用户名和密码');
+                        }
                     }
                 } catch (error) {
-                    // 网络错误（服务器未启动等）
-                    showError(errorMsg, '无法连接到服务器，请检查服务器是否已启动');
+                    // 网络错误
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '登录';
+                    showError(errorMsg, '网络连接错误，请检查网络后重试');
                     console.error('登录请求错误：', error);
                 }
             });
 
             // 登录成功处理
-            // 修改loginSuccess函数
             function loginSuccess(userData) {
                 // 保存用户信息到本地
                 const currentUser = {
-                    id: userData.id,  // 确保包含用户ID
+                    id: userData.id,
                     username: userData.username,
                     token: userData.token,
                     avatar: userData.avatar || '',
@@ -239,20 +289,15 @@
                 };
                 localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
     
-                // 同步到服务器
-                fetch('/.netlify/functions/saveUserInfo', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(currentUser)
-                });
-    
-                alert('登录成功，欢迎回来！');
-                window.location.href = `indexdaohang.html?token=${userData.token}&username=${encodeURIComponent(userData.username)}`;
+                // 显示成功消息后跳转
+                const successMsg = document.getElementById('successMsg');
+                successMsg.textContent = '登录成功，正在跳转...';
+                successMsg.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = `indexdaohang.html?token=${userData.token}&username=${encodeURIComponent(userData.username)}`;
+                }, 1000);
             }
-
-
 
             // 页面加载时填充记住的用户名
             window.onload = function() {
@@ -269,8 +314,9 @@
                 element.style.display = 'block';
                 setTimeout(() => {
                     element.style.display = 'none';
-                }, 3000);
+                }, 5000);
             }
         </script>
     </body>
 </html>
+    
