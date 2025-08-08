@@ -51,7 +51,7 @@ exports.handler = async (event) => {
         });
         // 检查接收者是否存在
         const recipientExists = await db.collection('users').findOne(
-            { _id: recipientId },
+            { _id: new ObjectId(recipientId) },
             { projection: { _id: 1 } }
         );
         console.log('接收者查询结果:', recipientExists);
