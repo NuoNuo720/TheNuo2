@@ -614,8 +614,8 @@
 
     <!-- 连接状态指示器 -->
     <div class="connection-status">
-        <div class="status-indicator status-reconnecting" id="statusIndicator"></div>
-        <span id="connectionText">连接中...</span>
+        <div class="status-indicator status-connected" id="statusIndicator"></div>
+        <span id="connectionText">已连接</span>
     </div>
 
     <!-- 通知组件 -->
@@ -626,11 +626,11 @@
 
     <script>
         // 全局变量
-        let socket;
         let currentUser;
         let pendingRequests = new Map(); // 跟踪待处理的好友请求
-        let reconnectAttempts = 0;
-        const MAX_RECONNECT_ATTEMPTS = 10; // 最大重连次数
+        let pollInterval; // 轮询定时器
+        const POLL_INTERVAL_MS = 30000; // 30秒一次轮询
+        let lastCheckTime = null; // 上次检查时间
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -648,16 +648,15 @@
             document.getElementById('searchFriends').addEventListener('input', filterFriends);
             document.getElementById('friendUsername').addEventListener('input', searchUsers);
 
-            // 监听页面可见性变化，自动重连
+            // 监听页面可见性变化，恢复轮询
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible' && currentUser && 
-                    (!socket || socket.readyState !== WebSocket.OPEN)) {
-                    initWebSocket();
+                if (document.visibilityState === 'visible' && currentUser) {
+                    startPolling();
                 }
             });
         });
         
-        // 检查登录状态 - 简化版，确保获取正确的用户ID
+        // 检查登录状态
         function checkLoginStatus() {
             // 从本地存储获取用户信息
             const userInfoStr = localStorage.getItem('mainUserInfo');
@@ -680,8 +679,8 @@
                 // 已登录，初始化
                 currentUser = userInfo;
                 updateUserDisplay();
-                initWebSocket();
                 loadFriendsData();
+                startPolling(); // 启动轮询
             } catch (error) {
                 console.error('解析用户信息失败:', error);
                 showNotification('用户信息无效，请重新登录', 'error');
@@ -698,104 +697,81 @@
             document.getElementById('userAvatar').src = currentUser.avatar || `https://picsum.photos/seed/${currentUser.id}/200`;
         }
         
-        // 初始化WebSocket连接（简化版，确保核心功能）
-        function initWebSocket() {
-            // 确保用户ID存在
-            if (!currentUser || !currentUser.id || !currentUser.token) {
-                showNotification('用户信息不完整，无法建立连接', 'error');
-                return;
+        // 启动轮询
+        function startPolling() {
+            // 先清除可能存在的定时器
+            if (pollInterval) {
+                clearInterval(pollInterval);
             }
             
-            // 避免重复连接
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                return;
+            // 如果没有上次检查时间，初始化
+            if (!lastCheckTime) {
+                lastCheckTime = new Date().toISOString();
             }
-
-            // 根据当前协议选择ws或wss
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.host;
             
-            // 关闭现有连接
-            if (socket) {
-                socket.close(1000, '主动重连'); // 正常关闭码
-            }
-
-            // 创建新连接
-            const wsUrl = `${protocol}//${host}/.netlify/functions/ws?userId=${encodeURIComponent(currentUser.id)}&token=${encodeURIComponent(currentUser.token)}`;
-            console.log('WebSocket连接URL:', wsUrl);
-            socket = new WebSocket(wsUrl);
+            // 立即执行一次，再开始间隔轮询
+            checkForUpdates();
             
-            // 连接成功
-            socket.onopen = () => {
-                console.log('WebSocket连接已建立');
-                updateConnectionStatus(true);
-                showNotification('实时连接已建立', 'success');
-                // 重置重连计数
-                reconnectAttempts = 0;
-            };
-            
-            // 接收消息
-            socket.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    handleWebSocketMessage(data);
-                } catch (error) {
-                    console.error('解析WebSocket消息失败:', error, '消息内容:', event.data);
-                    showNotification('收到无效消息', 'error');
+            // 设置新的定时器
+            pollInterval = setInterval(() => {
+                // 检查是否已登录
+                if (currentUser && currentUser.id) {
+                    checkForUpdates();
+                } else {
+                    clearInterval(pollInterval);
                 }
-            };
+            }, POLL_INTERVAL_MS);
             
-            // 连接关闭
-            socket.onclose = (event) => {
-                console.log(`WebSocket关闭: 代码=${event.code}, 原因=${event.reason}`);
-                updateConnectionStatus(false);
-                
-                // 处理异常关闭（非主动关闭）
-                if (event.code !== 1000) {
-                    reconnectAttempts++;
-                    if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
-                        const delay = Math.min(1000 * reconnectAttempts, 10000);
-                        showNotification(`连接断开，${delay/1000}秒后尝试重连（${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}）`, 'error');
-                        setTimeout(initWebSocket, delay);
-                    } else {
-                        showNotification('已达到最大重连次数，请刷新页面重试', 'error');
-                    }
-                }
-            };
-            
-            // 连接错误
-            socket.onerror = (error) => {
-                console.error('WebSocket错误:', error);
-                showNotification('连接发生错误', 'error');
-            };
+            console.log(`已启动轮询，间隔${POLL_INTERVAL_MS/1000}秒`);
+            updateConnectionStatus(true);
         }
         
-        // 处理WebSocket消息
-        function handleWebSocketMessage(data) {
-            console.log('收到实时消息:', data);
-            
-            switch (data.type) {
-                case 'friend_request':
-                    showRealTimeNotification(`收到来自 ${data.sender.username} 的好友请求`);
-                    loadFriendRequests();
-                    break;
-                case 'request_accepted':
-                    showRealTimeNotification(`${data.friend.username} 已接受你的好友请求`);
-                    loadFriendsList();
-                    loadPendingRequests();
-                    break;
-                case 'request_rejected':
-                    showRealTimeNotification(`${data.friend.username} 拒绝了你的好友请求`);
-                    loadPendingRequests();
-                    break;
-                case 'connection_established':
-                    showNotification(data.message, 'success');
-                    break;
-                case 'error':
-                    showNotification(`服务器错误: ${data.message}`, 'error');
-                    break;
-                default:
-                    console.log('未知消息类型:', data.type);
+        // 检查更新
+        async function checkForUpdates() {
+            try {
+                const response = await fetch('/.netlify/functions/checkUpdates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({ 
+                        userId: currentUser.id,
+                        lastCheckTime: lastCheckTime
+                    })
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showNotification('身份验证失败，请重新登录', 'error');
+                        logout();
+                        return;
+                    }
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const updates = await response.json();
+                // 更新上次检查时间
+                lastCheckTime = updates.lastCheckTime;
+                
+                // 处理新的好友请求
+                if (updates.newFriendRequests > 0) {
+                    showRealTimeNotification(`收到${updates.newFriendRequests}个新的好友请求`);
+                    loadFriendRequests(); // 刷新请求列表
+                }
+                
+                // 处理已接受的请求
+                if (updates.newAcceptedRequests.length > 0) {
+                    updates.newAcceptedRequests.forEach(friend => {
+                        showRealTimeNotification(`${friend.username}已接受你的好友请求`);
+                    });
+                    loadFriendsList(); // 刷新好友列表
+                    loadPendingRequests(); // 刷新待处理列表
+                }
+                
+            } catch (error) {
+                console.error('轮询检查更新失败:', error);
+                showNotification('获取更新失败，将继续尝试', 'error');
             }
         }
         
@@ -806,7 +782,7 @@
             
             if (isConnected) {
                 indicator.className = 'status-indicator status-connected';
-                connectionText.textContent = '已连接';
+                connectionText.textContent = `轮询中 (${POLL_INTERVAL_MS/1000}秒间隔)`;
             } else {
                 indicator.className = 'status-indicator status-reconnecting';
                 connectionText.textContent = '连接中...';
@@ -1324,8 +1300,9 @@
         // 退出登录
         function logout() {
             localStorage.removeItem('mainUserInfo');
-            if (socket) {
-                socket.close(1000, '用户退出');
+            // 停止轮询
+            if (pollInterval) {
+                clearInterval(pollInterval);
             }
             window.location.href = 'indexlo.html';
         }
@@ -1379,4 +1356,3 @@
     </script>
 </body>
 </html>
-    

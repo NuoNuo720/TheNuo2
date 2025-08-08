@@ -39,7 +39,8 @@ exports.handler = async (event) => {
       recipientId,
       message,
       status: 'pending',
-      sentAt: new Date()
+      sentAt: new Date(),
+      updatedAt:new Date()
     });
 
     return {

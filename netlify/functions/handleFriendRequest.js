@@ -35,7 +35,8 @@ exports.handler = async (event) => {
     // 更新请求状态
     await db.collection('friendRequests').updateOne(
       { _id: new ObjectId(requestId) },
-      { $set: { status: action } }
+      { $set: { status: action,
+                    updatedAt: new Date() } }
     );
 
     // 如果是接受请求，添加到双方好友列表
