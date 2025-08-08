@@ -178,7 +178,7 @@
 
             // 3. 发送数据到服务器（核心修改）
             try {
-                const response = await fetch('http://localhost:3000/api/register', {
+                const response = await fetch('/.netlify/functions/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json' // 告诉服务器发送的是JSON格式
