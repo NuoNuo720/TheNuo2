@@ -184,7 +184,7 @@
                 const password = document.getElementById('password').value;
                 const rememberMe = document.getElementById('rememberMe').checked;
                 const errorMsg = document.getElementById('errorMsg');
-
+                const.log("前端发送的密码是:",password);
                 // 前端基础验证
                 if (!username || !password) {
                     showError(errorMsg, '用户名和密码不能为空！');
