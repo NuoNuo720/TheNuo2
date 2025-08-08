@@ -5,15 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "..\node index.js"  // 建议添加启动脚本，方便本地测试
+    "start": "..\node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mongodb": "^5.9.1",  // 修正拼写，使用稳定版本
-    "ws": "^8.18.3",      // WebSocket 依赖保留
-    "express": "^4.18.2", // 添加 Web 服务器框架（如果使用 API 功能）
-    "cors": "^2.8.5"      // 添加跨域支持（如果前端需要调用 API）
+    "mongodb": "^5.9.1",
+    "ws": "^8.18.3",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   }
 }
