@@ -7,14 +7,12 @@ exports.handler = async (event) => {
   }
 
   try {
-    const t = "111111";
-    const th = "$2b$10$LpFYftOrgiVgzg9SvXnyzOxQYk13aU0yZWEAV4Zrvf2hyWyd//pTG";
-    const is = await bcrypt.compare(t,th);
-    console.log("直接测试结果:",is);
+    
     const { username, password } = JSON.parse(event.body);
-    console.log("前端传递数据:",{ username,password });
+    
     const client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
+    
     const db = client.db('userDB');
     const usersCollection = db.collection('users');
 
