@@ -626,12 +626,14 @@
 
     <script>
         // 全局变量
-        let currentUser;
+        let currentUser = null;
+        let selectedUserId = null;
+        let currentFriends = [];
         let pendingRequests = new Map(); // 跟踪待处理的好友请求
         let pollInterval; // 轮询定时器
         const POLL_INTERVAL_MS = 30000; // 30秒一次轮询
         let lastCheckTime = null; // 上次检查时间
-        
+        const pendingRequestsMap = new Map();
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             // 检查登录状态
@@ -1095,6 +1097,7 @@
                     // 显示搜索结果
                     let resultsHtml = '';
                     users.forEach(user => {
+                        let actionButton;
                         resultsHtml += `
                             <div class="search-result-item" data-user-id="${user.id}">
                                 <img src="${user.avatar || `https://picsum.photos/seed/${user.id}/200`}" 
