@@ -646,8 +646,9 @@
         function checkLoginStatus() {
             // 从本地存储获取用户信息
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            
-            if (!userInfo.id || !userInfo.username) {
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            console.log("读取到的用户信息：", userInfoStr);
+            if (!userInfoStr) {
                 // 未登录，重定向到登录页
                 window.location.href = 'indexlo.html';
                 return;
