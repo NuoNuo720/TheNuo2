@@ -1090,8 +1090,17 @@
                     let resultsHtml = '';
                     users.forEach(user => {
                         // 修复：添加用户信息存在性检查
-                        if (!user) {
-                            console.warn('无效的用户数据:', user);
+                        if (!user || !user.id) {
+                            console.warn('无效的用户数据(缺少id):', user);
+                            resultsHtml += `
+                                <div class="search-result-item" style="opacity: 0.5; cursor: not-allowed;">
+                                    <div>
+                                        <div>${user?.username || '未知用户'}</div>
+                                        <div class="friend-status status-offline">数据无效</div>
+                                    </div>
+                                    <span class="status-error">无法添加</span>
+                                </div>
+                            `;
                             return;
                         }
                         
@@ -1177,6 +1186,10 @@
         // 发送好友请求
         async function sendFriendRequest() {
             // 更严格的验证
+            if (!selectedUserId || selectedUserId.startsWith('unknown_')) {
+                showNotification('无法发送请求：目标用户信息无效', 'error');
+                return;
+            }
             if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
                 showNotification('请先从搜索结果中选择一个用户', 'error');
                 console.error('发送请求失败：未选择有效用户', {selectedUserId});
