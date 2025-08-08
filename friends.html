@@ -959,7 +959,13 @@
         }
         
         // 加载待同意请求
+        // 加载待处理请求列表
         async function loadPendingRequests() {
+            if (!currentUser || !currentUser.id) {
+                console.error('未获取到当前用户信息');
+                return;
+            }
+
             try {
                 const response = await fetch('/.netlify/functions/getPendingRequests', {
                     method: 'POST',
@@ -969,41 +975,61 @@
                     },
                     body: JSON.stringify({ userId: currentUser.id })
                 });
-                
+
+                const pendingRequests = await response.json();
+
                 if (!response.ok) {
-                    console.error('加载待处理请求失败，HTTP状态:', response.status);
-                    showNotification(`加载待处理请求失败 (${response.status})`, 'error');
+                    throw new Error(pendingRequests.error || '获取待处理请求失败');
+                }
+
+                console.log('加载待处理请求:', pendingRequests);
+
+                // 更新前端缓存的待处理请求（用于搜索时判断状态）
+                pendingRequestsMap.clear();
+                pendingRequests.forEach(req => {
+                    pendingRequestsMap.set(req.recipient.id, true);
+                });
+
+                // 渲染待处理请求列表
+                const pendingListEl = document.getElementById('pendingRequestsList');
+                if (pendingRequests.length === 0) {
+                    pendingListEl.innerHTML = '<div class="no-requests">暂无待处理的好友请求</div>';
                     return;
                 }
-                
-                const requests = await response.json();
-                const pendingTab = document.getElementById('pendingTab');
-                const emptyState = document.getElementById('pendingEmptyState');
-                
-                // 清空现有列表
-                Array.from(pendingTab.children).forEach(child => {
-                    if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
-                        pendingTab.removeChild(child);
-                    }
+
+                let html = '';
+                pendingRequests.forEach(request => {
+                    const sentTime = new Date(request.sentAt).toLocaleString();
+                    html += `
+                        <div class="pending-request-item" data-request-id="${request.id}">
+                            <img src="${request.recipient.avatar || `https://picsum.photos/seed/${request.recipient.id}/200`}" 
+                                 alt="${request.recipient.username}" class="request-avatar">
+                            <div class="request-info">
+                                <div class="request-username">${request.recipient.username}</div>
+                                <div class="request-time">发送于 ${sentTime}</div>
+                            </div>
+                            <button class="btn btn-danger cancel-btn" 
+                                    onclick="cancelFriendRequest('${request.id}', '${request.recipient.id}')">
+                                取消请求
+                            </button>
+                        </div>
+                    `;
                 });
-                
-                if (!Array.isArray(requests) || requests.length === 0) {
-                    emptyState.style.display = 'block';
-                    return;
-                }
-                
-                emptyState.style.display = 'none';
-                
-                // 添加请求项
-                requests.forEach(request => {
-                    const requestItem = createPendingRequestItem(request);
-                    pendingTab.insertBefore(requestItem, emptyState);
-                });
+
+                pendingListEl.innerHTML = html;
+
             } catch (error) {
                 console.error('加载待处理请求失败:', error);
-                showNotification('加载待处理请求失败', 'error');
+                showNotification(error.message || '获取待处理请求失败', 'error');
             }
         }
+
+        // 初始化：页面加载时调用
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            // 登录成功后会在checkLoginStatus中调用loadPendingRequests
+        });
+
         
         // 创建待同意请求项
         function createPendingRequestItem(request) {
@@ -1079,10 +1105,7 @@
                                         ${user.isOnline ? '在线' : '离线'}
                                     </div>
                                 </div>
-                                <button class="btn btn-success add-btn" 
-                                        onclick="selectUser('${user.id}', '${user.username}')">
-                                    添加
-                                </button>
+                                ${actionButton}
                             </div>
                         `;
                     });
@@ -1100,14 +1123,19 @@
         // 选择用户
         let selectedUserId = null;
         function selectUser(userId, username) {
+            if (!userId) {
+                showNotification('用户ID获取失败', 'error');
+                return;
+            }
             selectedUserId = userId;
             document.getElementById('friendUsername').value = username;
             document.getElementById('searchResults').style.display = 'none';
+            console.log(`已选择用户：${username}，ID：${userId}`);
         }
         
         // 发送好友请求
         async function sendFriendRequest() {
-            if (!selectedUserId) {
+            if (!selectedUserId || selectedUserId === 'undefined') {
                 showNotification('请先选择一个用户', 'error');
                 return;
             }
