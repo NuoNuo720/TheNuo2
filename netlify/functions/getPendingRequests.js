@@ -1,40 +1,45 @@
+// getPendingRequests.js
 const { MongoClient } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
 
 exports.handler = async (event) => {
-    // 跨域配置（必须添加，否则前端可能无法接收响应）
+    // 跨域配置（确保前端能正常接收响应）
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
 
-    // 处理预检flight请求（浏览器预检请求）
+    // 处理浏览器预检请求
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
+    // 仅允许POST方法
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, headers, body: JSON.stringify({ error: '只支持POST请求' }) };
     }
 
     let client;
     try {
-        // 连接MongoDB（使用环境变量中的连接字符串）
+        // 连接MongoDB数据库
         client = await MongoClient.connect(process.env.MONGODB_URI);
         const db = client.db('userDB');
-        const { userId } = JSON.parse(event.body);
+        const requestBody = JSON.parse(event.body) || {};
+        
+        // 支持senderId参数名，与前端保持一致
+        const userId = requestBody.senderId || requestBody.userId;
 
-        // 验证用户ID
+        // 验证发送者ID
         if (!userId) {
             return { 
                 statusCode: 400, 
                 headers, 
-                body: JSON.stringify({ error: '用户ID不能为空' }) 
+                body: JSON.stringify({ error: '发送者ID（senderId）不能为空' }) 
             };
         }
 
-        console.log('查询待处理请求，用户ID:', userId);
+        console.log('查询待处理请求，发送者ID:', userId);
 
         // 查询当前用户发送的、状态为pending的请求
         const requests = await db.collection('friendRequests').find({
@@ -79,7 +84,10 @@ exports.handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: '获取待处理请求失败', details: error.message })
+            body: JSON.stringify({ 
+                error: '获取待处理请求失败', 
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            })
         };
     } finally {
         // 确保数据库连接关闭

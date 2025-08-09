@@ -6,7 +6,6 @@
     <title>好友系统 - 实时社交</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -806,7 +805,7 @@
             loadPendingRequests();
         }
         
-        // 加载好友列表
+        // 加载好友列表 - 修复参数名称
         async function loadFriendsList() {
             try {
                 const response = await fetch('/.netlify/functions/getFriends', {
@@ -815,7 +814,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ recipientId:currentUser.id })
+                    body: JSON.stringify({ userId: currentUser.id }) // 修复：使用userId参数
                 });
                 
                 if (!response.ok) {
@@ -888,7 +887,7 @@
             return div;
         }
         
-        // 加载好友请求
+        // 加载好友请求 - 修复参数传递
         async function loadFriendRequests() {
             try {
                 const response = await fetch('/.netlify/functions/getFriendRequests', {
@@ -897,7 +896,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ userId: currentUser.id })
+                    body: JSON.stringify({ recipientId: currentUser.id }) // 修复：使用recipientId参数
                 });
                 
                 if (!response.ok) {
@@ -908,7 +907,6 @@
                 
                 const requests = await response.json();
                 const requestsTab = document.getElementById('requestsTab');
-                // 修复：正确获取空状态元素
                 const emptyState = document.getElementById('requestsEmptyState');
                 
                 // 清空现有列表（保留表头和空状态）
@@ -965,7 +963,7 @@
             return div;
         }
         
-        // 加载待处理请求列表
+        // 加载待处理请求列表 - 修复参数和错误处理
         async function loadPendingRequests() {
             if (!currentUser || !currentUser.id) {
                 console.error('未获取到当前用户信息');
@@ -979,28 +977,27 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ senderId: currentUser.id })
+                    body: JSON.stringify({ senderId: currentUser.id }) // 确保传递senderId
                 });
 
-                const pendingRequests = await response.json();
-
                 if (!response.ok) {
-                    throw new Error(pendingRequests.error || '获取待处理请求失败');
+                    throw new Error(`HTTP错误: ${response.status}`);
                 }
 
-                console.log('加载待处理请求:', pendingRequests);
+                const pendingRequests = await response.json();
 
                 // 更新前端缓存的待处理请求
                 pendingRequestsMap.clear();
                 pendingRequests.forEach(req => {
-                    pendingRequestsMap.set(req.recipient.id, true);
+                    if (req.recipient && req.recipient.id) {
+                        pendingRequestsMap.set(req.recipient.id, true);
+                    }
                 });
 
-                // 修复：正确获取待处理请求列表容器
                 const pendingTab = document.getElementById('pendingTab');
                 const emptyState = document.getElementById('pendingEmptyState');
                 
-                // 清空现有列表（保留表头和空状态）
+                // 清空现有列表
                 Array.from(pendingTab.children).forEach(child => {
                     if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
                         pendingTab.removeChild(child);
@@ -1022,7 +1019,7 @@
 
             } catch (error) {
                 console.error('加载待处理请求失败:', error);
-                showNotification(error.message || '获取待处理请求失败', 'error');
+                showNotification('获取待处理请求失败', 'error');
             }
         }
         
@@ -1089,7 +1086,6 @@
                     // 显示搜索结果
                     let resultsHtml = '';
                     users.forEach(user => {
-                        // 修复：添加用户信息存在性检查
                         if (!user || !user.id) {
                             console.warn('无效的用户数据(缺少id):', user);
                             resultsHtml += `
@@ -1114,10 +1110,8 @@
                             actionButton = '<span class="status-pending">请求已发送</span>';
                         } else {
                             // 安全处理用户ID和用户名
-                            const safeUserId = user.id ? user.id.replace(/'/g, "\\'") : 'unknown_' + Date.now();
-                            const hasPendingRequest = user.id ? pendingRequestsMap.has(user.id) : false;
-                            const isFriend = user.id ? currentFriends.some(f => f.id === user.id) : false;
-                            const safeUsername = user.username ? user.username.replace(/'/g, "\\'") : '';
+                            const safeUserId = user.id.replace(/'/g, "\\'");
+                            const safeUsername = user.username.replace(/'/g, "\\'");
                             actionButton = `<button class="btn btn-success add-btn" 
                                             onclick="selectUser('${safeUserId}', '${safeUsername}')">
                                             添加
@@ -1183,16 +1177,11 @@
             console.log(`已选择用户：${username}，ID：${userId}`);
         }
         
-        // 发送好友请求
+        // 发送好友请求 - 修复重复请求判断
         async function sendFriendRequest() {
-            // 更严格的验证
-            if (!selectedUserId || selectedUserId.startsWith('unknown_')) {
-                showNotification('无法发送请求：目标用户信息无效', 'error');
-                return;
-            }
+            // 严格验证
             if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
                 showNotification('请先从搜索结果中选择一个用户', 'error');
-                console.error('发送请求失败：未选择有效用户', {selectedUserId});
                 return;
             }
     
@@ -1249,7 +1238,6 @@
                 sendBtn.disabled = false;
                 selectedUserId = null;
             }
-            
         }
         
         // 处理好友请求（接受/拒绝）

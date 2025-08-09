@@ -1,3 +1,4 @@
+// dataStore.js
 // 简易数据存储（实际项目中应使用真实数据库）
 let users = [
   { id: '1', username: '张三', avatar: 'https://picsum.photos/seed/user1/200' },
@@ -85,15 +86,15 @@ module.exports = {
   createFriendRequest: (request) => {
     const newRequest = {
       id: generateId(),
-      status: 'pending', // 新增状态字段，用于区分请求状态
+      status: 'pending', // 状态字段，用于区分请求状态
       ...request,
-      sentAt: new Date().toISOString() // 确保发送时间被正确记录
+      sentAt: new Date().toISOString() // 记录发送时间
     };
     friendRequests.push(newRequest);
     return newRequest;
   },
   
-  // 修复：明确用于接收方查询的方法（与getFriendRequests.js对应）
+  // 用于接收方查询收到的请求
   getReceivedFriendRequests: (recipientId) => {
     return friendRequests
       .filter(req => req.recipientId === recipientId && req.status === 'pending')
@@ -111,11 +112,12 @@ module.exports = {
       });
   },
   
-  // 保持原方法兼容性，但内部调用正确的实现
+  // 保持兼容性，内部调用getReceivedFriendRequests
   getFriendRequests: (recipientId) => {
     return module.exports.getReceivedFriendRequests(recipientId);
   },
   
+  // 获取发送方的待处理请求
   getPendingRequests: (senderId) => {
     return friendRequests
       .filter(req => req.senderId === senderId && req.status === 'pending')
@@ -133,6 +135,7 @@ module.exports = {
       });
   },
   
+  // 检查是否有未处理的请求
   hasPendingRequest: (senderId, recipientId) => {
     return friendRequests.some(req => 
       req.status === 'pending' && (
@@ -142,6 +145,7 @@ module.exports = {
     );
   },
   
+  // 处理好友请求（接受/拒绝）
   handleFriendRequest: (requestId, action, userId) => {
     const requestIndex = friendRequests.findIndex(req => req.id === requestId);
     
@@ -156,7 +160,7 @@ module.exports = {
       return { success: false, error: '无权处理此请求' };
     }
     
-    // 更新请求状态而非直接删除，便于后续追踪（可选优化）
+    // 更新请求状态
     request.status = action === 'accept' ? 'accepted' : 'rejected';
     
     // 如果是接受请求，创建好友关系
@@ -175,6 +179,7 @@ module.exports = {
     return { success: true, action };
   },
   
+  // 取消好友请求
   cancelFriendRequest: (requestId, userId) => {
     const requestIndex = friendRequests.findIndex(req => req.id === requestId);
     
