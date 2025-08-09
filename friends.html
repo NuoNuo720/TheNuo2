@@ -756,35 +756,38 @@
                     showNotification(`轮询失败 (${response.status})，将继续尝试`, 'error');
                     return;
                 }
-                let updates;
+                
+                // 修复变量重复声明问题
+                let updatesData;
                 try {
-                    updates = await response.json();
+                    updatesData = await response.json();
                     // 验证核心字段是否存在，不存在则初始化
-                    updates = {
-                        newFriendRequests: updates.newFriendRequests || 0, // 确保是数字
-                        newAcceptedRequests: updates.newAcceptedRequests || [], // 确保是数组
-                        lastCheckTime: updates.lastCheckTime || new Date().toISOString() // 确保有时间戳
+                    updatesData = {
+                        newFriendRequests: updatesData.newFriendRequests || 0,
+                        newAcceptedRequests: updatesData.newAcceptedRequests || [],
+                        lastCheckTime: updatesData.lastCheckTime || new Date().toISOString()
                     };
                 } catch (jsonError) {
                     console.error('轮询响应JSON解析失败:', jsonError);
                     showNotification('获取更新失败，数据格式错误', 'error');
-                    return; // 解析失败不中断轮询，仅返回
+                    return;
                 }
-                const updates = await response.json();
+                
                 // 更新上次检查时间
-                lastCheckTime = updates.lastCheckTime;
+                lastCheckTime = updatesData.lastCheckTime;
                 
                 // 处理新的好友请求
-                if (typeof updates.newFriendRequests === 'number' && updates.newFriendRequests > 0) {
-                    showRealTimeNotification(`收到${updates.newFriendRequests}个新的好友请求`);
+                if (typeof updatesData.newFriendRequests === 'number' && updatesData.newFriendRequests > 0) {
+                    showRealTimeNotification(`收到${updatesData.newFriendRequests}个新的好友请求`);
                     loadFriendRequests(); // 刷新请求列表
                 }
                 
                 // 处理已接受的请求
-                if (Array.isArray(updates.newAcceptedRequests) && updates.newAcceptedRequests.length > 0) {
-                    updates.newAcceptedRequests.forEach(friend => {
+                if (Array.isArray(updatesData.newAcceptedRequests) && updatesData.newAcceptedRequests.length > 0) {
+                    updatesData.newAcceptedRequests.forEach(friend => {
                         if (friend && friend.username) {
-                            showRealTimeNotification(`${friend.username}已接受你的好友请求`);}
+                            showRealTimeNotification(`${friend.username}已接受你的好友请求`);
+                        }
                     });
                     loadFriendsList(); // 刷新好友列表
                     loadPendingRequests(); // 刷新待处理列表
@@ -822,7 +825,7 @@
             loadPendingRequests();
         }
         
-        // 加载好友列表 - 修复参数名称
+        // 加载好友列表
         async function loadFriendsList() {
             try {
                 const response = await fetch('/.netlify/functions/getFriends', {
@@ -831,7 +834,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ userId: currentUser.id }) // 修复：使用userId参数
+                    body: JSON.stringify({ userId: currentUser.id })
                 });
                 
                 if (!response.ok) {
@@ -904,7 +907,7 @@
             return div;
         }
         
-        // 加载好友请求 - 修复参数传递
+        // 加载好友请求
         async function loadFriendRequests() {
             try {
                 const response = await fetch('/.netlify/functions/getFriendRequests', {
@@ -913,7 +916,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ recipientId: currentUser.id }) // 修复：使用recipientId参数
+                    body: JSON.stringify({ recipientId: currentUser.id })
                 });
                 
                 if (!response.ok) {
@@ -980,7 +983,7 @@
             return div;
         }
         
-        // 加载待处理请求列表 - 修复参数和错误处理
+        // 加载待处理请求列表
         async function loadPendingRequests() {
             if (!currentUser || !currentUser.id) {
                 console.error('未获取到当前用户信息');
@@ -994,7 +997,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ senderId: currentUser.id }) // 确保传递senderId
+                    body: JSON.stringify({ senderId: currentUser.id })
                 });
 
                 if (!response.ok) {
@@ -1194,7 +1197,7 @@
             console.log(`已选择用户：${username}，ID：${userId}`);
         }
         
-        // 发送好友请求 - 修复重复请求判断
+        // 发送好友请求
         async function sendFriendRequest() {
             // 严格验证
             if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
@@ -1379,7 +1382,7 @@
             document.getElementById(`${tabName}Tab`).classList.add('active');
         }
         
-        // 打开添加好友模态框
+        // 打开添加好友模态框 - 确保函数已定义
         function openAddFriendModal() {
             document.getElementById('friendUsername').value = '';
             document.getElementById('friendMessage').value = '';
@@ -1452,3 +1455,4 @@
     </script>
 </body>
 </html>
+    
