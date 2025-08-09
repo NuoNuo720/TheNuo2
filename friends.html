@@ -780,7 +780,6 @@
                         lastCheckTime: lastCheckTime || new Date().toISOString()
                     })
                 });
-                
                 if (!response.ok) {
                     console.error(`轮询HTTP错误: ${response.status}`);
                     if (response.status === 401) {
@@ -1056,36 +1055,44 @@
                 // 读取原始响应文本进行调试
                 const responseText = await response.text();
                 console.log('待处理请求原始响应:', responseText);
-                
+                const cleanedText = responseText.replace(/^"|"$/g, '').replace(/\\"/g, '"');
                 // 尝试解析JSON
                 let pendingRequests;
                 try {
-                    pendingRequests = JSON.parse(responseText);
-                    const validRequests = pendingRequests.filter(req => 
-                        req.recipientId && req.recipientId !== 'undefined' && req.recipientId.trim() !== ''
-                    );
-                    const invalidCount = pendingRequests.length - validRequests.length;
-                    if (invalidCount > 0) {
-                        showNotification(`已过滤${invalidCount}条异常请求`, 'warning');
+                    pendingRequests = JSON.parse(cleanedText);
+                    if (!Array.isArray(pendingRequests)) {
+                        pendingRequests = []; // 确保是数组格式
+                        console.warn('后端返回非数组格式，已转为空数组');
                     }
-                    pendingRequestsMap.clear();
-                    validRequests.forEach(req => {
-                        if (req.recipientId) {
-                            pendingRequestsMap.set(req.recipientId, req);
-                        }
-                    });
-                    savePendingRequests();
                 } catch (jsonError) {
-                    console.error('解析待处理请求失败:', jsonError);
+                    console.error('解析待处理请求失败:', jsonError,'原始文本:',responseText);
                     showNotification('解析待处理请求失败', 'error');
-                    if (invalidCount > 0) {
-                        showNotification(`已过滤${invalidCount}条异常请求`, 'warning');
-                    }
                     return;
                 }
-                
+                const validRequests = pendingRequests.filter(req =>{
+                    const isValidRecipient = req.recipientId && 
+                                   req.recipientId !== 'undefined' && 
+                                   req.recipientId.trim() !== '';
+                    // 排除无ID或状态异常的请求
+                    const isValidRequest = req._id && req.status === 'pending';
+                    return isValidRecipient && isValidRequest;});
                 console.log('获取到的待处理请求:', pendingRequests);
-
+                const invalidCount = pendingRequests.length - validRequests.length;
+                if (invalidCount > 0) {
+                    showNotification(`已过滤${invalidCount}条异常请求`, 'warning');
+                }
+                pendingRequestsMap.clear();
+                validRequests.forEach(req => {
+                    pendingRequestsMap.set(req.recipientId, {
+                        id: req._id, // 后端返回的唯一ID
+                        recipientId: req.recipientId,
+                        recipientUsername: req.recipient?.username || '未知用户',
+                        message: req.message,
+                        sentAt: req.sentAt,
+                        status: req.status
+                    });
+                });
+                savePendingRequests();
                 // 检查后端是否返回空数组但应该有数据
                 const hasKnownPending = pendingRequestsMap.size > 0;
                 if (Array.isArray(pendingRequests) && pendingRequests.length === 0 && hasKnownPending) {
@@ -1117,20 +1124,17 @@
                         pendingTab.removeChild(child);
                     }
                 });
-                
-                if (!Array.isArray(pendingRequests) || pendingRequests.length === 0) {
+                if (validRequests.length === 0) {
                     emptyState.style.display = 'block';
                     return;
                 }
-                
+                                
                 emptyState.style.display = 'none';
-                
-                // 添加请求项
-                pendingRequests.forEach(request => {
+                validRequests.forEach(request => {
                     const requestItem = createPendingRequestItem(request);
                     pendingTab.insertBefore(requestItem, emptyState);
                 });
-
+                
             } catch (error) {
                 console.error('加载待处理请求失败:', error);
                 showNotification('获取待处理请求失败', 'error');
@@ -1473,11 +1477,12 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        requestId: requestId.toString(),
-                        senderId: currentUser.id.toString()
+                        requestId: String(requestId),
+                        senderId: currentUser.id
+                        recipientId: recipientId || 'unknown' // 补充recipientId，避免后端校验失败
                     })
                 });
-                
+                const result = await response.json();
                 if (response.ok) {
                     showNotification('已取消好友请求', 'success');
                     loadPendingRequests();
@@ -1495,6 +1500,7 @@
                     savePendingRequests();
                     loadPendingRequests();
                 } else {
+                    console.warn('后端取消失败，强制本地移除:', result.error);
                     showNotification('取消请求失败，将尝试从本地移除', 'warning');
                     // 即使后端失败，也从本地缓存中移除
                     if (recipientId) {
@@ -1503,7 +1509,7 @@
                         loadPendingRequests();
                         showNotification('已从本地移除该请求', 'warning');
                     } else {
-                        showNotification(result.error || '取消失败', 'error');}
+                        showNotification(result.error || '后端取消失败的取消失败', 'error');}
                     savePendingRequests();
                     loadPendingRequests();
                 }
@@ -1511,11 +1517,10 @@
                 console.error('取消请求失败:', error);
                 showNotification('取消请求失败，已从本地移除', 'warning');
                 // 网络错误时，仅从本地缓存中移除
-                if (recipientId) {
-                    pendingRequestsMap.delete(recipientId);
-                }
+                pendingRequestsMap.delete(recipientId);
                 savePendingRequests();
                 loadPendingRequests();
+                showNotification('网络错误，已从本地移除', 'warning');
             }
         }
         
