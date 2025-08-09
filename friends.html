@@ -697,7 +697,13 @@
             try {
                 const requestsArray = Array.from(pendingRequestsMap.values());
                 const uniqueRequests = [...new Map(requestsArray.map(req => [req.id, req])).values()];
-                localStorage.setItem('pendingFriendRequests', JSON.stringify(requestsArray));
+                const validRequests = requestsArray.filter(req => 
+                    req.recipientId && 
+                    req.recipientId !== 'undefined' && 
+                    req.recipientId.trim() !== '' && 
+                    req.status === 'pending'
+                );
+                localStorage.setItem('pendingFriendRequests', JSON.stringify(validRequests));
             } catch (e) {
                 console.error('保存待处理请求失败:', e);
             }
@@ -1078,11 +1084,12 @@
                     return;
                 }
                 const validRequests = pendingRequests.filter(req => {
-                    const isValidRecipient = req.recipientId && req.recipientId !== 'undefined' && req.recipientId.trim() !== '';
-                    // 排除无ID或状态异常的请求
-                    const isValidRequest = req._id && req.status === 'pending';
-                    return isValidRecipient && isValidRequest;
+                    const isInValidRecipient = !req.recipientId || req.recipientId === 'undefined' || req.recipientId.trim() === '';
+                    const isInValidRequest = !req._id || req.status !== 'pending';
+                    return !isInValidRecipient && !isInValidRequest;
                 });
+                const invalidRequests = pendingRequests.filter(req => !validRequests.includes(req));
+                console.log('被过滤的无效请求:', invalidRequests);
                 console.log('获取到的待处理请求:', pendingRequests);
                 const invalidCount = pendingRequests.length - validRequests.length;
                 if (invalidCount > 0) {
@@ -1171,6 +1178,10 @@
         // 创建待同意请求项
         function createPendingRequestItem(request) {
             // 处理本地缓存的请求格式
+            const requestId = request._id || request.id;
+            const recipientId = request.recipientId;
+            const escapedRequestId = encodeURIComponent(requestId);
+            const escapedRecipientId = encodeURIComponent(recipientId);
             const recipient = request.recipient || {
                 id: request.recipientId,
                 username: request.recipientUsername,
@@ -1199,7 +1210,7 @@
                 </div>
                 <div class="friend-joined">${formattedDate}</div>
                 <div class="friend-actions">
-                    <button class="action-btn delete-btn" onclick="cancelRequest('${request.id || recipient.id}', '${recipient.id}')" title="取消请求">
+                    <button class="action-btn delete-btn" onclick="cancelRequest('${escapedRequestId}', '${escapedRecipientId}')" title="取消请求">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -1342,6 +1353,16 @@
         // 发送好友请求 - 增强本地状态管理
         async function sendFriendRequest() {
             // 1. 严格验证（保留核心校验，简化冗余逻辑）
+            const hasPending = Array.from(pendingRequestsMap.values()).some(
+                req => req.recipientId === selectedUserId && req.status === 'pending'
+            );
+
+            if (hasPending) {
+                showNotification('已向该用户发送请求，请勿重复发送', 'warning');
+                closeAddFriendModal(); // 自动关闭弹窗
+                switchTab('pending'); // 跳转到待处理列表
+                return;
+            }
             if (!selectedUserId) {
                 showNotification('请先从搜索结果中选择一个用户', 'error');
                 return;
@@ -1467,6 +1488,8 @@
         
         // 取消请求 - 同时更新本地缓存
         async function cancelRequest(requestId, recipientId) {
+            const decodedRequestId = decodeURIComponent(requestId);
+            const decodedRecipientId = decodeURIComponent(recipientId);
             // 确认操作
             if (!confirm('确定要取消这个好友请求吗？')) {
                 return;
@@ -1485,7 +1508,7 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        requestId: String(requestId),
+                        requestId:decodedRequestId,
                         senderId: currentUser.id,
                         recipientId: recipientId || 'unknown' // 补充recipientId，避免后端校验失败
                     })
