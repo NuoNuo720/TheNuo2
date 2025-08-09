@@ -1180,8 +1180,8 @@
             // 处理本地缓存的请求格式
             const requestId = request._id || request.id;
             const recipientId = request.recipientId;
-            const escapedRequestId = encodeURIComponent(requestId);
-            const escapedRecipientId = encodeURIComponent(recipientId);
+            const escRequestId = encodeURIComponent(requestId); // 修改变量名，避免重复
+            const escRecipientId = encodeURIComponent(recipientId); // 修改变量名，避免重复
             const recipient = request.recipient || {
                 id: request.recipientId,
                 username: request.recipientUsername,
@@ -1192,7 +1192,7 @@
             const div = document.createElement('div');
             div.className = 'friend-item';
             div.dataset.userId = recipient.id;
-            div.dataset.requestId = request.id;
+            div.dataset.requestId = requestId;
             // 使用请求发送时间或本地记录时间
             const date = request.sentAt ? new Date(request.sentAt) : new Date(request.localTimestamp);
             const formattedDate = date.toLocaleString();
@@ -1210,7 +1210,7 @@
                 </div>
                 <div class="friend-joined">${formattedDate}</div>
                 <div class="friend-actions">
-                    <button class="action-btn delete-btn" onclick="cancelRequest('${escapedRequestId}', '${escapedRecipientId}')" title="取消请求">
+                    <button class="action-btn delete-btn" onclick="cancelRequest('${esRequestId}', '${esRecipientId}')" title="取消请求">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
