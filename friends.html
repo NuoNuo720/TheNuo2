@@ -630,6 +630,14 @@
     </div>
 
     <script>
+        // 确保openAddFriendModal函数已定义
+        function openAddFriendModal() {
+            document.getElementById('friendUsername').value = '';
+            document.getElementById('friendMessage').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            selectedUserId = null;
+            document.getElementById('addFriendModal').classList.add('active');
+        }
         // 全局变量
         let currentUser = null;
         let selectedUserId = null;
@@ -1069,13 +1077,12 @@
                     showNotification('解析待处理请求失败', 'error');
                     return;
                 }
-                const validRequests = pendingRequests.filter(req =>{
-                    const isValidRecipient = req.recipientId && 
-                                   req.recipientId !== 'undefined' && 
-                                   req.recipientId.trim() !== '';
+                const validRequests = pendingRequests.filter(req => {
+                    const isValidRecipient = req.recipientId && req.recipientId !== 'undefined' && req.recipientId.trim() !== '';
                     // 排除无ID或状态异常的请求
                     const isValidRequest = req._id && req.status === 'pending';
-                    return isValidRecipient && isValidRequest;});
+                    return isValidRecipient && isValidRequest;
+                });
                 console.log('获取到的待处理请求:', pendingRequests);
                 const invalidCount = pendingRequests.length - validRequests.length;
                 if (invalidCount > 0) {
@@ -1169,7 +1176,8 @@
                 username: request.recipientUsername,
                 avatar: request.recipientAvatar
             };
-            
+            const escapedRequestId = encodeURIComponent(request.id || '');
+            const escapedRecipientId = encodeURIComponent(recipient.id || '');
             const div = document.createElement('div');
             div.className = 'friend-item';
             div.dataset.userId = recipient.id;
@@ -1478,7 +1486,7 @@
                     },
                     body: JSON.stringify({
                         requestId: String(requestId),
-                        senderId: currentUser.id
+                        senderId: currentUser.id,
                         recipientId: recipientId || 'unknown' // 补充recipientId，避免后端校验失败
                     })
                 });
@@ -1624,15 +1632,7 @@
             }
         }
         
-        // 确保openAddFriendModal函数已定义
-        function openAddFriendModal() {
-            document.getElementById('friendUsername').value = '';
-            document.getElementById('friendMessage').value = '';
-            document.getElementById('searchResults').style.display = 'none';
-            selectedUserId = null;
-            document.getElementById('addFriendModal').classList.add('active');
-        }
-        
+                
         // 关闭添加好友模态框
         function closeAddFriendModal() {
             document.getElementById('addFriendModal').classList.remove('active');
