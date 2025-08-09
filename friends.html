@@ -1090,7 +1090,13 @@
                     const isIdValid = !!req._id;
                     return isRecipientValid && isStatusValid && isIdValid;
                 });
-                
+                // 如果后端返回空但本地有记录，使用本地记录
+                if (validRequests.length === 0 && pendingRequestsMap.size > 0) {
+                    console.log('后端返回空，但本地有记录，使用本地数据');
+                    // 检查这些本地记录是否真的存在于服务器
+                    const localRequests = Array.from(pendingRequestsMap.values());
+                    validRequests.push(...localRequests);
+                }
                 const invalidRequests = pendingRequests.filter(req => !validRequests.includes(req));
                 console.log('被过滤的无效请求:', invalidRequests);
                 console.log('获取到的待处理请求:', validRequests);
