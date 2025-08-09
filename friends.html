@@ -688,6 +688,7 @@
         function savePendingRequests() {
             try {
                 const requestsArray = Array.from(pendingRequestsMap.values());
+                const uniqueRequests = [...new Map(requestsArray.map(req => [req.id, req])).values()];
                 localStorage.setItem('pendingFriendRequests', JSON.stringify(requestsArray));
             } catch (e) {
                 console.error('保存待处理请求失败:', e);
@@ -1152,7 +1153,6 @@
             div.className = 'friend-item';
             div.dataset.userId = recipient.id;
             div.dataset.requestId = request.id;
-            
             // 使用请求发送时间或本地记录时间
             const date = request.sentAt ? new Date(request.sentAt) : new Date(request.localTimestamp);
             const formattedDate = date.toLocaleString();
@@ -1291,9 +1291,10 @@
         
         // 选择用户
         function selectUser(userId, username) {
-            if (!userId || userId === 'undefined') {
-                showNotification('用户ID获取失败', 'error');
-                console.error('尝试选择用户但未获取到有效ID', {userId, username});
+            const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+            if (!userId || !objectIdRegex.test(userId)) {
+                showNotification('无效的用户ID，无法添加', 'error');
+                console.error('无效的用户ID', userId);
                 return;
             }
     
@@ -1425,7 +1426,12 @@
             if (!confirm('确定要取消这个好友请求吗？')) {
                 return;
             }
-            
+            // 严格验证参数
+            if (!requestId || !currentUser?.id) {
+                showNotification('请求参数不完整，无法取消', 'error');
+                console.error('取消请求失败：参数缺失', { requestId, senderId: currentUser?.id });
+                return;
+            }
             try {
                 const response = await fetch('/.netlify/functions/cancelFriendRequest', {
                     method: 'POST',
@@ -1435,7 +1441,7 @@
                     },
                     body: JSON.stringify({
                         requestId: requestId,
-                        userId: currentUser.id
+                        senderId: currentUser.id
                     })
                 });
                 
