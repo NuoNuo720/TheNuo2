@@ -733,6 +733,7 @@
         // 检查更新
         async function checkForUpdates() {
             try {
+                console.log(`[${new Date().toLocaleTimeString()}] 开始轮询检查更新`);
                 const response = await fetch('/.netlify/functions/checkUpdates', {
                     method: 'POST',
                     headers: {
@@ -741,38 +742,54 @@
                     },
                     body: JSON.stringify({ 
                         userId: currentUser.id,
-                        lastCheckTime: lastCheckTime
+                        lastCheckTime: lastCheckTime || new Date().toISOString()
                     })
                 });
                 
                 if (!response.ok) {
+                    console.error(`轮询HTTP错误: ${response.status}`);
                     if (response.status === 401) {
                         showNotification('身份验证失败，请重新登录', 'error');
                         logout();
                         return;
                     }
-                    throw new Error(`HTTP错误: ${response.status}`);
+                    showNotification(`轮询失败 (${response.status})，将继续尝试`, 'error');
+                    return;
                 }
-                
+                let updates;
+                try {
+                    updates = await response.json();
+                    // 验证核心字段是否存在，不存在则初始化
+                    updates = {
+                        newFriendRequests: updates.newFriendRequests || 0, // 确保是数字
+                        newAcceptedRequests: updates.newAcceptedRequests || [], // 确保是数组
+                        lastCheckTime: updates.lastCheckTime || new Date().toISOString() // 确保有时间戳
+                    };
+                } catch (jsonError) {
+                    console.error('轮询响应JSON解析失败:', jsonError);
+                    showNotification('获取更新失败，数据格式错误', 'error');
+                    return; // 解析失败不中断轮询，仅返回
+                }
                 const updates = await response.json();
                 // 更新上次检查时间
                 lastCheckTime = updates.lastCheckTime;
                 
                 // 处理新的好友请求
-                if (updates.newFriendRequests > 0) {
+                if (typeof updates.newFriendRequests === 'number' && updates.newFriendRequests > 0) {
                     showRealTimeNotification(`收到${updates.newFriendRequests}个新的好友请求`);
                     loadFriendRequests(); // 刷新请求列表
                 }
                 
                 // 处理已接受的请求
-                if (updates.newAcceptedRequests.length > 0) {
+                if (Array.isArray(updates.newAcceptedRequests) && updates.newAcceptedRequests.length > 0) {
                     updates.newAcceptedRequests.forEach(friend => {
-                        showRealTimeNotification(`${friend.username}已接受你的好友请求`);
+                        if (friend && friend.username) {
+                            showRealTimeNotification(`${friend.username}已接受你的好友请求`);}
                     });
                     loadFriendsList(); // 刷新好友列表
                     loadPendingRequests(); // 刷新待处理列表
                 }
-                
+                console.log(`[${new Date().toLocaleTimeString()}] 轮询完成，下次检查时间: ${lastCheckTime}`);
             } catch (error) {
                 console.error('轮询检查更新失败:', error);
                 showNotification('获取更新失败，将继续尝试', 'error');
