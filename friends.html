@@ -6,6 +6,7 @@
     <title>好友系统 - 实时社交</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -505,7 +506,7 @@
     <!-- 导航栏 -->
     <div class="navbar">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="indexdaohang.html" class="navbar-title">
+            <a href="index.html" class="navbar-title">
                 <i class="fas fa-home"></i> 主页
             </a>
             <div class="navbar-title">
@@ -632,31 +633,22 @@
     </div>
 
     <script>
-        // 确保openAddFriendModal函数已定义
-        function openAddFriendModal() {
-            document.getElementById('friendUsername').value = '';
-            document.getElementById('friendMessage').value = '';
-            document.getElementById('searchResults').style.display = 'none';
-            selectedUserId = null;
-            document.getElementById('addFriendModal').classList.add('active');
-        }
-        
         // 全局变量
         let currentUser = null;
         let selectedUserId = null;
         let currentFriends = [];
-        let pendingRequests = new Map(); // 跟踪待处理的好友请求
+        let allUsersCache = new Map(); // 缓存所有用户信息，解决"未知用户"问题
         let pollInterval; // 轮询定时器
         const POLL_INTERVAL_MS = 10000; // 轮询间隔10秒
         let lastCheckTime = null; // 上次检查时间
-        // 增强的本地缓存，存储完整的请求信息
+        // 为当前用户单独存储待处理请求，解决用户数据隔离问题
         const pendingRequestsMap = new Map(); 
         let searchTimeout; // 搜索防抖定时器
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 从本地存储恢复pendingRequestsMap
-            const savedPendingRequests = localStorage.getItem('pendingFriendRequests');
+            // 从本地存储恢复当前用户的pendingRequestsMap
+            const savedPendingRequests = localStorage.getItem(`pendingFriendRequests_${getCurrentUserId()}`);
             if (savedPendingRequests) {
                 try {
                     const parsed = JSON.parse(savedPendingRequests);
@@ -666,7 +658,7 @@
                                 pendingRequestsMap.set(req.recipientId, req);
                             }
                         });
-                        console.log('从本地存储恢复了待处理请求:', parsed.length);
+                        console.log(`从本地存储恢复了${parsed.length}条当前用户的待处理请求`);
                     }
                 } catch (e) {
                     console.error('恢复待处理请求失败:', e);
@@ -695,7 +687,12 @@
             });
         });
         
-        // 保存待处理请求到本地存储
+        // 获取当前用户ID（辅助函数）
+        function getCurrentUserId() {
+            return currentUser?.id || 'unknown_user';
+        }
+        
+        // 保存待处理请求到本地存储（按用户隔离）
         function savePendingRequests() {
             try {
                 const requestsArray = Array.from(pendingRequestsMap.values());
@@ -706,9 +703,62 @@
                     req.recipientId.trim() !== '' && 
                     req.status === 'pending'
                 );
-                localStorage.setItem('pendingFriendRequests', JSON.stringify(validRequests));
+                // 使用用户ID作为键，确保不同用户的请求存储在不同的键下
+                localStorage.setItem(`pendingFriendRequests_${getCurrentUserId()}`, JSON.stringify(validRequests));
             } catch (e) {
                 console.error('保存待处理请求失败:', e);
+            }
+        }
+        
+        // 缓存用户信息
+        function cacheUserInfo(user) {
+            if (user && user.id) {
+                allUsersCache.set(user.id, user);
+                console.log(`已缓存用户信息: ${user.username} (${user.id})`);
+            }
+        }
+        
+        // 获取用户信息（从缓存或API）
+        async function getUserInfo(userId) {
+            // 先从缓存获取
+            if (allUsersCache.has(userId)) {
+                return allUsersCache.get(userId);
+            }
+            
+            // 缓存没有则从API获取
+            try {
+                const response = await fetch('/.netlify/functions/getUserInfo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({ userId: userId })
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user && user.id) {
+                        cacheUserInfo(user);
+                        return user;
+                    }
+                }
+            } catch (error) {
+                console.error(`获取用户${userId}信息失败:`, error);
+            }
+            
+            // 如果获取失败，返回默认信息
+            return {
+                id: userId,
+                username: '未知用户',
+                avatar: `https://picsum.photos/seed/${userId}/200`
+            };
+        }
+        
+        // 批量缓存搜索到的用户信息
+        function cacheUsers(users) {
+            if (Array.isArray(users)) {
+                users.forEach(user => cacheUserInfo(user));
             }
         }
         
@@ -734,6 +784,8 @@
                 
                 // 已登录，初始化
                 currentUser = userInfo;
+                // 缓存当前用户信息
+                cacheUserInfo(currentUser);
                 updateUserDisplay();
                 loadFriendsData();
                 startPolling(); // 启动轮询
@@ -836,6 +888,8 @@
                 if (Array.isArray(updatesData.newAcceptedRequests) && updatesData.newAcceptedRequests.length > 0) {
                     updatesData.newAcceptedRequests.forEach(friend => {
                         if (friend && friend.username) {
+                            // 缓存好友信息
+                            cacheUserInfo(friend);
                             showRealTimeNotification(`${friend.username}已接受你的好友请求`);
                             // 从本地缓存中移除
                             pendingRequestsMap.delete(friend.id);
@@ -897,7 +951,10 @@
                 }
                 
                 const friends = await response.json();
-                currentFriends = friends;
+                currentFriends = friends || [];
+                // 缓存好友信息
+                cacheUsers(friends);
+                
                 const container = document.getElementById('friends-container');
                 const emptyState = document.getElementById('friendsEmptyState');
                 
@@ -974,17 +1031,24 @@
                     },
                     body: JSON.stringify({ recipientId: recipientId })
                 });
-        
+                
                 console.log('好友请求响应状态:', response.status);
                 if (!response.ok) {
                     console.error('加载好友请求失败，HTTP状态:', response.status);
                     // 如果第一次请求失败，尝试使用更宽松的查询条件
                     throw new Error(`加载失败，状态码: ${response.status}`);
                 }
-        
+                
                 let requests = await response.json();
                 console.log('从recipientId获取到的好友请求:', requests);
-        
+                
+                // 缓存发送者信息
+                if (Array.isArray(requests)) {
+                    requests.forEach(req => {
+                        if (req.sender) cacheUserInfo(req.sender);
+                    });
+                }
+                
                 // 如果第一次查询没有结果，尝试使用备用方法
                 if (!Array.isArray(requests) || requests.length === 0) {
                     console.log('尝试使用备用方法加载好友请求');
@@ -999,32 +1063,43 @@
                             fallback: true
                         })
                     });
-            
+                    
                     if (backupResponse.ok) {
                         const backupRequests = await backupResponse.json();
                         console.log('从recipientUsername获取到的好友请求:', backupRequests);
                         requests = backupRequests;
+                        
+                        // 缓存发送者信息
+                        if (Array.isArray(requests)) {
+                            requests.forEach(req => {
+                                if (req.sender) cacheUserInfo(req.sender);
+                            });
+                        }
                     }
                 }
-        
+                
                 const container = document.getElementById('received-requests-container');
                 const emptyState = document.getElementById('requestsEmptyState');
-        
+                
                 // 清空容器
                 container.innerHTML = '';
-        
+                
                 if (!Array.isArray(requests) || requests.length === 0) {
                     emptyState.style.display = 'block';
                     return;
                 }
-        
+                
                 emptyState.style.display = 'none';
-        
+                
                 // 添加请求项
-                requests.forEach(request => {
+                for (const request of requests) {
+                    // 确保我们有发送者的信息
+                    const senderInfo = await getUserInfo(request.senderId);
+                    request.sender = { ...request.sender, ...senderInfo };
+                    
                     const requestItem = createFriendRequestItem(request);
                     container.appendChild(requestItem);
-                });
+                }
             } catch (error) {
                 console.error('加载好友请求失败:', error);
                 showNotification('加载好友请求失败', 'error');
@@ -1039,19 +1114,26 @@
             const date = new Date(request.sentAt);
             const formattedDate = date.toLocaleString();
             
+            // 使用缓存的发送者信息
+            const sender = request.sender || {
+                id: request.senderId,
+                username: '未知用户',
+                avatar: `https://picsum.photos/seed/${request.senderId}/200`
+            };
+            
             div.innerHTML = `
-                <img src="${request.sender.avatar || `https://picsum.photos/seed/${request.sender.id}/200`}" 
-                     alt="${request.sender.username}" class="request-avatar">
+                <img src="${sender.avatar || `https://picsum.photos/seed/${sender.id}/200`}" 
+                     alt="${sender.username}" class="request-avatar">
                 <div class="request-info">
-                    <div class="request-sender">${request.sender.username}</div>
+                    <div class="request-sender">${sender.username}</div>
                     <div class="request-message status-pending">${request.message || '请求添加你为好友'}</div>
                 </div>
                 <div class="request-time">${formattedDate}</div>
                 <div class="request-actions">
-                    <button class="action-btn accept-btn" onclick="handleRequest('${request.id}', 'accept')" title="接受">
+                    <button class="action-btn accept-btn" onclick="handleRequest('${request.id || request._id}', 'accept')" title="接受">
                         <i class="fas fa-check"></i>
                     </button>
-                    <button class="action-btn reject-btn" onclick="handleRequest('${request.id}', 'reject')" title="拒绝">
+                    <button class="action-btn reject-btn" onclick="handleRequest('${request.id || request._id}', 'reject')" title="拒绝">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -1110,9 +1192,10 @@
                 const validRequests = pendingRequests.filter(req => {
                     const isRecipientValid = req.recipientId && req.recipientId !== 'undefined' && req.recipientId.trim() !== '';
                     const isStatusValid = req.status === 'pending';
-                    const isIdValid = !!req._id;
+                    const isIdValid = !!req._id || !!req.id;
                     return isRecipientValid && isStatusValid && isIdValid;
                 });
+                
                 // 如果后端返回空但本地有记录，使用本地记录
                 if (validRequests.length === 0 && pendingRequestsMap.size > 0) {
                     console.log('后端返回空，但本地有记录，使用本地数据');
@@ -1120,6 +1203,12 @@
                     const localRequests = Array.from(pendingRequestsMap.values());
                     validRequests.push(...localRequests);
                 }
+                
+                // 缓存接收者信息
+                for (const req of validRequests) {
+                    await getUserInfo(req.recipientId);
+                }
+                
                 const invalidRequests = pendingRequests.filter(req => !validRequests.includes(req));
                 console.log('被过滤的无效请求:', invalidRequests);
                 console.log('获取到的待处理请求:', validRequests);
@@ -1128,12 +1217,13 @@
                 pendingRequestsMap.clear();
                 validRequests.forEach(req => {
                     pendingRequestsMap.set(req.recipientId, {
-                        id: req._id,
+                        id: req._id || req.id,
                         recipientId: req.recipientId,
-                        recipientUsername: req.recipient?.username || '未知用户',
+                        recipientUsername: req.recipient?.username || req.recipientUsername || '未知用户',
                         message: req.message,
-                        sentAt: req.sentAt,
-                        status: req.status
+                        sentAt: req.sentAt || req.localTimestamp,
+                        status: req.status,
+                        isLocal: !!req.isLocal
                     });
                 });
                 savePendingRequests();
@@ -1154,7 +1244,7 @@
         }
         
         // 渲染待处理请求
-        function renderPendingRequests(requests) {
+        async function renderPendingRequests(requests) {
             const container = document.getElementById('pending-requests-container');
             const emptyState = document.getElementById('pendingEmptyState');
             
@@ -1174,11 +1264,12 @@
             emptyState.style.display = 'none';
 
             // 遍历请求并创建DOM元素
-            requests.forEach(request => {
-                const recipient = request.recipient || {
+            for (const request of requests) {
+                // 获取接收者信息（从缓存）
+                const recipient = await getUserInfo(request.recipientId) || {
                     id: request.recipientId,
-                    username: request.recipientUsername || request.recipient?.username || '未知用户',
-                    avatar: request.recipient?.avatar || ''
+                    username: request.recipientUsername || '未知用户',
+                    avatar: ''
                 };
 
                 const div = document.createElement('div');
@@ -1215,7 +1306,7 @@
                 `;
 
                 container.appendChild(div);
-            });
+            }
 
             console.log(`已渲染${requests.length}条待处理请求`);
         }
@@ -1247,6 +1338,9 @@
                     });
             
                     const users = await response.json();
+            
+                    // 缓存搜索到的用户
+                    cacheUsers(users);
             
                     if (users.length === 0) {
                         resultsEl.innerHTML = '<div class="search-result-item">未找到匹配用户</div>';
@@ -1350,14 +1444,13 @@
         }
         
         // 发送好友请求
-        // 修改发送好友请求函数
         async function sendFriendRequest() {
             // 增强验证
             if (!selectedUserId) {
                 showNotification('请先从搜索结果中选择一个用户', 'error');
                 return;
             }
-    
+            
             // 验证用户ID格式
             const objectIdRegex = /^[0-9a-fA-F]{24}$/;
             if (!objectIdRegex.test(selectedUserId)) {
@@ -1631,6 +1724,15 @@
         // 关闭添加好友模态框
         function closeAddFriendModal() {
             document.getElementById('addFriendModal').classList.remove('active');
+        }
+        
+        // 打开添加好友模态框
+        function openAddFriendModal() {
+            document.getElementById('friendUsername').value = '';
+            document.getElementById('friendMessage').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            selectedUserId = null;
+            document.getElementById('addFriendModal').classList.add('active');
         }
         
         // 退出登录
