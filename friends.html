@@ -80,6 +80,7 @@
             background: #777;
         }
 
+        /* 其余样式保持不变 */
         header {
             text-align: center;
             margin: 30px 0;
@@ -495,6 +496,7 @@
     </style>
 </head>
 <body>
+    <!-- HTML结构保持不变 -->
     <!-- 导航栏 -->
     <div class="navbar">
         <div style="display: flex; align-items: center; gap: 15px;">
@@ -626,7 +628,7 @@
         let currentFriends = [];
         let pendingRequests = new Map(); // 跟踪待处理的好友请求
         let pollInterval; // 轮询定时器
-        const POLL_INTERVAL_MS = 30000; // 30秒一次轮询
+        const POLL_INTERVAL_MS = 15000; // 缩短轮询间隔为15秒
         let lastCheckTime = null; // 上次检查时间
         const pendingRequestsMap = new Map();
         let searchTimeout; // 搜索防抖定时器
@@ -981,7 +983,7 @@
             return div;
         }
         
-        // 加载待处理请求列表
+        // 加载待处理请求列表 - 核心修复部分
         async function loadPendingRequests() {
             if (!currentUser || !currentUser.id) {
                 console.error('未获取到当前用户信息');
@@ -990,13 +992,18 @@
 
             try {
                 console.log('加载待处理请求，用户ID:', currentUser.id);
+                // 尝试使用不同的API端点或参数
                 const response = await fetch('/.netlify/functions/getPendingRequests', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ senderId: currentUser.id })
+                    body: JSON.stringify({ 
+                        senderId: currentUser.id,
+                        // 添加时间范围参数，确保获取所有请求
+                        startTime: new Date(0).toISOString() // 从纪元时间开始
+                    })
                 });
 
                 console.log('待处理请求响应状态:', response.status);
@@ -1005,16 +1012,41 @@
                     throw new Error(`HTTP错误: ${response.status}`);
                 }
 
-                const pendingRequests = await response.json();
+                // 读取原始响应文本进行调试
+                const responseText = await response.text();
+                console.log('待处理请求原始响应:', responseText);
+                
+                // 尝试解析JSON
+                let pendingRequests;
+                try {
+                    pendingRequests = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('解析待处理请求失败:', jsonError);
+                    showNotification('解析待处理请求失败', 'error');
+                    return;
+                }
+                
                 console.log('获取到的待处理请求:', pendingRequests);
+
+                // 检查后端是否返回空数组但应该有数据
+                if (Array.isArray(pendingRequests) && pendingRequests.length === 0) {
+                    // 检查是否有已知的待处理请求（如刚刚尝试发送的）
+                    const hasKnownPending = Array.from(pendingRequestsMap.values()).some(v => v);
+                    if (hasKnownPending) {
+                        console.warn('后端返回空数组，但存在已知的待处理请求');
+                        showNotification('注意：可能存在未显示的待处理请求', 'info');
+                    }
+                }
 
                 // 更新前端缓存的待处理请求
                 pendingRequestsMap.clear();
-                pendingRequests.forEach(req => {
-                    if (req.recipient && req.recipient.id) {
-                        pendingRequestsMap.set(req.recipient.id, true);
-                    }
-                });
+                if (Array.isArray(pendingRequests)) {
+                    pendingRequests.forEach(req => {
+                        if (req.recipient && req.recipient.id) {
+                            pendingRequestsMap.set(req.recipient.id, true);
+                        }
+                    });
+                }
 
                 const pendingTab = document.getElementById('pendingTab');
                 const emptyState = document.getElementById('pendingEmptyState');
@@ -1199,7 +1231,7 @@
             console.log(`已选择用户：${username}，ID：${userId}`);
         }
         
-        // 发送好友请求
+        // 发送好友请求 - 增加本地缓存记录
         async function sendFriendRequest() {
             // 严格验证
             if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
@@ -1245,11 +1277,19 @@
         
                 if (response.ok) {
                     showNotification('好友请求已发送', 'success');
+                    // 即使后端返回成功，也强制添加到本地缓存
+                    pendingRequestsMap.set(selectedUserId, true);
                     closeAddFriendModal();
                     loadPendingRequests();
                 } else {
                     showNotification(result.error || '发送请求失败', 'error');
-                    // 即使失败也刷新列表，确保显示最新状态
+                    // 特别处理"已存在待处理请求"的情况
+                    if (result.error && result.error.includes('已存在待处理的好友请求')) {
+                        // 强制添加到本地缓存
+                        pendingRequestsMap.set(selectedUserId, true);
+                        showNotification('已存在待处理请求，将尝试显示', 'info');
+                    }
+                    // 即使失败也刷新列表
                     loadPendingRequests();
                 }
             } catch (error) {
@@ -1262,7 +1302,7 @@
                 pendingRequests.delete(selectedUserId);
                 sendBtn.innerHTML = originalText;
                 sendBtn.disabled = false;
-                selectedUserId = null;
+                // 不清除selectedUserId，以便用户可以重试
             }
         }
         
@@ -1317,6 +1357,12 @@
                 
                 if (response.ok) {
                     showNotification('已取消好友请求', 'success');
+                    // 从本地缓存中移除
+                    const pendingTab = document.getElementById('pendingTab');
+                    const itemToRemove = pendingTab.querySelector(`[data-request-id="${requestId}"]`);
+                    if (itemToRemove && itemToRemove.dataset.userId) {
+                        pendingRequestsMap.delete(itemToRemove.dataset.userId);
+                    }
                     loadPendingRequests();
                 } else {
                     showNotification('取消请求失败，请重试', 'error');
@@ -1386,6 +1432,11 @@
             // 添加active类到当前标签
             document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
             document.getElementById(`${tabName}Tab`).classList.add('active');
+            
+            // 切换到待处理标签时强制刷新
+            if (tabName === 'pending') {
+                loadPendingRequests();
+            }
         }
         
         // 确保openAddFriendModal函数已定义
