@@ -1,115 +1,124 @@
-const { MongoClient, ObjectId } = require('mongodb'); // 合并导入语句
+// addFriend.js
+const { MongoClient } = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
+
 exports.handler = async (event) => {
+    // 跨域配置
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
 
+    // 处理预检请求
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
+    // 仅允许 POST 方法
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: '只支持POST请求' }) };
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: '只支持 POST 请求' })
+        };
     }
 
     let client;
     try {
-        client = await MongoClient.connect(process.env.MONGODB_URI);
-        const db = client.db('userDB');
-        const requestBody = JSON.parse(event.body);
+        // 解析请求体
+        const requestBody = event.body ? JSON.parse(event.body) : {};
         const { senderId, recipientId, message } = requestBody;
 
-        // 验证必要参数
+        // 关键：严格验证必填参数
         if (!senderId || !recipientId) {
-            return { 
-                statusCode: 400, 
-                headers, 
-                body: JSON.stringify({ error: 'senderId和recipientId为必填项' }) 
-            };
-        }
-
-        // 验证ID格式是否正确
-        if (!ObjectId.isValid(senderId) || !ObjectId.isValid(recipientId)) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: '用户ID格式不正确' })
+                body: JSON.stringify({ 
+                    error: '参数不完整', 
+                    details: '需要 senderId（发送者ID）和 recipientId（接收者ID）' 
+                })
             };
         }
 
-        // 转换为ObjectId对象
-        const senderObjectId = new ObjectId(senderId);
-        const recipientObjectId = new ObjectId(recipientId);
+        // 防止添加自己为好友
+        if (senderId === recipientId) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: '不能添加自己为好友' })
+            };
+        }
 
-        // 检查是否已发送过请求（避免重复）
+        // 连接数据库
+        client = await MongoClient.connect(process.env.MONGODB_URI);
+        const db = client.db('userDB');
+
+        // 检查是否已发送过请求
         const existingRequest = await db.collection('friendRequests').findOne({
-            senderId: senderObjectId,  // 使用ObjectId查询
-            recipientId: recipientObjectId,  // 使用ObjectId查询
-            status: { $in: ['pending', 'accepted'] }
+            $or: [
+                { senderId, recipientId, status: 'pending' },
+                { senderId: recipientId, recipientId: senderId, status: 'pending' }
+            ]
         });
-        
+
         if (existingRequest) {
-            return { 
-                statusCode: 400, 
-                headers, 
-                body: JSON.stringify({ error: '已发送好友请求' }) 
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: '已存在待处理的好友请求' })
             };
         }
 
-        // 检查接收者是否存在（使用正确的_id字段查询）
-        const recipientExists = await db.collection('users').findOne(
-            { _id: recipientObjectId },
-            { projection: { _id: 1 } }
-        );
-        
-        if (!recipientExists) {
-            return { 
-                statusCode: 404, 
-                headers, 
-                body: JSON.stringify({ error: '目标用户不存在' }) 
+        // 检查是否已是好友
+        const isFriend = await db.collection('friends').findOne({
+            $or: [
+                { userId: senderId, friendId: recipientId },
+                { userId: recipientId, friendId: senderId }
+            ]
+        });
+
+        if (isFriend) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: '对方已是你的好友' })
             };
         }
 
-        // 保存新请求到数据库
-        const now = new Date();
-        const result = await db.collection('friendRequests').insertOne({
-            senderId: senderObjectId,  // 存储为ObjectId
-            recipientId: recipientObjectId,  // 存储为ObjectId
-            message: message || '请求添加为好友',
+        // 创建新的好友请求
+        const newRequest = {
+            senderId,
+            recipientId,
+            message: message || '请求添加你为好友',
             status: 'pending',
-            sentAt: now,
-            updatedAt: now
-        });
+            sentAt: new Date()
+        };
 
-        console.log('好友请求已保存:', { 
-            requestId: result.insertedId, 
-            senderId, 
-            recipientId 
-        });
+        const result = await db.collection('friendRequests').insertOne(newRequest);
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ 
-                message: '好友请求已发送',
+            body: JSON.stringify({
+                success: true,
                 requestId: result.insertedId.toString()
             })
         };
+
     } catch (error) {
         console.error('发送好友请求失败:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ 
-                error: '发送请求失败', 
-                details: error.message,
-                // 只在开发环境显示详细错误信息
-                debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            body: JSON.stringify({
+                error: '发送好友请求失败',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
             })
         };
     } finally {
+        // 关闭数据库连接
         if (client) {
             try {
                 await client.close();
