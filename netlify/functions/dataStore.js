@@ -85,15 +85,18 @@ module.exports = {
   createFriendRequest: (request) => {
     const newRequest = {
       id: generateId(),
-      ...request
+      status: 'pending', // 新增状态字段，用于区分请求状态
+      ...request,
+      sentAt: new Date().toISOString() // 确保发送时间被正确记录
     };
     friendRequests.push(newRequest);
     return newRequest;
   },
   
-  getFriendRequests: (recipientId) => {
+  // 修复：明确用于接收方查询的方法（与getFriendRequests.js对应）
+  getReceivedFriendRequests: (recipientId) => {
     return friendRequests
-      .filter(req => req.recipientId === recipientId)
+      .filter(req => req.recipientId === recipientId && req.status === 'pending')
       .map(req => {
         const sender = users.find(u => u.id === req.senderId);
         return {
@@ -108,9 +111,14 @@ module.exports = {
       });
   },
   
+  // 保持原方法兼容性，但内部调用正确的实现
+  getFriendRequests: (recipientId) => {
+    return module.exports.getReceivedFriendRequests(recipientId);
+  },
+  
   getPendingRequests: (senderId) => {
     return friendRequests
-      .filter(req => req.senderId === senderId)
+      .filter(req => req.senderId === senderId && req.status === 'pending')
       .map(req => {
         const recipient = users.find(u => u.id === req.recipientId);
         return {
@@ -127,8 +135,10 @@ module.exports = {
   
   hasPendingRequest: (senderId, recipientId) => {
     return friendRequests.some(req => 
-      (req.senderId === senderId && req.recipientId === recipientId) ||
-      (req.senderId === recipientId && req.recipientId === senderId)
+      req.status === 'pending' && (
+        (req.senderId === senderId && req.recipientId === recipientId) ||
+        (req.senderId === recipientId && req.recipientId === senderId)
+      )
     );
   },
   
@@ -146,8 +156,8 @@ module.exports = {
       return { success: false, error: '无权处理此请求' };
     }
     
-    // 移除请求
-    friendRequests.splice(requestIndex, 1);
+    // 更新请求状态而非直接删除，便于后续追踪（可选优化）
+    request.status = action === 'accept' ? 'accepted' : 'rejected';
     
     // 如果是接受请求，创建好友关系
     if (action === 'accept') {

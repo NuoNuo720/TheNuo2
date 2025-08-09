@@ -815,7 +815,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ userId: currentUser.id })
+                    body: JSON.stringify({ recipientId:currentUser.id })
                 });
                 
                 if (!response.ok) {
@@ -979,7 +979,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ userId: currentUser.id })
+                    body: JSON.stringify({ senderId: currentUser.id })
                 });
 
                 const pendingRequests = await response.json();
