@@ -252,6 +252,10 @@
             color: #f39c12;
         }
 
+        .status-warning {
+            color: #e67e22;
+        }
+
         .friend-actions {
             display: flex;
             gap: 10px;
@@ -420,6 +424,10 @@
 
         .notification.error {
             background-color: #e74c3c;
+        }
+
+        .notification.warning {
+            background-color: #f39c12;
         }
 
         /* 实时通知 */
@@ -628,13 +636,32 @@
         let currentFriends = [];
         let pendingRequests = new Map(); // 跟踪待处理的好友请求
         let pollInterval; // 轮询定时器
-        const POLL_INTERVAL_MS = 15000; // 缩短轮询间隔为15秒
+        const POLL_INTERVAL_MS = 10000; // 缩短轮询间隔至10秒
         let lastCheckTime = null; // 上次检查时间
-        const pendingRequestsMap = new Map();
+        // 增强的本地缓存，存储完整的请求信息
+        const pendingRequestsMap = new Map(); 
         let searchTimeout; // 搜索防抖定时器
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
+            // 从本地存储恢复pendingRequestsMap
+            const savedPendingRequests = localStorage.getItem('pendingFriendRequests');
+            if (savedPendingRequests) {
+                try {
+                    const parsed = JSON.parse(savedPendingRequests);
+                    if (parsed instanceof Array) {
+                        parsed.forEach(req => {
+                            if (req.recipientId) {
+                                pendingRequestsMap.set(req.recipientId, req);
+                            }
+                        });
+                        console.log('从本地存储恢复了待处理请求:', parsed.length);
+                    }
+                } catch (e) {
+                    console.error('恢复待处理请求失败:', e);
+                }
+            }
+            
             // 检查登录状态
             checkLoginStatus();
             
@@ -656,6 +683,16 @@
                 }
             });
         });
+        
+        // 保存待处理请求到本地存储
+        function savePendingRequests() {
+            try {
+                const requestsArray = Array.from(pendingRequestsMap.values());
+                localStorage.setItem('pendingFriendRequests', JSON.stringify(requestsArray));
+            } catch (e) {
+                console.error('保存待处理请求失败:', e);
+            }
+        }
         
         // 检查登录状态
         function checkLoginStatus() {
@@ -783,6 +820,9 @@
                     updatesData.newAcceptedRequests.forEach(friend => {
                         if (friend && friend.username) {
                             showRealTimeNotification(`${friend.username}已接受你的好友请求`);
+                            // 从本地缓存中移除
+                            pendingRequestsMap.delete(friend.id);
+                            savePendingRequests();
                         }
                     });
                     loadFriendsList(); // 刷新好友列表
@@ -1029,23 +1069,25 @@
                 console.log('获取到的待处理请求:', pendingRequests);
 
                 // 检查后端是否返回空数组但应该有数据
-                if (Array.isArray(pendingRequests) && pendingRequests.length === 0) {
-                    // 检查是否有已知的待处理请求（如刚刚尝试发送的）
-                    const hasKnownPending = Array.from(pendingRequestsMap.values()).some(v => v);
-                    if (hasKnownPending) {
-                        console.warn('后端返回空数组，但存在已知的待处理请求');
-                        showNotification('注意：可能存在未显示的待处理请求', 'info');
+                const hasKnownPending = pendingRequestsMap.size > 0;
+                if (Array.isArray(pendingRequests) && pendingRequests.length === 0 && hasKnownPending) {
+                    console.warn('后端返回空数组，但存在已知的待处理请求');
+                    showNotification('注意：系统检测到存在未显示的待处理请求', 'warning');
+                    
+                    // 使用本地缓存的数据来显示
+                    pendingRequests = Array.from(pendingRequestsMap.values());
+                    console.log('使用本地缓存的待处理请求:', pendingRequests.length);
+                } else {
+                    // 后端返回了有效数据，更新本地缓存
+                    pendingRequestsMap.clear();
+                    if (Array.isArray(pendingRequests)) {
+                        pendingRequests.forEach(req => {
+                            if (req.recipient && req.recipient.id) {
+                                pendingRequestsMap.set(req.recipient.id, req);
+                            }
+                        });
+                        savePendingRequests();
                     }
-                }
-
-                // 更新前端缓存的待处理请求
-                pendingRequestsMap.clear();
-                if (Array.isArray(pendingRequests)) {
-                    pendingRequests.forEach(req => {
-                        if (req.recipient && req.recipient.id) {
-                            pendingRequestsMap.set(req.recipient.id, true);
-                        }
-                    });
                 }
 
                 const pendingTab = document.getElementById('pendingTab');
@@ -1074,27 +1116,61 @@
             } catch (error) {
                 console.error('加载待处理请求失败:', error);
                 showNotification('获取待处理请求失败', 'error');
+                
+                // 出错时尝试使用本地缓存
+                if (pendingRequestsMap.size > 0) {
+                    console.log('加载失败，使用本地缓存的待处理请求');
+                    const pendingTab = document.getElementById('pendingTab');
+                    const emptyState = document.getElementById('pendingEmptyState');
+                    
+                    Array.from(pendingTab.children).forEach(child => {
+                        if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
+                            pendingTab.removeChild(child);
+                        }
+                    });
+                    
+                    emptyState.style.display = 'none';
+                    
+                    Array.from(pendingRequestsMap.values()).forEach(request => {
+                        const requestItem = createPendingRequestItem(request);
+                        pendingTab.insertBefore(requestItem, emptyState);
+                    });
+                }
             }
         }
         
         // 创建待同意请求项
         function createPendingRequestItem(request) {
+            // 处理本地缓存的请求格式
+            const recipient = request.recipient || {
+                id: request.recipientId,
+                username: request.recipientUsername,
+                avatar: request.recipientAvatar
+            };
+            
             const div = document.createElement('div');
             div.className = 'friend-item';
+            div.dataset.userId = recipient.id;
+            div.dataset.requestId = request.id;
             
-            const date = new Date(request.sentAt);
+            // 使用请求发送时间或本地记录时间
+            const date = request.sentAt ? new Date(request.sentAt) : new Date(request.localTimestamp);
             const formattedDate = date.toLocaleString();
             
+            // 标记本地缓存的请求
+            const localFlag = request.isLocal ? '<span class="status-warning">(本地记录)</span>' : '';
+            
             div.innerHTML = `
-                <img src="${request.recipient.avatar || `https://picsum.photos/seed/${request.recipient.id}/200`}" 
-                     alt="${request.recipient.username}" class="friend-avatar">
+                <img src="${recipient.avatar || `https://picsum.photos/seed/${recipient.id}/200`}" 
+                     alt="${recipient.username}" class="friend-avatar">
                 <div class="friend-info">
-                    <div class="friend-name">${request.recipient.username}</div>
+                    <div class="friend-name">${recipient.username} ${localFlag}</div>
                     <div class="friend-status status-pending">等待对方同意</div>
+                    <div class="friend-status">${request.message || '无验证消息'}</div>
                 </div>
                 <div class="friend-joined">${formattedDate}</div>
                 <div class="friend-actions">
-                    <button class="action-btn delete-btn" onclick="cancelRequest('${request.id}')" title="取消请求">
+                    <button class="action-btn delete-btn" onclick="cancelRequest('${request.id || recipient.id}', '${recipient.id}')" title="取消请求">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -1231,7 +1307,7 @@
             console.log(`已选择用户：${username}，ID：${userId}`);
         }
         
-        // 发送好友请求 - 增加本地缓存记录
+        // 发送好友请求 - 增强本地状态管理
         async function sendFriendRequest() {
             // 严格验证
             if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
@@ -1244,6 +1320,10 @@
                 return;
             }
     
+            // 获取用户名和消息
+            const username = document.getElementById('friendUsername').value.trim();
+            const message = document.getElementById('friendMessage').value.trim() || '我想加你为好友';
+            
             // 标记为待处理
             pendingRequests.set(selectedUserId, true);
             const sendBtn = document.getElementById('sendRequestBtn');
@@ -1252,7 +1332,6 @@
             sendBtn.disabled = true;
     
             try {
-                const message = document.getElementById('friendMessage').value.trim() || '我想加你为好友';
                 console.log('发送好友请求参数:',{
                     senderId: currentUser.id,
                     recipientId: selectedUserId,
@@ -1277,8 +1356,19 @@
         
                 if (response.ok) {
                     showNotification('好友请求已发送', 'success');
-                    // 即使后端返回成功，也强制添加到本地缓存
-                    pendingRequestsMap.set(selectedUserId, true);
+                    // 添加到本地缓存
+                    const requestData = {
+                        id: result.requestId || `local_${Date.now()}`,
+                        senderId: currentUser.id,
+                        recipientId: selectedUserId,
+                        recipientUsername: username,
+                        message: message,
+                        sentAt: new Date().toISOString(),
+                        localTimestamp: new Date().toISOString(),
+                        isLocal: !result.requestId // 如果没有后端返回的ID，则标记为本地记录
+                    };
+                    pendingRequestsMap.set(selectedUserId, requestData);
+                    savePendingRequests();
                     closeAddFriendModal();
                     loadPendingRequests();
                 } else {
@@ -1286,16 +1376,39 @@
                     // 特别处理"已存在待处理请求"的情况
                     if (result.error && result.error.includes('已存在待处理的好友请求')) {
                         // 强制添加到本地缓存
-                        pendingRequestsMap.set(selectedUserId, true);
-                        showNotification('已存在待处理请求，将尝试显示', 'info');
+                        const requestData = {
+                            id: `local_${Date.now()}`,
+                            senderId: currentUser.id,
+                            recipientId: selectedUserId,
+                            recipientUsername: username,
+                            message: message,
+                            localTimestamp: new Date().toISOString(),
+                            isLocal: true,
+                            status: 'conflict'
+                        };
+                        pendingRequestsMap.set(selectedUserId, requestData);
+                        savePendingRequests();
+                        showNotification('已存在待处理请求，已记录在本地', 'warning');
                     }
                     // 即使失败也刷新列表
                     loadPendingRequests();
                 }
             } catch (error) {
                 console.error('发送请求失败:', error);
-                showNotification('发送请求失败，请重试', 'error');
-                // 即使异常也刷新列表
+                showNotification('发送请求失败，已记录在本地', 'warning');
+                // 网络错误时添加到本地缓存
+                const requestData = {
+                    id: `local_${Date.now()}`,
+                    senderId: currentUser.id,
+                    recipientId: selectedUserId,
+                    recipientUsername: username,
+                    message: message,
+                    localTimestamp: new Date().toISOString(),
+                    isLocal: true,
+                    status: 'error'
+                };
+                pendingRequestsMap.set(selectedUserId, requestData);
+                savePendingRequests();
                 loadPendingRequests();
             } finally {
                 // 恢复状态
@@ -1303,6 +1416,62 @@
                 sendBtn.innerHTML = originalText;
                 sendBtn.disabled = false;
                 // 不清除selectedUserId，以便用户可以重试
+            }
+        }
+        
+        // 取消请求 - 同时更新本地缓存
+        async function cancelRequest(requestId, recipientId) {
+            // 确认操作
+            if (!confirm('确定要取消这个好友请求吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/.netlify/functions/cancelFriendRequest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({
+                        requestId: requestId,
+                        userId: currentUser.id
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('已取消好友请求', 'success');
+                    // 从本地缓存中移除
+                    if (recipientId) {
+                        pendingRequestsMap.delete(recipientId);
+                    } else {
+                        // 如果没有recipientId，遍历查找并删除
+                        Array.from(pendingRequestsMap.entries()).forEach(([key, value]) => {
+                            if (value.id === requestId) {
+                                pendingRequestsMap.delete(key);
+                            }
+                        });
+                    }
+                    savePendingRequests();
+                    loadPendingRequests();
+                } else {
+                    showNotification('取消请求失败，将尝试从本地移除', 'warning');
+                    // 即使后端失败，也从本地缓存中移除
+                    if (recipientId) {
+                        pendingRequestsMap.delete(recipientId);
+                    }
+                    savePendingRequests();
+                    loadPendingRequests();
+                }
+            } catch (error) {
+                console.error('取消请求失败:', error);
+                showNotification('取消请求失败，已从本地移除', 'warning');
+                // 网络错误时，仅从本地缓存中移除
+                if (recipientId) {
+                    pendingRequestsMap.delete(recipientId);
+                }
+                savePendingRequests();
+                loadPendingRequests();
             }
         }
         
@@ -1337,39 +1506,6 @@
             } catch (error) {
                 console.error('处理请求失败:', error);
                 showNotification('处理请求失败，请重试', 'error');
-            }
-        }
-        
-        // 取消请求
-        async function cancelRequest(requestId) {
-            try {
-                const response = await fetch('/.netlify/functions/cancelFriendRequest', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentUser.token}`
-                    },
-                    body: JSON.stringify({
-                        requestId: requestId,
-                        userId: currentUser.id
-                    })
-                });
-                
-                if (response.ok) {
-                    showNotification('已取消好友请求', 'success');
-                    // 从本地缓存中移除
-                    const pendingTab = document.getElementById('pendingTab');
-                    const itemToRemove = pendingTab.querySelector(`[data-request-id="${requestId}"]`);
-                    if (itemToRemove && itemToRemove.dataset.userId) {
-                        pendingRequestsMap.delete(itemToRemove.dataset.userId);
-                    }
-                    loadPendingRequests();
-                } else {
-                    showNotification('取消请求失败，请重试', 'error');
-                }
-            } catch (error) {
-                console.error('取消请求失败:', error);
-                showNotification('取消请求失败，请重试', 'error');
             }
         }
         
@@ -1455,6 +1591,9 @@
         
         // 退出登录
         function logout() {
+            // 保留待处理请求的本地缓存
+            savePendingRequests();
+            
             localStorage.removeItem('mainUserInfo');
             // 停止轮询
             if (pollInterval) {
@@ -1478,6 +1617,8 @@
                 icon.className = 'fas fa-check-circle';
             } else if (type === 'error') {
                 icon.className = 'fas fa-exclamation-circle';
+            } else if (type === 'warning') {
+                icon.className = 'fas fa-exclamation-triangle';
             } else {
                 icon.className = 'fas fa-info-circle';
             }
