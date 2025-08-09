@@ -965,6 +965,7 @@
             const recipientId = currentUser.id;
             console.log("加载好友请求，接收者ID:", recipientId);
             try {
+                // 先尝试获取所有发给当前用户的请求
                 const response = await fetch('https://thenuo2.netlify.app/.netlify/functions/getFriendRequests', {
                     method: 'POST',
                     headers: {
@@ -973,30 +974,52 @@
                     },
                     body: JSON.stringify({ recipientId: recipientId })
                 });
-                
+        
                 console.log('好友请求响应状态:', response.status);
                 if (!response.ok) {
                     console.error('加载好友请求失败，HTTP状态:', response.status);
-                    showNotification(`加载好友请求失败 (${response.status})`, 'error');
+                    // 如果第一次请求失败，尝试使用更宽松的查询条件
                     throw new Error(`加载失败，状态码: ${response.status}`);
                 }
-                
-                const requests = await response.json();
-                console.log('获取到的好友请求:', requests);
-                
+        
+                let requests = await response.json();
+                console.log('从recipientId获取到的好友请求:', requests);
+        
+                // 如果第一次查询没有结果，尝试使用备用方法
+                if (!Array.isArray(requests) || requests.length === 0) {
+                    console.log('尝试使用备用方法加载好友请求');
+                    const backupResponse = await fetch('https://thenuo2.netlify.app/.netlify/functions/getFriendRequests', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentUser.token}`
+                        },
+                        body: JSON.stringify({ 
+                            recipientUsername: currentUser.username,
+                            fallback: true
+                        })
+                    });
+            
+                    if (backupResponse.ok) {
+                        const backupRequests = await backupResponse.json();
+                        console.log('从recipientUsername获取到的好友请求:', backupRequests);
+                        requests = backupRequests;
+                    }
+                }
+        
                 const container = document.getElementById('received-requests-container');
                 const emptyState = document.getElementById('requestsEmptyState');
-                
+        
                 // 清空容器
                 container.innerHTML = '';
-                
+        
                 if (!Array.isArray(requests) || requests.length === 0) {
                     emptyState.style.display = 'block';
                     return;
                 }
-                
+        
                 emptyState.style.display = 'none';
-                
+        
                 // 添加请求项
                 requests.forEach(request => {
                     const requestItem = createFriendRequestItem(request);
@@ -1327,7 +1350,22 @@
         }
         
         // 发送好友请求
+        // 修改发送好友请求函数
         async function sendFriendRequest() {
+            // 增强验证
+            if (!selectedUserId) {
+                showNotification('请先从搜索结果中选择一个用户', 'error');
+                return;
+            }
+    
+            // 验证用户ID格式
+            const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+            if (!objectIdRegex.test(selectedUserId)) {
+                showNotification('无效的用户ID，无法发送请求', 'error');
+                console.error('无效的接收者ID:', selectedUserId);
+                return;
+            }
+
             // 检查是否已存在有效待处理请求
             const hasPending = Array.from(pendingRequestsMap.values()).some(
                 req => req.recipientId === selectedUserId && req.status === 'pending'
@@ -1339,18 +1377,12 @@
                 switchTab('pending');
                 return;
             }
-            
-            if (!selectedUserId) {
-                showNotification('请先从搜索结果中选择一个用户', 'error');
-                return;
-            }
 
             // 获取表单数据
             const username = document.getElementById('friendUsername').value.trim();
             const message = document.getElementById('friendMessage').value.trim() || '我想加你为好友';
-    
+
             // 临时状态处理（防止重复提交）
-            pendingRequests.set(selectedUserId, true);
             const sendBtn = document.getElementById('sendRequestBtn');
             const originalText = sendBtn.innerHTML;
             sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发送中';
@@ -1360,6 +1392,7 @@
                 console.log('发送好友请求参数:', {
                     senderId: currentUser.id,
                     recipientId: selectedUserId,
+                    recipientUsername: username,
                     message: message
                 });
                 const response = await fetch('/.netlify/functions/addFriend', {
@@ -1371,6 +1404,7 @@
                     body: JSON.stringify({
                         senderId: currentUser.id,
                         recipientId: selectedUserId,
+                        recipientUsername: username, // 额外传递用户名作为备份
                         message: message
                     })
                 });
@@ -1435,7 +1469,6 @@
                 savePendingRequests();
                 loadPendingRequests();
             } finally {
-                pendingRequests.delete(selectedUserId);
                 sendBtn.innerHTML = originalText;
                 sendBtn.disabled = false;
             }
