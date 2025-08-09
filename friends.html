@@ -910,6 +910,7 @@
         // 加载好友请求
         async function loadFriendRequests() {
             try {
+                console.log('加载好友请求，接收者ID:', currentUser.id); // 添加调试日志
                 const response = await fetch('/.netlify/functions/getFriendRequests', {
                     method: 'POST',
                     headers: {
@@ -918,7 +919,7 @@
                     },
                     body: JSON.stringify({ recipientId: currentUser.id })
                 });
-                
+                console.log('好友请求响应状态:', response.status); // 添加调试日志
                 if (!response.ok) {
                     console.error('加载好友请求失败，HTTP状态:', response.status);
                     showNotification(`加载好友请求失败 (${response.status})`, 'error');
@@ -928,7 +929,7 @@
                 const requests = await response.json();
                 const requestsTab = document.getElementById('requestsTab');
                 const emptyState = document.getElementById('requestsEmptyState');
-                
+                console.log('获取到的好友请求:', requests); // 添加调试日志
                 // 清空现有列表（保留表头和空状态）
                 Array.from(requestsTab.children).forEach(child => {
                     if (!child.classList.contains('list-header') && !child.classList.contains('empty-state')) {
@@ -991,6 +992,7 @@
             }
 
             try {
+                console.log('加载加载待处理请求，用户ID:', currentUser.id); // 添加调试日志
                 const response = await fetch('/.netlify/functions/getPendingRequests', {
                     method: 'POST',
                     headers: {
@@ -999,13 +1001,13 @@
                     },
                     body: JSON.stringify({ senderId: currentUser.id })
                 });
-
+                console.log('待处理请求响应状态:', response.status); // 添加调试日志
                 if (!response.ok) {
                     throw new Error(`HTTP错误: ${response.status}`);
                 }
-
+                
                 const pendingRequests = await response.json();
-
+                console.log('获取到的待处理请求:', pendingRequests); // 添加调试日志
                 // 更新前端缓存的待处理请求
                 pendingRequestsMap.clear();
                 pendingRequests.forEach(req => {
@@ -1235,6 +1237,15 @@
                         recipientId: selectedUserId,
                         message: message
                     })
+                    if (response.ok) {
+                        showNotification('好友请求已发送', 'success');
+                        closeAddFriendModal();
+                        loadPendingRequests(); // 刷新待处理列表
+                    } else {
+                        showNotification(result.error || '发送请求失败', 'error');
+                        // 即使失败也刷新列表，确保显示最新状态
+                        loadPendingRequests();
+                    }
                 });
         
                 console.log('请求状态:', response.status);
@@ -1251,6 +1262,7 @@
             } catch (error) {
                 console.error('发送请求失败:', error);
                 showNotification('发送请求失败，请重试', 'error');
+                loadPendingRequests();
             } finally {
                 // 恢复状态
                 pendingRequests.delete(selectedUserId);
