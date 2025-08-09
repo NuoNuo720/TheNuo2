@@ -589,6 +589,10 @@
                 <div class="empty-state" id="pendingEmptyState">
                     <div>没有待对方同意的请求</div>
                 </div>
+                <!-- 待处理请求标签页 -->
+                <div class="tab-content" id="pending-tab">
+                    <div id="pending-requests-container" class="friend-list"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -1091,9 +1095,10 @@
                     return;
                 }
                 const validRequests = pendingRequests.filter(req => {
-                    const isInValidRecipient = !req.recipientId || req.recipientId === 'undefined' || req.recipientId.trim() === '';
-                    const isInValidRequest = !req._id || req.status !== 'pending';
-                    return !isInValidRecipient && !isInValidRequest;
+                    const isValidRecipient = req.recipientId && req.recipientId !== 'undefined' && req.recipientId.trim() !== '';
+                    const isStatusValid = req.status === 'pending';
+                    const isIdValid = !!req._id;
+                    return isRecipientValid && isStatusValid && isIdValid;
                 });
                 const invalidRequests = pendingRequests.filter(req => !validRequests.includes(req));
                 console.log('被过滤的无效请求:', invalidRequests);
@@ -1114,6 +1119,7 @@
                     });
                 });
                 savePendingRequests();
+                renderPendingRequests(validRequests);
                 // 检查后端是否返回空数组但应该有数据
                 const hasKnownPending = pendingRequestsMap.size > 0;
                 if (Array.isArray(pendingRequests) && pendingRequests.length === 0 && hasKnownPending) {
@@ -1775,6 +1781,59 @@
             });
 
             console.log(`已渲染${requests.length}条收到的好友请求`);
+        }
+        // 渲染当前用户发送的待处理请求（test7的待处理列表）
+        function renderPendingRequests(requests) {
+            const pendingContainer = document.getElementById('pending-requests-container');
+            if (!pendingContainer) {
+                console.error('未找到待处理请求的容器元素，请检查HTML');
+                return;
+            }
+
+            // 清空容器
+            pendingContainer.innerHTML = '';
+
+            if (requests.length === 0) {
+                pendingContainer.innerHTML = '<div class="empty-state">暂无待对方同意的请求</div>';
+                return;
+            }
+
+            // 遍历请求并创建DOM元素
+            requests.forEach(request => {
+                const recipient = request.recipient || {
+                    id: request.recipientId,
+                    username: request.recipient?.username || '未知用户',
+                    avatar: request.recipient?.avatar || ''
+                };
+
+                const div = document.createElement('div');
+                div.className = 'pending-request-item';
+                div.dataset.requestId = request._id;
+                div.dataset.recipientId = recipient.id;
+
+                const date = request.sentAt ? new Date(request.sentAt) : new Date();
+                const formattedDate = date.toLocaleString();
+
+                // 转义ID，避免特殊字符问题
+                const escRequestId = encodeURIComponent(request._id);
+                const escRecipientId = encodeURIComponent(recipient.id);
+
+                div.innerHTML = `
+                    <img src="${recipient.avatar || `https://picsum.photos/seed/${recipient.id}/200`}" alt="${recipient.username}" class="pending-avatar">
+                    <div class="pending-info">
+                        <div class="pending-recipient">${recipient.username}</div>
+                        <div class="pending-message">${request.message || '已发送好友请求'}</div>
+                        <div class="pending-time">${formattedDate}</div>
+                    </div>
+                    <div class="pending-actions">
+                        <button class="action-btn cancel-btn" onclick="cancelRequest('${escRequestId}', '${escRecipientId}')">取消请求</button>
+                    </div>
+                `;
+
+                pendingContainer.appendChild(div);
+            });
+
+            console.log(`已渲染${requests.length}条待处理请求`);
         }
         // 点击模态框外部关闭
         window.onclick = function(event) {
