@@ -1311,11 +1311,14 @@
         // 发送好友请求 - 增强本地状态管理
         async function sendFriendRequest() {
             // 严格验证
-            if (!selectedUserId || selectedUserId === 'undefined' || selectedUserId.trim() === '') {
+            if (!selectedUserId) {
                 showNotification('请先从搜索结果中选择一个用户', 'error');
                 return;
             }
-    
+            if (pendingRequestsMap.has(selectedUserId)) {
+                showNotification('已向该用户发送请求，等待对方回应', 'warning');
+                return; // 直接拦截，不发送请求
+            }
             if (pendingRequests.has(selectedUserId)) {
                 showNotification('请求正在发送中，请稍候', 'error');
                 return;
@@ -1373,6 +1376,8 @@
                     closeAddFriendModal();
                     loadPendingRequests();
                 } else {
+                    const errorMsg = result?.error || `发送失败（状态码：${response.status}）`;
+                    showNotification(errorMsg, 'error');
                     showNotification(result.error || '发送请求失败', 'error');
                     // 特别处理"已存在待处理请求"的情况
                     if (result.error && result.error.includes('已存在待处理的好友请求')) {
@@ -1390,6 +1395,16 @@
                         pendingRequestsMap.set(selectedUserId, requestData);
                         savePendingRequests();
                         showNotification('已存在待处理请求，已记录在本地', 'warning');
+                    }
+                    if (errorMsg.includes('已存在待处理的好友请求') && result?.requestId) {
+                        pendingRequestsMap.set(selectedUserId, {
+                            id: result.requestId,
+                            recipientId: selectedUserId,
+                            recipientUsername: username,
+                            status: 'pending'
+                        });
+                        savePendingRequests();
+                        loadPendingRequests();
                     }
                     // 即使失败也刷新列表
                     loadPendingRequests();
