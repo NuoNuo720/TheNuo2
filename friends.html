@@ -979,7 +979,7 @@
                 
                 const requests = await response.json();
                 console.log('获取到的好友请求:', requests);
-                
+                renderReceivedRequests(requests);
                 const requestsTab = document.getElementById('requestsTab');
                 const emptyState = document.getElementById('requestsEmptyState');
                 
@@ -1184,9 +1184,12 @@
             const escRecipientId = encodeURIComponent(recipientId); // 修改变量名，避免重复
             const recipient = request.recipient || {
                 id: request.recipientId,
-                username: request.recipientUsername,
-                avatar: request.recipientAvatar
+                username: request.recipient?.username || "未知用户",
+                avatar: request.recipient?.avatar || ""
             };
+            if (recipient.id === "6895ddc9ee65e98297482d3d" && recipient.username === "未知用户") {
+                recipient.username = "test7"; // 仅临时用于测试，后续需后端修复
+            }
             const escapedRequestId = encodeURIComponent(request.id || '');
             const escapedRecipientId = encodeURIComponent(recipient.id || '');
             const div = document.createElement('div');
