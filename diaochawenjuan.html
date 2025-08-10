@@ -45,7 +45,13 @@
     <!-- 页面容器 -->
     <div class="container mx-auto px-4 py-8 md:py-16 max-w-5xl">
         <!-- 标题区域 -->
-        <header class="text-center mb-12">
+        <header class="text-center mb-12 relative">
+            <!-- 返回按钮 -->
+            <a href="indexdaohang.html" class="absolute left-0 top-0 md:top-4 text-slate-600 hover:text-primary transition-colors flex items-center">
+                <i class="fa fa-arrow-left mr-2"></i>
+                <span>返回首页</span>
+            </a>
+            
             <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-dark mb-4 tracking-tight">
                 <i class="fa fa-gamepad text-primary mr-3"></i>玩家意见调查问卷
             </h1>
@@ -208,12 +214,17 @@
                 <i class="fa fa-check text-2xl text-green-500"></i>
             </div>
             <h3 class="text-xl font-semibold text-green-800 mb-2">提交成功！</h3>
-            <p class="text-green-700">感谢您的宝贵意见，我们会认真阅读并考虑您的建议。</p>
+            <p class="text-green-700 mb-6">感谢您的宝贵意见，我们会认真阅读并考虑您的建议。</p>
+            <!-- 成功页面也添加返回按钮 -->
+            <a href="indexdaohang.html" class="inline-flex items-center bg-primary hover:bg-primary/90 text-white font-medium px-6 py-2 rounded-lg transition-all duration-300">
+                <i class="fa fa-arrow-left mr-2"></i>
+                <span>返回首页</span>
+            </a>
         </div>
         
         <!-- 页脚 -->
         <footer class="text-center text-slate-500 text-sm py-6">
-            <p>© 2023 游戏名称 版权所有 | 您的反馈是我们进步的动力</p>
+            <p>© 2025 半猫诺丷 | 您的反馈是我们进步的动力</p>
         </footer>
     </div>
     
@@ -248,51 +259,33 @@
                     }
                 });
                 
-                // 这里需要发送数据到后端
-                // 实际项目中，替换为你的后端API地址
-                console.log('表单数据:', surveyData);
-                
-                // 模拟API请求延迟
-                setTimeout(() => {
-                    // 隐藏表单，显示成功消息
-                    form.parentElement.classList.add('hidden');
-                    successMessage.classList.remove('hidden');
-                    
-                    // 重置按钮状态（实际项目中可能不需要）
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<span>提交反馈</span><i class="fa fa-paper-plane ml-2"></i>';
-                    
-                    // 实际项目中，这里应该是真实的API请求
-                    /*
-                    // 替换之前的模拟提交代码
-                    fetch('/.netlify/functions/surveySubmit', {  // 新的API端点
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(surveyData),
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // 提交成功
-                            form.parentElement.classList.add('hidden');
-                            successMessage.classList.remove('hidden');
-                        } else {
-                            // 提交失败
-                            alert(data.message || '提交失败，请稍后再试');
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = '<span>提交反馈</span><i class="fa fa-paper-plane ml-2"></i>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('提交失败，请稍后再试');
+                // 实际项目中，这里应该是真实的API请求
+                fetch('/.netlify/functions/surveySubmit', {  // 指向Netlify函数
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(surveyData),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 提交成功
+                        form.parentElement.classList.add('hidden');
+                        successMessage.classList.remove('hidden');
+                    } else {
+                        // 提交失败
+                        alert(data.message || '提交失败，请稍后再试');
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = '<span>提交反馈</span><i class="fa fa-paper-plane ml-2"></i>';
-                    });
-                    */
-                }, 1500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('提交失败，请稍后再试');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>提交反馈</span><i class="fa fa-paper-plane ml-2"></i>';
+                });
             });
         });
     </script>
