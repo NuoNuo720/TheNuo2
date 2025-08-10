@@ -1047,7 +1047,7 @@
                     requests.forEach(req => {
                         if (req.sender) {
                             cacheUserInfo(req.sender);
-                        } else if { (req.senderId && req.senderUsername) {
+                        } else if (req.senderId && req.senderUsername) {
                             cacheUserInfo({
                                 id: req.senderId,
                                 username: req.senderUsername});}

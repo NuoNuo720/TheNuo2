@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>称号管理 - 多功能导航中心</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 基础样式（与导航页保持一致） */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-title {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-title i {
+            font-size: 1.4em;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+            margin-right: 15px;
+        }
+
+        .back-btn:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+
+        .username {
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .title-badge {
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn {
+            background: #555;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background: #777;
+        }
+
+        /* 主容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #2c3e50;
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .page-title h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background-color: #3498db;
+            border-radius: 3px;
+        }
+
+        /* 称号卡片样式 */
+        .title-section {
+            margin-bottom: 50px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .title-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .title-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .title-card.equipped {
+            border-left-color: #2ecc71;
+            background-color: rgba(46, 204, 113, 0.05);
+        }
+
+        .equipped-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #2ecc71;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .title-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .title-icon {
+            font-size: 2rem;
+            color: #3498db;
+        }
+
+        .title-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .title-desc {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .title-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #95a5a6;
+        }
+
+        .equip-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .equip-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .equip-btn.unequip {
+            background-color: #7f8c8d;
+        }
+
+        .equip-btn.unequip:hover {
+            background-color: #666;
+        }
+
+        /* 添加称号表单样式 */
+        .add-title-form {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 50px;
+        }
+
+        .form-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .icon-selector {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .icon-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-option.selected {
+            border-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+
+        .icon-option i {
+            font-size: 1.5rem;
+        }
+
+        .submit-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #95a5a6;
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-state button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* 通知提示 */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #2ecc71;
+        }
+
+        .notification.error {
+            background-color: #e74c3c;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .title-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .username {
+                display: none;
+            }
+            
+            .page-title h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <div class="navbar-title">
+            <a href="indexdaohang.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> 返回
+            </a>
+            <i class="fas fa-trophy"></i>
+            称号管理中心
+        </div>
+        <div class="user-area" id="userArea">
+            <span class="username" id="navbarUsername">加载中...</span>
+            <div id="navbarTitleBadge"></div>
+            <img src="" alt="用户头像" class="user-avatar" id="navbarAvatar">
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> 退出
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-title">
+            <h1>我的称号 collection</h1>
+            <p>管理你的专属称号，展示独特身份</p>
+        </div>
+
+        <!-- 添加新称号表单 -->
+        <div class="add-title-form">
+            <h2 class="form-title">
+                <i class="fas fa-plus-circle"></i> 添加新称号
+            </h2>
+            <form id="addTitleForm">
+                <div class="form-group">
+                    <label class="form-label">称号名称</label>
+                    <input type="text" class="form-input" id="titleName" placeholder="输入称号名称" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">称号描述</label>
+                    <textarea class="form-textarea" id="titleDescription" placeholder="描述这个称号的含义或获取方式" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">选择图标</label>
+                    <div class="icon-selector">
+                        <div class="icon-option selected" data-icon="trophy">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="icon-option" data-icon="star">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="icon-option" data-icon="medal">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="icon-option" data-icon="crown">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="icon-option" data-icon="award">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <div class="icon-option" data-icon="lightbulb">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="icon-option" data-icon="fire">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="icon-option" data-icon="diamond">
+                            <i class="fas fa-diamond"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save"></i> 保存称号
+                </button>
+            </form>
+        </div>
+
+        <!-- 已获得的称号 -->
+        <div class="title-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-award"></i> 已获得的称号
+                </h2>
+                <span id="titleCount">0 个称号</span>
+            </div>
+
+            <div class="title-grid" id="ownedTitlesGrid">
+                <!-- 称号卡片会通过JavaScript动态生成 -->
+                <div class="empty-state">
+                    <i class="fas fa-trophy"></i>
+                    <p>你还没有获得任何称号</p>
+                    <p>完成特定任务或参与活动可以获得专属称号</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知组件 -->
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // 当前选中的图标
+        let selectedIcon = 'trophy';
+        // 当前用户信息
+        let currentUser = null;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查登录状态
+            checkLoginStatus();
+            
+            // 初始化图标选择器
+            initIconSelector();
+            
+            // 绑定表单提交事件
+            document.getElementById('addTitleForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addNewTitle();
+            });
+        });
+
+        // 检查登录状态
+        function checkLoginStatus() {
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            if (!userInfoStr) {
+                // 未登录，跳转到登录页
+                window.location.href = 'indexlo.html';
+                return;
+            }
+            
+            try {
+                currentUser = JSON.parse(userInfoStr);
+                // 更新导航栏用户信息
+                updateNavbarUserInfo();
+                
+                // 加载用户称号
+                loadUserTitles();
+            } catch (err) {
+                console.error('解析用户信息失败:', err);
+                localStorage.removeItem('mainUserInfo');
+                window.location.href = 'indexlo.html';
+            }
+        }
+
+        // 更新导航栏用户信息
+        function updateNavbarUserInfo() {
+            document.getElementById('navbarUsername').textContent = decodeURIComponent(currentUser.username);
+            document.getElementById('navbarAvatar').src = currentUser.avatar || 'https://picsum.photos/200';
+            
+            // 显示当前佩戴的称号
+            const titleBadgeEl = document.getElementById('navbarTitleBadge');
+            if (currentUser.currentTitle) {
+                titleBadgeEl.innerHTML = `
+                    <span class="title-badge">
+                        <i class="fas fa-${currentUser.currentTitle.icon}"></i>
+                        ${currentUser.currentTitle.name}
+                    </span>
+                `;
+            } else {
+                titleBadgeEl.innerHTML = '';
+            }
+        }
+
+        // 初始化图标选择器
+        function initIconSelector() {
+            const iconOptions = document.querySelectorAll('.icon-option');
+            iconOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // 移除其他选项的选中状态
+                    iconOptions.forEach(opt => opt.classList.remove('selected'));
+                    // 添加当前选项的选中状态
+                    this.classList.add('selected');
+                    // 更新选中的图标
+                    selectedIcon = this.getAttribute('data-icon');
+                });
+            });
+        }
+
+        // 加载用户称号
+        function loadUserTitles() {
+            // 先尝试从本地存储加载
+            const userTitles = JSON.parse(localStorage.getItem(`userTitles_${currentUser.id}`) || '[]');
+            
+            // 如果有本地数据，直接显示
+            if (userTitles.length > 0) {
+                renderTitleGrid(userTitles);
+            }
+            
+            // 同时尝试从服务器加载最新数据
+            fetchUserTitlesFromServer();
+        }
+
+        // 从服务器加载称号
+        async function fetchUserTitlesFromServer() {
+            try {
+                const response = await fetch('/api/titles', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const titles = await response.json();
+                    // 保存到本地存储
+                    localStorage.setItem(`userTitles_${currentUser.id}`, JSON.stringify(titles));
+                    // 渲染称号列表
+                    renderTitleGrid(titles);
+                } else if (response.status === 404) {
+                    // 处理404错误，使用本地数据
+                    console.log('称号API未找到，使用本地数据');
+                }
+            } catch (error) {
+                console.error('加载称号失败:', error);
+                showNotification('加载称号失败，使用本地数据', 'error');
+            }
+        }
+
+        // 渲染称号列表
+        function renderTitleGrid(titles) {
+            const gridEl = document.getElementById('ownedTitlesGrid');
+            const countEl = document.getElementById('titleCount');
+            
+            // 更新称号数量
+            countEl.textContent = `${titles.length} 个称号`;
+            
+            // 如果没有称号，显示空状态
+            if (titles.length === 0) {
+                gridEl.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-trophy"></i>
+                        <p>你还没有获得任何称号</p>
+                        <p>完成特定任务或参与活动可以获得专属称号</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 生成称号卡片
+            gridEl.innerHTML = '';
+            titles.forEach(title => {
+                const isEquipped = currentUser.currentTitle && currentUser.currentTitle.id === title.id;
+                
+                const cardEl = document.createElement('div');
+                cardEl.className = `title-card ${isEquipped ? 'equipped' : ''}`;
+                cardEl.innerHTML = `
+                    <div class="title-header">
+                        <i class="fas fa-${title.icon || 'trophy'} title-icon"></i>
+                        ${isEquipped ? `
+                            <div class="equipped-badge">
+                                <i class="fas fa-check"></i> 已佩戴
+                            </div>
+                        ` : ''}
+                    </div>
+                    <h3 class="title-name">${title.name}</h3>
+                    <p class="title-desc">${title.description}</p>
+                    <div class="title-meta">
+                        <span>
+                            <i class="fas fa-calendar"></i> 
+                            ${title.createdAt ? new Date(title.createdAt).toLocaleDateString() : '未知时间'}
+                        </span>
+                        <button class="equip-btn ${isEquipped ? 'unequip' : ''}" 
+                                data-title-id="${title.id}">
+                            <i class="fas ${isEquipped ? 'fa-exchange-alt' : 'fa-check'}"></i>
+                            ${isEquipped ? '更换' : '佩戴'}
+                        </button>
+                    </div>
+                `;
+                
+                gridEl.appendChild(cardEl);
+                
+                // 绑定佩戴按钮事件
+                cardEl.querySelector('.equip-btn').addEventListener('click', function() {
+                    const titleId = this.getAttribute('data-title-id');
+                    equipTitle(titleId, title);
+                });
+            });
+        }
+
+        // 添加新称号
+        async function addNewTitle() {
+            const titleName = document.getElementById('titleName').value.trim();
+            const titleDescription = document.getElementById('titleDescription').value.trim();
+            
+            if (!titleName || !titleDescription) {
+                showNotification('请填写称号名称和描述', 'error');
+                return;
+            }
+            
+            const newTitle = {
+                name: titleName,
+                description: titleDescription,
+                icon: selectedIcon,
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                // 保存到服务器
+                const response = await fetch('/api/titles', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newTitle)
+                });
+                
+                if (response.ok) {
+                    const savedTitle = await response.json();
+                    
+                    // 更新本地存储
+                    const userTitles = JSON.parse(localStorage.getItem(`userTitles_${currentUser.id}`) || '[]');
+                    userTitles.push(savedTitle);
+                    localStorage.setItem(`userTitles_${currentUser.id}`, JSON.stringify(userTitles));
+                    
+                    // 如果是第一个称号，自动佩戴
+                    if (userTitles.length === 1) {
+                        currentUser.currentTitle = savedTitle;
+                        localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+                        updateNavbarUserInfo();
+                    }
+                    
+                    // 重新渲染
+                    renderTitleGrid(userTitles);
+                    
+                    // 重置表单
+                    document.getElementById('addTitleForm').reset();
+                    
+                    showNotification(`成功添加称号: ${titleName}`, 'success');
+                } else {
+                    throw new Error('添加称号失败');
+                }
+            } catch (error) {
+                console.error('添加称号失败:', error);
+                showNotification('添加称号失败，请重试', 'error');
+            }
+        }
+
+        // 佩戴/更换称号
+        async function equipTitle(titleId, titleData) {
+            try {
+                // 更新到服务器
+                const response = await fetch(`/api/titles/equip/${titleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // 更新本地用户信息
+                    currentUser.currentTitle = titleData;
+                    localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+                    
+                    // 更新导航栏显示
+                    updateNavbarUserInfo();
+                    
+                    // 重新渲染称号列表
+                    const userTitles = JSON.parse(localStorage.getItem(`userTitles_${currentUser.id}`) || '[]');
+                    renderTitleGrid(userTitles);
+                    
+                    showNotification(`已佩戴称号: ${titleData.name}`, 'success');
+                } else {
+                    throw new Error('更新称号状态失败');
+                }
+            } catch (error) {
+                console.error('佩戴称号失败:', error);
+                showNotification('佩戴称号失败，请重试', 'error');
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.className = 'notification';
+            notification.classList.add(type);
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('mainUserInfo');
+                window.location.href = 'indexlo.html';
+            }
+        }
+    </script>
+</body>
+</html>
