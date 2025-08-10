@@ -54,7 +54,7 @@ exports.handler = async (event) => {
       friendRequests: []
     };
     await usersCollection.insertOne(newUser);
-
+    dataStore.addUser(newUser);
     // 关闭连接并返回成功响应
     await client.close();
     return {
@@ -65,7 +65,10 @@ exports.handler = async (event) => {
         token: newUser.token
       })
     };
-
+    // register.js 注册成功后
+    const newUser = await usersCollection.insertOne(newUser);
+    // 同步新用户到缓存
+    const cachedUser = dataStore.syncUserFromDB(newUser.ops[0]); 
   } catch (err) {
     // 捕获所有错误并输出日志
     console.error('注册函数错误：', err.message);

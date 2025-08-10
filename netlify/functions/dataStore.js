@@ -1,204 +1,171 @@
 // dataStore.js
-// 简易数据存储（实际项目中应使用真实数据库）
-let users = [
-  { id: '1', username: '张三', avatar: 'https://picsum.photos/seed/user1/200' },
-  { id: '2', username: '李四', avatar: 'https://picsum.photos/seed/user2/200' },
-  { id: '3', username: '王五', avatar: 'https://picsum.photos/seed/user3/200' },
-  { id: '4', username: '赵六', avatar: 'https://picsum.photos/seed/user4/200' }
-];
+// 作为MongoDB的缓存层，同步数据库中的用户数据
+let users = []; // 缓存用户数据（从数据库同步）
+let friendRequests = []; // 缓存好友请求
+let friends = []; // 缓存好友关系
+let webSocketClients = {};
 
-let friends = []; // 存储好友关系 { id: '1-2', userId: '1', friendId: '2', addedAt: '' }
-let friendRequests = []; // 存储好友请求 { id: 'req1', senderId: '1', recipientId: '2', message: '', sentAt: '' }
-let webSocketClients = {}; // 存储WebSocket连接 { userId: { connectionId, send } }
-
-// 生成唯一ID
+// 生成唯一ID（兼容MongoDB的ObjectId格式）
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  const timestamp = Date.now().toString(16);
+  const random = Math.random().toString(16).substr(2, 10);
+  return `${timestamp}${random}`;
 }
 
 module.exports = {
-  // 用户相关
-  getUserById: (id) => users.find(user => user.id === id),
+  // 核心：从数据库同步用户到缓存（注册/登录时调用）
+  syncUserFromDB: (dbUser) => {
+    if (!dbUser || !dbUser._id) return;
+    
+    // 转换MongoDB文档格式（_id -> id，移除敏感字段）
+    const user = {
+      id: dbUser._id.toString(), // MongoDB的ObjectId转为字符串
+      username: dbUser.username,
+      email: dbUser.email,
+      avatar: dbUser.avatar || `https://picsum.photos/seed/${dbUser._id}/200`,
+      isOnline: false,
+      createdAt: dbUser.createdAt
+    };
+    
+    // 同步到缓存（更新或新增）
+    const index = users.findIndex(u => u.id === user.id);
+    if (index > -1) {
+      users[index] = user; // 更新已有用户
+    } else {
+      users.push(user); // 新增用户
+    }
+    console.log(`已同步用户到缓存：${user.username}（ID: ${user.id}）`);
+    return user;
+  },
+
+  // 从缓存获取用户（优先），不存在则返回基础信息
+  getUserById: (id) => {
+    const user = users.find(u => u.id === id);
+    if (user) return user;
+    
+    // 缓存未命中时的兜底（避免前端报错）
+    console.warn(`缓存未找到用户：${id}，返回基础信息`);
+    return {
+      id,
+      username: '未知用户',
+      avatar: `https://picsum.photos/seed/${id}/200`,
+      isOnline: false
+    };
+  },
+
+  // 从缓存搜索用户（用于前端搜索功能）
   searchUsers: (query, excludeUserId) => {
     return users
       .filter(user => user.id !== excludeUserId)
       .filter(user => user.username.toLowerCase().includes(query.toLowerCase()));
   },
+
+  // 更新用户在线状态
   updateUserStatus: (userId, isOnline) => {
     const user = users.find(u => u.id === userId);
     if (user) {
       user.isOnline = isOnline;
     }
   },
-  
-  // 好友相关
+
+  // 同步数据库中的好友关系到缓存
+  syncFriendsFromDB: (userId, dbFriends) => {
+    // dbFriends格式：[{ friendId: ObjectId, addedAt: Date }, ...]
+    friends = friends.filter(f => f.userId !== userId); // 先清除旧数据
+    
+    dbFriends.forEach(friend => {
+      const friendId = friend.friendId.toString();
+      friends.push({
+        id: `${userId}-${friendId}`,
+        userId,
+        friendId,
+        addedAt: friend.addedAt.toISOString()
+      });
+    });
+    console.log(`已同步用户${userId}的好友关系（${dbFriends.length}条）`);
+  },
+
+  // 获取缓存中的好友列表
   getFriends: (userId) => {
-    // 查找所有好友关系
-    const userFriends = friends.filter(f => f.userId === userId);
+    return friends
+      .filter(f => f.userId === userId)
+      .map(friendRel => {
+        const friend = module.exports.getUserById(friendRel.friendId);
+        return {
+          ...friend,
+          addedAt: friendRel.addedAt
+        };
+      });
+  },
+
+  // 同步数据库中的好友请求到缓存
+  syncFriendRequestsFromDB: (userId, dbRequests, isSender) => {
+    // 清除该用户的旧请求
+    friendRequests = friendRequests.filter(req => 
+      !(isSender ? req.senderId === userId : req.recipientId === userId)
+    );
     
-    // 获取好友详细信息
-    return userFriends.map(friendRel => {
-      const friend = users.find(u => u.id === friendRel.friendId);
-      return {
-        ...friend,
-        addedAt: friendRel.addedAt
+    // 同步新请求（dbRequests为数据库查询结果）
+    dbRequests.forEach(req => {
+      const request = {
+        id: req._id.toString(),
+        senderId: req.senderId.toString(),
+        recipientId: req.recipientId.toString(),
+        message: req.message || '',
+        status: req.status || 'pending',
+        sentAt: req.sentAt.toISOString()
       };
-    });
-  },
-  
-  isFriends: (userId1, userId2) => {
-    return friends.some(f => 
-      (f.userId === userId1 && f.friendId === userId2) || 
-      (f.userId === userId2 && f.friendId === userId1)
-    );
-  },
-  
-  addFriend: (userId1, userId2) => {
-    const id = `${userId1}-${userId2}`;
-    
-    // 添加双向好友关系
-    friends.push({
-      id,
-      userId: userId1,
-      friendId: userId2,
-      addedAt: new Date().toISOString()
+      friendRequests.push(request);
     });
     
-    friends.push({
-      id: `${userId2}-${userId1}`,
-      userId: userId2,
-      friendId: userId1,
-      addedAt: new Date().toISOString()
-    });
-    
-    return id;
+    console.log(`已同步用户${userId}的${isSender ? '发送' : '收到'}请求（${dbRequests.length}条）`);
   },
-  
-  deleteFriend: (userId, friendId) => {
-    friends = friends.filter(f => 
-      !(f.userId === userId && f.friendId === friendId) &&
-      !(f.userId === friendId && f.friendId === userId)
-    );
-    return true;
-  },
-  
-  // 好友请求相关
-  createFriendRequest: (request) => {
-    const newRequest = {
-      id: generateId(),
-      status: 'pending', // 状态字段，用于区分请求状态
-      ...request,
-      sentAt: new Date().toISOString() // 记录发送时间
-    };
-    friendRequests.push(newRequest);
-    return newRequest;
-  },
-  
-  // 用于接收方查询收到的请求
+
+  // 获取收到的请求（从缓存）
   getReceivedFriendRequests: (recipientId) => {
     return friendRequests
       .filter(req => req.recipientId === recipientId && req.status === 'pending')
       .map(req => {
-        const sender = users.find(u => u.id === req.senderId);
+        const sender = module.exports.getUserById(req.senderId);
         return {
           ...req,
-          sender: sender ? {
+          sender: {
             id: sender.id,
             username: sender.username,
             avatar: sender.avatar,
             isOnline: sender.isOnline
-          } : null
+          }
         };
       });
   },
-  
-  // 保持兼容性，内部调用getReceivedFriendRequests
-  getFriendRequests: (recipientId) => {
-    return module.exports.getReceivedFriendRequests(recipientId);
-  },
-  
-  // 获取发送方的待处理请求
+
+  // 获取发送的请求（从缓存）
   getPendingRequests: (senderId) => {
     return friendRequests
       .filter(req => req.senderId === senderId && req.status === 'pending')
       .map(req => {
-        const recipient = users.find(u => u.id === req.recipientId);
+        const recipient = module.exports.getUserById(req.recipientId);
         return {
           ...req,
-          recipient: recipient ? {
+          recipient: {
             id: recipient.id,
             username: recipient.username,
             avatar: recipient.avatar,
             isOnline: recipient.isOnline
-          } : null
+          }
         };
       });
   },
-  
+
   // 检查是否有未处理的请求
   hasPendingRequest: (senderId, recipientId) => {
     return friendRequests.some(req => 
-      req.status === 'pending' && (
-        (req.senderId === senderId && req.recipientId === recipientId) ||
-        (req.senderId === recipientId && req.recipientId === senderId)
-      )
+      req.status === 'pending' && 
+      ((req.senderId === senderId && req.recipientId === recipientId) ||
+       (req.senderId === recipientId && req.recipientId === senderId))
     );
   },
-  
-  // 处理好友请求（接受/拒绝）
-  handleFriendRequest: (requestId, action, userId) => {
-    const requestIndex = friendRequests.findIndex(req => req.id === requestId);
-    
-    if (requestIndex === -1) {
-      return { success: false, error: '请求不存在' };
-    }
-    
-    const request = friendRequests[requestIndex];
-    
-    // 验证请求接收者是否匹配
-    if (request.recipientId !== userId) {
-      return { success: false, error: '无权处理此请求' };
-    }
-    
-    // 更新请求状态
-    request.status = action === 'accept' ? 'accepted' : 'rejected';
-    
-    // 如果是接受请求，创建好友关系
-    if (action === 'accept') {
-      module.exports.addFriend(request.senderId, request.recipientId);
-      
-      // 返回好友信息
-      const friend = users.find(u => u.id === request.senderId);
-      return {
-        success: true,
-        action,
-        friend
-      };
-    }
-    
-    return { success: true, action };
-  },
-  
-  // 取消好友请求
-  cancelFriendRequest: (requestId, userId) => {
-    const requestIndex = friendRequests.findIndex(req => req.id === requestId);
-    
-    if (requestIndex === -1) {
-      return false;
-    }
-    
-    const request = friendRequests[requestIndex];
-    
-    // 验证请求发送者是否匹配
-    if (request.senderId !== userId) {
-      return false;
-    }
-    
-    // 移除请求
-    friendRequests.splice(requestIndex, 1);
-    return true;
-  },
-  
-  // WebSocket相关
+
+  // WebSocket连接管理
   webSocketClients
 };
