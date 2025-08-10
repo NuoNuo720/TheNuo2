@@ -1,9 +1,9 @@
 // 称号相关API路由
 const express = require('express');
 const router = express.Router();
-const Title = require('../models/Title');
-const User = require('../models/User');
-const auth = require('../middleware/auth'); // 认证中间件
+const Title = require('./models/Title');
+const User = require('./models/User');
+const auth = require('./models/auth'); // 认证中间件
 
 // 获取当前用户的所有称号
 router.get('/', auth, async (req, res) => {
