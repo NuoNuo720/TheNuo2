@@ -1,13 +1,14 @@
-// 称号相关API路由
 const express = require('express');
 const router = express.Router();
-const Title = require('./models/Title');
-const User = require('./models/User');
-const auth = require('./models/auth'); // 认证中间件
+const Title = require('./models/Title');  // 修正模型路径
+const User = require('./models/User');    // 修正模型路径
+const auth = require('./auth');           // 修正认证中间件路径
+const connectDB = require('./utils/db');  // 修正数据库连接路径
 
 // 获取当前用户的所有称号
 router.get('/', auth, async (req, res) => {
   try {
+    await connectDB();  // 确保连接数据库
     const titles = await Title.find({ userId: req.user.id });
     res.json(titles);
   } catch (err) {
@@ -19,6 +20,7 @@ router.get('/', auth, async (req, res) => {
 // 获取当前佩戴的称号
 router.get('/current', auth, async (req, res) => {
   try {
+    await connectDB();  // 确保连接数据库
     const user = await User.findById(req.user.id);
     if (!user.profile.currentTitleId) {
       return res.json(null);
@@ -37,6 +39,7 @@ router.post('/', auth, async (req, res) => {
   const { name, description, icon } = req.body;
   
   try {
+    await connectDB();  // 确保连接数据库
     const newTitle = new Title({
       name,
       description,
@@ -65,6 +68,7 @@ router.post('/', auth, async (req, res) => {
 // 切换称号佩戴状态
 router.put('/equip/:id', auth, async (req, res) => {
   try {
+    await connectDB();  // 确保连接数据库
     // 验证称号是否属于当前用户
     const title = await Title.findOne({
       _id: req.params.id,
