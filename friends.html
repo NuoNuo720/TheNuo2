@@ -1209,12 +1209,16 @@
                 }
                 
                 // 过滤有效请求
-                const validRequests = pendingRequests.filter(req => {
-                    const isRecipientValid = req.recipientId && req.recipientId !== 'undefined' && req.recipientId.trim() !== '';
-                    const isStatusValid = req.status === 'pending';
-                    const isIdValid = !!req._id || !!req.id;
-                    return isRecipientValid && isStatusValid && isIdValid;
-                });
+                const validRequests = Array.from(
+                    new Map(pendingRequests
+                        .filter(req => 
+                            req.senderId === currentUser.id &&  // 确保是自己发送的
+                            req.recipientId !== 'undefined' && 
+                            req.status === 'pending'
+                        )
+                        .map(req => [req.recipientId, req]) // 按接收者ID去重
+                    ).values()
+                );
                 
                 // 如果后端返回空但本地有记录，使用本地记录
                 if (validRequests.length === 0 && pendingRequestsMap.size > 0) {
@@ -1470,7 +1474,10 @@
                 showNotification('请先从搜索结果中选择一个用户', 'error');
                 return;
             }
-            
+            if (selectedUserId === currentUser.id) {
+                showNotification('不能向自己发送请求', 'error');
+                return;
+            }
             // 验证用户ID格式
             const objectIdRegex = /^[0-9a-fA-F]{24}$/;
             if (!objectIdRegex.test(selectedUserId)) {

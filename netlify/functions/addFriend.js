@@ -103,14 +103,14 @@ exports.handler = async (event) => {
 
         // 创建新的好友请求（补充必要字段）
         const newRequest = {
-            senderId,
-            recipientId,
+            senderId:senderId,
+            recipientId:recipientId,
             message: message || '请求添加你为好友',
             status: 'pending',
             sentAt: new Date(),
             updatedAt: new Date() // 新增字段，便于后续状态更新追踪
         };
-
+        await db.collection('friendRequests').insertOne(newRequest);
         const result = await db.collection('friendRequests').insertOne(newRequest);
 
         return {
