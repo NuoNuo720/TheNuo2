@@ -12,7 +12,44 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        /* 称号徽章样式 */
+        .title-badge {
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
+        /* 称号列表样式 */
+        .title-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .title-item {
+            background-color: #f0f4f8;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .title-item.equipped {
+            background-color: #e8f4fd;
+            border-color: #2980b9;
+            font-weight: 500;
+        }
         body {
             background-color: #f0f4f8;
             color: #333;
@@ -589,7 +626,17 @@
                 </button>
                 <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarUpload(event)">
             </div>
-            
+            <!-- 修改个人信息模态框，添加称号展示区域 -->
+            <div class="profile-section">
+                <label class="profile-label">当前称号</label>
+                <div id="titleDisplay" class="profile-value">暂无称号</div>
+            </div>
+            <div class="profile-section">
+                <label class="profile-label">称号管理</label>
+                <button class="upload-btn" onclick="navigateTo('titles.html')">
+                    <i class="fas fa-trophy"></i> 查看/管理我的称号
+                </button>
+            </div>
             <div class="profile-section">
                 <label class="profile-label">用户名</label>
                 <div id="usernameDisplay" class="profile-value"></div>
@@ -680,7 +727,14 @@
             // 格式化登录时间
             const loginTime = new Date(userInfo.loginTime);
             const formattedTime = loginTime.toLocaleString();
-            
+            // 构建用户信息区域HTML，包含称号展示
+            let titleBadge = '';
+            if (userInfo.currentTitle) {
+                titleBadge = `<span class="title-badge">
+                    <i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i>
+                    ${userInfo.currentTitle.name}
+                </span>`;
+            }
             userAreaEl.innerHTML = `
                 <span class="username">${decodeURIComponent(userInfo.username)}</span>
                 <img src="${avatarUrl}" alt="用户头像" class="user-avatar" onclick="openProfileModal()">
@@ -693,6 +747,13 @@
             document.getElementById('modalAvatar').src = avatarUrl;
             document.getElementById('usernameDisplay').textContent = decodeURIComponent(userInfo.username);
             document.getElementById('loginTimeDisplay').textContent = formattedTime;
+            // 设置模态框中的当前称号
+            const titleDisplay = document.getElementById('titleDisplay');
+            if (userInfo.currentTitle) {
+                titleDisplay.innerHTML = `<i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i> ${userInfo.currentTitle.name}`;
+            } else {
+                titleDisplay.textContent = '暂无称号';
+            }
         }
 
         // 初始化卡片动画
@@ -852,6 +913,86 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
+        }
+        // 在checkLoginStatus函数中添加加载称号的逻辑
+        function checkLoginStatus() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            console.log("读取到的用户信息：", userInfoStr);
+    
+            // 如果未登录，重定向到登录页
+            if (!userInfoStr) {
+                if (!window.location.pathname.includes('indexlo.html')) {
+                    window.location.href = 'indexlo.html';
+                }
+                return;
+            }
+    
+            try {
+                const userInfo = JSON.parse(userInfoStr);
+                // 验证关键字段是否存在
+                if (!userInfo.token || !userInfo.username) {
+                    throw new Error("用户信息不完整");
+                }
+                // 已登录，显示用户信息
+                updateUserDisplay(userInfo);
+        
+                // 加载用户称号
+                loadUserTitles(userInfo); // 添加这行
+            } catch (err) {
+                console.error("用户信息解析失败：", err);
+                localStorage.removeItem('mainUserInfo');
+                if (!window.location.pathname.includes('indexlo.html')) {
+                    window.location.href = 'indexlo.html';
+                }
+            }
+        }
+        // 添加加载用户称号的函数
+        function loadUserTitles(userInfo) {
+            // 从localStorage获取用户称号
+            const userTitles = JSON.parse(localStorage.getItem(`userTitles_${userInfo.id}`) || '[]');
+    
+            // 如果没有称号数据，尝试从服务器获取
+            if (userTitles.length === 0) {
+                fetchUserTitlesFromServer(userInfo);
+            } else {
+                // 更新用户信息中的当前称号
+                if (userTitles.length > 0 && !userInfo.currentTitle) {
+                    userInfo.currentTitle = userTitles[0];
+                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                    updateUserDisplay(userInfo);
+                }
+            }
+        }
+
+        // 从服务器获取用户称号
+        async function fetchUserTitlesFromServer(userInfo) {
+            try {
+                const response = await fetch('/api/titles', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${userInfo.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+        
+                if (response.ok) {
+                    const titles = await response.json();
+                    // 保存到localStorage
+                    localStorage.setItem(`userTitles_${userInfo.id}`, JSON.stringify(titles));
+            
+                    // 如果有称号，设置第一个为当前称号
+                    if (titles.length > 0) {
+                        const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
+                        userData.currentTitle = titles[0];
+                        localStorage.setItem('mainUserInfo', JSON.stringify(userData));
+                        updateUserDisplay(userData);
+                    }
+                }
+            } catch (error) {
+                console.error('获取称号失败:', error);
+                // 可以忽略错误，使用本地数据
+            }
         }
     </script>
 </body>

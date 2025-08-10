@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>自由电子冒险2：量子风暴 | Electron Adventure 2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -100,19 +100,29 @@
             .control-btn {
                 aspect-ratio: 1/1;
                 font-size: 6vw;
+                min-width: 50px;
+                min-height: 50px;
             }
             .status-bar {
                 font-size: 3.5vw;
+                padding: 2px 3px;
             }
             .modal-content {
                 max-height: 85vh;
+            }
+            #gameArea {
+                height: clamp(200px, 40vh, 400px);
+            }
+            nav {
+                padding-top: 2px;
+                padding-bottom: 2px;
             }
         }
     </style>
 </head>
 <body class="bg-gradient-to-b from-space to-slate-900 text-white min-h-screen font-future overflow-x-hidden">
     <!-- 顶部导航 -->
-    <nav class="container mx-auto px-4 py-3 flex justify-between items-center border-b border-slate-800">
+    <nav class="container mx-auto px-4 py-2 flex justify-between items-center border-b border-slate-800">
         <div class="flex items-center">
             <div class="w-10 h-10 rounded-full bg-quantum/30 flex items-center justify-center mr-2">
                 <i class="fa fa-atom text-quantum glow"></i>
@@ -132,11 +142,11 @@
     </nav>
 
     <!-- 游戏主容器 -->
-    <main class="container mx-auto px-4 py-5 max-w-6xl">
+    <main class="container mx-auto px-2 py-3 max-w-6xl">
         <!-- 状态面板 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
-                <div class="w-8 h-8 rounded-full bg-electron/20 flex items-center justify-center mr-2">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center status-bar border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-electron/20 flex items-center justify-center mr-2">
                     <i class="fa fa-signal text-electron"></i>
                 </div>
                 <div>
@@ -144,8 +154,8 @@
                     <div class="font-bold" id="levelDisplay">1</div>
                 </div>
             </div>
-            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
-                <div class="w-8 h-8 rounded-full bg-quantum/20 flex items-center justify-center mr-2">
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center status-bar border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-quantum/20 flex items-center justify-center mr-2">
                     <i class="fa fa-bolt text-quantum"></i>
                 </div>
                 <div>
@@ -153,8 +163,8 @@
                     <div class="font-bold" id="scoreDisplay">0</div>
                 </div>
             </div>
-            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
-                <div class="w-8 h-8 rounded-full bg-neutral/20 flex items-center justify-center mr-2">
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center status-bar border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-neutral/20 flex items-center justify-center mr-2">
                     <i class="fa fa-clock-o text-neutral"></i>
                 </div>
                 <div>
@@ -162,8 +172,8 @@
                     <div class="font-bold" id="timerDisplay">45s</div>
                 </div>
             </div>
-            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
-                <div class="w-8 h-8 rounded-full bg-positive/20 flex items-center justify-center mr-2">
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center status-bar border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-positive/20 flex items-center justify-center mr-2">
                     <i class="fa fa-magnet text-positive" id="chargeIcon"></i>
                 </div>
                 <div>
@@ -174,9 +184,9 @@
         </div>
         
         <!-- 游戏区域 -->
-        <div class="perspective-3d mb-5">
+        <div class="perspective-3d mb-4">
             <div id="gameArea" class="relative bg-space rounded-xl overflow-hidden border-2 border-slate-700 field-grid z-axis-transform" 
-                 style="height: clamp(300px, 55vh, 600px);">
+                 style="height: clamp(200px, 40vh, 400px);">
                 <!-- 电子 -->
                 <div id="electron" class="absolute w-10 h-10 rounded-full bg-negative charge-effect float-3d" 
                      style="left: 50px; top: 50%; --z-offset: 0px; --z-absolute: 0; color: var(--tw-text-opacity); --tw-text-opacity: 1;">
@@ -204,28 +214,28 @@
         </div>
         
         <!-- 控制面板 -->
-        <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700 mb-6">
-            <h3 class="text-center text-base font-semibold mb-4 text-quantum">量子电场控制台</h3>
+        <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700 mb-4">
+            <h3 class="text-center text-base font-semibold mb-3 text-quantum">量子电场控制台</h3>
             
             <!-- 主要控制方向 -->
-            <div class="grid grid-cols-3 gap-2 md:gap-4 mb-4">
+            <div class="grid grid-cols-3 gap-4 mb-3">
                 <div class="col-start-2">
-                    <button id="upBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                    <button id="upBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-2 rounded-lg flex justify-center items-center control-btn">
                         <i class="fa fa-arrow-up text-white text-xl"></i>
                     </button>
                 </div>
                 <div class="col-start-1 row-start-2">
-                    <button id="leftBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                    <button id="leftBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-2 rounded-lg flex justify-center items-center control-btn">
                         <i class="fa fa-arrow-left text-white text-xl"></i>
                     </button>
                 </div>
                 <div class="col-start-2 row-start-2">
-                    <button id="downBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                    <button id="downBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-2 rounded-lg flex justify-center items-center control-btn">
                         <i class="fa fa-arrow-down text-white text-xl"></i>
                     </button>
                 </div>
                 <div class="col-start-3 row-start-2">
-                    <button id="rightBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                    <button id="rightBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-2 rounded-lg flex justify-center items-center control-btn">
                         <i class="fa fa-arrow-right text-white text-xl"></i>
                     </button>
                 </div>
@@ -234,26 +244,26 @@
             <!-- Z轴控制和电荷切换 -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="flex gap-2">
-                    <button id="zMinusBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                    <button id="zMinusBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 transition-all p-2 rounded-lg flex justify-center items-center control-btn">
                         <i class="fa fa-arrow-circle-o-left text-quantum text-xl"></i>
                     </button>
-                    <button id="zPlusBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                    <button id="zPlusBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 transition-all p-2 rounded-lg flex justify-center items-center control-btn">
                         <i class="fa fa-arrow-circle-o-right text-quantum text-xl"></i>
                     </button>
                 </div>
-                <button id="chargeToggleBtn" class="bg-gradient-to-r from-positive to-negative hover:opacity-90 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                <button id="chargeToggleBtn" class="bg-gradient-to-r from-positive to-negative hover:opacity-90 transition-all p-2 rounded-lg flex justify-center items-center control-btn">
                     <i class="fa fa-exchange text-white text-xl mr-2"></i>
                     <span>切换电荷</span>
                 </button>
             </div>
             
-            <p class="text-center text-xs text-slate-400 mt-4">
-                提示: 电荷状态会改变电子在电场中的运动方向 | Z轴控制可穿越不同空间层
+            <p class="text-center text-xs text-slate-400 mt-3">
+                提示: 负电荷远离电场，正电荷靠近电场 | Z轴控制可穿越不同空间层
             </p>
         </div>
         
         <!-- 快捷按钮 -->
-        <div class="flex flex-wrap justify-center gap-3 mb-10">
+        <div class="flex flex-wrap justify-center gap-3 mb-6">
             <button id="restartBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-4 py-2 rounded-lg flex items-center">
                 <i class="fa fa-refresh mr-2"></i> 重置量子态
             </button>
@@ -389,8 +399,8 @@
                 <div>
                     <h3 class="font-semibold text-quantum mb-1">电荷系统</h3>
                     <ul class="list-disc list-inside text-slate-300 space-y-1">
-                        <li><span class="text-negative">负电荷</span>：与原电场方向相反移动</li>
-                        <li><span class="text-positive">正电荷</span>：与原电场方向相同移动</li>
+                        <li><span class="text-negative">负电荷</span>：远离电场方向移动</li>
+                        <li><span class="text-positive">正电荷</span>：靠近电场方向移动</li>
                         <li><span class="text-neutral">中性</span>：不受电场影响，仅受惯性影响</li>
                     </ul>
                 </div>
@@ -1034,19 +1044,19 @@
             }
         }
         
-        // 应用电场力
+        // 应用电场力（核心修正：负电荷远离电场，正电荷靠近电场）
         function applyField(direction) {
             if (!gameState.isPlaying) return;
             
             gameState.moves++;
             showFieldDirectionIndicator(direction);
             
-            // 根据电荷状态确定受力方向
+            // 根据电荷状态确定受力方向（已修正）
             let forceMultiplier = 1;
             if (gameState.electron.charge === 'negative') {
-                forceMultiplier = 1; // 负电荷：与电场方向相反
+                forceMultiplier = -1; // 负电荷：远离电场方向
             } else if (gameState.electron.charge === 'positive') {
-                forceMultiplier = -1; // 正电荷：与电场方向相同
+                forceMultiplier = 1;  // 正电荷：靠近电场方向
             } else {
                 forceMultiplier = 0.3; // 中性：受影响小
             }
@@ -1390,7 +1400,7 @@
             
             const padding = 60;
             const protonSize = gameState.baseObstacleSize;
-            const maxAttempts = 50;
+            const maxAttempts = 80; // 增加尝试次数避免重叠
             const allObstacles = [...gameState.traps];
             
             for (let i = 0; i < count; i++) {
@@ -1448,7 +1458,7 @@
             
             const padding = 60;
             const trapSize = gameState.baseObstacleSize + 10;
-            const maxAttempts = 50;
+            const maxAttempts = 80; // 增加尝试次数避免重叠
             const allObstacles = [...gameState.protons];
             
             for (let i = 0; i < count; i++) {
@@ -1493,7 +1503,7 @@
             }
         }
         
-        // 创建量子碎片
+        // 创建量子碎片（确保至少3个）
         function createFragments(count) {
             // 清除现有碎片
             gameState.fragments.forEach(frag => {
@@ -1505,19 +1515,25 @@
             
             const fragmentSize = 20;
             const padding = 50;
+            const actualCount = Math.max(3, count); // 确保至少3个碎片
             
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < actualCount; i++) {
                 let x, y, z;
+                let attempts = 0;
+                const maxAttempts = 50;
                 
-                // 确保碎片位置有一定挑战性
                 do {
                     x = Math.random() * (gameState.gameWidth - fragmentSize - padding * 2) + padding;
                     y = Math.random() * (gameState.gameHeight - fragmentSize - padding * 2) + padding;
                     z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+                    attempts++;
                 } while (
                     // 不要太靠近电子或目标
                     (Math.abs(x - gameState.electron.x) < 100 && Math.abs(y - gameState.electron.y) < 100) ||
-                    (Math.abs(x - gameState.target.x) < 100 && Math.abs(y - gameState.target.y) < 100)
+                    (Math.abs(x - gameState.target.x) < 100 && Math.abs(y - gameState.target.y) < 100) ||
+                    // 不要太靠近其他碎片
+                    isPositionTooClose(x, y, fragmentSize, gameState.fragments) ||
+                    attempts >= maxAttempts
                 );
                 
                 const fragment = document.createElement('div');
@@ -1670,14 +1686,14 @@
             }
         }
         
-        // 获取障碍物数量
+        // 获取障碍物数量（确保碎片至少3个）
         function getObstacleCount() {
             let protonCount, trapCount, fragmentCount;
             
-            // 基础数量
-            protonCount = Math.min(2 + Math.floor(gameState.level / 2), window.innerWidth < 640 ? 4 : 8);
-            trapCount = Math.min(1 + Math.floor((gameState.level - 1) / 3), window.innerWidth < 640 ? 3 : 5);
-            fragmentCount = Math.min(2 + Math.floor(gameState.level / 5), 3); // 最多3个碎片
+            // 基础数量（调整碎片数量，确保至少3个）
+            protonCount = Math.min(2 + Math.floor(gameState.level / 2), window.innerWidth < 640 ? 3 : 8); // 移动端减少质子数量
+            trapCount = Math.min(1 + Math.floor((gameState.level - 1) / 3), window.innerWidth < 640 ? 2 : 5); // 移动端减少陷阱数量
+            fragmentCount = Math.min(3 + Math.floor((gameState.level - 1) / 3), 5); // 初始3个，随等级增加
             
             // Boss关特殊设置
             if (gameState.level % 5 === 0) {
@@ -1744,7 +1760,7 @@
         
         // 游戏循环
         let lastFrameTime = 0;
-        const maxFps = 60;
+        const maxFps = 30;
         const frameInterval = 1000 / maxFps;
         
         function gameLoop(timestamp) {
