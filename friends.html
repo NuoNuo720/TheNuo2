@@ -727,7 +727,7 @@
             
             // 缓存没有则从API获取
             try {
-                const response = await fetch('/.netlify/functions/getUserInfo', {
+                const response = await fetch('/.netlify/functions/searchUsers', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
