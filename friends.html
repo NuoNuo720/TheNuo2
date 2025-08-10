@@ -1685,7 +1685,7 @@
                 if (serverSuccess) {
                     showNotification(`已${action === 'accept' ? '接受' : '拒绝'}好友请求`, 'success');
                     loadFriendRequests();
-                    loadFriendList();
+                    loadFriendLists();
                     return;
                 }
         
@@ -1885,7 +1885,7 @@
         async function syncPendingActions() {
             const queue = JSON.parse(localStorage.getItem('friendSyncQueue') || '[]');
             if (queue.length === 0) return;
-            
+            console.log("同步队列参数:", queue);  // 新增：打印参数
             // 检查上次同步时间，至少间隔30秒
             const lastSyncTime = localStorage.getItem('lastSyncTime') || 0;
             const now = new Date().getTime();
