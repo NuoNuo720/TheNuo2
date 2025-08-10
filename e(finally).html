@@ -150,7 +150,7 @@
             </div>
         </div>
         <!-- 游戏区域 - 自适应高度 -->
-        <div id="gameArea" class="game-container relative bg-slate-900/60 backdrop-blur-sm rounded-xl overflow-hidden border-2 border-slate-700 mb-4" style="height: clamp(300px, 50vh, 500px);">
+        <div id="gameArea" class="game-container relative bg-slate-900/60 backdrop-blur-sm rounded-xl overflow-hidden border-2 border-slate-700 mb-4 transition-opacity duration-500" style="height: clamp(300px, 50vh, 500px);">
             <!-- 电子 -->
             <div id="electron" class="absolute w-8 h-8 bg-primary rounded-full electron-glow floating" style="left: 50px; top: 50%;">
                 <div class="absolute -inset-1 bg-gradient-to-r from-primary to-blue-300 rounded-full opacity-30"></div>
@@ -237,7 +237,7 @@
             baseObstacleSize: 36
         };
         
-        // 排行榜相关函数 - 修复版
+        // 排行榜相关函数
         const rankingSystem = {
             // 初始化排行榜（增加存储检测）
             init() {
@@ -286,7 +286,7 @@
                 return false;
             },
 
-            // 添加新分数（修复核心逻辑）
+            // 添加新分数
             addScore(score) {
                 // 确保分数是数字
                 if (typeof score !== 'number' || isNaN(score)) {
@@ -294,12 +294,15 @@
                     return false;
                 }
                 
-                // 获取玩家名称（简化处理，确保有默认值）
+                // 获取玩家名称
                 let playerName = '游客';
                 try {
-                    const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-                    if (userInfo?.username) {
-                        playerName = userInfo.username;
+                    const userInfoStr = localStorage.getItem('mainUserInfo');
+                    if (userInfoStr) { // 先判断是否存在
+                        const userInfo = JSON.parse(userInfoStr);
+                        if (userInfo?.username) {
+                            playerName = userInfo.username;
+                        }
                     }
                 } catch (e) {
                     console.log('使用默认用户名:', e);
@@ -356,7 +359,7 @@
                 if (this.rankings.length === 0) {
                     const emptyItem = document.createElement('div');
                     emptyItem.className = 'text-center p-4 text-slate-400';
-                    emptyItem.textContent = '暂无排行榜数据';
+                    emptyItem.textContent = '暂无记录，快来创造第一个高分吧！';
                     rankingListEl.appendChild(emptyItem);
                     return;
                 }
@@ -409,7 +412,7 @@
         
         // 初始化游戏
         function initGame() {
-            // 初始化排行榜（增加日志）
+            // 初始化排行榜
             console.log('初始化排行榜...');
             rankingSystem.init();
             console.log('初始排行榜数据:', rankingSystem.rankings);
@@ -484,12 +487,13 @@
     '开始修复');
         }
         
-        // 其他游戏函数保持不变...
+        // 更新游戏区域尺寸
         function updateGameDimensions() {
             gameState.gameWidth = gameState.gameArea.offsetWidth;
             gameState.gameHeight = gameState.gameArea.offsetHeight;
         }
         
+        // 根据屏幕尺寸调整游戏参数
         function adjustGameParameters() {
             if (window.innerWidth < 640) {
                 gameState.baseObstacleSize = 30;
@@ -502,6 +506,7 @@
             }
         }
         
+        // 重置电子位置
         function resetElectronPosition() {
             gameState.electron.x = 30;
             gameState.electron.y = gameState.gameHeight / 2;
@@ -510,6 +515,7 @@
             updateElectronPosition();
         }
         
+        // 设置随机目标位置
         function setRandomTargetPosition() {
             const padding = 40;
             const targetWidth = gameState.target.element.offsetWidth;
@@ -530,16 +536,26 @@
             gameState.target.element.style.top = `${gameState.target.y}px`;
         }
         
+        // 更新电子位置
         function updateElectronPosition() {
-            gameState.electron.velocityX *= 0.97;
-            gameState.electron.velocityY *= 0.97;
+            // 根据屏幕尺寸调整摩擦系数
+            if (window.innerWidth < 640) {
+                gameState.electron.velocityX *= 0.95; // 小屏幕降低摩擦，操作更灵敏
+                gameState.electron.velocityY *= 0.95;
+            } else {
+                gameState.electron.velocityX *= 0.97;
+                gameState.electron.velocityY *= 0.97;
+            }
             
+            // 确保速度不会太小
             if (Math.abs(gameState.electron.velocityX) < 0.1) gameState.electron.velocityX = 0;
             if (Math.abs(gameState.electron.velocityY) < 0.1) gameState.electron.velocityY = 0;
             
+            // 更新位置
             gameState.electron.x += gameState.electron.velocityX;
             gameState.electron.y += gameState.electron.velocityY;
             
+            // 确保电子不会超出游戏区域
             if (gameState.electron.x < 0) gameState.electron.x = 0;
             if (gameState.electron.x > gameState.gameWidth - gameState.electron.size) {
                 gameState.electron.x = gameState.gameWidth - gameState.electron.size;
@@ -549,40 +565,48 @@
                 gameState.electron.y = gameState.gameHeight - gameState.electron.size;
             }
             
+            // 应用位置
             gameState.electron.element.style.left = `${gameState.electron.x}px`;
             gameState.electron.element.style.top = `${gameState.electron.y}px`;
             
+            // 检查是否到达目标
             checkTargetCollision();
+            
+            // 检查是否碰撞障碍物
             checkObstacleCollision();
         }
         
+        // 应用电场力
         function applyField(direction) {
             if (!gameState.isPlaying) return;
             
             gameState.moves++;
             showFieldDirectionIndicator(direction);
             
+            // 电子带负电，向电场相反方向移动
             switch(direction) {
-                case 'left':
+                case 'left':    // 电场向左 → 电子受力向右
                     gameState.electron.velocityX += gameState.electron.speed;
                     createFieldEffect('left');
                     break;
-                case 'right':
+                case 'right':   // 电场向右 → 电子受力向左
                     gameState.electron.velocityX -= gameState.electron.speed;
                     createFieldEffect('right');
                     break;
-                case 'up':
+                case 'up':      // 电场向上 → 电子受力向下
                     gameState.electron.velocityY += gameState.electron.speed;
                     createFieldEffect('up');
                     break;
-                case 'down':
+                case 'down':    // 电场向下 → 电子受力向上
                     gameState.electron.velocityY -= gameState.electron.speed;
                     createFieldEffect('down');
                     break;
             }
         }
         
+        // 显示电场方向指示器
         function showFieldDirectionIndicator(direction) {
+            // 先移除任何已存在的指示器
             const existingIndicator = document.querySelector('.direction-indicator');
             if (existingIndicator) {
                 gameState.gameArea.removeChild(existingIndicator);
@@ -590,18 +614,30 @@
             
             const indicator = document.createElement('div');
             indicator.className = 'direction-indicator absolute text-field text-4xl pointer-events-none z-10';
+            
+            // 设置指示器位置在电子附近
             indicator.style.left = `${gameState.electron.x + 40}px`;
             indicator.style.top = `${gameState.electron.y}px`;
             
+            // 设置指示器图标
             switch(direction) {
-                case 'left': indicator.innerHTML = '<i class="fa fa-long-arrow-left"></i>'; break;
-                case 'right': indicator.innerHTML = '<i class="fa fa-long-arrow-right"></i>'; break;
-                case 'up': indicator.innerHTML = '<i class="fa fa-long-arrow-up"></i>'; break;
-                case 'down': indicator.innerHTML = '<i class="fa fa-long-arrow-down"></i>'; break;
+                case 'left':
+                    indicator.innerHTML = '<i class="fa fa-long-arrow-left"></i>';
+                    break;
+                case 'right':
+                    indicator.innerHTML = '<i class="fa fa-long-arrow-right"></i>';
+                    break;
+                case 'up':
+                    indicator.innerHTML = '<i class="fa fa-long-arrow-up"></i>';
+                    break;
+                case 'down':
+                    indicator.innerHTML = '<i class="fa fa-long-arrow-down"></i>';
+                    break;
             }
             
             gameState.gameArea.appendChild(indicator);
             
+            // 1秒后移除指示器
             setTimeout(() => {
                 if (indicator.parentNode) {
                     indicator.style.opacity = '0';
@@ -614,10 +650,12 @@
             }, 1000);
         }
         
+        // 创建电场视觉效果
         function createFieldEffect(direction) {
             const fieldEffect = document.createElement('div');
             fieldEffect.className = 'absolute bg-field/20 field-glow transition-opacity duration-500';
             
+            // 根据方向设置电场效果的位置和大小
             if (direction === 'left') {
                 fieldEffect.style.height = '100%';
                 fieldEffect.style.width = '30%';
@@ -642,6 +680,7 @@
             
             gameState.gameArea.appendChild(fieldEffect);
             
+            // 电场效果显示时间
             setTimeout(() => {
                 fieldEffect.style.opacity = '0';
                 setTimeout(() => {
@@ -652,7 +691,9 @@
             }, 500);
         }
         
+        // 检查是否到达目标
         function checkTargetCollision() {
+            // 简化的碰撞检测
             const dx = Math.abs(gameState.electron.x + gameState.electron.size/2 - (gameState.target.x + gameState.target.size/2));
             const dy = Math.abs(gameState.electron.y + gameState.electron.size/2 - (gameState.target.y + gameState.target.size/2));
             
@@ -662,10 +703,12 @@
             }
         }
         
+        // 检查是否碰撞障碍物
         function checkObstacleCollision() {
             const electronCenterX = gameState.electron.x + gameState.electron.size/2;
             const electronCenterY = gameState.electron.y + gameState.electron.size/2;
             
+            // 检查与质子的碰撞
             for (let i = 0; i < gameState.protons.length; i++) {
                 const proton = gameState.protons[i];
                 const dx = Math.abs(electronCenterX - (proton.x + proton.size/2));
@@ -677,6 +720,7 @@
                 }
             }
             
+            // 检查与陷阱的碰撞
             for (let i = 0; i < gameState.traps.length; i++) {
                 const trap = gameState.traps[i];
                 const dx = Math.abs(electronCenterX - (trap.x + trap.size/2));
@@ -689,6 +733,7 @@
             }
         }
         
+        // 检查新位置是否与现有障碍物太近
         function isPositionTooClose(x, y, size, obstacles) {
             for (let i = 0; i < obstacles.length; i++) {
                 const obstacle = obstacles[i];
@@ -697,13 +742,15 @@
                 const minAllowedDistance = (size + obstacle.size) / 2 + gameState.minObstacleDistance;
                 
                 if (dx < minAllowedDistance && dy < minAllowedDistance) {
-                    return true;
+                    return true; // 太近了
                 }
             }
             return false;
         }
         
+        // 创建质子障碍物
         function createProtons(count) {
+            // 先清除现有质子
             gameState.protons.forEach(proton => {
                 if (proton.element.parentNode) {
                     gameState.gameArea.removeChild(proton.element);
@@ -713,25 +760,33 @@
             
             const padding = 60;
             const protonSize = gameState.baseObstacleSize;
-            const maxAttempts = 50;
+            const maxAttempts = 50; // 最大尝试次数，避免无限循环
+            
+            // 合并所有已存在的障碍物用于碰撞检测
             const allObstacles = [...gameState.traps];
             
             for (let i = 0; i < count; i++) {
                 let x, y;
                 let attempts = 0;
                 
+                // 尝试生成不与其他障碍物重叠的位置
                 do {
                     x = Math.random() * (gameState.gameWidth - protonSize - padding * 2) + padding;
                     y = Math.random() * (gameState.gameHeight - protonSize - padding * 2) + padding;
                     attempts++;
                     
+                    // 如果尝试次数过多还没找到合适位置，减少间距要求
                     if (attempts > maxAttempts / 2) {
                         gameState.minObstacleDistance = Math.max(30, gameState.minObstacleDistance - 5);
                     }
                 } while (
+                    // 远离电子
                     (Math.abs(x - gameState.electron.x) < 100 && Math.abs(y - gameState.electron.y) < 100) ||
+                    // 远离目标
                     (Math.abs(x - gameState.target.x) < 100 && Math.abs(y - gameState.target.y) < 100) ||
+                    // 远离其他障碍物
                     isPositionTooClose(x, y, protonSize, allObstacles) ||
+                    // 尝试次数过多时强制退出
                     attempts >= maxAttempts
                 );
                 
@@ -749,11 +804,13 @@
                 gameState.gameArea.appendChild(proton);
                 const newProton = { element: proton, x, y, size: protonSize };
                 gameState.protons.push(newProton);
-                allObstacles.push(newProton);
+                allObstacles.push(newProton); // 添加到障碍物列表用于后续检测
             }
         }
         
+        // 创建陷阱
         function createTraps(count) {
+            // 先清除现有陷阱
             gameState.traps.forEach(trap => {
                 if (trap.element.parentNode) {
                     gameState.gameArea.removeChild(trap.element);
@@ -762,26 +819,34 @@
             gameState.traps = [];
             
             const padding = 60;
-            const trapSize = gameState.baseObstacleSize + 12;
-            const maxAttempts = 50;
+            const trapSize = gameState.baseObstacleSize + 12; // 陷阱比质子稍大
+            const maxAttempts = 50; // 最大尝试次数
+            
+            // 合并所有已存在的障碍物用于碰撞检测
             const allObstacles = [...gameState.protons];
             
             for (let i = 0; i < count; i++) {
                 let x, y;
                 let attempts = 0;
                 
+                // 尝试生成不与其他障碍物重叠的位置
                 do {
                     x = Math.random() * (gameState.gameWidth - trapSize - padding * 2) + padding;
                     y = Math.random() * (gameState.gameHeight - trapSize - padding * 2) + padding;
                     attempts++;
                     
+                    // 如果尝试次数过多还没找到合适位置，减少间距要求
                     if (attempts > maxAttempts / 2) {
                         gameState.minObstacleDistance = Math.max(30, gameState.minObstacleDistance - 5);
                     }
                 } while (
+                    // 远离电子
                     (Math.abs(x - gameState.electron.x) < 120 && Math.abs(y - gameState.electron.y) < 120) ||
+                    // 远离目标
                     (Math.abs(x - gameState.target.x) < 120 && Math.abs(y - gameState.target.y) < 120) ||
+                    // 远离其他障碍物
                     isPositionTooClose(x, y, trapSize, allObstacles) ||
+                    // 尝试次数过多时强制退出
                     attempts >= maxAttempts
                 );
                 
@@ -798,17 +863,20 @@
                 gameState.gameArea.appendChild(trap);
                 const newTrap = { element: trap, x, y, size: trapSize };
                 gameState.traps.push(newTrap);
-                allObstacles.push(newTrap);
+                allObstacles.push(newTrap); // 添加到障碍物列表用于后续检测
             }
         }
         
+        // 根据屏幕尺寸调整障碍物数量
         function getObstacleCount() {
             let protonCount, trapCount;
             
+            // 小屏幕减少障碍物数量
             if (window.innerWidth < 640) {
                 protonCount = Math.min(1 + Math.floor(gameState.level / 4), 3);
                 trapCount = Math.min(0 + Math.floor((gameState.level - 3) / 5), 1);
             } else {
+                // 大屏幕正常数量
                 protonCount = Math.min(2 + Math.floor(gameState.level / 2), 6);
                 trapCount = Math.min(1 + Math.floor((gameState.level - 1) / 3), 4);
             }
@@ -816,31 +884,32 @@
             return { protonCount, trapCount };
         }
         
+        // 开始关卡
         function startLevel() {
+            // 重置游戏状态
             gameState.moves = 0;
             gameState.timeLeft = 30 + (gameState.level - 1) * 5;
             resetElectronPosition();
             setRandomTargetPosition();
             
+            // 更新显示
             elements.levelDisplay.textContent = gameState.level;
             elements.timerDisplay.textContent = gameState.timeLeft;
             
+            // 根据屏幕尺寸获取障碍物数量并创建
             const { protonCount, trapCount } = getObstacleCount();
-            createProtons(protonCount);
-            createTraps(trapCount);
-            
             if (window.innerWidth < 640) {
+                // 小屏幕用空闲回调优化性能
                 requestIdleCallback(() => {
-                    const { protonCount, trapCount } = getObstacleCount();
                     createProtons(protonCount);
                     createTraps(trapCount);
                 }, { timeout: 1000 });
             } else {
-                const { protonCount, trapCount } = getObstacleCount();
                 createProtons(protonCount);
                 createTraps(trapCount);
             }
             
+            // 启动计时器
             if (gameState.timerInterval) {
                 clearInterval(gameState.timerInterval);
             }
@@ -854,6 +923,7 @@
                 }
             }, 1000);
             
+            // 启动游戏循环
             if (gameState.gameLoop) {
                 cancelAnimationFrame(gameState.gameLoop);
             }
@@ -863,10 +933,10 @@
         }
         
         let lastFrameTime = 0;
-        const maxFps = 30;
+        const maxFps = 30; // 限制帧率平衡性能
         const frameInterval = 1000 / maxFps;
-        let frameCounter = 0;
         
+        // 游戏主循环
         function gameLoop(timestamp) {
             if (!timestamp) timestamp = performance.now();
             if (timestamp - lastFrameTime < frameInterval) {
@@ -874,18 +944,16 @@
                 return;
             }
             lastFrameTime = timestamp;
-            frameCounter++
+            
             updateElectronPosition();
-            if (frameCounter % 2 === 0 && window.innerWidth < 640) {
-                checkObstacleCollision();
-            } else {
-                checkObstacleCollision();
-            }
             gameState.gameLoop = requestAnimationFrame(gameLoop);
         }
         
+        // 完成关卡
         function completeLevel() {
             if (!gameState.isPlaying) return;
+            
+            // 停止游戏循环和计时器
             clearInterval(gameState.timerInterval);
             cancelAnimationFrame(gameState.gameLoop);
             gameState.timerInterval = null;
@@ -893,19 +961,26 @@
             
             gameState.isPlaying = false;
             
+            // 计算得分
             const timeBonus = gameState.timeLeft * 10;
             const movePenalty = Math.min(gameState.moves * 5, 100);
             const levelScore = 100 + timeBonus - movePenalty;
             gameState.score += levelScore;
             
+            // 更新显示
             elements.scoreDisplay.textContent = gameState.score;
             
+            // 关卡过渡动画
+            elements.gameArea.style.opacity = '0.5';
+            
+            // 准备下一关
             gameState.level++;
             
-            // 通关时也添加到排行榜
+            // 添加到排行榜
             console.log('关卡完成，添加分数:', gameState.score);
             rankingSystem.addScore(gameState.score);
             
+            // 关卡提示信息
             let levelMessage = '';
             if (gameState.level === 2) {
                 levelMessage = '第一阶段修复完成！系统能量恢复15%，但区域出现更多质子干扰。';
@@ -917,21 +992,28 @@
                 levelMessage = `第${gameState.level - 1}阶段修复完成，系统能量提升！`;
             }
             
-            showMessage(
-                `修复阶段 ${gameState.level - 1} 完成！`,
-                `${levelMessage}<br>获得 ${levelScore} 点能量！剩余时间奖励: ${timeBonus} 点，操作消耗: ${movePenalty} 点`,
-                `进入阶段 ${gameState.level}`
-            );
+            // 恢复游戏区域透明度并显示消息
+            setTimeout(() => {
+                elements.gameArea.style.opacity = '1';
+                showMessage(
+                    `修复阶段 ${gameState.level - 1} 完成！`,
+                    `${levelMessage}<br>获得 ${levelScore} 点能量！剩余时间奖励: ${timeBonus} 点，操作消耗: ${movePenalty} 点`,
+                    `进入阶段 ${gameState.level}`
+                );
+            }, 500);
         }
         
-        // 游戏结束时强制添加分数到排行榜
+        // 游戏结束
         function gameOver(title, message) {
             gameState.isPlaying = false;
+            
+            // 停止游戏循环和计时器
             clearInterval(gameState.timerInterval);
             cancelAnimationFrame(gameState.gameLoop);
             gameState.timerInterval = null;
             gameState.gameLoop = null;
             
+            // 失败原因说明
             let failReason = '';
             if (title === '碰撞质子！') {
                 failReason = '电子被质子的强吸引力捕获，导致局部电路烧毁。';
@@ -941,7 +1023,7 @@
                 failReason = '电子未能及时到达稳定区，能量耗尽消失。';
             }
             
-            // 强制添加分数，增加日志便于调试
+            // 添加分数到排行榜
             console.log('游戏结束，添加分数:', gameState.score);
             const added = rankingSystem.addScore(gameState.score);
             console.log('分数添加结果:', added ? '成功' : '失败');
@@ -953,8 +1035,11 @@
             );
         }
         
+        // 重新开始游戏
         function restartGame() {
             gameState.isPlaying = false;
+            
+            // 停止所有计时器和动画
             if (gameState.timerInterval) {
                 clearInterval(gameState.timerInterval);
             }
@@ -962,17 +1047,21 @@
                 cancelAnimationFrame(gameState.gameLoop);
             }
             
+            // 重置游戏状态
             gameState.level = 1;
             gameState.score = 0;
             gameState.minObstacleDistance = window.innerWidth < 640 ? 60 : 80;
             
+            // 更新显示
             elements.levelDisplay.textContent = gameState.level;
             elements.scoreDisplay.textContent = gameState.score;
             
+            // 隐藏弹窗并开始第一关
             elements.messageModal.classList.add('hidden');
             startLevel();
         }
         
+        // 显示消息弹窗
         function showMessage(title, message, buttonText) {
             elements.modalTitle.textContent = title;
             elements.modalMessage.innerHTML = message;
@@ -989,4 +1078,3 @@
 
 </body>
 </html>
-    

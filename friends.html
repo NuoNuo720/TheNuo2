@@ -1191,71 +1191,58 @@
         }
         
         // 渲染待处理请求
-        async function renderPendingRequests(requests) {
-            const container = document.getElementById('pending-requests-container');
-            const emptyState = document.getElementById('pendingEmptyState');
-            
-            if (!container) {
-                console.error('未找到待处理请求的容器元素，请检查HTML');
+        function renderFriendRequests(requests) {
+            const container = document.getElementById('received-requests-container');
+            container.innerHTML = ''; // 清空容器
+    
+            if (!Array.isArray(requests) || requests.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无好友请求</div>';
                 return;
             }
-
-            // 清空容器
-            container.innerHTML = '';
-
-            if (requests.length === 0) {
-                emptyState.style.display = 'block';
-                return;
-            }
-
-            emptyState.style.display = 'none';
-
-            // 遍历请求并创建DOM元素
-            for (const request of requests) {
-                // 获取接收者信息（从缓存）
-                const recipient = await getUserInfo(request.recipientId) || {
-                    id: request.recipientId,
-                    username: request.recipientUsername || '未知用户',
-                    avatar: ''
-                };
-
-                const div = document.createElement('div');
-                div.className = 'pending-request-item';
-                div.dataset.requestId = request.id || request._id;
-                div.dataset.recipientId = recipient.id;
-
-                // 使用请求发送时间或本地记录时间
-                const date = request.sentAt ? new Date(request.sentAt) : new Date();
-                const formattedDate = date.toLocaleString();
-
-                // 标记本地缓存的请求
-                const localFlag = request.isLocal ? '<span class="status-warning">(本地记录)</span>' : '';
-                
-                // 转义ID用于点击事件
-                const escRequestId = encodeURIComponent(request.id || request._id || '');
-                const escRecipientId = encodeURIComponent(recipient.id || '');
-
-                div.innerHTML = `
-                    <img src="${recipient.avatar || `https://picsum.photos/seed/${recipient.id}/200`}" 
-                         alt="${recipient.username}" class="pending-avatar">
-                    <div class="pending-info">
-                        <div class="pending-recipient">${recipient.username} ${localFlag}</div>
-                        <div class="pending-message status-pending">等待对方同意</div>
-                        <div class="pending-message">${request.message || '无验证消息'}</div>
+    
+            requests.forEach(request => {
+                // 强制获取有效的 requestId（兼容 _id 或 id 字段）
+                const requestId = request._id || request.id;
+                if (!requestId) {
+                    console.warn('跳过无效请求（无ID）:', request);
+                    return;
+                }
+        
+                // 创建请求项，使用 onclick 函数绑定而非字符串拼接（避免ID特殊字符问题）
+                const requestItem = document.createElement('div');
+                requestItem.className = 'friend-request-item';
+                requestItem.dataset.requestId = requestId;
+        
+                // 渲染请求内容（使用默认用户信息）
+                requestItem.innerHTML = `
+                    <div class="request-avatar">
+                        <img src="https://picsum.photos/seed/${request.senderId}/200" alt="头像">
                     </div>
-                    <div class="pending-time">${formattedDate}</div>
-                    <div class="pending-actions">
-                        <button class="action-btn cancel-btn" 
-                                onclick="cancelRequest('${escRequestId}', '${escRecipientId}')">
-                            <i class="fas fa-times"></i>
-                        </button>
+                    <div class="request-info">
+                        <div class="sender-name">用户 ${request.senderId.slice(0, 6)}</div>
+                        <div class="request-msg">${request.message || '请求添加好友'}</div>
+                        <div class="request-time">${new Date(request.createdAt).toLocaleString()}</div>
+                    </div>
+                    <div class="request-actions">
+                        <button class="accept-btn">接受</button>
+                        <button class="reject-btn">拒绝</button>
                     </div>
                 `;
-
-                container.appendChild(div);
-            }
-
-            console.log(`已渲染${requests.length}条待处理请求`);
+        
+                // 绑定事件（使用事件委托，确保 requestId 正确传递）
+                const acceptBtn = requestItem.querySelector('.accept-btn');
+                const rejectBtn = requestItem.querySelector('.reject-btn');
+        
+                acceptBtn.addEventListener('click', () => {
+                    handleRequest(requestId, 'accept');
+                });
+        
+                rejectBtn.addEventListener('click', () => {
+                    handleRequest(requestId, 'reject');
+                });
+        
+                container.appendChild(requestItem);
+            });
         }
         
         // 搜索用户
@@ -1574,125 +1561,85 @@
         // 修复：处理好友请求（接受/拒绝）- 增加错误处理和重试逻辑
         // 修复：处理好友请求（增加防重复提交和批量重试）
         async function handleRequest(requestId, action) {
+            // 强制验证 requestId
             if (!requestId) {
                 showNotification('操作失败：请求ID无效', 'error');
-                console.error('handleRequest 缺少有效的 requestId');
+                console.error('handleRequest 缺少 requestId');
                 return;
             }
-            if (!requestInProgress) requestInProgress = new Map();
-            // 检查是否已有请求在处理中
-            if (requestInProgress.has(requestId)) {
-                showNotification('操作正在处理中，请稍候', 'info');
+    
+            // 防止重复处理
+            if (!window.requestInProgress) window.requestInProgress = new Map();
+            if (window.requestInProgress.has(requestId)) {
+                showNotification('操作正在处理中', 'info');
                 return;
             }
-            
-            // 标记请求为处理中
-            requestInProgress.set(requestId, true);
-            
-            // 禁用按钮防止重复点击
-            const button = event?.target.closest('button');
-            if (button) {
-                button.disabled = true;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中';
+            window.requestInProgress.set(requestId, true);
+    
+            // 禁用按钮反馈
+            const btn = event?.target.closest('button');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '处理中...';
             }
-            
+    
             try {
                 // 构建请求数据
                 const requestData = {
                     requestId: requestId,
                     action: action,
-                    userId: currentUser.id,
-                    timestamp: new Date().getTime()
+                    userId: currentUser.id
                 };
-                
-                // 尝试多次重试（最多3次）
-                const maxRetries = 2;
-                let lastError = null;
-                
-                for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                    try {
-                        console.log(`尝试处理请求 (${attempt}/${maxRetries}):`, requestId);
-                        
-                        // 尝试主接口
-                        let response = await fetch('https://thenuo2.netlify.app/.netlify/functions/handleFriendRequest', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${currentUser.token}`
-                            },
-                            body: JSON.stringify(requestData)
-                        });
-                        
-                        
-                        
-                        // 检查响应状态
-                        if (response.ok) {
-                            // 无论响应内容如何，只要状态码正确就视为成功
-                            showNotification(
-                                action === 'accept' ? '好友请求已接受' : '好友请求已拒绝', 
-                                'success'
-                            );
-                            
-                            // 强制刷新列表
-                            loadFriendRequests();
-                            if (action === 'accept') {
-                                loadFriendsList();
-                            }
-                            
-                            return;
-                        }
-                        
-                        // 记录错误但继续重试
-                        lastError = `HTTP状态码: ${response.status}`;
-                        console.log(`尝试 ${attempt} 失败: ${lastError}`);
-                    } catch (error) {
-                        lastError = error.message;
-                        console.log(`尝试 ${attempt} 出错: ${lastError}`);
-                    }
-                    
-                    // 重试前等待一段时间（指数退避）
-                    if (attempt < maxRetries) {
-                        const delay = 1000 * attempt;
-                        console.log(`等待 ${delay}ms 后重试...`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    }
+        
+                // 仅尝试1次请求（服务器持续错误，多次尝试无意义）
+                let serverSuccess = false;
+                try {
+                    const response = await fetch('https://thenuo2.netlify.app/.netlify/functions/handleFriendRequest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentUser.token}`
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    serverSuccess = response.ok;
+                } catch (error) {
+                    console.error('服务器请求失败:', error);
                 }
-                
-                // 所有尝试都失败时，使用本地状态更新
-                showNotification(
-                    `已${action === 'accept' ? '接受' : '拒绝'}请求，待服务器同步`, 
-                    'warning'
-                );
+        
+                // 无论服务器是否成功，先更新本地UI
                 const requestEl = document.querySelector(`[data-request-id="${requestId}"]`);
                 if (requestEl) {
-                    requestEl.style.transition = 'opacity 0.3s, transform 0.3s';
-                    requestEl.style.opacity = '0';
-                    requestEl.style.transform = 'translateX(20px)';
-                    setTimeout(() => requestEl.remove(), 300);
+                    requestEl.style.opacity = '0.5';
+                    requestEl.innerHTML += `
+                        <div class="local-status">
+                            已${action === 'accept' ? '接受' : '拒绝'}（${serverSuccess ? '已同步' : '待同步'}）
+                        </div>
+                    `;
+                    // 隐藏按钮
+                    requestEl.querySelector('.request-actions').style.display = 'none';
                 }
-                // 保存操作到本地，等待后续同步
-                const pendingActions = JSON.parse(localStorage.getItem('pendingFriendActions') || '[]');
-                pendingActions.push({
-                    requestId,
-                    action,
-                    timestamp: new Date().toISOString()
-                });
-                localStorage.setItem('pendingFriendActions', JSON.stringify(pendingActions));
-                
-                                
+        
+                // 服务器成功则刷新列表
+                if (serverSuccess) {
+                    showNotification(`已${action === 'accept' ? '接受' : '拒绝'}好友请求`, 'success');
+                    loadFriendRequests();
+                    return;
+                }
+        
+                // 服务器失败：仅记录到本地，限制同步频率
+                showNotification(`操作已保存，将在网络恢复后同步`, 'warning');
+                saveToLocalSyncQueue(requestId, action);
+        
             } catch (error) {
-                console.error('处理请求失败:', error);
+                console.error('处理请求异常:', error);
                 showNotification('操作失败，请稍后重试', 'error');
             } finally {
-                // 移除处理中标记
-                if (requestInProgress) requestInProgress.delete(requestId);
-                
-                // 恢复按钮状态
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = action === 'accept' 
-                        ? '<i class="fas fa-check"></i>' 
-                        : '<i class="fas fa-times"></i>';
+                // 恢复状态
+                window.requestInProgress.delete(requestId);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = action === 'accept' ? '接受' : '拒绝';
                 }
             }
         }
@@ -1839,13 +1786,23 @@
             }
         }
         async function syncPendingActions() {
-            const pendingActions = JSON.parse(localStorage.getItem('pendingFriendActions') || '[]');
-            if (pendingActions.length === 0) return;
-            
-            console.log(`发现 ${pendingActions.length} 个待同步操作，开始同步...`);
-            
-            // 逐个处理待同步操作
-            for (const action of pendingActions) {
+            const queue = JSON.parse(localStorage.getItem('friendSyncQueue') || '[]');
+            if (queue.length === 0) return;
+    
+            // 检查上次同步时间，至少间隔30秒
+            const lastSyncTime = localStorage.getItem('lastSyncTime') || 0;
+            const now = new Date().getTime();
+            if (now - lastSyncTime < 30000) { // 30秒
+                console.log('同步频率限制，暂不同步');
+                return;
+            }
+    
+            console.log(`开始同步 ${queue.length} 个操作`);
+            localStorage.setItem('lastSyncTime', now.toString());
+    
+            // 逐个尝试同步
+            for (let i = 0; i < queue.length; i++) {
+                const item = queue[i];
                 try {
                     const response = await fetch('https://thenuo2.netlify.app/.netlify/functions/handleFriendRequest', {
                         method: 'POST',
@@ -1853,36 +1810,26 @@
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${currentUser.token}`
                         },
-                        body: JSON.stringify({
-                            requestId: action.requestId,
-                            action: action.action,
-                            userId: currentUser.id,
-                            sync: true
-                        })
+                        body: JSON.stringify(item)
                     });
-                    
+            
                     if (response.ok) {
-                        console.log(`已同步操作: ${action.action} ${action.requestId}`);
-                        // 从待同步列表中移除
-                        const index = pendingActions.findIndex(a => 
-                            a.requestId === action.requestId && a.action === action.action
-                        );
-                        if (index !== -1) {
-                            pendingActions.splice(index, 1);
-                            localStorage.setItem('pendingFriendActions', JSON.stringify(pendingActions));
-                        }
+                        // 同步成功，从队列移除
+                        queue.splice(i, 1);
+                        i--; // 修正索引
+                        console.log(`同步成功：${item.requestId}`);
+                    } else {
+                        console.log(`同步失败：${item.requestId}，状态码: ${response.status}`);
+                        break; // 服务器仍错误，停止后续同步
                     }
                 } catch (error) {
-                    console.error(`同步操作 ${action.requestId} 失败:`, error);
-                    // 同步失败则保留，等待下次尝试
-                    break;
+                    console.error('同步出错:', error);
+                    break; // 网络错误，停止同步
                 }
             }
-            
-            // 如果还有待同步操作，显示提示
-            if (pendingActions.length > 0) {
-                showNotification(`尚有 ${pendingActions.length} 个操作待同步`, 'info');
-            }
+    
+            // 保存更新后的队列
+            localStorage.setItem('friendSyncQueue', JSON.stringify(queue));
         }
         function renderFriendRequests(requests) {
             const container = document.getElementById('received-requests-container');
@@ -1954,6 +1901,31 @@
                 notification.style.opacity = '0';
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
+        }
+        function saveToLocalSyncQueue(requestId, action) {
+            // 获取现有队列
+            const queue = JSON.parse(localStorage.getItem('friendSyncQueue') || '[]');
+    
+            // 去重：避免同一请求重复添加
+            const existingIndex = queue.findIndex(item => item.requestId === requestId);
+            if (existingIndex !== -1) {
+                queue.splice(existingIndex, 1); // 移除旧记录
+            }
+    
+            // 添加新记录
+            queue.push({
+                requestId: requestId,
+                action: action,
+                userId: currentUser.id,
+                timestamp: new Date().getTime()
+            });
+    
+            // 限制队列长度（最多保留5条）
+            if (queue.length > 5) {
+                queue.shift(); // 移除最早的记录
+            }
+    
+            localStorage.setItem('friendSyncQueue', JSON.stringify(queue));
         }
     </script>
 </body>
