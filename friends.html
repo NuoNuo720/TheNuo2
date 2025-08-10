@@ -644,7 +644,7 @@
         const pendingRequestsMap = new Map(); 
         let searchTimeout; // 搜索防抖定时器
         const userCache = new Map();
-        
+        let requestInProgress = new Map(); // 用于跟踪正在进行的请求
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             // 从本地存储恢复当前用户的pendingRequestsMap
@@ -782,7 +782,7 @@
             } catch (error) {
                 console.error(`获取用户${userId}信息失败:`, error);
             }
-            
+            console.warn(`所有用户信息接口均失败，使用默认信息 for ${userId}`);
             // 如果获取失败，返回默认信息
             const fallbackUser = {
                 id: userId,
@@ -790,6 +790,7 @@
                 avatar: `https://picsum.photos/seed/${userId}/200`
             };
             userCache.set(userId, fallbackUser);
+            cacheUserInfo(fallbackUser);
             return fallbackUser;
         }
         
@@ -1627,6 +1628,9 @@
         // 修复：处理好友请求（接受/拒绝）- 增加错误处理和重试逻辑
         // 修复：处理好友请求（增加防重复提交和批量重试）
         async function handleRequest(requestId, action) {
+            if (!requestInProgress) {
+                requestInProgress = new Map();
+            }
             // 检查是否已有请求在处理中
             if (requestInProgress.has(requestId)) {
                 showNotification('操作正在处理中，请稍候', 'info');
