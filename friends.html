@@ -12,7 +12,14 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        .resize-width {
+            max - width: 200px; /* 设置最大宽度，可根据实际情况调整 */
+            height: auto;
+        }
+        img {
+            max - width: 100%;
+            height: auto;
+        }
         body {
             background-color: #f0f4f8;
             color: #333;
@@ -1038,7 +1045,12 @@
                 // 缓存发送者信息
                 if (Array.isArray(requests)) {
                     requests.forEach(req => {
-                        if (req.sender) cacheUserInfo(req.sender);
+                        if (req.sender) {
+                            cacheUserInfo(req.sender);
+                        } else if { (req.senderId && req.senderUsername) {
+                            cacheUserInfo({
+                                id: req.senderId,
+                                username: req.senderUsername});}
                     });
                 }
                 
@@ -1265,7 +1277,7 @@
                         <img src="https://picsum.photos/seed/${request.senderId}/200" alt="用户头像">
                     </div>
                     <div class="request-info">
-                        <div class="request-sender">用户 ${request.senderId.slice(0, 6)}</div>
+                        <div class="request-sender">${request.sender?.username || request.senderUsername || '用户'}</div>
                         <div class="request-message">${request.message || '发送了好友请求'}</div>
                         <div class="request-time">${formatTime(request.createdAt)}</div>
                     </div>
@@ -1673,6 +1685,7 @@
                 if (serverSuccess) {
                     showNotification(`已${action === 'accept' ? '接受' : '拒绝'}好友请求`, 'success');
                     loadFriendRequests();
+                    loadFriendList();
                     return;
                 }
         
