@@ -750,7 +750,7 @@
             // 如果获取失败，返回默认信息
             return {
                 id: userId,
-                username: '未知用户',
+                username: `用户${userId.slice(0, 6)}`,
                 avatar: `https://picsum.photos/seed/${userId}/200`
             };
         }
@@ -1059,7 +1059,7 @@
                             'Authorization': `Bearer ${currentUser.token}`
                         },
                         body: JSON.stringify({ 
-                            recipientUsername: currentUser.username,
+                            recipientId: recipientId,
                             fallback: true
                         })
                     });
