@@ -1,9 +1,13 @@
-[build]
-  functions = "netlify/functions"  # 函数目录
+[
+build
+]
   publish = "."                   # 前端文件目录（根目录）
+  functions = "netlify/functions"  # 函数目录
+
 [[
 redirects
 ]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+  from = "/api/*"                 # 匹配所有以/api/开头的请求
+  to = "/.netlify/functions/api/:splat"  # 转发到api函数
+  status = 200                    # 使用200状态码进行代理转发
+  force = true                    # 强制重定向，确保所有匹配请求都被转发
