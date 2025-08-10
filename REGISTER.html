@@ -34,13 +34,21 @@
         }
         input[type="text"],
         input[type="password"],
-        input[type="email"] { /* 新增邮箱输入框样式 */
+        input[type="email"] {
             width:100%;
             padding:10px;
             margin-bottom:15px;
             border:1px solid #ccc;
             border-radius:4px;
             box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        .input-error {
+            border-color: #dc3545 !important;
         }
         .links a:hover {
             text-decoration:underline;
@@ -58,9 +66,14 @@
             border-radius:4px;
             cursor:pointer;
             font-size:16px;
+            transition: background-color 0.3s;
         }
-        button:hover {
+        button:hover:not(:disabled) {
             background-color:#218838;
+        }
+        button:disabled {
+            background-color:#6c757d;
+            cursor: not-allowed;
         }
         .links{
             text-align:center;
@@ -81,16 +94,65 @@
             background-color: #f8d7da;
             display: none;
         }
-        .tip { /* 新增提示文字样式（如密码要求） */
+        .success-message {
+            color: #28a745;
+            text-align: center;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            background-color: #d4edda;
+            display: none;
+        }
+        .tip {
             font-size: 12px;
             color: #666;
             margin: -12px 0 15px 0;
+        }
+        .password-strength {
+            height: 5px;
+            background-color: #eee;
+            margin: -10px 0 15px 0;
+            border-radius: 3px;
+            overflow: hidden;
+            display: none;
+        }
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .strength-weak {
+            background-color: #dc3545;
+            width: 33%;
+        }
+        .strength-medium {
+            background-color: #ffc107;
+            width: 66%;
+        }
+        .strength-strong {
+            background-color: #28a745;
+            width: 100%;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="error-message" id="errorMsg"></div>
+        <div class="success-message" id="successMsg"></div>
         
         <form id="registerForm">
             <h2>注册</h2>
@@ -98,17 +160,21 @@
             <!-- 用户名 -->
             <label for="username">用户名</label>
             <input type="text" name="username" placeholder="请输入昵称" id="username" required>
+            <div class="tip">用户名长度为3-20位字符</div>
             
-            <!-- 邮箱（新增） -->
+            <!-- 邮箱 -->
             <label for="email">邮箱</label>
             <input type="email" name="email" placeholder="请输入邮箱" id="email" required>
             
-            <!-- 密码 + 提示文字 -->
+            <!-- 密码 -->
             <label for="password">密码</label>
             <input type="password" name="password" placeholder="至少6位字符" id="password" required>
-            <div class="tip">密码长度至少6位</div>
+            <div class="password-strength">
+                <div class="strength-bar" id="strengthBar"></div>
+            </div>
+            <div class="tip">密码长度至少6位，包含字母和数字更安全</div>
             
-            <!-- 密码确认（新增） -->
+            <!-- 密码确认 -->
             <label for="confirmPassword">确认密码</label>
             <input type="password" name="confirmPassword" placeholder="再次输入密码" id="confirmPassword" required>
             
@@ -117,7 +183,7 @@
                 <label for="rememberMe">记住用户名</label>
             </div>
             
-            <button type="submit">注册</button>
+            <button type="submit" id="submitBtn">注册</button>
         </form>
         
         <div class="links">
@@ -133,13 +199,165 @@
                 document.getElementById('username').value = savedUsername;
                 document.getElementById('rememberMe').checked = true;
             }
+
+            // 为密码输入框添加强度检测
+            const passwordInput = document.getElementById('password');
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthContainer = document.querySelector('.password-strength');
+
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                
+                if (password.length > 0) {
+                    strengthContainer.style.display = 'block';
+                    
+                    // 简单的密码强度检测
+                    if (password.length < 6) {
+                        strengthBar.className = 'strength-bar';
+                    } else if (password.length < 8 || !/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
+                        strengthBar.className = 'strength-bar strength-weak';
+                    } else if (password.length < 10 || !/[^a-zA-Z0-9]/.test(password)) {
+                        strengthBar.className = 'strength-bar strength-medium';
+                    } else {
+                        strengthBar.className = 'strength-bar strength-strong';
+                    }
+                } else {
+                    strengthContainer.style.display = 'none';
+                }
+            });
+
+            // 添加实时验证
+            const formInputs = registerForm.querySelectorAll('input[required]');
+            formInputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+            });
         };
 
         const registerForm = document.getElementById('registerForm');
         const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // 显示错误信息
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+            successMsg.style.display = 'none';
+        }
+
+        // 显示成功信息
+        function showSuccess(message) {
+            successMsg.textContent = message;
+            successMsg.style.display = 'block';
+            errorMsg.style.display = 'none';
+        }
+
+        // 隐藏所有消息
+        function hideMessages() {
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+        }
+
+        // 验证单个字段
+        function validateField(field) {
+            const value = field.value.trim();
+            let isValid = true;
+            let errorMessage = '';
+
+            // 移除之前的错误状态
+            field.classList.remove('input-error');
+
+            switch(field.id) {
+                case 'username':
+                    if (value.length < 3 || value.length > 20) {
+                        isValid = false;
+                        errorMessage = '用户名长度应为3-20位';
+                    }
+                    break;
+                case 'email':
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|cn|net|org|edu|gov)$/;
+                    if (!emailRegex.test(value)) {
+                        isValid = false;
+                        errorMessage = '请输入有效的邮箱地址';
+                    }
+                    break;
+                case 'password':
+                    if (value.length < 6) {
+                        isValid = false;
+                        errorMessage = '密码长度至少6位';
+                    }
+                    break;
+                case 'confirmPassword':
+                    const password = document.getElementById('password').value;
+                    if (value !== password) {
+                        isValid = false;
+                        errorMessage = '两次输入的密码不一致';
+                    }
+                    break;
+            }
+
+            if (!isValid) {
+                field.classList.add('input-error');
+                // 只在有值的情况下显示错误（避免刚点击就显示）
+                if (value.length > 0) {
+                    showError(errorMessage);
+                }
+            }
+
+            return isValid;
+        }
+
+        // 验证整个表单
+        function validateForm() {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // 检查所有字段
+            let isFormValid = true;
+            
+            if (!username) {
+                showError('请输入用户名');
+                isFormValid = false;
+            } else if (!validateField(document.getElementById('username'))) {
+                isFormValid = false;
+            }
+            
+            if (!email) {
+                showError('请输入邮箱');
+                isFormValid = false;
+            } else if (!validateField(document.getElementById('email'))) {
+                isFormValid = false;
+            }
+            
+            if (!password) {
+                showError('请输入密码');
+                isFormValid = false;
+            } else if (!validateField(document.getElementById('password'))) {
+                isFormValid = false;
+            }
+            
+            if (!confirmPassword) {
+                showError('请确认密码');
+                isFormValid = false;
+            } else if (!validateField(document.getElementById('confirmPassword'))) {
+                isFormValid = false;
+            }
+
+            return isFormValid;
+        }
 
         registerForm.addEventListener('submit', async function(event) {
             event.preventDefault();
+            hideMessages();
+
+            // 验证表单
+            if (!validateForm()) {
+                return;
+            }
             
             // 获取所有输入值
             const username = document.getElementById('username').value.trim();
@@ -148,44 +366,31 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
             const rememberMe = document.getElementById('rememberMe').checked;
 
-            // 1. 基础非空验证
-            if (!username || !email || !password || !confirmPassword) {
-                showError('所有字段不能为空！');
-                return;
-            }
+            // 防止重复提交
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> 注册中...';
 
-            // 2. 邮箱格式验证（简单正则）
-            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|cn|net|org|edu|gov)$/;
-            if (!emailRegex.test(email)) {
-                showError('请输入有效的邮箱地址（支持 .com/.cn/.net 等常见域名）！');
-                return;
-            }
-
-            // 3. 密码长度验证
-            if (password.length < 6) {
-                showError('密码长度至少6位！');
-                return;
-            }
-
-            // 4. 密码确认验证
-            if (password !== confirmPassword) {
-                showError('两次输入的密码不一致！');
-                return;
-            }
-
-            // 5. 检查用户名/邮箱是否已注册
-            const token = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-
-            // 3. 发送数据到服务器（核心修改）
             try {
-                const response = await fetch('/.netlify/functions/register', {
+                // 在实际应用中，这里应该发送加密后的密码
+                // 这里仅作示例，实际项目需要使用HTTPS并在客户端进行密码哈希
+                
+                // 生成临时token（实际应用中应由服务器生成）
+                const token = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+
+                // 替换为实际的API地址
+                const apiUrl = '/api/register'; // 本地开发环境
+                // const apiUrl = '/.netlify/functions/register'; // Netlify部署环境
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json' // 告诉服务器发送的是JSON格式
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         username,
                         email,
+                        // 注意：实际应用中这里不应发送明文密码
+                        // 应该使用加密算法如bcrypt在客户端加密后再发送
                         password,
                         token
                     })
@@ -193,36 +398,32 @@
 
                 const result = await response.json();
 
-                // 4. 处理服务器响应
                 if (response.ok) {
-                    // 注册成功：处理"记住用户名"（仅本地记录，不影响服务器）
+                    // 注册成功：处理"记住用户名"
                     if (rememberMe) {
                         localStorage.setItem('rememberedUsername', username);
                     } else {
                         localStorage.removeItem('rememberedUsername');
                     }
 
-                    alert('注册成功！即将跳转到登录页');
-                    window.location.href = 'indexlo.html';
+                    showSuccess('注册成功！即将跳转到登录页');
+                    setTimeout(() => {
+                        window.location.href = 'indexlo.html';
+                    }, 1500);
                 } else {
-                    // 注册失败：显示服务器返回的错误信息
+                    // 注册失败
                     showError(result.message || '注册失败，请重试');
                 }
             } catch (error) {
-                // 网络错误（如服务器未启动）
-                showError('无法连接到服务器，请检查服务器是否已启动');
+                // 网络错误
+                showError('无法连接到服务器，请稍后再试');
                 console.error('注册请求错误：', error);
+            } finally {
+                // 恢复按钮状态
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '注册';
             }
         });
-
-        // 显示错误信息
-        function showError(message) {
-            errorMsg.textContent = message;
-            errorMsg.style.display = 'block';
-            setTimeout(() => {
-                errorMsg.style.display = 'none';
-            }, 3000);
-        }
     </script>
 </body>
 </html>

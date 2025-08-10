@@ -14,6 +14,9 @@
             color: #333;
             padding: 20px;
         }
+        #startBtn {
+            transition: opacity 0.3s ease;
+        }
         .game-container {
             text-align: center;
             margin-top: 20px;
@@ -160,7 +163,7 @@
             </div>
         </div>
         
-        <button onclick="startGame()">开始游戏</button>
+        <button id="startBtn" onclick="startGame()">开始游戏</button>
     </div>
 
     <script>
@@ -247,6 +250,7 @@
 
         function startGame() {
             // 重置游戏状态
+            document.getElementById('startBtn').style.display = 'none';
             score = 0;
             timeLeft = 60;
             correctCount = 0;
@@ -276,6 +280,7 @@
         }
 
         function endGame() {
+            document.getElementById('startBtn').style.display = 'inline-block';
             clearInterval(timer);
             isPlaying = false;
             lettersEl.textContent = `游戏结束！得分: ${score}`;
