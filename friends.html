@@ -733,65 +733,11 @@
         
         // 获取用户信息（从缓存或API）
         async function getUserInfo(userId) {
-            // 先从缓存获取
-            if (allUsersCache.has(userId)) {
-                return allUsersCache.get(userId);
-            }
-            
-            // 缓存没有则从API获取
-            try {
-                // 尝试第一个API端点
-                let response = await fetch('/.netlify/functions/getUserById', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentUser.token}`
-                    },
-                    body: JSON.stringify({ userId })
-                });
-                
-                // 如果第一个端点404，尝试第二个端点
-                if (response.status === 404) {
-                    console.log('getUserById端点404，尝试备用端点');
-                    response = await fetch('/.netlify/functions/findUser', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${currentUser.token}`
-                        },
-                        body: JSON.stringify({ id: userId })
-                    });
-                }
-                
-                if (response.ok) {
-                    const user = await response.json();
-                    userCache.set(userId, user);
-                    return user;
-                }
-                
-                // 处理404情况
-                if (response.status === 404) {
-                    const fallbackUser = {
-                        id: userId,
-                        username: `用户_${userId.slice(0, 6)}`,
-                        avatar: `https://picsum.photos/seed/${userId}/200`
-                    };
-                    userCache.set(userId, fallbackUser);
-                    return fallbackUser;
-                }
-            } catch (error) {
-                console.error(`获取用户${userId}信息失败:`, error);
-            }
-            console.warn(`所有用户信息接口均失败，使用默认信息 for ${userId}`);
-            // 如果获取失败，返回默认信息
-            const fallbackUser = {
+            return {
                 id: userId,
-                username: `用户_${userId.slice(0, 6)}`,
-                avatar: `https://picsum.photos/seed/${userId}/200`
+                username: `用户 ${userId.slice(0, 6)}`, // 显示ID前6位作为用户名
+                avatar: `https://picsum.photos/seed/${userId}/200` // 用ID生成默认头像
             };
-            userCache.set(userId, fallbackUser);
-            cacheUserInfo(fallbackUser);
-            return fallbackUser;
         }
         
         // 批量缓存搜索到的用户信息
@@ -1628,9 +1574,12 @@
         // 修复：处理好友请求（接受/拒绝）- 增加错误处理和重试逻辑
         // 修复：处理好友请求（增加防重复提交和批量重试）
         async function handleRequest(requestId, action) {
-            if (!requestInProgress) {
-                requestInProgress = new Map();
+            if (!requestId) {
+                showNotification('操作失败：请求ID无效', 'error');
+                console.error('handleRequest 缺少有效的 requestId');
+                return;
             }
+            if (!requestInProgress) requestInProgress = new Map();
             // 检查是否已有请求在处理中
             if (requestInProgress.has(requestId)) {
                 showNotification('操作正在处理中，请稍候', 'info');
@@ -1657,7 +1606,7 @@
                 };
                 
                 // 尝试多次重试（最多3次）
-                const maxRetries = 3;
+                const maxRetries = 2;
                 let lastError = null;
                 
                 for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -1674,24 +1623,7 @@
                             body: JSON.stringify(requestData)
                         });
                         
-                        // 如果主接口失败，尝试备用接口格式
-                        if (!response.ok) {
-                            console.log(`主接口尝试 ${attempt} 失败，状态码: ${response.status}`);
-                            
-                            // 尝试不同的接口路径
-                            response = await fetch('https://thenuo2.netlify.app/.netlify/functions/manageFriendRequest', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${currentUser.token}`
-                                },
-                                body: JSON.stringify({
-                                    id: requestId,
-                                    type: action,
-                                    user: currentUser.id
-                                })
-                            });
-                        }
+                        
                         
                         // 检查响应状态
                         if (response.ok) {
@@ -1720,19 +1652,24 @@
                     
                     // 重试前等待一段时间（指数退避）
                     if (attempt < maxRetries) {
-                        const delay = 1000 * Math.pow(2, attempt);
+                        const delay = 1000 * attempt;
                         console.log(`等待 ${delay}ms 后重试...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                     }
                 }
                 
                 // 所有尝试都失败时，使用本地状态更新
-                console.log(`所有 ${maxRetries} 次尝试都失败`);
                 showNotification(
-                    `暂时无法${action === 'accept' ? '接受' : '拒绝'}请求，已保存操作`, 
+                    `已${action === 'accept' ? '接受' : '拒绝'}请求，待服务器同步`, 
                     'warning'
                 );
-                
+                const requestEl = document.querySelector(`[data-request-id="${requestId}"]`);
+                if (requestEl) {
+                    requestEl.style.transition = 'opacity 0.3s, transform 0.3s';
+                    requestEl.style.opacity = '0';
+                    requestEl.style.transform = 'translateX(20px)';
+                    setTimeout(() => requestEl.remove(), 300);
+                }
                 // 保存操作到本地，等待后续同步
                 const pendingActions = JSON.parse(localStorage.getItem('pendingFriendActions') || '[]');
                 pendingActions.push({
@@ -1742,23 +1679,13 @@
                 });
                 localStorage.setItem('pendingFriendActions', JSON.stringify(pendingActions));
                 
-                // 手动更新UI
-                const requestEl = document.querySelector(`[data-request-id="${requestId}"]`);
-                if (requestEl) {
-                    requestEl.style.opacity = '0.6';
-                    requestEl.innerHTML += `
-                        <div class="status-warning">
-                            已${action === 'accept' ? '接受' : '拒绝'}（待同步）
-                        </div>
-                    `;
-                }
-                
+                                
             } catch (error) {
                 console.error('处理请求失败:', error);
                 showNotification('操作失败，请稍后重试', 'error');
             } finally {
                 // 移除处理中标记
-                requestInProgress.delete(requestId);
+                if (requestInProgress) requestInProgress.delete(requestId);
                 
                 // 恢复按钮状态
                 if (button) {
@@ -1956,6 +1883,77 @@
             if (pendingActions.length > 0) {
                 showNotification(`尚有 ${pendingActions.length} 个操作待同步`, 'info');
             }
+        }
+        function renderFriendRequests(requests) {
+            const container = document.getElementById('received-requests-container');
+            const emptyState = document.getElementById('requestsEmptyState');
+    
+            container.innerHTML = '';
+    
+            if (!Array.isArray(requests) || requests.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+    
+            emptyState.style.display = 'none';
+    
+            // 渲染每个请求，确保绑定正确的 requestId
+            requests.forEach(request => {
+                // 验证 requestId 是否存在
+                if (!request._id && !request.id) {
+                    console.warn('无效的好友请求数据，缺少 ID:', request);
+                    return; // 跳过无效请求
+                }
+        
+                // 兼容不同格式的 ID 字段（_id 或 id）
+                const requestId = request._id || request.id;
+        
+                // 创建请求项元素
+                const requestItem = document.createElement('div');
+                requestItem.className = 'friend-request-item';
+                requestItem.dataset.requestId = requestId; // 存储 ID 用于后续操作
+        
+                // 构建 HTML（使用默认用户信息，避免依赖 getUserInfo 接口）
+                requestItem.innerHTML = `
+                    <div class="request-avatar">
+                        <img src="https://picsum.photos/seed/${request.senderId}/200" alt="用户头像">
+                    </div>
+                    <div class="request-info">
+                        <div class="request-sender">用户 ${request.senderId.slice(0, 6)}</div>
+                        <div class="request-message">${request.message || '发送了好友请求'}</div>
+                        <div class="request-time">${formatTime(request.createdAt)}</div>
+                    </div>
+                    <div class="request-actions">
+                        <button class="accept-btn" onclick="handleRequest('${requestId}', 'accept')">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="reject-btn" onclick="handleRequest('${requestId}', 'reject')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+        
+                container.appendChild(requestItem);
+            });
+        }
+        // 辅助函数：格式化时间
+        function formatTime(timestamp) {
+            if (!timestamp) return '未知时间';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        // 辅助函数：显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+    
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>
