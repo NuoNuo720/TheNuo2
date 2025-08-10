@@ -6,7 +6,6 @@
     <title>好友系统 - 实时社交</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -645,6 +644,7 @@
         const pendingRequestsMap = new Map(); 
         let searchTimeout; // 搜索防抖定时器
         const userCache = new Map();
+        
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             // 从本地存储恢复当前用户的pendingRequestsMap
@@ -1207,18 +1207,19 @@
                     showNotification('解析待处理请求失败', 'error');
                     return;
                 }
-                
+                const requests = await response.json();
                 // 过滤有效请求
-                const validRequests = Array.from(
-                    new Map(pendingRequests
-                        .filter(req => 
-                            req.senderId === currentUser.id &&  // 确保是自己发送的
-                            req.recipientId !== 'undefined' && 
-                            req.status === 'pending'
-                        )
-                        .map(req => [req.recipientId, req]) // 按接收者ID去重
-                    ).values()
-                );
+                const validRequests = Array.isArray(requests)
+                    ? requests.filter(req =>
+                        
+                        req.senderId === currentUser.id &&  // 确保是自己发送的
+                        req.recipientId &&
+                        req.recipientId !== 'undefined' && 
+                        req.status === 'pending'
+                      )
+                        
+                    : [];
+                
                 
                 // 如果后端返回空但本地有记录，使用本地记录
                 if (validRequests.length === 0 && pendingRequestsMap.size > 0) {

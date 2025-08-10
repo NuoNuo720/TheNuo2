@@ -1,64 +1,52 @@
-const dataStore = require('./dataStore');
+// netlify/functions/getFriendRequests.js
+const { MongoClient } = require('mongodb');
 
-exports.handler = async (event, context) => {
-    // 设置CORS headers，允许跨域请求
+exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
 
-    // 处理预检请求
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
-    // 只允许POST方法
     if (event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            headers,
-            body: JSON.stringify({ error: '只允许POST请求' })
-        };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: '只支持POST请求' }) };
     }
 
     try {
-        // 解析请求体
-        const requestBody = event.body ? JSON.parse(event.body) : {};
-        // 支持两种参数名以提高兼容性（recipientId是更准确的命名）
-        const userId = requestBody.recipientId || requestBody.userId;
+        const { recipientId } = JSON.parse(event.body);
         
-        // 参数验证
-        if (!userId) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: '缺少接收者ID（recipientId）' })
-            };
+        if (!recipientId) {
+            return { statusCode: 400, headers, body: JSON.stringify({ error: '缺少recipientId' }) };
         }
-        
-        // 从数据存储获取收到的好友请求
-        const requests = dataStore.getReceivedFriendRequests(userId);
-        
-        // 日志记录
-        console.log(`用户 ${userId} 获取好友请求，共 ${requests.length} 条`);
-        
-        // 成功响应
+
+        const client = new MongoClient(process.env.MONGODB_URI);
+        await client.connect();
+        const db = client.db('userDB');
+        const requestsCollection = db.collection('friendRequests');
+
+        // 关键修复：只查询发给当前用户的请求
+        const requests = await requestsCollection.find({
+            recipientId: recipientId,  // 接收者是当前用户
+            status: 'pending'
+        }).toArray();
+
+        await client.close();
+
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify(requests)
         };
     } catch (error) {
-        // 错误处理
-        console.error('获取好友请求时发生错误:', error);
+        console.error('获取请求失败:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ 
-                error: '获取好友请求失败',
-                details: process.env.NODE_ENV === 'development' ? error.message : undefined
-            })
+            body: JSON.stringify({ error: '获取好友请求失败' })
         };
     }
 };
