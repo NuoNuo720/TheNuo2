@@ -503,7 +503,7 @@
             </div>
 
             <!-- 调查问卷 -->
-            <div class="nav-card" onclick="showDisabledNotice('调查问卷')">
+            <div class="nav-card" onclick="navigateTo('diaochawenjuan.html')">
                 <div class="card-icon">
                     <i class="fas fa-poll"></i>
                 </div>
@@ -545,6 +545,15 @@
                 </div>
                 <h2 class="card-title">好友列表</h2>
                 <p class="card-desc">管理你的好友和联系人，一起互动</p>
+            </div>
+
+            <!-- 新模式 -->
+            <div class="nav-card" onclick="showDisabledNotice('自由电子冒险2')">
+                <div class="card-icon">
+                    <i class="fas fa-poll"></i>
+                </div>
+                <h2 class="card-title">自由电子冒险2</h2>
+                <p class="card-desc">自由电子冒险之旅！</p>
             </div>
 
             <!-- 更多功能 -->
@@ -809,7 +818,7 @@
 
         // 显示功能已禁用提示
         function showDisabledNotice(featureName) {
-            showNotification(`${featureName}功能暂时停用，敬请期待`, 'info');
+            showNotification(`${featureName}模式即将上线，敬请期待`, 'info');
         }
 
         // 显示即将上线提示
