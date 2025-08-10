@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>自由电子冒险2：量子风暴 | Electron Adventure 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        electron: '#3B82F6',    // 电子蓝
+                        proton: '#F97316',      // 质子橙
+                        neutron: '#6B7280',     // 中子灰
+                        positive: '#EF4444',    // 正电荷红
+                        negative: '#3B82F6',    // 负电荷蓝
+                        neutral: '#10B981',     // 中性绿
+                        space: '#0F172A',       // 太空黑
+                        quantum: '#8B5CF6',     // 量子紫
+                    },
+                    fontFamily: {
+                        future: ['Orbitron', 'Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .glow {
+                filter: drop-shadow(0 0 8px currentColor);
+            }
+            .field-grid {
+                background-image: linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+                background-size: 30px 30px;
+            }
+            .perspective-3d {
+                perspective: 1200px;
+            }
+            .z-axis-transform {
+                transform-style: preserve-3d;
+                transform: translateZ(var(--z-offset, 0px));
+            }
+            .depth-fade {
+                opacity: calc(1 - (var(--z-absolute) * 0.1));
+            }
+        }
+        
+        /* 核心动画 */
+        @keyframes float-3d {
+            0%, 100% { transform: translateZ(0px) translateY(0px); }
+            25% { transform: translateZ(10px) translateY(-5px); }
+            50% { transform: translateZ(0px) translateY(-10px); }
+            75% { transform: translateZ(-10px) translateY(-5px); }
+        }
+        
+        .float-3d {
+            animation: float-3d 4s ease-in-out infinite;
+        }
+        
+        @keyframes quantum-pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        .quantum-pulse {
+            animation: quantum-pulse 2s infinite;
+        }
+        
+        @keyframes charge-shift {
+            0%, 100% { box-shadow: 0 0 15px 5px currentColor; }
+            50% { box-shadow: 0 0 25px 8px currentColor; }
+        }
+        
+        .charge-effect {
+            animation: charge-shift 1.5s infinite;
+        }
+        
+        @keyframes boss-rotate {
+            from { transform: rotate(0deg) scale(1); }
+            to { transform: rotate(360deg) scale(1.05); }
+        }
+        
+        .boss-animation {
+            animation: boss-rotate 8s linear infinite;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 640px) {
+            .control-btn {
+                aspect-ratio: 1/1;
+                font-size: 6vw;
+            }
+            .status-bar {
+                font-size: 3.5vw;
+            }
+            .modal-content {
+                max-height: 85vh;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-space to-slate-900 text-white min-h-screen font-future overflow-x-hidden">
+    <!-- 顶部导航 -->
+    <nav class="container mx-auto px-4 py-3 flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center">
+            <div class="w-10 h-10 rounded-full bg-quantum/30 flex items-center justify-center mr-2">
+                <i class="fa fa-atom text-quantum glow"></i>
+            </div>
+            <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-quantum to-electron">
+                自由电子冒险2
+            </h1>
+        </div>
+        <div class="flex gap-2">
+            <button id="techBtn" class="bg-slate-800/70 hover:bg-slate-700/70 transition-colors px-3 py-1.5 rounded-lg text-sm flex items-center">
+                <i class="fa fa-cogs text-quantum mr-1"></i> 量子科技
+            </button>
+            <button id="helpBtn" class="bg-slate-800/70 hover:bg-slate-700/70 transition-colors px-3 py-1.5 rounded-lg text-sm flex items-center">
+                <i class="fa fa-question-circle text-blue-400 mr-1"></i> 帮助
+            </button>
+        </div>
+    </nav>
+
+    <!-- 游戏主容器 -->
+    <main class="container mx-auto px-4 py-5 max-w-6xl">
+        <!-- 状态面板 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
+                <div class="w-8 h-8 rounded-full bg-electron/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-signal text-electron"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">量子阶段</div>
+                    <div class="font-bold" id="levelDisplay">1</div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
+                <div class="w-8 h-8 rounded-full bg-quantum/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-bolt text-quantum"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">量子能量</div>
+                    <div class="font-bold" id="scoreDisplay">0</div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
+                <div class="w-8 h-8 rounded-full bg-neutral/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-clock-o text-neutral"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">剩余时间</div>
+                    <div class="font-bold" id="timerDisplay">45s</div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-3 flex items-center status-bar border border-slate-700">
+                <div class="w-8 h-8 rounded-full bg-positive/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-magnet text-positive" id="chargeIcon"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">电荷状态</div>
+                    <div class="font-bold" id="chargeDisplay">负电荷</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏区域 -->
+        <div class="perspective-3d mb-5">
+            <div id="gameArea" class="relative bg-space rounded-xl overflow-hidden border-2 border-slate-700 field-grid z-axis-transform" 
+                 style="height: clamp(300px, 55vh, 600px);">
+                <!-- 电子 -->
+                <div id="electron" class="absolute w-10 h-10 rounded-full bg-negative charge-effect float-3d" 
+                     style="left: 50px; top: 50%; --z-offset: 0px; --z-absolute: 0; color: var(--tw-text-opacity); --tw-text-opacity: 1;">
+                    <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">e⁻</div>
+                </div>
+                
+                <!-- 目标位置 -->
+                <div id="target" class="absolute w-14 h-14 rounded-full border-2 border-dashed border-neutral/70 flex items-center justify-center" 
+                     style="left: 80%; top: 50%; --z-offset: 0px; --z-absolute: 0;">
+                    <div class="w-5 h-5 bg-neutral rounded-full quantum-pulse"></div>
+                </div>
+                
+                <!-- Z轴指示器 -->
+                <div class="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded text-xs flex items-center">
+                    <i class="fa fa-arrows-h text-quantum mr-1"></i>
+                    <span>深度: <span id="zDepthDisplay">0</span></span>
+                </div>
+                
+                <!-- 量子碎片指示器 -->
+                <div class="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded text-xs flex items-center">
+                    <i class="fa fa-diamond text-quantum mr-1"></i>
+                    <span>碎片: <span id="fragmentCount">0</span>/<span id="fragmentsNeeded">3</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700 mb-6">
+            <h3 class="text-center text-base font-semibold mb-4 text-quantum">量子电场控制台</h3>
+            
+            <!-- 主要控制方向 -->
+            <div class="grid grid-cols-3 gap-2 md:gap-4 mb-4">
+                <div class="col-start-2">
+                    <button id="upBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                        <i class="fa fa-arrow-up text-white text-xl"></i>
+                    </button>
+                </div>
+                <div class="col-start-1 row-start-2">
+                    <button id="leftBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                        <i class="fa fa-arrow-left text-white text-xl"></i>
+                    </button>
+                </div>
+                <div class="col-start-2 row-start-2">
+                    <button id="downBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                        <i class="fa fa-arrow-down text-white text-xl"></i>
+                    </button>
+                </div>
+                <div class="col-start-3 row-start-2">
+                    <button id="rightBtn" class="w-full bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                        <i class="fa fa-arrow-right text-white text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Z轴控制和电荷切换 -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex gap-2">
+                    <button id="zMinusBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                        <i class="fa fa-arrow-circle-o-left text-quantum text-xl"></i>
+                    </button>
+                    <button id="zPlusBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                        <i class="fa fa-arrow-circle-o-right text-quantum text-xl"></i>
+                    </button>
+                </div>
+                <button id="chargeToggleBtn" class="bg-gradient-to-r from-positive to-negative hover:opacity-90 transition-all p-3 rounded-lg flex justify-center items-center control-btn">
+                    <i class="fa fa-exchange text-white text-xl mr-2"></i>
+                    <span>切换电荷</span>
+                </button>
+            </div>
+            
+            <p class="text-center text-xs text-slate-400 mt-4">
+                提示: 电荷状态会改变电子在电场中的运动方向 | Z轴控制可穿越不同空间层
+            </p>
+        </div>
+        
+        <!-- 快捷按钮 -->
+        <div class="flex flex-wrap justify-center gap-3 mb-10">
+            <button id="restartBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-refresh mr-2"></i> 重置量子态
+            </button>
+            <button id="rankingBtn" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 transition-colors px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-trophy mr-2"></i> 量子排行榜
+            </button>
+            <button id="skillsBtn" class="bg-quantum/80 hover:bg-quantum transition-colors px-4 py-2 rounded-lg flex items-center" disabled>
+                <i class="fa fa-rocket mr-2"></i> 技能激活 (需3碎片)
+            </button>
+        </div>
+    </main>
+    
+    <!-- 排行榜弹窗 -->
+    <div id="rankingModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700 modal-content overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4 text-center text-yellow-400">
+                <i class="fa fa-trophy mr-2"></i>量子能量排行榜
+            </h2>
+            <div id="rankingList" class="max-h-60 overflow-y-auto mb-5 space-y-2">
+                <!-- 排行榜数据将通过JS动态插入 -->
+            </div>
+            <div class="flex justify-center">
+                <button id="closeRankingBtn" class="bg-quantum hover:bg-quantum/80 transition-colors px-5 py-2 rounded-lg text-sm">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 科技树弹窗 -->
+    <div id="techModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-2xl w-11/12 mx-4 transform transition-all border border-slate-700 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-5 text-center text-quantum">
+                <i class="fa fa-cogs mr-2"></i>量子科技树
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <div class="bg-slate-900/70 rounded-lg p-4 border border-slate-700">
+                    <h3 class="text-lg font-semibold mb-2 text-electron">电子强化</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full bg-electron/30 flex items-center justify-center mr-2">
+                                <i class="fa fa-bolt text-xs text-electron"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium">能量效率</div>
+                                <div class="text-xs text-slate-400">减少操作能量消耗</div>
+                            </div>
+                            <div class="text-xs bg-slate-700 px-2 py-1 rounded">
+                                Lv.1 <i class="fa fa-lock text-slate-500"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full bg-electron/30 flex items-center justify-center mr-2">
+                                <i class="fa fa-tachometer text-xs text-electron"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium">场强增幅</div>
+                                <div class="text-xs text-slate-400">提高电场控制效果</div>
+                            </div>
+                            <div class="text-xs bg-slate-700 px-2 py-1 rounded">
+                                Lv.1 <i class="fa fa-lock text-slate-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-900/70 rounded-lg p-4 border border-slate-700">
+                    <h3 class="text-lg font-semibold mb-2 text-quantum">空间技术</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full bg-quantum/30 flex items-center justify-center mr-2">
+                                <i class="fa fa-compress text-xs text-quantum"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium">维度压缩</div>
+                                <div class="text-xs text-slate-400">降低Z轴切换能耗</div>
+                            </div>
+                            <div class="text-xs bg-slate-700 px-2 py-1 rounded">
+                                Lv.1 <i class="fa fa-lock text-slate-500"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full bg-quantum/30 flex items-center justify-center mr-2">
+                                <i class="fa fa-eye text-xs text-quantum"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium">跨维感知</div>
+                                <div class="text-xs text-slate-400">显示其他维度障碍物</div>
+                            </div>
+                            <div class="text-xs bg-slate-700 px-2 py-1 rounded">
+                                Lv.1 <i class="fa fa-lock text-slate-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center text-sm text-slate-400">
+                收集量子碎片可解锁和升级科技
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <button id="closeTechBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-2 rounded-lg text-sm">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 帮助弹窗 -->
+    <div id="helpModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4 text-center text-blue-400">
+                <i class="fa fa-question-circle mr-2"></i>游戏帮助
+            </h2>
+            
+            <div class="space-y-4 text-sm">
+                <div>
+                    <h3 class="font-semibold text-quantum mb-1">基本目标</h3>
+                    <p class="text-slate-300">引导电子到达目标区域，同时避开质子和能量陷阱。每完成一个阶段，难度会增加。</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-quantum mb-1">控制方式</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1">
+                        <li>方向键或屏幕按钮控制电子在X/Y轴移动</li>
+                        <li>Z轴按钮控制电子在深度维度切换</li>
+                        <li>电荷切换按钮改变电子电荷状态（影响电场响应）</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-quantum mb-1">电荷系统</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1">
+                        <li><span class="text-negative">负电荷</span>：与原电场方向相反移动</li>
+                        <li><span class="text-positive">正电荷</span>：与原电场方向相同移动</li>
+                        <li><span class="text-neutral">中性</span>：不受电场影响，仅受惯性影响</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-quantum mb-1">特殊机制</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1">
+                        <li>收集3个量子碎片可激活特殊技能</li>
+                        <li>每5关会遭遇反粒子风暴Boss</li>
+                        <li>科技树可增强电子能力</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <button id="closeHelpBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-2 rounded-lg text-sm">
+                    明白了
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 游戏消息弹窗 -->
+    <div id="messageModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700">
+            <h2 id="modalTitle" class="text-xl font-bold mb-3 text-center"></h2>
+            <p id="modalMessage" class="text-center mb-5 text-sm"></p>
+            <div class="flex justify-center">
+                <button id="modalBtn" class="bg-quantum hover:bg-quantum/80 transition-colors px-5 py-2 rounded-lg text-sm">
+                    继续
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Boss战预警弹窗 -->
+    <div id="bossWarningModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-gradient-to-b from-slate-900 to-space rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-red-900/50">
+            <div class="text-center mb-4">
+                <i class="fa fa-exclamation-triangle text-red-500 text-4xl mb-2"></i>
+                <h2 class="text-xl font-bold text-red-400">反粒子风暴警报</h2>
+            </div>
+            <p class="text-center mb-5 text-sm text-slate-300">
+                检测到高强度反粒子活动！下一阶段将遭遇反粒子集群，它们会跟随电子运动轨迹。<br><br>
+                策略提示：利用电荷切换制造轨迹迷惑敌人，快速到达目标区域。
+            </p>
+            <div class="flex justify-center">
+                <button id="bossWarningBtn" class="bg-red-600 hover:bg-red-700 transition-colors px-5 py-2 rounded-lg text-sm">
+                    迎战
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态变量
+        const gameState = {
+            // 电子属性
+            electron: {
+                element: null,
+                x: 50,
+                y: 0,
+                z: 0,
+                velocityX: 0,
+                velocityY: 0,
+                speed: 3,
+                size: 40,
+                charge: 'negative', // negative, positive, neutral
+                chargeCycle: ['negative', 'positive', 'neutral']
+            },
+            
+            // 目标属性
+            target: {
+                x: 0,
+                y: 0,
+                z: 0,
+                element: null,
+                size: 56
+            },
+            
+            // 游戏元素
+            obstacles: [],
+            protons: [],
+            traps: [],
+            fragments: [],
+            boss: null,
+            bossProjectiles: [],
+            
+            // 游戏状态
+            level: 1,
+            score: 0,
+            timeLeft: 45,
+            timerInterval: null,
+            moves: 0,
+            fragmentsCollected: 0,
+            fragmentsNeeded: 3,
+            skillAvailable: false,
+            inBossFight: false,
+            
+            // 游戏区域属性
+            gameArea: null,
+            gameWidth: 0,
+            gameHeight: 0,
+            maxZDepth: 3,
+            
+            // 游戏控制状态
+            isPlaying: false,
+            gameLoop: null,
+            minObstacleDistance: 80,
+            baseObstacleSize: 36,
+            
+            // 音效状态（预留）
+            soundEnabled: true
+        };
+        
+        // 排行榜系统
+        const rankingSystem = {
+            rankings: [],
+            
+            init() {
+                try {
+                    // 测试localStorage可用性
+                    const testKey = 'quantum_test_' + Date.now();
+                    localStorage.setItem(testKey, 'test');
+                    localStorage.removeItem(testKey);
+                    
+                    const savedRankings = localStorage.getItem('electronAdventure2Rankings');
+                    if (savedRankings) {
+                        this.rankings = JSON.parse(savedRankings);
+                    } else {
+                        // 初始化默认数据
+                        this.rankings = [
+                            { name: '量子大师', score: 5000, date: this.formatDate(new Date()) },
+                            { name: '粒子专家', score: 3800, date: this.formatDate(new Date()) },
+                            { name: '电场行者', score: 2900, date: this.formatDate(new Date()) },
+                            { name: '电子学徒', score: 1800, date: this.formatDate(new Date()) },
+                            { name: '新手玩家', score: 950, date: this.formatDate(new Date()) }
+                        ];
+                        this.save();
+                    }
+                } catch (e) {
+                    // 存储不可用时使用内存存储
+                    this.rankings = [
+                        { name: '量子大师', score: 5000, date: this.formatDate(new Date()) },
+                        { name: '粒子专家', score: 3800, date: this.formatDate(new Date()) },
+                        { name: '电场行者', score: 2900, date: this.formatDate(new Date()) }
+                    ];
+                    console.log('本地存储不可用，使用临时存储:', e);
+                }
+            },
+
+            save() {
+                try {
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('electronAdventure2Rankings', JSON.stringify(this.rankings));
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('排行榜保存失败:', e);
+                }
+                return false;
+            },
+
+            addScore(score) {
+                if (typeof score !== 'number' || isNaN(score)) {
+                    console.error('无效分数:', score);
+                    return false;
+                }
+                
+                // 获取玩家名称
+                let playerName = '量子游客';
+                try {
+                    const userInfoStr = localStorage.getItem('quantumUserInfo');
+                    if (userInfoStr) {
+                        const userInfo = JSON.parse(userInfoStr);
+                        if (userInfo?.username) {
+                            playerName = userInfo.username;
+                        }
+                    }
+                } catch (e) {
+                    console.log('使用默认用户名:', e);
+                }
+                const normalizedName = playerName.slice(0, 10) || '量子游客';
+                
+                // 查找并更新或添加记录
+                const existingIndex = this.rankings.findIndex(item => item.name === normalizedName);
+                
+                if (existingIndex !== -1) {
+                    if (score > this.rankings[existingIndex].score) {
+                        this.rankings[existingIndex] = {
+                            name: normalizedName,
+                            score: score,
+                            date: this.formatDate(new Date())
+                        };
+                    }
+                } else {
+                    this.rankings.push({
+                        name: normalizedName,
+                        score: score,
+                        date: this.formatDate(new Date())
+                    });
+                }
+                
+                // 排序并保留前10
+                this.rankings.sort((a, b) => b.score - a.score);
+                this.rankings = this.rankings.slice(0, 10);
+                
+                // 保存并更新显示
+                const saved = this.save();
+                this.render();
+                return saved;
+            },
+
+            formatDate(date) {
+                return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            },
+
+            render() {
+                const rankingListEl = document.getElementById('rankingList');
+                if (!rankingListEl) return;
+                
+                rankingListEl.innerHTML = '';
+                
+                if (this.rankings.length === 0) {
+                    const emptyItem = document.createElement('div');
+                    emptyItem.className = 'text-center p-4 text-slate-400';
+                    emptyItem.textContent = '暂无记录，快来创造第一个高分吧！';
+                    rankingListEl.appendChild(emptyItem);
+                    return;
+                }
+                
+                this.rankings.forEach((item, index) => {
+                    const rankItem = document.createElement('div');
+                    rankItem.className = `flex justify-between items-center p-2 rounded-lg ${
+                                index < 3 ? 'bg-yellow-900/30' : 'bg-slate-700/50'
+                    }`;
+            
+                    let rankIcon = '';
+                    if (index === 0) rankIcon = '<i class="fa fa-trophy text-yellow-500 mr-2"></i>';
+                    if (index === 1) rankIcon = '<i class="fa fa-trophy text-gray-400 mr-2"></i>';
+                    if (index === 2) rankIcon = '<i class="fa fa-trophy text-amber-700 mr-2"></i>';
+            
+                    rankItem.innerHTML = `
+                        <div class="flex items-center">
+                            <span class="w-6 text-center font-bold ${index < 3 ? 'text-yellow-400' : ''}">${index + 1}</span>
+                            ${rankIcon}
+                            <span class="ml-1">${item.name}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="font-bold text-quantum mr-4">${item.score}</span>
+                            <span class="text-xs text-slate-400">${item.date}</span>
+                        </div>
+                    `;
+                    rankingListEl.appendChild(rankItem);
+                });
+            }
+        };
+        
+        // DOM元素引用
+        const elements = {
+            electron: document.getElementById('electron'),
+            target: document.getElementById('target'),
+            gameArea: document.getElementById('gameArea'),
+            levelDisplay: document.getElementById('levelDisplay'),
+            scoreDisplay: document.getElementById('scoreDisplay'),
+            timerDisplay: document.getElementById('timerDisplay'),
+            chargeIcon: document.getElementById('chargeIcon'),
+            chargeDisplay: document.getElementById('chargeDisplay'),
+            zDepthDisplay: document.getElementById('zDepthDisplay'),
+            fragmentCount: document.getElementById('fragmentCount'),
+            fragmentsNeeded: document.getElementById('fragmentsNeeded'),
+            skillsBtn: document.getElementById('skillsBtn'),
+            
+            // 按钮
+            restartBtn: document.getElementById('restartBtn'),
+            upBtn: document.getElementById('upBtn'),
+            downBtn: document.getElementById('downBtn'),
+            leftBtn: document.getElementById('leftBtn'),
+            rightBtn: document.getElementById('rightBtn'),
+            zPlusBtn: document.getElementById('zPlusBtn'),
+            zMinusBtn: document.getElementById('zMinusBtn'),
+            chargeToggleBtn: document.getElementById('chargeToggleBtn'),
+            rankingBtn: document.getElementById('rankingBtn'),
+            techBtn: document.getElementById('techBtn'),
+            helpBtn: document.getElementById('helpBtn'),
+            
+            // 弹窗
+            messageModal: document.getElementById('messageModal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalMessage: document.getElementById('modalMessage'),
+            modalBtn: document.getElementById('modalBtn'),
+            rankingModal: document.getElementById('rankingModal'),
+            closeRankingBtn: document.getElementById('closeRankingBtn'),
+            techModal: document.getElementById('techModal'),
+            closeTechBtn: document.getElementById('closeTechBtn'),
+            helpModal: document.getElementById('helpModal'),
+            closeHelpBtn: document.getElementById('closeHelpBtn'),
+            bossWarningModal: document.getElementById('bossWarningModal'),
+            bossWarningBtn: document.getElementById('bossWarningBtn')
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            // 初始化排行榜
+            rankingSystem.init();
+            
+            // 设置游戏区域
+            gameState.gameArea = elements.gameArea;
+            updateGameDimensions();
+            adjustGameParameters();
+            
+            // 初始化电子和目标引用
+            gameState.electron.element = elements.electron;
+            gameState.target.element = elements.target;
+            
+            // 更新显示
+            updateFragmentDisplay();
+            
+            // 添加事件监听器
+            elements.upBtn.addEventListener('click', () => applyField('up'));
+            elements.downBtn.addEventListener('click', () => applyField('down'));
+            elements.leftBtn.addEventListener('click', () => applyField('left'));
+            elements.rightBtn.addEventListener('click', () => applyField('right'));
+            elements.zPlusBtn.addEventListener('click', () => changeZDepth(1));
+            elements.zMinusBtn.addEventListener('click', () => changeZDepth(-1));
+            elements.chargeToggleBtn.addEventListener('click', toggleCharge);
+            elements.restartBtn.addEventListener('click', restartGame);
+            elements.skillsBtn.addEventListener('click', activateSkill);
+            
+            // 键盘控制
+            document.addEventListener('keydown', (e) => {
+                if (!gameState.isPlaying) return;
+                
+                switch(e.key) {
+                    case 'ArrowUp': applyField('up'); break;
+                    case 'ArrowDown': applyField('down'); break;
+                    case 'ArrowLeft': applyField('left'); break;
+                    case 'ArrowRight': applyField('right'); break;
+                    case 'w': case 'W': changeZDepth(1); break;
+                    case 's': case 'S': changeZDepth(-1); break;
+                    case ' ': toggleCharge(); break; // 空格切换电荷
+                    case 'Shift': if (gameState.skillAvailable) activateSkill(); break;
+                }
+            });
+            
+            // 弹窗控制
+            elements.rankingBtn.addEventListener('click', () => {
+                rankingSystem.render();
+                elements.rankingModal.classList.remove('hidden');
+            });
+            elements.closeRankingBtn.addEventListener('click', () => {
+                elements.rankingModal.classList.add('hidden');
+            });
+            
+            elements.techBtn.addEventListener('click', () => {
+                elements.techModal.classList.remove('hidden');
+            });
+            elements.closeTechBtn.addEventListener('click', () => {
+                elements.techModal.classList.add('hidden');
+            });
+            
+            elements.helpBtn.addEventListener('click', () => {
+                elements.helpModal.classList.remove('hidden');
+            });
+            elements.closeHelpBtn.addEventListener('click', () => {
+                elements.helpModal.classList.add('hidden');
+            });
+            
+            elements.modalBtn.addEventListener('click', () => {
+                elements.messageModal.classList.add('hidden');
+                if (!gameState.isPlaying) {
+                    startLevel();
+                }
+            });
+            
+            elements.bossWarningBtn.addEventListener('click', () => {
+                elements.bossWarningModal.classList.add('hidden');
+                startLevel();
+            });
+            
+            // 窗口大小变化处理
+            window.addEventListener('resize', () => {
+                updateGameDimensions();
+                adjustGameParameters();
+                if (gameState.isPlaying) {
+                    repositionElements();
+                }
+            });
+            
+            // 显示欢迎消息
+            showMessage(
+                '量子风暴来临',
+                '反粒子集群正在侵蚀能量系统，你的任务是引导电子穿越多维电场，<br>收集量子碎片并修复能量核心。<br><br>使用方向键或屏幕按钮控制电子，Z轴按钮切换深度维度。',
+                '开始任务'
+            );
+        }
+        
+        // 更新游戏区域尺寸
+        function updateGameDimensions() {
+            gameState.gameWidth = gameState.gameArea.offsetWidth;
+            gameState.gameHeight = gameState.gameArea.offsetHeight;
+        }
+        
+        // 根据屏幕尺寸调整游戏参数
+        function adjustGameParameters() {
+            if (window.innerWidth < 640) {
+                gameState.baseObstacleSize = 30;
+                gameState.minObstacleDistance = Math.max(60, gameState.gameWidth * 0.15);
+                gameState.electron.speed = 2.5;
+                gameState.maxZDepth = 2; // 小屏幕减少Z轴深度
+            } else {
+                gameState.baseObstacleSize = 36;
+                gameState.minObstacleDistance = 80;
+                gameState.electron.speed = 3;
+                gameState.maxZDepth = 3;
+            }
+        }
+        
+        // 重新定位所有元素（窗口大小变化时）
+        function repositionElements() {
+            // 重新定位电子
+            updateElectronPosition(false);
+            
+            // 重新定位目标
+            gameState.target.element.style.left = `${gameState.target.x}px`;
+            gameState.target.element.style.top = `${gameState.target.y}px`;
+            gameState.target.element.style.setProperty('--z-offset', `${gameState.target.z * 30}px`);
+            gameState.target.element.style.setProperty('--z-absolute', Math.abs(gameState.target.z));
+            
+            // 重新定位障碍物
+            gameState.protons.forEach(proton => {
+                proton.element.style.left = `${proton.x}px`;
+                proton.element.style.top = `${proton.y}px`;
+            });
+            
+            gameState.traps.forEach(trap => {
+                trap.element.style.left = `${trap.x}px`;
+                trap.element.style.top = `${trap.y}px`;
+            });
+            
+            gameState.fragments.forEach(frag => {
+                frag.element.style.left = `${frag.x}px`;
+                frag.element.style.top = `${frag.y}px`;
+            });
+        }
+        
+        // 重置电子位置
+        function resetElectronPosition() {
+            gameState.electron.x = 50;
+            gameState.electron.y = gameState.gameHeight / 2;
+            gameState.electron.z = 0;
+            gameState.electron.velocityX = 0;
+            gameState.electron.velocityY = 0;
+            gameState.electron.charge = 'negative';
+            
+            // 更新电荷显示
+            updateChargeDisplay();
+            
+            // 更新位置
+            updateElectronPosition();
+        }
+        
+        // 更新电荷显示
+        function updateChargeDisplay() {
+            const charge = gameState.electron.charge;
+            let colorClass, chargeText, iconClass;
+            
+            switch(charge) {
+                case 'negative':
+                    colorClass = 'text-negative';
+                    chargeText = '负电荷';
+                    iconClass = 'fa-magnet text-negative';
+                    gameState.electron.element.className = 'absolute w-10 h-10 rounded-full bg-negative charge-effect float-3d';
+                    break;
+                case 'positive':
+                    colorClass = 'text-positive';
+                    chargeText = '正电荷';
+                    iconClass = 'fa-magnet text-positive';
+                    gameState.electron.element.className = 'absolute w-10 h-10 rounded-full bg-positive charge-effect float-3d';
+                    break;
+                case 'neutral':
+                    colorClass = 'text-neutral';
+                    chargeText = '中性';
+                    iconClass = 'fa-circle-o text-neutral';
+                    gameState.electron.element.className = 'absolute w-10 h-10 rounded-full bg-neutral charge-effect float-3d';
+                    break;
+            }
+            
+            elements.chargeDisplay.className = `font-bold ${colorClass}`;
+            elements.chargeDisplay.textContent = chargeText;
+            elements.chargeIcon.className = `fa ${iconClass}`;
+        }
+        
+        // 切换电荷状态
+        function toggleCharge() {
+            if (!gameState.isPlaying) return;
+            
+            const currentIndex = gameState.electron.chargeCycle.indexOf(gameState.electron.charge);
+            const nextIndex = (currentIndex + 1) % gameState.electron.chargeCycle.length;
+            gameState.electron.charge = gameState.electron.chargeCycle[nextIndex];
+            
+            // 消耗少量分数作为切换成本
+            gameState.score = Math.max(0, gameState.score - 5);
+            elements.scoreDisplay.textContent = gameState.score;
+            
+            updateChargeDisplay();
+            
+            // 添加视觉效果
+            const flash = document.createElement('div');
+            flash.className = `absolute inset-0 pointer-events-none z-20 flex items-center justify-center`;
+            flash.style.backgroundColor = gameState.electron.charge === 'negative' ? 'rgba(59, 130, 246, 0.3)' :
+                                         gameState.electron.charge === 'positive' ? 'rgba(239, 68, 68, 0.3)' :
+                                         'rgba(16, 185, 129, 0.3)';
+            flash.style.transition = 'opacity 0.5s';
+            gameState.gameArea.appendChild(flash);
+            
+            setTimeout(() => {
+                flash.style.opacity = '0';
+                setTimeout(() => {
+                    if (flash.parentNode) {
+                        gameState.gameArea.removeChild(flash);
+                    }
+                }, 500);
+            }, 100);
+        }
+        
+        // 改变Z轴深度
+        function changeZDepth(delta) {
+            if (!gameState.isPlaying) return;
+            
+            const newZ = gameState.electron.z + delta;
+            if (newZ >= -gameState.maxZDepth && newZ <= gameState.maxZDepth) {
+                gameState.electron.z = newZ;
+                
+                // Z轴切换消耗分数
+                gameState.score = Math.max(0, gameState.score - 10);
+                elements.scoreDisplay.textContent = gameState.score;
+                
+                // 更新显示
+                elements.zDepthDisplay.textContent = gameState.electron.z;
+                updateElectronPosition();
+                
+                // 添加深度切换效果
+                createZEffect();
+            }
+        }
+        
+        // 创建Z轴切换效果
+        function createZEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'absolute inset-0 pointer-events-none z-20';
+            effect.style.background = `radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0) 70%)`;
+            effect.style.transition = 'opacity 0.5s';
+            gameState.gameArea.appendChild(effect);
+            
+            setTimeout(() => {
+                effect.style.opacity = '0';
+                setTimeout(() => {
+                    if (effect.parentNode) {
+                        gameState.gameArea.removeChild(effect);
+                    }
+                }, 500);
+            }, 100);
+        }
+        
+        // 设置随机目标位置
+        function setRandomTargetPosition() {
+            const padding = 50;
+            const targetWidth = gameState.target.size;
+            const targetHeight = gameState.target.size;
+            
+            // 随机X位置（偏右）
+            const maxX = gameState.gameWidth - padding - targetWidth;
+            const minX = gameState.gameWidth * 0.6;
+            gameState.target.x = Math.random() * (maxX - minX) + minX;
+            
+            // 随机Y位置
+            const maxY = gameState.gameHeight - padding - targetHeight;
+            const minY = padding;
+            gameState.target.y = Math.random() * (maxY - minY) + minY;
+            
+            // 随机Z位置
+            gameState.target.z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+            
+            // 应用位置
+            gameState.target.element.style.left = `${gameState.target.x}px`;
+            gameState.target.element.style.top = `${gameState.target.y}px`;
+            gameState.target.element.style.setProperty('--z-offset', `${gameState.target.z * 30}px`);
+            gameState.target.element.style.setProperty('--z-absolute', Math.abs(gameState.target.z));
+        }
+        
+        // 更新电子位置
+        function updateElectronPosition(applyPhysics = true) {
+            if (applyPhysics) {
+                // 应用摩擦
+                if (window.innerWidth < 640) {
+                    gameState.electron.velocityX *= 0.95;
+                    gameState.electron.velocityY *= 0.95;
+                } else {
+                    gameState.electron.velocityX *= 0.97;
+                    gameState.electron.velocityY *= 0.97;
+                }
+                
+                // 速度阈值
+                if (Math.abs(gameState.electron.velocityX) < 0.1) gameState.electron.velocityX = 0;
+                if (Math.abs(gameState.electron.velocityY) < 0.1) gameState.electron.velocityY = 0;
+                
+                // 更新位置
+                gameState.electron.x += gameState.electron.velocityX;
+                gameState.electron.y += gameState.electron.velocityY;
+                
+                // 边界检查
+                if (gameState.electron.x < 0) gameState.electron.x = 0;
+                if (gameState.electron.x > gameState.gameWidth - gameState.electron.size) {
+                    gameState.electron.x = gameState.gameWidth - gameState.electron.size;
+                }
+                if (gameState.electron.y < 0) gameState.electron.y = 0;
+                if (gameState.electron.y > gameState.gameHeight - gameState.electron.size) {
+                    gameState.electron.y = gameState.gameHeight - gameState.electron.size;
+                }
+            }
+            
+            // 应用位置和Z轴变换
+            gameState.electron.element.style.left = `${gameState.electron.x}px`;
+            gameState.electron.element.style.top = `${gameState.electron.y}px`;
+            gameState.electron.element.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+            gameState.electron.element.style.setProperty('--z-absolute', Math.abs(gameState.electron.z));
+            
+            // 更新Z轴显示
+            elements.zDepthDisplay.textContent = gameState.electron.z;
+            
+            // 检查碰撞
+            checkTargetCollision();
+            checkObstacleCollision();
+            checkFragmentCollection();
+            
+            // 如果在Boss战中，更新Boss和投射物
+            if (gameState.inBossFight && gameState.boss) {
+                updateBoss();
+                updateBossProjectiles();
+            }
+        }
+        
+        // 应用电场力
+        function applyField(direction) {
+            if (!gameState.isPlaying) return;
+            
+            gameState.moves++;
+            showFieldDirectionIndicator(direction);
+            
+            // 根据电荷状态确定受力方向
+            let forceMultiplier = 1;
+            if (gameState.electron.charge === 'negative') {
+                forceMultiplier = 1; // 负电荷：与电场方向相反
+            } else if (gameState.electron.charge === 'positive') {
+                forceMultiplier = -1; // 正电荷：与电场方向相同
+            } else {
+                forceMultiplier = 0.3; // 中性：受影响小
+            }
+            
+            // 应用力
+            switch(direction) {
+                case 'up':
+                    gameState.electron.velocityY -= gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('up');
+                    break;
+                case 'down':
+                    gameState.electron.velocityY += gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('down');
+                    break;
+                case 'left':
+                    gameState.electron.velocityX -= gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('left');
+                    break;
+                case 'right':
+                    gameState.electron.velocityX += gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('right');
+                    break;
+            }
+        }
+        
+        // 显示电场方向指示器
+        function showFieldDirectionIndicator(direction) {
+            const existingIndicator = document.querySelector('.direction-indicator');
+            if (existingIndicator) {
+                gameState.gameArea.removeChild(existingIndicator);
+            }
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'direction-indicator absolute pointer-events-none z-10';
+            indicator.style.left = `${gameState.electron.x + 40}px`;
+            indicator.style.top = `${gameState.electron.y}px`;
+            indicator.style.setProperty('--z-offset', `${gameState.electron.z * 30 + 10}px`);
+            
+            let icon, color;
+            switch(direction) {
+                case 'left':
+                    icon = 'fa-long-arrow-left';
+                    color = 'text-electron';
+                    break;
+                case 'right':
+                    icon = 'fa-long-arrow-right';
+                    color = 'text-electron';
+                    break;
+                case 'up':
+                    icon = 'fa-long-arrow-up';
+                    color = 'text-electron';
+                    break;
+                case 'down':
+                    icon = 'fa-long-arrow-down';
+                    color = 'text-electron';
+                    break;
+            }
+            
+            indicator.innerHTML = `<i class="fa ${icon} ${color} text-2xl"></i>`;
+            gameState.gameArea.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.style.transition = 'opacity 0.5s';
+                    indicator.style.opacity = '0';
+                    setTimeout(() => {
+                        if (indicator.parentNode) {
+                            gameState.gameArea.removeChild(indicator);
+                        }
+                    }, 500);
+                }
+            }, 800);
+        }
+        
+        // 创建电场视觉效果
+        function createFieldEffect(direction) {
+            const fieldEffect = document.createElement('div');
+            fieldEffect.className = 'absolute bg-electron/10 field-glow transition-opacity duration-500 pointer-events-none';
+            fieldEffect.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+            
+            // 根据方向设置电场区域
+            if (direction === 'left' || direction === 'right') {
+                fieldEffect.style.height = '100%';
+                fieldEffect.style.width = '40%';
+                fieldEffect.style.top = '0';
+                fieldEffect.style[direction] = '0';
+            } else {
+                fieldEffect.style.width = '100%';
+                fieldEffect.style.height = '40%';
+                fieldEffect.style.left = '0';
+                fieldEffect.style[direction] = '0';
+            }
+            
+            gameState.gameArea.appendChild(fieldEffect);
+            
+            setTimeout(() => {
+                fieldEffect.style.opacity = '0';
+                setTimeout(() => {
+                    if (fieldEffect.parentNode) {
+                        gameState.gameArea.removeChild(fieldEffect);
+                    }
+                }, 500);
+            }, 400);
+        }
+        
+        // 检查是否到达目标
+        function checkTargetCollision() {
+            // 只有在同一Z轴深度才能碰撞
+            if (gameState.electron.z !== gameState.target.z) return;
+            
+            const dx = Math.abs(gameState.electron.x + gameState.electron.size/2 - (gameState.target.x + gameState.target.size/2));
+            const dy = Math.abs(gameState.electron.y + gameState.electron.size/2 - (gameState.target.y + gameState.target.size/2));
+            
+            if (dx < (gameState.electron.size + gameState.target.size)/2.5 && 
+                dy < (gameState.electron.size + gameState.target.size)/2.5) {
+                completeLevel();
+            }
+        }
+        
+        // 检查障碍物碰撞
+        function checkObstacleCollision() {
+            const electronCenterX = gameState.electron.x + gameState.electron.size/2;
+            const electronCenterY = gameState.electron.y + gameState.electron.size/2;
+            
+            // 检查与质子的碰撞（只在同一Z轴）
+            for (let i = 0; i < gameState.protons.length; i++) {
+                const proton = gameState.protons[i];
+                if (proton.z !== gameState.electron.z) continue;
+                
+                const dx = Math.abs(electronCenterX - (proton.x + proton.size/2));
+                const dy = Math.abs(electronCenterY - (proton.y + proton.size/2));
+                
+                if (dx < (gameState.electron.size + proton.size)/2.2 && 
+                    dy < (gameState.electron.size + proton.size)/2.2) {
+                    gameOver('质子碰撞', '电子与质子发生强相互作用，能量消散');
+                    return;
+                }
+            }
+            
+            // 检查与陷阱的碰撞（陷阱影响相邻Z轴）
+            for (let i = 0; i < gameState.traps.length; i++) {
+                const trap = gameState.traps[i];
+                // 陷阱影响当前Z轴和相邻Z轴
+                if (Math.abs(trap.z - gameState.electron.z) > 1) continue;
+                
+                const dx = Math.abs(electronCenterX - (trap.x + trap.size/2));
+                const dy = Math.abs(electronCenterY - (trap.y + trap.size/2));
+                
+                // 陷阱碰撞范围稍大
+                if (dx < (gameState.electron.size + trap.size)/2 && 
+                    dy < (gameState.electron.size + trap.size)/2) {
+                    gameOver('能量陷阱', '电子进入不稳定能量区域，结构崩溃');
+                    return;
+                }
+            }
+            
+            // 检查与Boss投射物的碰撞
+            if (gameState.inBossFight) {
+                for (let i = gameState.bossProjectiles.length - 1; i >= 0; i--) {
+                    const projectile = gameState.bossProjectiles[i];
+                    if (projectile.z !== gameState.electron.z) continue;
+                    
+                    const dx = Math.abs(electronCenterX - (projectile.x + projectile.size/2));
+                    const dy = Math.abs(electronCenterY - (projectile.y + projectile.size/2));
+                    
+                    if (dx < (gameState.electron.size + projectile.size)/2 && 
+                        dy < (gameState.electron.size + projectile.size)/2) {
+                        // 移除投射物
+                        if (projectile.element.parentNode) {
+                            gameState.gameArea.removeChild(projectile.element);
+                        }
+                        gameState.bossProjectiles.splice(i, 1);
+                        
+                        gameOver('反粒子击中', '反粒子与电子湮灭，能量归零');
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // 检查量子碎片收集
+        function checkFragmentCollection() {
+            for (let i = gameState.fragments.length - 1; i >= 0; i--) {
+                const fragment = gameState.fragments[i];
+                if (fragment.z !== gameState.electron.z) continue;
+                
+                const dx = Math.abs(gameState.electron.x + gameState.electron.size/2 - (fragment.x + fragment.size/2));
+                const dy = Math.abs(gameState.electron.y + gameState.electron.size/2 - (fragment.y + fragment.size/2));
+                
+                if (dx < (gameState.electron.size + fragment.size)/2 && 
+                    dy < (gameState.electron.size + fragment.size)/2) {
+                    // 收集碎片
+                    if (fragment.element.parentNode) {
+                        gameState.gameArea.removeChild(fragment.element);
+                    }
+                    gameState.fragments.splice(i, 1);
+                    
+                    // 增加计数
+                    gameState.fragmentsCollected++;
+                    updateFragmentDisplay();
+                    
+                    // 增加分数
+                    const fragmentScore = 100;
+                    gameState.score += fragmentScore;
+                    elements.scoreDisplay.textContent = gameState.score;
+                    
+                    // 显示收集效果
+                    showFragmentEffect(fragment.x, fragment.y);
+                    
+                    // 检查是否可以激活技能
+                    if (gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
+                        enableSkill();
+                    }
+                }
+            }
+        }
+        
+        // 更新碎片显示
+        function updateFragmentDisplay() {
+            elements.fragmentCount.textContent = gameState.fragmentsCollected;
+            
+            // 如果已收集足够碎片，更新技能按钮
+            if (gameState.fragmentsCollected >= gameState.fragmentsNeeded && !gameState.skillAvailable) {
+                enableSkill();
+            }
+        }
+        
+        // 显示碎片收集效果
+        function showFragmentEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'absolute quantum-pulse pointer-events-none z-20';
+            effect.style.left = `${x}px`;
+            effect.style.top = `${y}px`;
+            effect.style.width = '30px';
+            effect.style.height = '30px';
+            effect.style.backgroundColor = 'rgba(139, 92, 246, 0.6)';
+            effect.style.borderRadius = '50%';
+            effect.style.transform = 'translate(-50%, -50%)';
+            
+            gameState.gameArea.appendChild(effect);
+            
+            // 添加分数浮动效果
+            const scorePopup = document.createElement('div');
+            scorePopup.className = 'absolute text-quantum font-bold pointer-events-none z-20';
+            scorePopup.style.left = `${x}px`;
+            scorePopup.style.top = `${y - 20}px`;
+            scorePopup.style.transform = 'translate(-50%, 0)';
+            scorePopup.style.transition = 'all 0.8s ease-out';
+            scorePopup.textContent = '+100';
+            gameState.gameArea.appendChild(scorePopup);
+            
+            setTimeout(() => {
+                effect.style.opacity = '0';
+                scorePopup.style.opacity = '0';
+                scorePopup.style.transform = 'translate(-50%, -30px)';
+                
+                setTimeout(() => {
+                    if (effect.parentNode) gameState.gameArea.removeChild(effect);
+                    if (scorePopup.parentNode) gameState.gameArea.removeChild(scorePopup);
+                }, 800);
+            }, 300);
+        }
+        
+        // 启用技能
+        function enableSkill() {
+            gameState.skillAvailable = true;
+            elements.skillsBtn.disabled = false;
+            elements.skillsBtn.classList.add('animate-pulse');
+        }
+        
+        // 激活技能
+        function activateSkill() {
+            if (!gameState.skillAvailable || !gameState.isPlaying) return;
+            
+            // 消耗所有碎片
+            gameState.fragmentsCollected = 0;
+            gameState.skillAvailable = false;
+            updateFragmentDisplay();
+            elements.skillsBtn.disabled = true;
+            elements.skillsBtn.classList.remove('animate-pulse');
+            
+            // 技能效果：清除当前Z轴的质子，短时间内免疫陷阱
+            const skillEffect = document.createElement('div');
+            skillEffect.className = 'absolute inset-0 bg-quantum/20 pointer-events-none z-30';
+            skillEffect.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+            skillEffect.style.transition = 'opacity 1s';
+            gameState.gameArea.appendChild(skillEffect);
+            
+            // 清除当前Z轴的质子
+            for (let i = gameState.protons.length - 1; i >= 0; i--) {
+                const proton = gameState.protons[i];
+                if (proton.z === gameState.electron.z) {
+                    if (proton.element.parentNode) {
+                        gameState.gameArea.removeChild(proton.element);
+                    }
+                    gameState.protons.splice(i, 1);
+                }
+            }
+            
+            // 显示技能激活消息
+            const skillMessage = document.createElement('div');
+            skillMessage.className = 'absolute top-4 left-1/2 transform -translate-x-1/2 bg-quantum/80 text-white px-3 py-1 rounded text-xs font-bold z-40';
+            skillMessage.textContent = '量子净化激活！';
+            gameState.gameArea.appendChild(skillMessage);
+            
+            setTimeout(() => {
+                skillEffect.style.opacity = '0';
+                skillMessage.style.opacity = '0';
+                
+                setTimeout(() => {
+                    if (skillEffect.parentNode) gameState.gameArea.removeChild(skillEffect);
+                    if (skillMessage.parentNode) gameState.gameArea.removeChild(skillMessage);
+                }, 1000);
+            }, 2000);
+        }
+        
+        // 检查位置是否太近
+        function isPositionTooClose(x, y, size, obstacles) {
+            for (let i = 0; i < obstacles.length; i++) {
+                const obstacle = obstacles[i];
+                const dx = Math.abs(x - obstacle.x);
+                const dy = Math.abs(y - obstacle.y);
+                const minAllowedDistance = (size + obstacle.size) / 2 + gameState.minObstacleDistance;
+                
+                if (dx < minAllowedDistance && dy < minAllowedDistance) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // 创建质子
+        function createProtons(count) {
+            // 清除现有质子
+            gameState.protons.forEach(proton => {
+                if (proton.element.parentNode) {
+                    gameState.gameArea.removeChild(proton.element);
+                }
+            });
+            gameState.protons = [];
+            
+            const padding = 60;
+            const protonSize = gameState.baseObstacleSize;
+            const maxAttempts = 50;
+            const allObstacles = [...gameState.traps];
+            
+            for (let i = 0; i < count; i++) {
+                let x, y, z;
+                let attempts = 0;
+                
+                do {
+                    x = Math.random() * (gameState.gameWidth - protonSize - padding * 2) + padding;
+                    y = Math.random() * (gameState.gameHeight - protonSize - padding * 2) + padding;
+                    z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+                    attempts++;
+                    
+                    if (attempts > maxAttempts / 2) {
+                        gameState.minObstacleDistance = Math.max(30, gameState.minObstacleDistance - 5);
+                    }
+                } while (
+                    // 远离电子
+                    (Math.abs(x - gameState.electron.x) < 120 && Math.abs(y - gameState.electron.y) < 120 && z === gameState.electron.z) ||
+                    // 远离目标
+                    (Math.abs(x - gameState.target.x) < 120 && Math.abs(y - gameState.target.y) < 120 && z === gameState.target.z) ||
+                    // 远离其他障碍物
+                    isPositionTooClose(x, y, protonSize, allObstacles) ||
+                    attempts >= maxAttempts
+                );
+                
+                const proton = document.createElement('div');
+                proton.className = 'absolute bg-proton rounded-full proton-glow spin-slow depth-fade';
+                proton.style.width = `${protonSize}px`;
+                proton.style.height = `${protonSize}px`;
+                proton.style.left = `${x}px`;
+                proton.style.top = `${y}px`;
+                proton.style.setProperty('--z-offset', `${z * 30}px`);
+                proton.style.setProperty('--z-absolute', Math.abs(z));
+                proton.innerHTML = `
+                    <div class="absolute -inset-1 bg-gradient-to-r from-proton to-orange-300 rounded-full opacity-30"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">p⁺</div>
+                `;
+                
+                gameState.gameArea.appendChild(proton);
+                const newProton = { element: proton, x, y, z, size: protonSize };
+                gameState.protons.push(newProton);
+                allObstacles.push(newProton);
+            }
+        }
+        
+        // 创建陷阱
+        function createTraps(count) {
+            // 清除现有陷阱
+            gameState.traps.forEach(trap => {
+                if (trap.element.parentNode) {
+                    gameState.gameArea.removeChild(trap.element);
+                }
+            });
+            gameState.traps = [];
+            
+            const padding = 60;
+            const trapSize = gameState.baseObstacleSize + 10;
+            const maxAttempts = 50;
+            const allObstacles = [...gameState.protons];
+            
+            for (let i = 0; i < count; i++) {
+                let x, y, z;
+                let attempts = 0;
+                
+                do {
+                    x = Math.random() * (gameState.gameWidth - trapSize - padding * 2) + padding;
+                    y = Math.random() * (gameState.gameHeight - trapSize - padding * 2) + padding;
+                    z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+                    attempts++;
+                    
+                    if (attempts > maxAttempts / 2) {
+                        gameState.minObstacleDistance = Math.max(30, gameState.minObstacleDistance - 5);
+                    }
+                } while (
+                    // 远离电子
+                    (Math.abs(x - gameState.electron.x) < 150 && Math.abs(y - gameState.electron.y) < 150 && z === gameState.electron.z) ||
+                    // 远离目标
+                    (Math.abs(x - gameState.target.x) < 150 && Math.abs(y - gameState.target.y) < 150 && z === gameState.target.z) ||
+                    // 远离其他障碍物
+                    isPositionTooClose(x, y, trapSize, allObstacles) ||
+                    attempts >= maxAttempts
+                );
+                
+                const trap = document.createElement('div');
+                trap.className = 'absolute bg-danger rounded-full trap-pulse depth-fade';
+                trap.style.width = `${trapSize}px`;
+                trap.style.height = `${trapSize}px`;
+                trap.style.left = `${x}px`;
+                trap.style.top = `${y}px`;
+                trap.style.setProperty('--z-offset', `${z * 30}px`);
+                trap.style.setProperty('--z-absolute', Math.abs(z));
+                trap.innerHTML = `
+                    <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">能量陷阱</div>
+                `;
+                
+                gameState.gameArea.appendChild(trap);
+                const newTrap = { element: trap, x, y, z, size: trapSize };
+                gameState.traps.push(newTrap);
+                allObstacles.push(newTrap);
+            }
+        }
+        
+        // 创建量子碎片
+        function createFragments(count) {
+            // 清除现有碎片
+            gameState.fragments.forEach(frag => {
+                if (frag.element.parentNode) {
+                    gameState.gameArea.removeChild(frag.element);
+                }
+            });
+            gameState.fragments = [];
+            
+            const fragmentSize = 20;
+            const padding = 50;
+            
+            for (let i = 0; i < count; i++) {
+                let x, y, z;
+                
+                // 确保碎片位置有一定挑战性
+                do {
+                    x = Math.random() * (gameState.gameWidth - fragmentSize - padding * 2) + padding;
+                    y = Math.random() * (gameState.gameHeight - fragmentSize - padding * 2) + padding;
+                    z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+                } while (
+                    // 不要太靠近电子或目标
+                    (Math.abs(x - gameState.electron.x) < 100 && Math.abs(y - gameState.electron.y) < 100) ||
+                    (Math.abs(x - gameState.target.x) < 100 && Math.abs(y - gameState.target.y) < 100)
+                );
+                
+                const fragment = document.createElement('div');
+                fragment.className = 'absolute bg-quantum rounded-full quantum-pulse depth-fade';
+                fragment.style.width = `${fragmentSize}px`;
+                fragment.style.height = `${fragmentSize}px`;
+                fragment.style.left = `${x}px`;
+                fragment.style.top = `${y}px`;
+                fragment.style.setProperty('--z-offset', `${z * 30}px`);
+                fragment.style.setProperty('--z-absolute', Math.abs(z));
+                fragment.innerHTML = `<i class="fa fa-diamond absolute inset-0 flex items-center justify-center text-white text-xs"></i>`;
+                
+                gameState.gameArea.appendChild(fragment);
+                gameState.fragments.push({ element: fragment, x, y, z, size: fragmentSize });
+            }
+        }
+        
+        // 创建Boss
+        function createBoss() {
+            // 清除现有Boss
+            if (gameState.boss && gameState.boss.element.parentNode) {
+                gameState.gameArea.removeChild(gameState.boss.element);
+            }
+            gameState.boss = null;
+            
+            // 清除投射物
+            gameState.bossProjectiles.forEach(p => {
+                if (p.element.parentNode) {
+                    gameState.gameArea.removeChild(p.element);
+                }
+            });
+            gameState.bossProjectiles = [];
+            
+            const bossSize = 60;
+            const x = gameState.gameWidth * 0.15;
+            const y = gameState.gameHeight / 2;
+            const z = 0;
+            
+            const boss = document.createElement('div');
+            boss.className = 'absolute bg-gradient-to-r from-red-600 to-purple-600 rounded-full boss-animation';
+            boss.style.width = `${bossSize}px`;
+            boss.style.height = `${bossSize}px`;
+            boss.style.left = `${x}px`;
+            boss.style.top = `${y}px`;
+            boss.style.setProperty('--z-offset', `${z * 30}px`);
+            boss.innerHTML = `
+                <div class="absolute -inset-2 bg-gradient-to-r from-red-500 to-purple-500 rounded-full opacity-30"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-white font-bold">反粒子</div>
+            `;
+            
+            gameState.gameArea.appendChild(boss);
+            gameState.boss = {
+                element: boss,
+                x,
+                y,
+                z,
+                size: bossSize,
+                fireRate: 2000, // 发射间隔(ms)
+                lastFired: 0,
+                moveSpeed: 0.5
+            };
+        }
+        
+        // 更新Boss
+        function updateBoss() {
+            if (!gameState.boss) return;
+            
+            const now = Date.now();
+            
+            // Boss缓慢跟随电子Y轴
+            const targetY = gameState.electron.y;
+            const dy = targetY - gameState.boss.y;
+            gameState.boss.y += dy * 0.02 * gameState.boss.moveSpeed;
+            
+            // 限制Boss移动范围
+            const padding = 50;
+            if (gameState.boss.y < padding) gameState.boss.y = padding;
+            if (gameState.boss.y > gameState.gameHeight - gameState.boss.size - padding) {
+                gameState.boss.y = gameState.gameHeight - gameState.boss.size - padding;
+            }
+            
+            // 更新位置
+            gameState.boss.element.style.top = `${gameState.boss.y}px`;
+            
+            // 发射投射物
+            if (now - gameState.boss.lastFired > gameState.boss.fireRate) {
+                fireBossProjectile();
+                gameState.boss.lastFired = now;
+            }
+        }
+        
+        // Boss发射投射物
+        function fireBossProjectile() {
+            if (!gameState.boss) return;
+            
+            const projectileSize = 16;
+            const x = gameState.boss.x + gameState.boss.size / 2 - projectileSize / 2;
+            const y = gameState.boss.y + gameState.boss.size / 2 - projectileSize / 2;
+            // 随机选择一个Z轴
+            const z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+            
+            const projectile = document.createElement('div');
+            projectile.className = 'absolute bg-red-500 rounded-full';
+            projectile.style.width = `${projectileSize}px`;
+            projectile.style.height = `${projectileSize}px`;
+            projectile.style.left = `${x}px`;
+            projectile.style.top = `${y}px`;
+            projectile.style.setProperty('--z-offset', `${z * 30}px`);
+            projectile.style.setProperty('--z-absolute', Math.abs(z));
+            
+            gameState.gameArea.appendChild(projectile);
+            
+            // 计算瞄准电子的速度向量
+            const dx = (gameState.electron.x + gameState.electron.size/2) - x;
+            const dy = (gameState.electron.y + gameState.electron.size/2) - y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const speed = 3;
+            
+            gameState.bossProjectiles.push({
+                element: projectile,
+                x,
+                y,
+                z,
+                size: projectileSize,
+                velocityX: (dx / distance) * speed,
+                velocityY: (dy / distance) * speed
+            });
+        }
+        
+        // 更新Boss投射物
+        function updateBossProjectiles() {
+            for (let i = gameState.bossProjectiles.length - 1; i >= 0; i--) {
+                const projectile = gameState.bossProjectiles[i];
+                
+                // 更新位置
+                projectile.x += projectile.velocityX;
+                projectile.y += projectile.velocityY;
+                projectile.element.style.left = `${projectile.x}px`;
+                projectile.element.style.top = `${projectile.y}px`;
+                
+                // 移除超出屏幕的投射物
+                if (projectile.x < -50 || projectile.x > gameState.gameWidth + 50 ||
+                    projectile.y < -50 || projectile.y > gameState.gameHeight + 50) {
+                    
+                    if (projectile.element.parentNode) {
+                        gameState.gameArea.removeChild(projectile.element);
+                    }
+                    gameState.bossProjectiles.splice(i, 1);
+                }
+            }
+        }
+        
+        // 获取障碍物数量
+        function getObstacleCount() {
+            let protonCount, trapCount, fragmentCount;
+            
+            // 基础数量
+            protonCount = Math.min(2 + Math.floor(gameState.level / 2), window.innerWidth < 640 ? 4 : 8);
+            trapCount = Math.min(1 + Math.floor((gameState.level - 1) / 3), window.innerWidth < 640 ? 3 : 5);
+            fragmentCount = Math.min(2 + Math.floor(gameState.level / 5), 3); // 最多3个碎片
+            
+            // Boss关特殊设置
+            if (gameState.level % 5 === 0) {
+                protonCount = Math.floor(protonCount * 0.5); // Boss关减少普通质子
+                trapCount = Math.floor(trapCount * 0.5);     // Boss关减少普通陷阱
+            }
+            
+            return { protonCount, trapCount, fragmentCount };
+        }
+        
+        // 开始关卡
+        function startLevel() {
+            // 重置状态
+            gameState.moves = 0;
+            gameState.timeLeft = 45 + Math.min(15, Math.floor(gameState.level / 3) * 5);
+            gameState.fragmentsCollected = 0;
+            gameState.skillAvailable = false;
+            gameState.inBossFight = gameState.level % 5 === 0; // 每5关是Boss关
+            
+            // 更新UI
+            elements.skillsBtn.disabled = true;
+            elements.skillsBtn.classList.remove('animate-pulse');
+            elements.levelDisplay.textContent = gameState.level;
+            elements.timerDisplay.textContent = `${gameState.timeLeft}s`;
+            updateFragmentDisplay();
+            
+            // 重置电子和目标位置
+            resetElectronPosition();
+            setRandomTargetPosition();
+            
+            // 创建障碍物和碎片
+            const { protonCount, trapCount, fragmentCount } = getObstacleCount();
+            createProtons(protonCount);
+            createTraps(trapCount);
+            createFragments(fragmentCount);
+            
+            // 如果是Boss关，创建Boss
+            if (gameState.inBossFight) {
+                createBoss();
+            }
+            
+            // 启动计时器
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft--;
+                elements.timerDisplay.textContent = `${gameState.timeLeft}s`;
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    gameOver('时间耗尽', '量子能量耗尽，电子不稳定消散');
+                }
+            }, 1000);
+            
+            // 启动游戏循环
+            if (gameState.gameLoop) {
+                cancelAnimationFrame(gameState.gameLoop);
+            }
+            gameState.gameLoop = requestAnimationFrame(gameLoop); 
+            
+            gameState.isPlaying = true;
+        }
+        
+        // 游戏循环
+        let lastFrameTime = 0;
+        const maxFps = 60;
+        const frameInterval = 1000 / maxFps;
+        
+        function gameLoop(timestamp) {
+            if (!timestamp) timestamp = performance.now();
+            if (timestamp - lastFrameTime < frameInterval) {
+                gameState.gameLoop = requestAnimationFrame(gameLoop);
+                return;
+            }
+            lastFrameTime = timestamp;
+            
+            updateElectronPosition();
+            gameState.gameLoop = requestAnimationFrame(gameLoop);
+        }
+        
+        // 完成关卡
+        function completeLevel() {
+            if (!gameState.isPlaying) return;
+            
+            // 停止游戏
+            clearInterval(gameState.timerInterval);
+            cancelAnimationFrame(gameState.gameLoop);
+            gameState.timerInterval = null;
+            gameState.gameLoop = null;
+            
+            gameState.isPlaying = false;
+            
+            // 计算得分
+            const timeBonus = gameState.timeLeft * 15;
+            const moveBonus = Math.max(0, 200 - gameState.moves * 2);
+            const levelBonus = gameState.level * 50;
+            const bossBonus = gameState.inBossFight ? 500 : 0;
+            
+            const totalScore = timeBonus + moveBonus + levelBonus + bossBonus;
+            gameState.score += totalScore;
+            
+            // 更新显示
+            elements.scoreDisplay.textContent = gameState.score;
+            
+            // 添加到排行榜
+            rankingSystem.addScore(gameState.score);
+            
+            // 关卡过渡效果
+            gameState.gameArea.style.opacity = '0.5';
+            
+            // 准备下一关
+            gameState.level++;
+            
+            // 延迟显示消息，让过渡效果可见
+            setTimeout(() => {
+                gameState.gameArea.style.opacity = '1';
+                
+                // 显示关卡完成消息
+                let levelMessage = '';
+                if (gameState.inBossFight) {
+                    levelMessage = '成功抵御反粒子风暴！能量系统暂时稳定，但更大的威胁即将到来。';
+                } else if (gameState.level % 5 === 1) {
+                    levelMessage = `即将进入第${gameState.level}阶段，检测到高强度反粒子活动，准备迎接挑战！`;
+                } else {
+                    levelMessage = `第${gameState.level - 1}阶段修复完成，量子能量同步率提升！`;
+                }
+                
+                // 检查是否需要显示Boss预警
+                if (gameState.level % 5 === 0) {
+                    elements.bossWarningModal.classList.remove('hidden');
+                } else {
+                    showMessage(
+                        `阶段 ${gameState.level - 1} 完成！`,
+                        `${levelMessage}<br><br>时间奖励: ${timeBonus}，操作奖励: ${moveBonus}，` +
+                        `阶段奖励: ${levelBonus} ${gameState.inBossFight ? `，Boss奖励: ${bossBonus}` : ''}`,
+                        `进入阶段 ${gameState.level}`
+                    );
+                }
+            }, 500);
+        }
+        
+        // 游戏结束
+        function gameOver(title, message) {
+            if (!gameState.isPlaying) return;
+            
+            gameState.isPlaying = false;
+            
+            // 停止游戏
+            clearInterval(gameState.timerInterval);
+            cancelAnimationFrame(gameState.gameLoop);
+            gameState.timerInterval = null;
+            gameState.gameLoop = null;
+            
+            // 添加分数到排行榜
+            rankingSystem.addScore(gameState.score);
+            
+            // 显示游戏结束消息
+            showMessage(
+                `任务失败: ${title}`,
+                `${message}<br><br>总量子能量: ${gameState.score}<br>已完成 ${gameState.level - 1} 个阶段`,
+                '重新开始'
+            );
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            // 停止所有动画和计时器
+            gameState.isPlaying = false;
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            if (gameState.gameLoop) {
+                cancelAnimationFrame(gameLoop);
+            }
+            
+            // 重置游戏状态
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.fragmentsCollected = 0;
+            gameState.skillAvailable = false;
+            gameState.inBossFight = false;
+            gameState.minObstacleDistance = window.innerWidth < 640 ? 60 : 80;
+            
+            // 清除所有元素
+            gameState.protons.forEach(p => {
+                if (p.element.parentNode) gameState.gameArea.removeChild(p.element);
+            });
+            gameState.traps.forEach(t => {
+                if (t.element.parentNode) gameState.gameArea.removeChild(t.element);
+            });
+            gameState.fragments.forEach(f => {
+                if (f.element.parentNode) gameState.gameArea.removeChild(f.element);
+            });
+            if (gameState.boss && gameState.boss.element.parentNode) {
+                gameState.gameArea.removeChild(gameState.boss.element);
+            }
+            gameState.bossProjectiles.forEach(p => {
+                if (p.element.parentNode) gameState.gameArea.removeChild(p.element);
+            });
+            
+            // 更新显示
+            elements.levelDisplay.textContent = gameState.level;
+            elements.scoreDisplay.textContent = gameState.score;
+            elements.skillsBtn.disabled = true;
+            elements.skillsBtn.classList.remove('animate-pulse');
+            
+            // 隐藏所有弹窗
+            elements.messageModal.classList.add('hidden');
+            elements.rankingModal.classList.add('hidden');
+            elements.techModal.classList.add('hidden');
+            elements.helpModal.classList.add('hidden');
+            elements.bossWarningModal.classList.add('hidden');
+            
+            // 开始第一关
+            startLevel();
+        }
+        
+        // 显示消息弹窗
+        function showMessage(title, message, buttonText) {
+            elements.modalTitle.textContent = title;
+            elements.modalMessage.innerHTML = message;
+            elements.modalBtn.textContent = buttonText;
+            elements.messageModal.classList.remove('hidden');
+        }
+        
+        // 初始化游戏
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
