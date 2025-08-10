@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-
+const Schema = mongoose.Schema;
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
     currentTitleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Title' },
     // 其他个人资料字段
   },
+  isAdmin: { type: Boolean, default: false }, // 管理员标识，默认false
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   friendRequests: [{
     from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -35,5 +38,8 @@ userSchema.pre('save', async function(next) {
 userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
+userSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 module.exports = mongoose.model('User', userSchema);
