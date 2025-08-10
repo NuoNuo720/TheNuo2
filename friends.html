@@ -644,7 +644,7 @@
         // 为当前用户单独存储待处理请求，解决用户数据隔离问题
         const pendingRequestsMap = new Map(); 
         let searchTimeout; // 搜索防抖定时器
-        
+        const userCache = new Map();
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             // 从本地存储恢复当前用户的pendingRequestsMap
@@ -727,32 +727,43 @@
             
             // 缓存没有则从API获取
             try {
-                const response = await fetch('/.netlify/functions/searchUsers', {
+                const response = await fetch('/.netlify/functions/getUserById', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ userId: userId })
+                    body: JSON.stringify({ userId })
                 });
                 
                 if (response.ok) {
                     const user = await response.json();
-                    if (user && user.id) {
-                        cacheUserInfo(user);
-                        return user;
-                    }
+                    userCache.set(userId,user);
+                    return user;
+                }
+                // 3. 接口返回404（用户不存在）
+                if (response.status === 404) {
+                    const fallbackUser = {
+                        id: userId,
+                        username: `用户_${userId.slice(0, 6)}`, // 显示ID前缀
+                        avatar: `https://picsum.photos/seed/${userId}/200`
+                    };
+                    userCache.set(userId, fallbackUser);
+                    return fallbackUser;
                 }
             } catch (error) {
                 console.error(`获取用户${userId}信息失败:`, error);
             }
             
             // 如果获取失败，返回默认信息
-            return {
+            // 4. 网络错误时的兜底
+            const fallbackUser = {
                 id: userId,
-                username: `用户${userId.slice(0, 6)}`,
+                username: `用户_${userId.slice(0, 6)}`,
                 avatar: `https://picsum.photos/seed/${userId}/200`
             };
+            userCache.set(userId, fallbackUser);
+            return fallbackUser;
         }
         
         // 批量缓存搜索到的用户信息
@@ -1093,11 +1104,20 @@
                 
                 // 添加请求项
                 for (const request of requests) {
-                    // 确保我们有发送者的信息
-                    const senderInfo = await getUserInfo(request.senderId);
-                    request.sender = { ...request.sender, ...senderInfo };
-                    
-                    const requestItem = createFriendRequestItem(request);
+                    const sender = await getUserInfo(request.senderId); // 使用新接口
+                    const requestItem = document.createElement('div');
+                    requestItem.className = 'friend-request-item';
+                    requestItem.innerHTML = `
+                        <img src="${sender.avatar}" class="request-avatar">
+                        <div class="request-info">
+                            <div class="request-sender">${sender.username}</div>
+                            <div class="request-message">${request.message || '请求添加你为好友'}</div>
+                        </div>
+                        <div class="request-actions">
+                            <button onclick="handleRequest('${request.id}', 'accept')">接受</button>
+                            <button onclick="handleRequest('${request.id}', 'reject')">拒绝</button>
+                        </div>
+                    `;
                     container.appendChild(requestItem);
                 }
             } catch (error) {
