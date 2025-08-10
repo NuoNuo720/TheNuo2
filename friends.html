@@ -6,6 +6,7 @@
     <title>好友系统 - 实时社交</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -636,11 +637,10 @@
         let currentUser = null;
         let selectedUserId = null;
         let currentFriends = [];
-        let allUsersCache = new Map(); // 缓存所有用户信息，解决"未知用户"问题
+        let allUsersCache = new Map(); // 缓存所有用户信息
         let pollInterval; // 轮询定时器
         const POLL_INTERVAL_MS = 10000; // 轮询间隔10秒
         let lastCheckTime = null; // 上次检查时间
-        // 为当前用户单独存储待处理请求，解决用户数据隔离问题
         const pendingRequestsMap = new Map(); 
         let searchTimeout; // 搜索防抖定时器
         const userCache = new Map();
@@ -703,7 +703,6 @@
                     req.recipientId.trim() !== '' && 
                     req.status === 'pending'
                 );
-                // 使用用户ID作为键，确保不同用户的请求存储在不同的键下
                 localStorage.setItem(`pendingFriendRequests_${getCurrentUserId()}`, JSON.stringify(validRequests));
             } catch (e) {
                 console.error('保存待处理请求失败:', e);
@@ -727,7 +726,8 @@
             
             // 缓存没有则从API获取
             try {
-                const response = await fetch('/.netlify/functions/getUserById', {
+                // 尝试第一个API端点
+                let response = await fetch('/.netlify/functions/getUserById', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -736,16 +736,30 @@
                     body: JSON.stringify({ userId })
                 });
                 
+                // 如果第一个端点404，尝试第二个端点
+                if (response.status === 404) {
+                    console.log('getUserById端点404，尝试备用端点');
+                    response = await fetch('/.netlify/functions/findUser', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentUser.token}`
+                        },
+                        body: JSON.stringify({ id: userId })
+                    });
+                }
+                
                 if (response.ok) {
                     const user = await response.json();
-                    userCache.set(userId,user);
+                    userCache.set(userId, user);
                     return user;
                 }
-                // 3. 接口返回404（用户不存在）
+                
+                // 处理404情况
                 if (response.status === 404) {
                     const fallbackUser = {
                         id: userId,
-                        username: `用户_${userId.slice(0, 6)}`, // 显示ID前缀
+                        username: `用户_${userId.slice(0, 6)}`,
                         avatar: `https://picsum.photos/seed/${userId}/200`
                     };
                     userCache.set(userId, fallbackUser);
@@ -756,7 +770,6 @@
             }
             
             // 如果获取失败，返回默认信息
-            // 4. 网络错误时的兜底
             const fallbackUser = {
                 id: userId,
                 username: `用户_${userId.slice(0, 6)}`,
@@ -1031,7 +1044,7 @@
                 return;
             }
             const recipientId = currentUser.id;
-            console.log("加载好友请求，接收者ID:", recipientId);
+            console.log("加载好友请求，接收者ID: " + recipientId);
             try {
                 // 先尝试获取所有发给当前用户的请求
                 const response = await fetch('https://thenuo2.netlify.app/.netlify/functions/getFriendRequests', {
@@ -1043,14 +1056,13 @@
                     body: JSON.stringify({ recipientId: recipientId })
                 });
                 
-                console.log('好友请求响应状态:', response.status);
+                console.log('好友请求响应状态: ' + response.status);
                 if (!response.ok) {
-                    console.error('加载好友请求失败，HTTP状态:', response.status);
-                    // 如果第一次请求失败，尝试使用更宽松的查询条件
+                    console.error('加载好友请求失败，HTTP状态: ' + response.status);
                     throw new Error(`加载失败，状态码: ${response.status}`);
                 }
                 
-                let requests = await response.json();
+                const requests = await response.json();
                 console.log('从recipientId获取到的好友请求:', requests);
                 
                 // 缓存发送者信息
@@ -1058,35 +1070,6 @@
                     requests.forEach(req => {
                         if (req.sender) cacheUserInfo(req.sender);
                     });
-                }
-                
-                // 如果第一次查询没有结果，尝试使用备用方法
-                if (!Array.isArray(requests) || requests.length === 0) {
-                    console.log('尝试使用备用方法加载好友请求');
-                    const backupResponse = await fetch('https://thenuo2.netlify.app/.netlify/functions/getFriendRequests', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${currentUser.token}`
-                        },
-                        body: JSON.stringify({ 
-                            recipientId: recipientId,
-                            fallback: true
-                        })
-                    });
-                    
-                    if (backupResponse.ok) {
-                        const backupRequests = await backupResponse.json();
-                        console.log('从recipientUsername获取到的好友请求:', backupRequests);
-                        requests = backupRequests;
-                        
-                        // 缓存发送者信息
-                        if (Array.isArray(requests)) {
-                            requests.forEach(req => {
-                                if (req.sender) cacheUserInfo(req.sender);
-                            });
-                        }
-                    }
                 }
                 
                 const container = document.getElementById('received-requests-container');
@@ -1104,7 +1087,7 @@
                 
                 // 添加请求项
                 for (const request of requests) {
-                    const sender = await getUserInfo(request.senderId); // 使用新接口
+                    const sender = await getUserInfo(request.senderId);
                     const requestItem = document.createElement('div');
                     requestItem.className = 'friend-request-item';
                     requestItem.innerHTML = `
@@ -1162,7 +1145,7 @@
             return div;
         }
         
-        // 加载待处理请求列表
+        // 修复：加载待处理请求列表 - 解决body stream already read错误
         async function loadPendingRequests() {
             if (!currentUser || !currentUser.id) {
                 console.error('未获取到当前用户信息');
@@ -1170,7 +1153,7 @@
             }
 
             try {
-                console.log('加载待处理请求，用户ID:', currentUser.id);
+                console.log('加载待处理请求，用户ID: ' + currentUser.id);
                 const response = await fetch('/.netlify/functions/getPendingRequests', {
                     method: 'POST',
                     headers: {
@@ -1183,43 +1166,24 @@
                     })
                 });
 
-                console.log('待处理请求响应状态:', response.status);
+                console.log('待处理请求响应状态: ' + response.status);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP错误: ${response.status}`);
                 }
 
-                // 读取原始响应文本进行调试
-                const responseText = await response.text();
-                console.log('待处理请求原始响应:', responseText);
-                const cleanedText = responseText.replace(/^"|"$/g, '').replace(/\\"/g, '"');
-                
-                // 尝试解析JSON
-                let pendingRequests;
-                try {
-                    pendingRequests = JSON.parse(cleanedText);
-                    if (!Array.isArray(pendingRequests)) {
-                        pendingRequests = [];
-                        console.warn('后端返回非数组格式，已转为空数组');
-                    }
-                } catch (jsonError) {
-                    console.error('解析待处理请求失败:', jsonError,'原始文本:',responseText);
-                    showNotification('解析待处理请求失败', 'error');
-                    return;
-                }
+                // 只读取一次响应并解析
                 const requests = await response.json();
+                
                 // 过滤有效请求
                 const validRequests = Array.isArray(requests)
                     ? requests.filter(req =>
-                        
                         req.senderId === currentUser.id &&  // 确保是自己发送的
                         req.recipientId &&
                         req.recipientId !== 'undefined' && 
                         req.status === 'pending'
                       )
-                        
                     : [];
-                
                 
                 // 如果后端返回空但本地有记录，使用本地记录
                 if (validRequests.length === 0 && pendingRequestsMap.size > 0) {
@@ -1233,10 +1197,6 @@
                 for (const req of validRequests) {
                     await getUserInfo(req.recipientId);
                 }
-                
-                const invalidRequests = pendingRequests.filter(req => !validRequests.includes(req));
-                console.log('被过滤的无效请求:', invalidRequests);
-                console.log('获取到的待处理请求:', validRequests);
                 
                 // 更新本地缓存
                 pendingRequestsMap.clear();
@@ -1649,10 +1609,10 @@
             }
         }
         
-        // 处理好友请求（接受/拒绝）
+        // 修复：处理好友请求（接受/拒绝）- 增加错误处理和重试逻辑
         async function handleRequest(requestId, action) {
             try {
-                const response = await fetch('/.netlify/functions/handleFriendRequest', {
+                const response = await fetch('https://thenuo2.netlify.app/.netlify/functions/handleFriendRequest', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1665,6 +1625,40 @@
                     })
                 });
                 
+                // 处理500错误
+                if (response.status === 500) {
+                    // 尝试一次重试
+                    console.log('服务器内部错误，尝试重试...');
+                    // 等待1秒后重试
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // 重试请求
+                    const retryResponse = await fetch('https://thenuo2.netlify.app/.netlify/functions/handleFriendRequest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentUser.token}`
+                        },
+                        body: JSON.stringify({
+                            requestId: requestId,
+                            action: action,
+                            userId: currentUser.id
+                        })
+                    });
+                    
+                    if (retryResponse.ok) {
+                        showNotification(
+                            action === 'accept' ? '已接受好友请求' : '已拒绝好友请求', 
+                            'success'
+                        );
+                        loadFriendRequests();
+                        if (action === 'accept') {
+                            loadFriendsList();
+                        }
+                        return;
+                    }
+                }
+                
                 if (response.ok) {
                     showNotification(
                         action === 'accept' ? '已接受好友请求' : '已拒绝好友请求', 
@@ -1675,11 +1669,17 @@
                         loadFriendsList();
                     }
                 } else {
-                    showNotification('操作失败，请重试', 'error');
+                    // 提取错误信息
+                    try {
+                        const errorData = await response.json();
+                        showNotification(`操作失败: ${errorData.error || '未知错误'}`, 'error');
+                    } catch (e) {
+                        showNotification('操作失败，请重试', 'error');
+                    }
                 }
             } catch (error) {
                 console.error('处理请求失败:', error);
-                showNotification('处理请求失败，请重试', 'error');
+                showNotification('网络错误，操作失败', 'error');
             }
         }
         
