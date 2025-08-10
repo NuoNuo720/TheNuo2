@@ -1,94 +1,53 @@
+// titleRoutes.js（补充完整接口）
 const express = require('express');
-const router = express.Router();
-const Title = require('./models/Title');  // 修正模型路径
-const User = require('./models/User');    // 修正模型路径
-const auth = require('./auth');           // 修正认证中间件路径
-const connectDB = require('./utils/db');  // 修正数据库连接路径
+const serverless = require('serverless-http');
+const { auth } = require('./auth');
+const titleService = require('./titleService');
 
-// 获取当前用户的所有称号
-router.get('/', auth, async (req, res) => {
+const app = express();
+app.use(express.json());
+
+// 1. 获取用户的所有称号（对应 TitleService.getUserTitles()）
+app.get('/', auth, async (req, res) => {
   try {
-    await connectDB();  // 确保连接数据库
-    const titles = await Title.find({ userId: req.user.id });
+    const titles = await titleService.getUserTitles(req.user.userId);
     res.json(titles);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('服务器错误');
+    res.status(500).json({ message: err.message || '获取称号失败' });
   }
 });
 
-// 获取当前佩戴的称号
-router.get('/current', auth, async (req, res) => {
+// 2. 获取当前佩戴的称号（对应 TitleService.getCurrentTitle()）
+app.get('/current', auth, async (req, res) => {
   try {
-    await connectDB();  // 确保连接数据库
-    const user = await User.findById(req.user.id);
-    if (!user.profile.currentTitleId) {
-      return res.json(null);
-    }
-    
-    const title = await Title.findById(user.profile.currentTitleId);
-    res.json(title);
+    const currentTitle = await titleService.getCurrentTitle(req.user.userId);
+    res.json(currentTitle);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('服务器错误');
+    res.status(500).json({ message: err.message || '获取当前称号失败' });
   }
 });
 
-// 添加新称号
-router.post('/', auth, async (req, res) => {
-  const { name, description, icon } = req.body;
-  
+// 3. 添加新称号（对应 TitleService.addTitle()）
+app.post('/', auth, async (req, res) => {
   try {
-    await connectDB();  // 确保连接数据库
-    const newTitle = new Title({
-      name,
-      description,
-      icon,
-      userId: req.user.id,
-      createdAt: new Date()
+    const newTitle = await titleService.createUserTitle({
+      ...req.body,
+      userId: req.user.userId
     });
-    
-    const title = await newTitle.save();
-    
-    // 如果是用户的第一个称号，自动设置为当前佩戴
-    const userTitlesCount = await Title.countDocuments({ userId: req.user.id });
-    if (userTitlesCount === 1) {
-      await User.findByIdAndUpdate(req.user.id, {
-        'profile.currentTitleId': title._id
-      });
-    }
-    
-    res.json(title);
+    res.status(201).json(newTitle);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('服务器错误');
+    res.status(400).json({ message: err.message || '添加称号失败' });
   }
 });
 
-// 切换称号佩戴状态
-router.put('/equip/:id', auth, async (req, res) => {
+// 4. 切换称号佩戴状态（对应 TitleService.toggleTitleEquip()）
+app.put('/equip/:titleId', auth, async (req, res) => {
   try {
-    await connectDB();  // 确保连接数据库
-    // 验证称号是否属于当前用户
-    const title = await Title.findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!title) {
-      return res.status(404).json({ msg: '称号不存在' });
-    }
-    
-    // 更新用户当前佩戴的称号
-    await User.findByIdAndUpdate(req.user.id, {
-      'profile.currentTitleId': req.params.id
-    });
-    
-    res.json({ msg: '称号佩戴状态已更新' });
+    const result = await titleService.equipTitle(req.user.userId, req.params.titleId);
+    res.json(result);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('服务器错误');
+    res.status(400).json({ message: err.message || '切换称号状态失败' });
   }
 });
 
-module.exports = router;
+module.exports.handler = serverless(app);

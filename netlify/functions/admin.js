@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const connectDB = require('./utils/db');
 const User = require('./models/User');
 const Title = require('./models/Title');
-
+const { adminAuth } = require('./auth'); // 引入管理员验证中间件
 const app = express();
 app.use(express.json());
 
