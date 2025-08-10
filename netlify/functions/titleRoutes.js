@@ -27,18 +27,6 @@ app.get('/current', auth, async (req, res) => {
   }
 });
 
-// 3. 添加新称号（对应 TitleService.addTitle()）
-app.post('/', auth, async (req, res) => {
-  try {
-    const newTitle = await titleService.createUserTitle({
-      ...req.body,
-      userId: req.user.userId
-    });
-    res.status(201).json(newTitle);
-  } catch (err) {
-    res.status(400).json({ message: err.message || '添加称号失败' });
-  }
-});
 
 // 4. 切换称号佩戴状态（对应 TitleService.toggleTitleEquip()）
 app.put('/equip/:titleId', auth, async (req, res) => {

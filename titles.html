@@ -6,7 +6,7 @@
     <title>称号管理 - 多功能导航中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 基础样式（与导航页保持一致） */
+        /* 基础样式 */
         * {
             margin: 0;
             padding: 0;
@@ -263,96 +263,6 @@
             background-color: #666;
         }
 
-        /* 添加称号表单样式 */
-        .add-title-form {
-            background-color: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            margin-bottom: 50px;
-        }
-
-        .form-title {
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #3498db;
-        }
-
-        .form-input, .form-textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-
-        .form-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .icon-selector {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .icon-option {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #ddd;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .icon-option.selected {
-            border-color: #3498db;
-            background-color: rgba(52, 152, 219, 0.1);
-            color: #3498db;
-        }
-
-        .icon-option i {
-            font-size: 1.5rem;
-        }
-
-        .submit-btn {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.2s, transform 0.2s;
-        }
-
-        .submit-btn:hover {
-            background-color: #27ae60;
-            transform: translateY(-2px);
-        }
-
         /* 空状态样式 */
         .empty-state {
             text-align: center;
@@ -369,15 +279,6 @@
         .empty-state p {
             font-size: 1.1rem;
             margin-bottom: 20px;
-        }
-
-        .empty-state button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
         }
 
         /* 通知提示 */
@@ -452,58 +353,6 @@
             <p>管理你的专属称号，展示独特身份</p>
         </div>
 
-        <!-- 添加新称号表单 -->
-        <div class="add-title-form">
-            <h2 class="form-title">
-                <i class="fas fa-plus-circle"></i> 添加新称号
-            </h2>
-            <form id="addTitleForm">
-                <div class="form-group">
-                    <label class="form-label">称号名称</label>
-                    <input type="text" class="form-input" id="titleName" placeholder="输入称号名称" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">称号描述</label>
-                    <textarea class="form-textarea" id="titleDescription" placeholder="描述这个称号的含义或获取方式" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">选择图标</label>
-                    <div class="icon-selector">
-                        <div class="icon-option selected" data-icon="trophy">
-                            <i class="fas fa-trophy"></i>
-                        </div>
-                        <div class="icon-option" data-icon="star">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="icon-option" data-icon="medal">
-                            <i class="fas fa-medal"></i>
-                        </div>
-                        <div class="icon-option" data-icon="crown">
-                            <i class="fas fa-crown"></i>
-                        </div>
-                        <div class="icon-option" data-icon="award">
-                            <i class="fas fa-award"></i>
-                        </div>
-                        <div class="icon-option" data-icon="lightbulb">
-                            <i class="fas fa-lightbulb"></i>
-                        </div>
-                        <div class="icon-option" data-icon="fire">
-                            <i class="fas fa-fire"></i>
-                        </div>
-                        <div class="icon-option" data-icon="diamond">
-                            <i class="fas fa-diamond"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-save"></i> 保存称号
-                </button>
-            </form>
-        </div>
-
         <!-- 已获得的称号 -->
         <div class="title-section">
             <div class="section-header">
@@ -518,7 +367,7 @@
                 <div class="empty-state">
                     <i class="fas fa-trophy"></i>
                     <p>你还没有获得任何称号</p>
-                    <p>完成特定任务或参与活动可以获得专属称号</p>
+                    <p>请等待管理员授予专属称号</p>
                 </div>
             </div>
         </div>
@@ -531,8 +380,6 @@
     </div>
 
     <script>
-        // 当前选中的图标
-        let selectedIcon = 'trophy';
         // 当前用户信息
         let currentUser = null;
 
@@ -540,15 +387,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 检查登录状态
             checkLoginStatus();
-            
-            // 初始化图标选择器
-            initIconSelector();
-            
-            // 绑定表单提交事件
-            document.getElementById('addTitleForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                addNewTitle();
-            });
         });
 
         // 检查登录状态
@@ -593,21 +431,6 @@
             }
         }
 
-        // 初始化图标选择器
-        function initIconSelector() {
-            const iconOptions = document.querySelectorAll('.icon-option');
-            iconOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    // 移除其他选项的选中状态
-                    iconOptions.forEach(opt => opt.classList.remove('selected'));
-                    // 添加当前选项的选中状态
-                    this.classList.add('selected');
-                    // 更新选中的图标
-                    selectedIcon = this.getAttribute('data-icon');
-                });
-            });
-        }
-
         // 加载用户称号
         function loadUserTitles() {
             // 先尝试从本地存储加载
@@ -640,7 +463,6 @@
                     // 渲染称号列表
                     renderTitleGrid(titles);
                 } else if (response.status === 404) {
-                    // 处理404错误，使用本地数据
                     console.log('称号API未找到，使用本地数据');
                 }
             } catch (error) {
@@ -663,7 +485,7 @@
                     <div class="empty-state">
                         <i class="fas fa-trophy"></i>
                         <p>你还没有获得任何称号</p>
-                        <p>完成特定任务或参与活动可以获得专属称号</p>
+                        <p>请等待管理员授予专属称号</p>
                     </div>
                 `;
                 return;
@@ -705,68 +527,13 @@
                 // 绑定佩戴按钮事件
                 cardEl.querySelector('.equip-btn').addEventListener('click', function() {
                     const titleId = this.getAttribute('data-title-id');
-                    equipTitle(titleId, title);
+                    // 查找对应的称号数据
+                    const titleData = titles.find(t => t.id === titleId);
+                    if (titleData) {
+                        equipTitle(titleId, titleData);
+                    }
                 });
             });
-        }
-
-        // 添加新称号
-        async function addNewTitle() {
-            const titleName = document.getElementById('titleName').value.trim();
-            const titleDescription = document.getElementById('titleDescription').value.trim();
-            
-            if (!titleName || !titleDescription) {
-                showNotification('请填写称号名称和描述', 'error');
-                return;
-            }
-            
-            const newTitle = {
-                name: titleName,
-                description: titleDescription,
-                icon: selectedIcon,
-                createdAt: new Date().toISOString()
-            };
-            
-            try {
-                // 保存到服务器
-                const response = await fetch('/api/titles', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${currentUser.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(newTitle)
-                });
-                
-                if (response.ok) {
-                    const savedTitle = await response.json();
-                    
-                    // 更新本地存储
-                    const userTitles = JSON.parse(localStorage.getItem(`userTitles_${currentUser.id}`) || '[]');
-                    userTitles.push(savedTitle);
-                    localStorage.setItem(`userTitles_${currentUser.id}`, JSON.stringify(userTitles));
-                    
-                    // 如果是第一个称号，自动佩戴
-                    if (userTitles.length === 1) {
-                        currentUser.currentTitle = savedTitle;
-                        localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
-                        updateNavbarUserInfo();
-                    }
-                    
-                    // 重新渲染
-                    renderTitleGrid(userTitles);
-                    
-                    // 重置表单
-                    document.getElementById('addTitleForm').reset();
-                    
-                    showNotification(`成功添加称号: ${titleName}`, 'success');
-                } else {
-                    throw new Error('添加称号失败');
-                }
-            } catch (error) {
-                console.error('添加称号失败:', error);
-                showNotification('添加称号失败，请重试', 'error');
-            }
         }
 
         // 佩戴/更换称号
@@ -795,11 +562,12 @@
                     
                     showNotification(`已佩戴称号: ${titleData.name}`, 'success');
                 } else {
-                    throw new Error('更新称号状态失败');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || '更新称号状态失败');
                 }
             } catch (error) {
                 console.error('佩戴称号失败:', error);
-                showNotification('佩戴称号失败，请重试', 'error');
+                showNotification(error.message || '佩戴称号失败，请重试', 'error');
             }
         }
 
