@@ -2,42 +2,106 @@ const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
 
 exports.handler = async (event) => {
+  // 设置默认响应头，确保始终返回JSON
+  const headers = {
+    'Content-Type': 'application/json',
+    // 允许跨域请求
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
+  // 处理预检请求
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers
+    };
+  }
+
   // 只允许POST请求
   if (event.httpMethod !== 'POST') {
     return { 
       statusCode: 405, 
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ error: '只支持POST请求' }) 
     };
   }
 
-  let client; // 在外部声明客户端，以便在finally中关闭连接
+  let client;
   
   try {
-    // 解析前端发送的注册数据
-    const { username, password, email } = JSON.parse(event.body);
+    // 验证请求体是否存在
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '请求体不能为空' })
+      };
+    }
+
+    // 解析请求体，增加错误捕获
+    let requestData;
+    try {
+      requestData = JSON.parse(event.body);
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: '无效的JSON格式',
+          details: process.env.NODE_ENV === 'development' ? parseError.message : undefined
+        })
+      };
+    }
+
+    const { username, password, email } = requestData;
     
-    // 前端数据验证（避免空值）
+    // 数据验证
     if (!username || !password || !email) {
       return { 
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ error: '用户名、密码和邮箱不能为空' }) 
       };
+    }
+
+    // 邮箱格式验证
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '请输入有效的邮箱地址' })
+      };
+    }
+
+    // 密码强度验证
+    if (password.length < 6) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '密码长度不能少于6个字符' })
+      };
+    }
+
+    // 检查数据库连接字符串
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI环境变量未配置');
     }
 
     // 连接数据库
     client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
-    const db = client.db('userDB'); // 数据库名：userDB
-    const usersCollection = db.collection('users'); // 集合名：users
+    const db = client.db('userDB');
+    const usersCollection = db.collection('users');
 
     // 检查用户名是否已存在
     const existingUser = await usersCollection.findOne({ username });
     if (existingUser) {
       return { 
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ error: '用户名已存在' }) 
       };
     }
@@ -47,12 +111,12 @@ exports.handler = async (event) => {
     if (existingEmail) {
       return { 
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ error: '邮箱已被注册' }) 
       };
     }
 
-    // 加密密码（使用bcrypt）
+    // 加密密码
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -62,7 +126,7 @@ exports.handler = async (event) => {
     // 插入新用户到数据库
     const newUser = {
       username,
-      password: hashedPassword, // 存储加密后的密码
+      password: hashedPassword,
       email,
       token,
       createdAt: new Date(),
@@ -70,12 +134,11 @@ exports.handler = async (event) => {
       friendRequests: []
     };
     
-    const result = await usersCollection.insertOne(newUser);
+    await usersCollection.insertOne(newUser);
     
-    // 关闭连接并返回成功响应
     return {
       statusCode: 201,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ 
         message: '注册成功', 
         username: newUser.username,
@@ -83,14 +146,13 @@ exports.handler = async (event) => {
       })
     };
   } catch (err) {
-    // 捕获所有错误并输出日志
-    console.error('注册函数错误：', err.message);
+    console.error('注册函数错误：', err);
+    // 确保错误响应也是有效的JSON
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ 
         error: '服务器内部错误',
-        // 生产环境建议移除details
         details: process.env.NODE_ENV === 'development' ? err.message : undefined
       })
     };
@@ -100,7 +162,7 @@ exports.handler = async (event) => {
       try {
         await client.close();
       } catch (closeErr) {
-        console.error('关闭数据库连接错误：', closeErr.message);
+        console.error('关闭数据库连接错误：', closeErr);
       }
     }
   }
