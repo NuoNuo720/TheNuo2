@@ -1,88 +1,89 @@
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
 
+// 封装安全的JSON字符串化函数
+const safeStringify = (data) => {
+  try {
+    return JSON.stringify(data);
+  } catch (e) {
+    console.error('JSON序列化失败:', e);
+    // 返回一个保底的错误信息
+    return JSON.stringify({ error: '服务器响应序列化失败' });
+  }
+};
+
 exports.handler = async (event) => {
-  // 设置默认响应头，确保始终返回JSON
-  const headers = {
-    'Content-Type': 'application/json',
-    // 允许跨域请求
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
+  // 初始化响应对象，确保即使在最极端情况下也有默认响应
+  let response = {
+    statusCode: 500,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    },
+    body: safeStringify({ error: '服务器处理请求时发生未知错误' })
   };
-
-  // 处理预检请求
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers
-    };
-  }
-
-  // 只允许POST请求
-  if (event.httpMethod !== 'POST') {
-    return { 
-      statusCode: 405, 
-      headers,
-      body: JSON.stringify({ error: '只支持POST请求' }) 
-    };
-  }
 
   let client;
   
   try {
-    // 验证请求体是否存在
-    if (!event.body) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: '请求体不能为空' })
-      };
+    // 处理预检请求
+    if (event.httpMethod === 'OPTIONS') {
+      response.statusCode = 200;
+      response.body = safeStringify({ status: 'OK' });
+      return response;
     }
 
-    // 解析请求体，增加错误捕获
+    // 只允许POST请求
+    if (event.httpMethod !== 'POST') {
+      response.statusCode = 405;
+      response.body = safeStringify({ error: '只支持POST请求' });
+      return response;
+    }
+
+    // 验证请求体是否存在
+    if (!event.body) {
+      response.statusCode = 400;
+      response.body = safeStringify({ error: '请求体不能为空' });
+      return response;
+    }
+
+    // 解析请求体
     let requestData;
     try {
       requestData = JSON.parse(event.body);
     } catch (parseError) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ 
-          error: '无效的JSON格式',
-          details: process.env.NODE_ENV === 'development' ? parseError.message : undefined
-        })
-      };
+      response.statusCode = 400;
+      response.body = safeStringify({ 
+        error: '无效的JSON格式',
+        details: process.env.NODE_ENV === 'development' ? parseError.message : undefined
+      });
+      return response;
     }
 
     const { username, password, email } = requestData;
     
     // 数据验证
     if (!username || !password || !email) {
-      return { 
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: '用户名、密码和邮箱不能为空' }) 
-      };
+      response.statusCode = 400;
+      response.body = safeStringify({ error: '用户名、密码和邮箱不能为空' });
+      return response;
     }
 
     // 邮箱格式验证
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: '请输入有效的邮箱地址' })
-      };
+      response.statusCode = 400;
+      response.body = safeStringify({ error: '请输入有效的邮箱地址' });
+      return response;
     }
 
     // 密码强度验证
     if (password.length < 6) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: '密码长度不能少于6个字符' })
-      };
+      response.statusCode = 400;
+      response.body = safeStringify({ error: '密码长度不能少于6个字符' });
+      return response;
     }
 
     // 检查数据库连接字符串
@@ -99,21 +100,17 @@ exports.handler = async (event) => {
     // 检查用户名是否已存在
     const existingUser = await usersCollection.findOne({ username });
     if (existingUser) {
-      return { 
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: '用户名已存在' }) 
-      };
+      response.statusCode = 400;
+      response.body = safeStringify({ error: '用户名已存在' });
+      return response;
     }
 
     // 检查邮箱是否已被使用
     const existingEmail = await usersCollection.findOne({ email });
     if (existingEmail) {
-      return { 
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: '邮箱已被注册' }) 
-      };
+      response.statusCode = 400;
+      response.body = safeStringify({ error: '邮箱已被注册' });
+      return response;
     }
 
     // 加密密码
@@ -136,26 +133,23 @@ exports.handler = async (event) => {
     
     await usersCollection.insertOne(newUser);
     
-    return {
-      statusCode: 201,
-      headers,
-      body: JSON.stringify({ 
-        message: '注册成功', 
-        username: newUser.username,
-        token: newUser.token
-      })
-    };
+    response.statusCode = 201;
+    response.body = safeStringify({ 
+      message: '注册成功', 
+      username: newUser.username,
+      token: newUser.token
+    });
+    
+    return response;
   } catch (err) {
     console.error('注册函数错误：', err);
     // 确保错误响应也是有效的JSON
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
-        error: '服务器内部错误',
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined
-      })
-    };
+    response.statusCode = 500;
+    response.body = safeStringify({ 
+      error: '服务器内部错误',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+    return response;
   } finally {
     // 确保客户端连接总是被关闭
     if (client) {
