@@ -1,20 +1,18 @@
-const express = require('express'); const serverless = require('serverless-http'); const titleRoutes = require('./titleRoutes'); const connectDB = require('./utils/db');
-// 初始化 express 应用
-const app = express ();
+const express = require('express');
+const app = express();
+app.use(express.json());
 
-// 中间件
-app.use (express.json ());
-
-// 连接数据库
-connectDB ();
-
-// 路由
-app.use ('/titles', titleRoutes); // 称号相关路由
-
-// 404 处理
-app.use ((req, res) => {
-return res.status (404).json ({ error: 'Not Found' });
+// 直接处理 /api/titles 请求
+app.get('/titles', async (req, res) => {
+  try {
+    // 返回模拟称号数据
+    res.json([
+      { id: "001", name: "测试称号", description: "示例数据" }
+    ]);
+  } catch (err) {
+    res.status(500).json({ error: "获取称号失败" });
+  }
 });
 
-// 导出 serverless 函数
-module.exports.handler = serverless (app);
+// Netlify 函数入口
+exports.handler = app;
