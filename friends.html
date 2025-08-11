@@ -1685,14 +1685,19 @@
                 if (serverSuccess) {
                     showNotification(`已${action === 'accept' ? '接受' : '拒绝'}好友请求`, 'success');
                     loadFriendRequests();
-                    loadFriendLists();
+                    loadFriendsList();
                     return;
                 }
         
                 // 服务器失败：仅记录到本地，限制同步频率
                 showNotification(`操作已保存，将在网络恢复后同步`, 'warning');
                 saveToLocalSyncQueue(requestId, action);
-        
+                addToSyncQueue({ 
+                    requestId: requestId, // 正确传递请求ID
+                    action: action, 
+                    userId: currentUser.id,
+                    timestamp: Date.now()
+                });
             } catch (error) {
                 console.error('处理请求异常:', error);
                 showNotification('操作失败，请稍后重试', 'error');
@@ -1705,6 +1710,7 @@
                         : '<i class="fas fa-times"></i>';  // 恢复按钮图标
                 }
             }
+            
         }
         
         // 删除好友
@@ -1918,7 +1924,8 @@
                         },
                         body: JSON.stringify(item)  // 确保 item 包含 requestId
                     });
-                    
+                    const responseBody = await response.text();
+                    console.log(`同步响应：status=${response.status}, body=${responseBody}`);
                     if (response.ok) {
                         console.log(`同步成功：requestId=${item.requestId}`);
                         queue.splice(i, 1);  // 同步成功，移除操作
@@ -1929,6 +1936,12 @@
                         }
                     } else {
                         console.log(`同步失败：requestId=${item.requestId}，状态码: ${response.status}`);
+                        // 若为500错误，10秒后重试（仅重试1次）
+                        if (response.status === 500 && !item.retried) {
+                            item.retried = true;
+                            queue[i] = item;
+                            setTimeout(() => syncPendingActions(), 10000);
+                        }
                         break;  // 服务器错误，停止后续同步
                     }
                 } catch (error) {
