@@ -1,12 +1,31 @@
-// netlify/functions/titles.js
-exports.handler = async (event) => {
-  // 强制返回有效的响应格式
-  return {
-    statusCode: 200, // 必须包含有效的状态码（200、400、500等）
+// 纯原生JavaScript实现，无任何外部依赖
+exports.handler = (event, context, callback) => {
+  // 1. 强制设置响应结构（Netlify要求的最低结构）
+  const response = {
+    statusCode: 200,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ message: "函数正常执行" })
+    body: JSON.stringify({
+      success: true,
+      message: "称号接口正常响应",
+      data: []
+    })
   };
+
+  // 2. 无论任何情况，都通过callback返回响应
+  try {
+    // 这里可以逐步添加逻辑，但目前保持空
+    callback(null, response);
+  } catch (err) {
+    // 即使发生错误，也返回修改后的响应
+    response.statusCode = 500;
+    response.body = JSON.stringify({
+      success: false,
+      message: "接口执行出错",
+      error: err.toString()
+    });
+    callback(null, response);
+  }
 };
