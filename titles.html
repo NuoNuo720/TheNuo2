@@ -6,54 +6,538 @@
     <title>称号管理 - 多功能导航中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保留你原有的所有样式 */
-        /* 新增管理员授予称号的样式 */
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(155, 89, 182, 0.05) 0%, transparent 20%);
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-title {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-title i {
+            font-size: 1.4em;
+            color: #3498db;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            margin-right: 15px;
+        }
+
+        .back-btn:hover {
+            background-color: rgba(255,255,255,0.1);
+            transform: translateX(-2px);
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+        }
+
+        .username {
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .title-badge {
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .title-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .logout-btn {
+            background: #555;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #777;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* 主容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #2c3e50;
+            padding: 20px 0;
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .page-title h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            border-radius: 3px;
+        }
+
+        .page-title p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        /* 管理员区域样式 */
         .admin-section {
             margin: 30px 0;
             padding: 20px;
             background-color: white;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid #e74c3c;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
+
+        .admin-section:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        }
+
         .admin-title {
             font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #e74c3c;
+            margin-bottom: 20px;
+            color: #c0392b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .grant-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .grant-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(231, 76, 60, 0.2);
+        }
+
+        .grant-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        /* 称号卡片样式 */
+        .title-section {
+            margin-bottom: 50px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .grant-form {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
+
+        .section-title i {
+            color: #3498db;
         }
-        .form-group {
-            flex: 1;
-            min-width: 200px;
+
+        .title-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
+
+        .title-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .form-group input, .form-group select {
+
+        .title-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
-        .grant-btn {
-            background-color: #e74c3c;
+
+        .title-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .title-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            border-left-color: #3498db;
+        }
+
+        .title-card.equipped {
+            border-left-color: #2ecc71;
+            background-color: rgba(46, 204, 113, 0.03);
+        }
+
+        .equipped-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #2ecc71;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+        }
+
+        .exclusive-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .title-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+            padding: 10px 0;
+        }
+
+        .title-icon {
+            font-size: 2rem;
+            color: #3498db;
+            text-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .title-card:hover .title-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .title-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .title-name::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #3498db;
+            transition: width 0.3s;
+        }
+
+        .title-card:hover .title-name::after {
+            width: 100%;
+        }
+
+        .title-desc {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            line-height: 1.7;
+            padding-left: 5px;
+            border-left: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .title-card:hover .title-desc {
+            border-left-color: #3498db;
+        }
+
+        .title-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #95a5a6;
+            padding-top: 10px;
+            border-top: 1px dashed #eee;
+        }
+
+        .equip-btn {
+            background-color: #3498db;
             color: white;
             border: none;
-            padding: 8px 20px;
+            padding: 5px 12px;
             border-radius: 5px;
             cursor: pointer;
-            align-self: flex-end;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.2);
         }
-        .grant-btn:hover {
-            background-color: #c0392b;
+
+        .equip-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .equip-btn.unequip {
+            background-color: #7f8c8d;
+            box-shadow: 0 2px 5px rgba(127, 140, 141, 0.2);
+        }
+
+        .equip-btn.unequip:hover {
+            background-color: #666;
+            box-shadow: 0 4px 8px rgba(127, 140, 141, 0.3);
+        }
+
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #95a5a6;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+            color: #3498db;
+            transition: transform 0.3s;
+        }
+
+        .empty-state:hover i {
+            transform: rotate(10deg) scale(1.1);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        /* 通知提示 */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .title-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .username {
+                display: none;
+            }
+            
+            .page-title h1 {
+                font-size: 1.6rem;
+            }
+
+            .grant-form {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-section {
+                padding: 15px;
+            }
+
+            .grant-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -83,7 +567,7 @@
             <p>管理你的个人专属称号，展示独特身份</p>
         </div>
 
-        <!-- 管理员授予称号区域（仅管理员可见） -->
+        <!-- 管理员授予称号区域 -->
         <div class="admin-section" id="adminSection" style="display: none;">
             <h3 class="admin-title">
                 <i class="fas fa-user-shield"></i> 管理员操作 - 授予专属称号
@@ -109,6 +593,8 @@
                         <option value="medal">勋章 (medal)</option>
                         <option value="star">星星 (star)</option>
                         <option value="heart">爱心 (heart)</option>
+                        <option value="trophy">奖杯 (trophy)</option>
+                        <option value="award">奖励 (award)</option>
                     </select>
                 </div>
                 <button type="submit" class="grant-btn">
@@ -158,15 +644,23 @@
         function checkLoginStatus() {
             const userInfoStr = localStorage.getItem('mainUserInfo');
             if (!userInfoStr) {
-                window.location.href = 'indexlo.html';
+                // 如果没有用户信息，创建一个测试用户
+                const testUser = {
+                    id: 'user_' + Date.now().toString().slice(-6),
+                    username: '测试用户',
+                    avatar: 'https://picsum.photos/200',
+                    isAdmin: false // 默认不是管理员
+                };
+                localStorage.setItem('mainUserInfo', JSON.stringify(testUser));
+                window.location.reload();
                 return;
             }
             
             try {
                 currentUser = JSON.parse(userInfoStr);
-                // 确保用户有唯一ID（如果没有则生成）
+                // 确保用户有唯一ID
                 if (!currentUser.id) {
-                    currentUser.id = 'user_' + Date.now(); // 生成临时ID
+                    currentUser.id = 'user_' + Date.now().toString().slice(-6);
                     localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
                 }
                 // 初始化当前用户的称号列表（如果没有则创建）
@@ -175,7 +669,7 @@
                         {
                             id: 'default_' + currentUser.id,
                             name: '初心者',
-                            description: '初始专属称号',
+                            description: '每个用户的初始专属称号',
                             icon: 'seedling',
                             createdAt: new Date().toISOString(),
                             isExclusive: false
@@ -198,7 +692,7 @@
             } catch (err) {
                 console.error('解析用户信息失败:', err);
                 localStorage.removeItem('mainUserInfo');
-                window.location.href = 'indexlo.html';
+                window.location.reload();
             }
         }
 
@@ -256,8 +750,8 @@
                 const isEquipped = currentUser.currentTitle && currentUser.currentTitle.id === title.id;
                 // 专属称号添加特殊标识
                 const exclusiveBadge = title.isExclusive ? `
-                    <div style="position:absolute; top:15px; left:15px; background:#e74c3c; color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem;">
-                        专属
+                    <div class="exclusive-badge">
+                        <i class="fas fa-star"></i> 专属
                     </div>
                 ` : '';
                 
@@ -316,9 +810,14 @@
             const titleDesc = document.getElementById('exclusiveTitleDesc').value.trim();
             const titleIcon = document.getElementById('exclusiveTitleIcon').value;
             
-            // 检查目标用户是否存在（这里简化处理，实际应验证用户ID有效性）
+            if (!targetUserId || !titleName || !titleDesc) {
+                showNotification('请填写完整信息', 'error');
+                return;
+            }
+            
+            // 检查目标用户是否存在（不存在则创建）
             if (!allUsersTitles[targetUserId]) {
-                allUsersTitles[targetUserId] = []; // 为新用户创建称号列表
+                allUsersTitles[targetUserId] = [];
             }
             
             // 创建专属称号
@@ -328,8 +827,8 @@
                 description: titleDesc,
                 icon: titleIcon,
                 createdAt: new Date().toISOString(),
-                isExclusive: true, // 标记为专属称号
-                grantedBy: currentUser.username // 记录授予者
+                isExclusive: true,
+                grantedBy: currentUser.username
             };
             
             // 添加到目标用户的称号列表
@@ -365,12 +864,16 @@
         function logout() {
             if (confirm('确定要退出登录吗？')) {
                 localStorage.removeItem('mainUserInfo');
-                window.location.href = 'indexlo.html';
+                window.location.reload();
             }
         }
 
-        // 模拟管理员权限（实际项目中应从后端获取）
-        // 可以在控制台执行：localStorage.setItem('mainUserInfo', JSON.stringify({id:'admin123', username:'管理员', isAdmin:true})) 切换到管理员账号
+        // 快速成为管理员（在控制台执行）
+        // makeMeAdmin = () => {
+        //     currentUser.isAdmin = true;
+        //     localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+        //     window.location.reload();
+        // }
     </script>
 </body>
 </html>
