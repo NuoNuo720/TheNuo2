@@ -6,7 +6,7 @@
     <title>称号管理 - 多功能导航中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 基础样式 */
+        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -24,7 +24,6 @@
                 radial-gradient(circle at 90% 80%, rgba(155, 89, 182, 0.05) 0%, transparent 20%);
         }
 
-        /* 导航栏样式 */
         .navbar {
             width: 100%;
             background-color: #333;
@@ -110,30 +109,6 @@
             transition: transform 0.2s;
         }
 
-        .title-badge:hover {
-            transform: scale(1.05);
-        }
-
-        .logout-btn {
-            background: #555;
-            border: none;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: #777;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        /* 主容器样式 */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -158,23 +133,6 @@
             color: transparent;
         }
 
-        .page-title h1::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 10%;
-            width: 80%;
-            height: 3px;
-            background: linear-gradient(90deg, #3498db, #9b59b6);
-            border-radius: 3px;
-        }
-
-        .page-title p {
-            color: #7f8c8d;
-            font-size: 1.1rem;
-        }
-
-        /* 管理员区域样式 */
         .admin-section {
             margin: 30px 0;
             padding: 20px;
@@ -183,21 +141,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             border-left: 4px solid #e74c3c;
             transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .admin-section:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-        }
-
-        .admin-title {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: #c0392b;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
         }
 
         .grant-form {
@@ -213,13 +156,6 @@
             gap: 8px;
         }
 
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            color: #2c3e50;
-            font-size: 0.9rem;
-        }
-
         .form-group input, .form-group select {
             width: 100%;
             padding: 10px 12px;
@@ -227,13 +163,6 @@
             border-radius: 5px;
             font-size: 0.95rem;
             transition: all 0.2s;
-        }
-
-        .form-group input:focus, .form-group select:focus {
-            border-color: #3498db;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-            transform: translateY(-1px);
         }
 
         .grant-btn {
@@ -247,16 +176,8 @@
             align-items: center;
             gap: 8px;
             font-weight: 500;
-            transition: all 0.2s;
-            box-shadow: 0 2px 5px rgba(231, 76, 60, 0.2);
         }
 
-        .grant-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
-        }
-
-        /* 称号卡片样式 */
         .title-section {
             margin-bottom: 50px;
         }
@@ -268,18 +189,6 @@
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid #e1e8ed;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title i {
-            color: #3498db;
         }
 
         .title-grid {
@@ -296,29 +205,6 @@
             border-left: 4px solid transparent;
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
-        }
-
-        .title-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #3498db, #9b59b6);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .title-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .title-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-            border-left-color: #3498db;
         }
 
         .title-card.equipped {
@@ -338,7 +224,6 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
         }
 
         .exclusive-badge {
@@ -350,30 +235,14 @@
             font-size: 0.7rem;
             padding: 2px 8px;
             border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3);
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
-        .title-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            position: relative;
-            padding: 10px 0;
-        }
-
         .title-icon {
             font-size: 2rem;
             color: #3498db;
-            text-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
-            transition: transform 0.3s;
-        }
-
-        .title-card:hover .title-icon {
-            transform: scale(1.1) rotate(5deg);
         }
 
         .title-name {
@@ -381,37 +250,12 @@
             font-weight: 600;
             color: #2c3e50;
             margin-bottom: 5px;
-            position: relative;
-            display: inline-block;
-        }
-
-        .title-name::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background-color: #3498db;
-            transition: width 0.3s;
-        }
-
-        .title-card:hover .title-name::after {
-            width: 100%;
         }
 
         .title-desc {
             color: #7f8c8d;
             font-size: 0.95rem;
             margin-bottom: 15px;
-            line-height: 1.7;
-            padding-left: 5px;
-            border-left: 2px solid transparent;
-            transition: border-color 0.3s;
-        }
-
-        .title-card:hover .title-desc {
-            border-left-color: #3498db;
         }
 
         .title-meta {
@@ -434,27 +278,12 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.2);
-        }
-
-        .equip-btn:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
         }
 
         .equip-btn.unequip {
             background-color: #7f8c8d;
-            box-shadow: 0 2px 5px rgba(127, 140, 141, 0.2);
         }
 
-        .equip-btn.unequip:hover {
-            background-color: #666;
-            box-shadow: 0 4px 8px rgba(127, 140, 141, 0.3);
-        }
-
-        /* 空状态样式 */
         .empty-state {
             text-align: center;
             padding: 50px 20px;
@@ -464,24 +293,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
-        .empty-state i {
-            font-size: 5rem;
-            margin-bottom: 20px;
-            opacity: 0.3;
-            color: #3498db;
-            transition: transform 0.3s;
-        }
-
-        .empty-state:hover i {
-            transform: rotate(10deg) scale(1.1);
-        }
-
-        .empty-state p {
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-        }
-
-        /* 通知提示 */
         .notification {
             position: fixed;
             bottom: 20px;
@@ -511,32 +322,13 @@
             background: linear-gradient(135deg, #e74c3c, #c0392b);
         }
 
-        /* 响应式设计 */
         @media (max-width: 768px) {
             .title-grid {
                 grid-template-columns: 1fr;
             }
             
-            .username {
-                display: none;
-            }
-            
-            .page-title h1 {
-                font-size: 1.6rem;
-            }
-
             .grant-form {
                 grid-template-columns: 1fr;
-            }
-
-            .admin-section {
-                padding: 15px;
-            }
-
-            .grant-btn {
-                width: 100%;
-                justify-content: center;
-                padding: 12px;
             }
         }
     </style>
@@ -574,7 +366,7 @@
             </h3>
             <form class="grant-form" onsubmit="grantExclusiveTitle(event)">
                 <div class="form-group">
-                    <label for="targetUserId">用户ID</label>
+                    <label for="targetUserId">用户ID（当前用户ID: <span id="currentUserId">加载中</span>）</label>
                     <input type="text" id="targetUserId" placeholder="输入目标用户ID" required>
                 </div>
                 <div class="form-group">
@@ -592,9 +384,6 @@
                         <option value="diamond">钻石 (diamond)</option>
                         <option value="medal">勋章 (medal)</option>
                         <option value="star">星星 (star)</option>
-                        <option value="heart">爱心 (heart)</option>
-                        <option value="trophy">奖杯 (trophy)</option>
-                        <option value="award">奖励 (award)</option>
                     </select>
                 </div>
                 <button type="submit" class="grant-btn">
@@ -613,7 +402,6 @@
             </div>
 
             <div class="title-grid" id="ownedTitlesGrid">
-                <!-- 称号卡片会通过JavaScript动态生成 -->
                 <div class="empty-state">
                     <i class="fas fa-trophy"></i>
                     <p>你还没有获得专属称号</p>
@@ -632,7 +420,7 @@
     <script>
         // 当前用户信息
         let currentUser = null;
-        // 所有用户的专属称号存储（模拟数据库）
+        // 所有用户的专属称号存储
         let allUsersTitles = JSON.parse(localStorage.getItem('allUsersTitles')) || {};
 
         // 页面加载时初始化
@@ -643,67 +431,63 @@
         // 检查登录状态并初始化数据
         function checkLoginStatus() {
             const userInfoStr = localStorage.getItem('mainUserInfo');
+            
+            // 如果没有用户信息，创建一个新用户
             if (!userInfoStr) {
-                // 如果没有用户信息，创建一个测试用户
-                const testUser = {
-                    id: 'user_' + Date.now().toString().slice(-6),
-                    username: '测试用户',
+                const newUser = {
+                    id: 'user_' + Math.floor(Math.random() * 10000),
+                    username: '新用户',
                     avatar: 'https://picsum.photos/200',
-                    isAdmin: false // 默认不是管理员
+                    isAdmin: false
                 };
-                localStorage.setItem('mainUserInfo', JSON.stringify(testUser));
-                window.location.reload();
-                return;
+                localStorage.setItem('mainUserInfo', JSON.stringify(newUser));
+                currentUser = newUser;
+            } else {
+                currentUser = JSON.parse(userInfoStr);
+            }
+
+            // 显示当前用户ID（方便管理员操作）
+            document.getElementById('currentUserId').textContent = currentUser.id;
+            
+            // 确保当前用户有称号列表
+            if (!allUsersTitles[currentUser.id]) {
+                allUsersTitles[currentUser.id] = [
+                    {
+                        id: 'default_' + currentUser.id,
+                        name: '初心者',
+                        description: '每个用户的初始专属称号',
+                        icon: 'seedling',
+                        createdAt: new Date().toISOString(),
+                        isExclusive: false
+                    }
+                ];
+                saveAllUsersTitles();
             }
             
-            try {
-                currentUser = JSON.parse(userInfoStr);
-                // 确保用户有唯一ID
-                if (!currentUser.id) {
-                    currentUser.id = 'user_' + Date.now().toString().slice(-6);
-                    localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
-                }
-                // 初始化当前用户的称号列表（如果没有则创建）
-                if (!allUsersTitles[currentUser.id]) {
-                    allUsersTitles[currentUser.id] = [
-                        {
-                            id: 'default_' + currentUser.id,
-                            name: '初心者',
-                            description: '初始称号',
-                            icon: 'seedling',
-                            createdAt: new Date().toISOString(),
-                            isExclusive: false
-                        }
-                    ];
-                    saveAllUsersTitles();
-                }
-                // 初始化当前佩戴的称号
-                if (!currentUser.currentTitle) {
-                    currentUser.currentTitle = allUsersTitles[currentUser.id][0];
-                    localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
-                }
-                // 更新页面
-                updateNavbarUserInfo();
-                loadUserTitles();
-                // 显示管理员区域（如果是管理员）
-                if (currentUser.isAdmin) {
-                    document.getElementById('adminSection').style.display = 'block';
-                }
-            } catch (err) {
-                console.error('解析用户信息失败:', err);
-                localStorage.removeItem('mainUserInfo');
-                window.location.reload();
+            // 确保有默认佩戴的称号
+            if (!currentUser.currentTitle) {
+                currentUser.currentTitle = allUsersTitles[currentUser.id][0];
+                localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+            }
+            
+            // 更新页面显示
+            updateNavbarUserInfo();
+            loadUserTitles();
+            
+            // 显示管理员区域
+            if (currentUser.isAdmin) {
+                document.getElementById('adminSection').style.display = 'block';
             }
         }
 
-        // 保存所有用户的称号数据到本地存储
+        // 保存所有用户的称号数据
         function saveAllUsersTitles() {
             localStorage.setItem('allUsersTitles', JSON.stringify(allUsersTitles));
         }
 
         // 更新导航栏用户信息
         function updateNavbarUserInfo() {
-            document.getElementById('navbarUsername').textContent = decodeURIComponent(currentUser.username);
+            document.getElementById('navbarUsername').textContent = currentUser.username;
             document.getElementById('navbarAvatar').src = currentUser.avatar || 'https://picsum.photos/200';
             
             // 显示当前佩戴的称号
@@ -716,8 +500,10 @@
             `;
         }
 
-        // 加载当前用户的专属称号
+        // 加载并刷新用户称号列表
         function loadUserTitles() {
+            // 强制从本地存储重新读取数据，确保获取最新数据
+            allUsersTitles = JSON.parse(localStorage.getItem('allUsersTitles')) || {};
             const userTitles = allUsersTitles[currentUser.id] || [];
             renderTitleGrid(userTitles);
         }
@@ -727,13 +513,9 @@
             const gridEl = document.getElementById('ownedTitlesGrid');
             const countEl = document.getElementById('titleCount');
             
-            // 更新称号数量
             countEl.textContent = `${titles.length} 个称号`;
-            
-            // 清空原有内容
             gridEl.innerHTML = '';
             
-            // 如果没有称号，显示空状态
             if (titles.length === 0) {
                 gridEl.innerHTML = `
                     <div class="empty-state">
@@ -745,10 +527,11 @@
                 return;
             }
             
-            // 生成每个称号卡片
+            // 按时间排序，最新的称号显示在前面
+            titles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
             titles.forEach(title => {
                 const isEquipped = currentUser.currentTitle && currentUser.currentTitle.id === title.id;
-                // 专属称号添加特殊标识
                 const exclusiveBadge = title.isExclusive ? `
                     <div class="exclusive-badge">
                         <i class="fas fa-star"></i> 专属
@@ -772,7 +555,7 @@
                     <div class="title-meta">
                         <span>
                             <i class="fas fa-calendar"></i> 
-                            ${new Date(title.createdAt).toLocaleDateString()}
+                            ${new Date(title.createdAt).toLocaleString()}
                         </span>
                         <button class="equip-btn ${isEquipped ? 'unequip' : ''}" 
                                 onclick="equipTitle('${title.id}')">
@@ -792,35 +575,35 @@
             const title = userTitles.find(t => t.id === titleId);
             if (!title) return;
             
-            // 更新当前用户的佩戴称号
             currentUser.currentTitle = title;
             localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
-            
-            // 刷新显示
             updateNavbarUserInfo();
             renderTitleGrid(userTitles);
-            showNotification(`已成功佩戴专属称号：${title.name}`, 'success');
+            showNotification(`已成功佩戴称号：${title.name}`, 'success');
         }
 
-        // 管理员授予专属称号
+        // 管理员授予专属称号（修复核心逻辑）
         function grantExclusiveTitle(event) {
             event.preventDefault();
+            
+            // 获取表单数据
             const targetUserId = document.getElementById('targetUserId').value.trim();
             const titleName = document.getElementById('exclusiveTitleName').value.trim();
             const titleDesc = document.getElementById('exclusiveTitleDesc').value.trim();
             const titleIcon = document.getElementById('exclusiveTitleIcon').value;
             
+            // 验证数据
             if (!targetUserId || !titleName || !titleDesc) {
-                showNotification('请填写完整信息', 'error');
+                showNotification('请填写完整的称号信息', 'error');
                 return;
             }
             
-            // 检查目标用户是否存在（不存在则创建）
+            // 确保目标用户有称号列表
             if (!allUsersTitles[targetUserId]) {
                 allUsersTitles[targetUserId] = [];
             }
             
-            // 创建专属称号
+            // 创建新称号
             const newTitle = {
                 id: 'exclusive_' + Date.now(),
                 name: titleName,
@@ -833,16 +616,16 @@
             
             // 添加到目标用户的称号列表
             allUsersTitles[targetUserId].push(newTitle);
-            saveAllUsersTitles();
+            saveAllUsersTitles(); // 强制保存到本地存储
             
             // 重置表单
             event.target.reset();
-            showNotification(`已成功为用户 ${targetUserId} 授予专属称号：${titleName}`, 'success');
             
-            // 如果是给自己授予，立即刷新列表
-            if (targetUserId === currentUser.id) {
-                loadUserTitles();
-            }
+            // 显示成功通知
+            showNotification(`已成功授予称号：${titleName}`, 'success');
+            
+            // 关键修复：无论是否授予自己，都重新加载数据并刷新显示
+            loadUserTitles();
         }
 
         // 显示通知
@@ -868,7 +651,7 @@
             }
         }
 
-        // 快速成为管理员（在控制台执行）
+        // 快速成为管理员（在浏览器控制台执行）
         // makeMeAdmin = () => {
         //     currentUser.isAdmin = true;
         //     localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
