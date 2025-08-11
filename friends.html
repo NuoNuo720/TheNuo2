@@ -1616,7 +1616,12 @@
                 console.error('handleRequest 缺少 requestId');
                 return;
             }
-    
+            const isValidId = requestId && /^[0-9a-fA-F]{24}$/.test(requestId);
+            if (!isValidId) {
+                showNotification('请求ID无效，无法处理', 'error');
+                console.error('无效的requestId:', requestId);
+                return;
+            }
             // 防止重复处理
             if (!window.requestInProgress) window.requestInProgress = new Map();
             if (window.requestInProgress.has(requestId)) {
@@ -1661,6 +1666,12 @@
                             // 忽略 text() 本身的错误
                         }
                         errorMessage = `服务器错误: ${response.status} - ${errorText}`;
+                        addToSyncQueue({ 
+                            requestId: requestId, // 确保传递有效的requestId
+                            action: action, 
+                            userId: currentUser.id,
+                            timestamp: Date.now()
+                        });
                     }
                 } catch (error) {
                     errorMessage = `网络错误: ${error.message}`;
@@ -1890,6 +1901,21 @@
         // 优化同步逻辑，确保 requestId 正确传递
         async function syncPendingActions() {
             const queue = JSON.parse(localStorage.getItem('friendSyncQueue') || '[]');
+            // 1. 强制过滤无效操作（无requestId或格式错误）
+            const validQueue = queue.filter(item => {
+                // 验证requestId存在且为24位十六进制字符串
+                const isValid = item.requestId && /^[0-9a-fA-F]{24}$/.test(item.requestId);
+                if (!isValid) {
+                    console.warn('移除无效同步操作:', item);
+                }
+                return isValid;
+            });
+  
+            // 更新本地存储，彻底清除无效数据
+            if (validQueue.length !== queue.length) {
+                localStorage.setItem('friendSyncQueue', JSON.stringify(validQueue));
+                queue = validQueue;
+            }
             if (queue.length === 0) return;
             console.log("同步队列参数:", queue);  // 新增：打印参数
             // 检查上次同步时间，至少间隔30秒
@@ -1959,6 +1985,55 @@
             if (!timestamp) return '未知时间';
             const date = new Date(timestamp);
             return date.toLocaleString();
+        }
+        // 添加到同步队列（补充完整实现）
+        function addToSyncQueue(actionData) {
+            // 验证参数有效性
+            if (!actionData || !actionData.requestId || !actionData.action) {
+                console.error('无效的同步操作数据:', actionData);
+                showNotification('同步数据不完整，操作失败', 'error');
+                return;
+            }
+
+            // 验证requestId格式（24位十六进制字符串）
+            const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+            if (!objectIdRegex.test(actionData.requestId)) {
+                console.error('无效的requestId格式:', actionData.requestId);
+                showNotification('请求ID格式错误，无法同步', 'error');
+                return;
+            }
+
+            // 从本地存储获取现有队列
+            let syncQueue = JSON.parse(localStorage.getItem('friendSyncQueue') || '[]');
+
+            // 去重：如果相同requestId和action已存在，则更新时间戳
+            const existingIndex = syncQueue.findIndex(
+                item => item.requestId === actionData.requestId && item.action === actionData.action
+            );
+
+            if (existingIndex !== -1) {
+                syncQueue.splice(existingIndex, 1); // 移除旧记录
+            }
+
+            // 添加新操作（确保包含所有必要字段）
+            const newAction = {
+                requestId: actionData.requestId,
+                action: actionData.action,
+                userId: actionData.userId || currentUser.id,
+                timestamp: actionData.timestamp || Date.now(),
+                retried: false // 重试标记
+            };
+
+            syncQueue.push(newAction);
+
+            // 限制队列最大长度为10，避免数据过多
+            if (syncQueue.length > 10) {
+                syncQueue = syncQueue.slice(-10); // 保留最近的10条
+            }
+
+            // 保存到本地存储
+            localStorage.setItem('friendSyncQueue', JSON.stringify(syncQueue));
+            console.log('已添加到同步队列:', newAction);
         }
     </script>
 </body>
