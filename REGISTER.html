@@ -3,35 +3,51 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>注册界面</title>
     <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body{
             background-color:#f4f4f4;
             font-family:Arial,sans-serif;
             height:100vh;
-            margin:0;
-            padding:0;
             display : flex;
             justify-content:center;
             align-items:center;
+            /* 确保body占满整个视口 */
+            width: 100%;
+            overflow: hidden; /* 防止页面滚动 */
         }
+        
         .container {
             width:300px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             background-color:#fff;
             border-radius:8px;
             padding : 20px;
+            /* 确保表单在加载动画之上 */
+            position: relative;
+            z-index: 10;
         }
+        
         h2{
             text-align:center;
-            color:#333;
+            color:#0000004d;
             margin-bottom:20px;
         }
+        
         label {
             display:block;
             margin-bottom:5px;
             font-weight:bold;
             color:#666;
         }
+        
         input[type="text"],
         input[type="password"],
         input[type="email"] {
@@ -42,21 +58,26 @@
             border-radius:4px;
             box-sizing: border-box;
         }
+        
         input:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
         }
+        
         .input-error {
             border-color: #dc3545 !important;
         }
+        
         .links a:hover {
             text-decoration:underline;
         } 
+        
         .checkbox {
             margin-bottom:15px;
             color:#666;
         }
+        
         button {
             width:100%;
             padding:10px;
@@ -68,22 +89,27 @@
             font-size:16px;
             transition: background-color 0.3s;
         }
+        
         button:hover:not(:disabled) {
             background-color:#218838;
         }
+        
         button:disabled {
             background-color:#6c757d;
             cursor: not-allowed;
         }
+        
         .links{
             text-align:center;
             margin-top:15px;
         }
+        
         .links a {
             color:#007bff;
             text-decoration:none;
             margin:0 5px;
         }
+        
         .error-message {
             color: #dc3545;
             text-align: center;
@@ -94,8 +120,9 @@
             background-color: #f8d7da;
             display: none;
         }
+        
         .success-message {
-            color: #28a745;
+            color: #155724;
             text-align: center;
             margin: 10px 0;
             padding: 8px;
@@ -104,11 +131,13 @@
             background-color: #d4edda;
             display: none;
         }
+        
         .tip {
             font-size: 12px;
             color: #666;
             margin: -12px 0 15px 0;
         }
+        
         .password-strength {
             height: 5px;
             background-color: #eee;
@@ -117,39 +146,99 @@
             overflow: hidden;
             display: none;
         }
+        
         .strength-bar {
             height: 100%;
             width: 0%;
             transition: width 0.3s;
         }
+        
         .strength-weak {
             background-color: #dc3545;
             width: 33%;
         }
+        
         .strength-medium {
             background-color: #ffc107;
             width: 66%;
         }
+        
         .strength-strong {
             background-color: #28a745;
             width: 100%;
         }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+        
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
             border-radius: 50%;
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
+            display: inline-block;
             vertical-align: middle;
+            margin-right: 8px;
         }
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* 加载动画样式 - 修复关键部分 */
+        #loader-wrapper {
+          position: fixed; /* 固定定位，相对于视口 */
+          top: 0;
+          left: 0;
+          width: 100vw; /* 占满整个视口宽度 */
+          height: 100vh; /* 占满整个视口高度 */
+          background: #fff;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999; /* 确保在最上层 */
+          transition: opacity 0.5s ease-out;
+        }
+
+        #loader {
+          width: 60px;
+          height: 60px;
+          border: 5px solid #f3f3f3;
+          border-top: 5px solid #3498db;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 20px;
+        }
+
+        #loading-text {
+          color: #333;
+          font-family: 'Arial', sans-serif;
+          font-size: 16px;
+          letter-spacing: 1px;
+          animation: fade 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes fade {
+          from { opacity: 0.7; }
+          to { opacity: 1; }
+        }
+
+        /* 加载完成后隐藏动画 */
+        .loaded #loader-wrapper {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.5s ease-out;
         }
     </style>
 </head>
 <body>
+    <!-- 加载动画 - 放在body最开始 -->
+    <div id="loader-wrapper">
+      <div id="loader"></div>
+      <p id="loading-text">加载中...</p >
+    </div>
+
+    <!-- 注册表单容器 -->
     <div class="container">
         <div class="error-message" id="errorMsg"></div>
         <div class="success-message" id="successMsg"></div>
@@ -192,7 +281,16 @@
     </div>
 
     <script>
-        window.onload = function() {
+        // 页面加载动画控制
+        window.addEventListener('load', function() {
+            // 页面加载完成后延迟隐藏加载动画
+            setTimeout(function() {
+                document.body.classList.add('loaded');
+            }, 1000);
+        });
+
+        // 页面加载完成后的初始化
+        window.addEventListener('DOMContentLoaded', function() {
             // 自动填充记住的用户名
             const savedUsername = localStorage.getItem('rememberedUsername');
             if (savedUsername) {
@@ -233,8 +331,9 @@
                     validateField(this);
                 });
             });
-        };
+        });
 
+        // 表单验证和提交逻辑
         const registerForm = document.getElementById('registerForm');
         const errorMsg = document.getElementById('errorMsg');
         const successMsg = document.getElementById('successMsg');
@@ -245,6 +344,11 @@
             errorMsg.textContent = message;
             errorMsg.style.display = 'block';
             successMsg.style.display = 'none';
+            
+            // 5秒后自动隐藏错误信息
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 5000);
         }
 
         // 显示成功信息
@@ -350,6 +454,7 @@
             return isFormValid;
         }
 
+        // 表单提交处理
         registerForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             hideMessages();
@@ -363,25 +468,15 @@
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
             const rememberMe = document.getElementById('rememberMe').checked;
 
             // 防止重复提交
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="loading"></span> 注册中...';
+            submitBtn.innerHTML = '<span class="spinner"></span> 注册中...';
 
             try {
-                // 在实际应用中，这里应该发送加密后的密码
-                // 这里仅作示例，实际项目需要使用HTTPS并在客户端进行密码哈希
-                
-                // 生成临时token（实际应用中应由服务器生成）
-                const token = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-
-                // 替换为实际的API地址
-                const apiUrl = '/api/register'; // 本地开发环境
-                // const apiUrl = '/.netlify/functions/register'; // Netlify部署环境
-                
-                const response = await fetch(apiUrl, {
+                // 发送注册请求到服务器
+                const response = await fetch('/.netlify/functions/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -389,10 +484,7 @@
                     body: JSON.stringify({
                         username,
                         email,
-                        // 注意：实际应用中这里不应发送明文密码
-                        // 应该使用加密算法如bcrypt在客户端加密后再发送
-                        password,
-                        token
+                        password
                     })
                 });
 
@@ -412,17 +504,27 @@
                     }, 1500);
                 } else {
                     // 注册失败
-                    showError(result.message || '注册失败，请重试');
+                    if (response.status === 500) {
+                        showError('服务器内部错误，请稍后再试或联系管理员');
+                    } else {
+                        showError(result.message || '注册失败，请重试');
+                    }
                 }
             } catch (error) {
                 // 网络错误
-                showError('无法连接到服务器，请稍后再试');
+                showError('网络连接错误，请检查网络后重试');
                 console.error('注册请求错误：', error);
             } finally {
                 // 恢复按钮状态
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '注册';
             }
+        });
+
+        // 登录链接跳转
+        document.getElementById('loginLink').addEventListener('click',function(event) {
+            event.preventDefault();
+            window.location.href = "indexlo.html";
         });
     </script>
 </body>
