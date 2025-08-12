@@ -2,11 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>称号管理 - 多功能导航中心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>称号管理 - 云端同步版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保持原有样式不变 */
+        /* 基础样式保持不变 */
         * {
             margin: 0;
             padding: 0;
@@ -24,14 +24,15 @@
                 radial-gradient(circle at 90% 80%, rgba(155, 89, 182, 0.05) 0%, transparent 20%);
         }
 
+        /* 导航栏样式 */
         .navbar {
             width: 100%;
             background-color: #333;
-            padding: 15px 20px;
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
@@ -40,25 +41,25 @@
 
         .navbar-title {
             color: white;
-            font-size: 1.2em;
+            font-size: 1rem;
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .navbar-title i {
-            font-size: 1.4em;
+            font-size: 1.2em;
             color: #3498db;
         }
 
         .back-btn {
             color: white;
             text-decoration: none;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 3px;
             transition: all 0.2s;
-            margin-right: 15px;
+            margin-right: 8px;
         }
 
         .back-btn:hover {
@@ -69,62 +70,78 @@
         .user-area {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             color: white;
         }
 
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid white;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
         }
 
         .user-avatar:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+            transform: scale(1.1);
         }
 
         .username {
             white-space: nowrap;
             font-weight: 500;
+            font-size: 0.9rem;
         }
 
         .title-badge {
             background: linear-gradient(135deg, #3498db, #9b59b6);
             color: white;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            margin-left: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-left: 5px;
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            gap: 3px;
         }
 
+        .logout-btn {
+            background: #555;
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #777;
+        }
+
+        /* 主容器样式 */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 15px;
         }
 
         .page-title {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             color: #2c3e50;
-            padding: 20px 0;
+            padding: 15px 0;
         }
 
         .page-title h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
             position: relative;
             display: inline-block;
             background: linear-gradient(90deg, #3498db, #9b59b6);
@@ -133,78 +150,204 @@
             color: transparent;
         }
 
-        .admin-section {
-            margin: 30px 0;
-            padding: 20px;
+        .page-title h1::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 10%;
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            border-radius: 3px;
+        }
+
+        .page-title p {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* 用户信息区域 */
+        .user-info-section {
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border-left: 4px solid #e74c3c;
-            transition: transform 0.3s, box-shadow 0.3s;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 3px solid #3498db;
+        }
+
+        .info-title {
+            font-size: 1rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .user-id-display {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .sync-status {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sync-status.online {
+            color: #2ecc71;
+        }
+
+        /* 管理员区域样式 */
+        .admin-section {
+            margin: 25px 0;
+            padding: 18px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 3px solid #e74c3c;
+            display: none;
+        }
+
+        .admin-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #c0392b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
         }
 
         .grant-form {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
             align-items: end;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 0.85rem;
         }
 
         .form-group input, .form-group select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 0.95rem;
-            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #3498db;
+            outline: none;
         }
 
         .grant-btn {
             background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-weight: 500;
+            font-size: 0.9rem;
         }
 
+        /* 称号卡片样式 */
         .title-section {
-            margin-bottom: 50px;
+            margin-bottom: 40px;
         }
 
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
             border-bottom: 2px solid #e1e8ed;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: #3498db;
         }
 
         .title-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
         }
 
         .title-card {
             background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border-left: 4px solid transparent;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 3px solid transparent;
             transition: all 0.3s ease;
             position: relative;
+        }
+
+        .title-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.08);
+            border-left-color: #3498db;
         }
 
         .title-card.equipped {
@@ -214,39 +357,48 @@
 
         .equipped-badge {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 12px;
+            right: 12px;
             background-color: #2ecc71;
             color: white;
             font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 3px;
         }
 
         .exclusive-badge {
             position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 12px;
+            left: 12px;
             background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
             font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 3px;
+        }
+
+        .title-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            position: relative;
+            padding: 8px 0;
         }
 
         .title-icon {
-            font-size: 2rem;
+            font-size: 1.8rem;
             color: #3498db;
         }
 
         .title-name {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #2c3e50;
             margin-bottom: 5px;
@@ -254,17 +406,18 @@
 
         .title-desc {
             color: #7f8c8d;
-            font-size: 0.95rem;
-            margin-bottom: 15px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            line-height: 1.6;
         }
 
         .title-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #95a5a6;
-            padding-top: 10px;
+            padding-top: 8px;
             border-top: 1px dashed #eee;
         }
 
@@ -272,42 +425,58 @@
             background-color: #3498db;
             color: white;
             border: none;
-            padding: 5px 12px;
-            border-radius: 5px;
+            padding: 4px 10px;
+            border-radius: 4px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 3px;
+            font-size: 0.85rem;
         }
 
         .equip-btn.unequip {
             background-color: #7f8c8d;
         }
 
+        /* 空状态样式 */
         .empty-state {
             text-align: center;
-            padding: 50px 20px;
+            padding: 40px 15px;
             color: #95a5a6;
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+            color: #3498db;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        /* 通知提示 */
         .notification {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            padding: 15px 20px;
+            padding: 12px 15px;
             background-color: #3498db;
             color: white;
             border-radius: 5px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             transform: translateX(120%);
             transition: transform 0.3s ease;
             z-index: 1000;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            max-width: 80%;
         }
 
         .notification.show {
@@ -322,13 +491,70 @@
             background: linear-gradient(135deg, #e74c3c, #c0392b);
         }
 
+        .notification.sync {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        /* 加载指示器 */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 */
         @media (max-width: 768px) {
             .title-grid {
                 grid-template-columns: 1fr;
             }
             
+            .username {
+                display: none;
+            }
+            
+            .page-title h1 {
+                font-size: 1.5rem;
+            }
+
             .grant-form {
                 grid-template-columns: 1fr;
+            }
+
+            .admin-section {
+                padding: 15px;
+            }
+
+            .grant-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 10px;
+            }
+
+            .info-controls {
+                flex-direction: column;
+            }
+
+            .copy-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-title span {
+                display: none;
+            }
+            
+            .navbar-title {
+                gap: 0;
             }
         }
     </style>
@@ -341,7 +567,7 @@
                 <i class="fas fa-arrow-left"></i> 返回
             </a>
             <i class="fas fa-trophy"></i>
-            称号管理中心
+            <span>称号管理中心</span>
         </div>
         <div class="user-area" id="userArea">
             <span class="username" id="navbarUsername">加载中...</span>
@@ -356,18 +582,38 @@
     <div class="container">
         <div class="page-title">
             <h1>我的专属称号 collection</h1>
-            <p>管理你的个人专属称号，展示独特身份</p>
+            <p>云端同步，多设备共享你的称号</p>
+        </div>
+
+        <!-- 用户信息区域 -->
+        <div class="user-info-section">
+            <h3 class="info-title">
+                <i class="fas fa-user"></i> 用户信息
+            </h3>
+            <div class="info-controls">
+                <div class="user-id-display">
+                    <i class="fas fa-user-secret"></i>
+                    <span>你的用户ID: <strong id="currentUserId">加载中</strong></span>
+                </div>
+                <button class="copy-btn" onclick="copyUserId()">
+                    <i class="fas fa-copy"></i> 复制ID
+                </button>
+            </div>
+            <div class="sync-status" id="syncStatus">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <span>正在连接服务器...</span>
+            </div>
         </div>
 
         <!-- 管理员授予称号区域 -->
-        <div class="admin-section" id="adminSection" style="display: none;">
+        <div class="admin-section" id="adminSection">
             <h3 class="admin-title">
                 <i class="fas fa-user-shield"></i> 管理员操作 - 授予专属称号
             </h3>
             <form class="grant-form" onsubmit="grantExclusiveTitle(event)">
                 <div class="form-group">
-                    <label for="targetUserId">用户ID（当前用户ID: <span id="currentUserId">加载中</span>）</label>
-                    <input type="text" id="targetUserId" placeholder="输入目标用户ID" required>
+                    <label for="targetUserId">目标用户ID</label>
+                    <input type="text" id="targetUserId" placeholder="输入要授予的用户ID" required>
                 </div>
                 <div class="form-group">
                     <label for="exclusiveTitleName">称号名称</label>
@@ -384,6 +630,9 @@
                         <option value="diamond">钻石 (diamond)</option>
                         <option value="medal">勋章 (medal)</option>
                         <option value="star">星星 (star)</option>
+                        <option value="gamepad">游戏手柄 (gamepad)</option>
+                        <option value="trophy">奖杯 (trophy)</option>
+                        <option value="award">奖励 (award)</option>
                     </select>
                 </div>
                 <button type="submit" class="grant-btn">
@@ -402,10 +651,11 @@
             </div>
 
             <div class="title-grid" id="ownedTitlesGrid">
+                <!-- 称号卡片会通过JavaScript动态生成 -->
                 <div class="empty-state">
                     <i class="fas fa-trophy"></i>
-                    <p>你还没有获得专属称号</p>
-                    <p>请等待管理员授予或完成特殊任务</p>
+                    <p>正在加载你的称号...</p>
+                    <p>请稍候</p>
                 </div>
             </div>
         </div>
@@ -418,105 +668,296 @@
     </div>
 
     <script>
+        // 后端API地址（请替换为你的MongoDB后端接口）
+        const API_BASE_URL = 'https://thenuo2.netlify.app:3000'; // 例如: 'https://api.yourdomain.com/titles'
+        
         // 当前用户信息
         let currentUser = null;
-        // 所有用户的专属称号存储
-        let allUsersTitles = JSON.parse(localStorage.getItem('allUsersTitles')) || {};
+        // 当前用户的称号列表
+        let userTitles = [];
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
-            checkLoginStatus();
+            initApp();
         });
 
-        // 检查登录状态并初始化数据
-        function checkLoginStatus() {
-            const userInfoStr = localStorage.getItem('mainUserInfo');
-            
-            // 如果没有用户信息，创建一个新用户
-            if (!userInfoStr) {
-                const newUser = {
-                    id: 'user_' + Math.floor(Math.random() * 10000),
-                    username: '新用户',
-                    avatar: 'https://picsum.photos/200',
-                    isAdmin: false
-                };
-                localStorage.setItem('mainUserInfo', JSON.stringify(newUser));
-                currentUser = newUser;
-            } else {
-                currentUser = JSON.parse(userInfoStr);
+        // 初始化应用
+        async function initApp() {
+            try {
+                // 检查本地是否有用户信息
+                const localUser = localStorage.getItem('cloudUserInfo');
+                if (localUser) {
+                    currentUser = JSON.parse(localUser);
+                    // 从服务器加载用户数据
+                    await loadUserData();
+                } else {
+                    // 创建新用户并保存到服务器
+                    await createNewUser();
+                }
+            } catch (error) {
+                console.error('初始化失败:', error);
+                updateSyncStatus(false, '连接服务器失败，请稍后重试');
+                showNotification('无法连接到服务器', 'error');
             }
+        }
 
-            // 显示当前用户ID（方便管理员操作）
-            document.getElementById('currentUserId').textContent = currentUser.id;
-            
-            // 确保当前用户有称号列表
-            if (!allUsersTitles[currentUser.id]) {
-                allUsersTitles[currentUser.id] = [
-                    {
-                        id: 'default_' + currentUser.id,
-                        name: '初心者',
-                        description: '每个用户的初始专属称号',
-                        icon: 'seedling',
-                        createdAt: new Date().toISOString(),
-                        isExclusive: false
+        // 创建新用户
+        async function createNewUser() {
+            try {
+                // 生成新用户ID
+                const newUserId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                
+                // 发送请求到后端创建用户
+                const response = await fetch(`${API_BASE_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: newUserId,
+                        username: '新用户',
+                        avatar: 'https://picsum.photos/200',
+                        isAdmin: false,
+                        currentTitle: null
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('创建用户失败');
+                }
+
+                const userData = await response.json();
+                currentUser = userData;
+                
+                // 保存到本地存储
+                localStorage.setItem('cloudUserInfo', JSON.stringify(currentUser));
+                
+                // 加载用户称号
+                await loadUserTitles();
+                
+                // 更新UI
+                updateNavbarUserInfo();
+                updateSyncStatus(true, '已连接到服务器');
+            } catch (error) {
+                console.error('创建用户失败:', error);
+                throw error;
+            }
+        }
+
+        // 从服务器加载用户数据
+        async function loadUserData() {
+            try {
+                // 先加载用户基本信息
+                const userResponse = await fetch(`${API_BASE_URL}/users/${currentUser.userId}`);
+                if (!userResponse.ok) {
+                    throw new Error('获取用户信息失败');
+                }
+                
+                currentUser = await userResponse.json();
+                localStorage.setItem('cloudUserInfo', JSON.stringify(currentUser));
+                
+                // 再加载用户称号
+                await loadUserTitles();
+                
+                // 更新UI
+                updateNavbarUserInfo();
+                updateSyncStatus(true, '已连接到服务器');
+                showNotification('数据同步成功', 'sync');
+            } catch (error) {
+                console.error('加载用户数据失败:', error);
+                throw error;
+            }
+        }
+
+        // 从服务器加载用户称号
+        async function loadUserTitles() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${currentUser.userId}/titles`);
+                
+                if (response.ok) {
+                    userTitles = await response.json();
+                    
+                    // 如果用户没有称号，初始化一个默认称号
+                    if (userTitles.length === 0) {
+                        const defaultTitle = {
+                            id: 'default_' + currentUser.userId,
+                            name: '初心者',
+                            description: '每个用户的初始专属称号',
+                            icon: 'seedling',
+                            createdAt: new Date().toISOString(),
+                            isExclusive: false
+                        };
+                        
+                        // 保存到服务器
+                        await saveNewTitle(defaultTitle);
+                        userTitles = [defaultTitle];
+                        
+                        // 如果没有当前佩戴的称号，设置为默认称号
+                        if (!currentUser.currentTitle) {
+                            await setCurrentTitle(defaultTitle.id);
+                        }
                     }
-                ];
-                saveAllUsersTitles();
-            }
-            
-            // 确保有默认佩戴的称号
-            if (!currentUser.currentTitle) {
-                currentUser.currentTitle = allUsersTitles[currentUser.id][0];
-                localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
-            }
-            
-            // 更新页面显示
-            updateNavbarUserInfo();
-            loadUserTitles();
-            
-            // 显示管理员区域
-            if (currentUser.isAdmin) {
-                document.getElementById('adminSection').style.display = 'block';
+                    
+                    renderTitleGrid();
+                } else {
+                    // 处理404等错误情况
+                    userTitles = [];
+                    renderTitleGrid();
+                }
+            } catch (error) {
+                console.error('加载称号失败:', error);
+                showNotification('加载称号失败', 'error');
             }
         }
 
-        // 保存所有用户的称号数据
-        function saveAllUsersTitles() {
-            localStorage.setItem('allUsersTitles', JSON.stringify(allUsersTitles));
+        // 保存新称号到服务器
+        async function saveNewTitle(title) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${currentUser.userId}/titles`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(title)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('保存称号失败');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('保存称号失败:', error);
+                throw error;
+            }
         }
 
-        // 更新导航栏用户信息
-        function updateNavbarUserInfo() {
-            document.getElementById('navbarUsername').textContent = currentUser.username;
-            document.getElementById('navbarAvatar').src = currentUser.avatar || 'https://picsum.photos/200';
+        // 设置当前佩戴的称号
+        async function setCurrentTitle(titleId) {
+            try {
+                // 找到要佩戴的称号
+                const titleToEquip = userTitles.find(t => t.id === titleId);
+                if (!titleToEquip) return;
+                
+                // 更新服务器上的用户信息
+                const response = await fetch(`${API_BASE_URL}/users/${currentUser.userId}/current-title`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ titleId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('更新佩戴称号失败');
+                }
+                
+                // 更新本地用户信息
+                currentUser.currentTitle = titleToEquip;
+                localStorage.setItem('cloudUserInfo', JSON.stringify(currentUser));
+                
+                return true;
+            } catch (error) {
+                console.error('设置当前称号失败:', error);
+                showNotification('更新称号失败', 'error');
+                return false;
+            }
+        }
+
+        // 管理员授予专属称号
+        async function grantExclusiveTitle(event) {
+            event.preventDefault();
             
-            // 显示当前佩戴的称号
-            const titleBadgeEl = document.getElementById('navbarTitleBadge');
-            titleBadgeEl.innerHTML = `
-                <span class="title-badge">
-                    <i class="fas fa-${currentUser.currentTitle.icon}"></i>
-                    ${currentUser.currentTitle.name}
-                </span>
-            `;
+            const targetUserId = document.getElementById('targetUserId').value.trim();
+            const titleName = document.getElementById('exclusiveTitleName').value.trim();
+            const titleDesc = document.getElementById('exclusiveTitleDesc').value.trim();
+            const titleIcon = document.getElementById('exclusiveTitleIcon').value;
+            
+            if (!targetUserId || !titleName || !titleDesc) {
+                showNotification('请填写完整信息', 'error');
+                return;
+            }
+            
+            // 检查目标用户是否存在
+            try {
+                const userCheck = await fetch(`${API_BASE_URL}/users/${targetUserId}`);
+                if (!userCheck.ok) {
+                    showNotification('目标用户不存在', 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('检查用户失败:', error);
+                showNotification('无法验证目标用户', 'error');
+                return;
+            }
+            
+            // 创建新称号
+            const newTitle = {
+                id: 'exclusive_' + Date.now(),
+                name: titleName,
+                description: titleDesc,
+                icon: titleIcon,
+                createdAt: new Date().toISOString(),
+                isExclusive: true,
+                grantedBy: currentUser.username
+            };
+            
+            try {
+                // 直接保存到目标用户的称号列表
+                const response = await fetch(`${API_BASE_URL}/users/${targetUserId}/titles`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 这里可以添加管理员认证令牌
+                        'Authorization': `Bearer ${currentUser.adminToken || ''}`
+                    },
+                    body: JSON.stringify(newTitle)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('授予称号失败');
+                }
+                
+                // 重置表单
+                event.target.reset();
+                showNotification(`已成功为用户 ${targetUserId} 授予专属称号：${titleName}`, 'success');
+                
+                // 如果是给自己授予，立即刷新列表
+                if (targetUserId === currentUser.userId) {
+                    await loadUserTitles();
+                }
+            } catch (error) {
+                console.error('授予称号失败:', error);
+                showNotification('授予称号失败，请检查权限', 'error');
+            }
         }
 
-        // 加载并刷新用户称号列表
-        function loadUserTitles() {
-            // 强制从本地存储重新读取数据，确保获取最新数据
-            allUsersTitles = JSON.parse(localStorage.getItem('allUsersTitles')) || {};
-            const userTitles = allUsersTitles[currentUser.id] || [];
-            renderTitleGrid(userTitles);
+        // 佩戴称号
+        async function equipTitle(titleId) {
+            // 显示加载状态
+            showNotification('<span class="loader"></span> 正在更新...', 'sync');
+            
+            const success = await setCurrentTitle(titleId);
+            if (success) {
+                // 刷新称号显示
+                renderTitleGrid();
+                // 更新导航栏
+                updateNavbarUserInfo();
+                // 显示成功通知
+                const title = userTitles.find(t => t.id === titleId);
+                showNotification(`已成功佩戴称号：${title.name}`, 'success');
+            }
         }
 
         // 渲染称号列表
-        function renderTitleGrid(titles) {
+        function renderTitleGrid() {
             const gridEl = document.getElementById('ownedTitlesGrid');
             const countEl = document.getElementById('titleCount');
             
-            countEl.textContent = `${titles.length} 个称号`;
+            countEl.textContent = `${userTitles.length} 个称号`;
             gridEl.innerHTML = '';
             
-            if (titles.length === 0) {
+            if (userTitles.length === 0) {
                 gridEl.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-trophy"></i>
@@ -528,9 +969,9 @@
             }
             
             // 按时间排序，最新的称号显示在前面
-            titles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            userTitles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
-            titles.forEach(title => {
+            userTitles.forEach(title => {
                 const isEquipped = currentUser.currentTitle && currentUser.currentTitle.id === title.id;
                 const exclusiveBadge = title.isExclusive ? `
                     <div class="exclusive-badge">
@@ -555,7 +996,7 @@
                     <div class="title-meta">
                         <span>
                             <i class="fas fa-calendar"></i> 
-                            ${new Date(title.createdAt).toLocaleString()}
+                            ${new Date(title.createdAt).toLocaleDateString()}
                         </span>
                         <button class="equip-btn ${isEquipped ? 'unequip' : ''}" 
                                 onclick="equipTitle('${title.id}')">
@@ -569,63 +1010,50 @@
             });
         }
 
-        // 佩戴称号
-        function equipTitle(titleId) {
-            const userTitles = allUsersTitles[currentUser.id] || [];
-            const title = userTitles.find(t => t.id === titleId);
-            if (!title) return;
+        // 更新导航栏用户信息
+        function updateNavbarUserInfo() {
+            document.getElementById('navbarUsername').textContent = currentUser.username;
+            document.getElementById('navbarAvatar').src = currentUser.avatar || 'https://picsum.photos/200';
+            document.getElementById('currentUserId').textContent = currentUser.userId;
             
-            currentUser.currentTitle = title;
-            localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
-            updateNavbarUserInfo();
-            renderTitleGrid(userTitles);
-            showNotification(`已成功佩戴称号：${title.name}`, 'success');
+            // 显示当前佩戴的称号
+            const titleBadgeEl = document.getElementById('navbarTitleBadge');
+            if (currentUser.currentTitle) {
+                titleBadgeEl.innerHTML = `
+                    <span class="title-badge">
+                        <i class="fas fa-${currentUser.currentTitle.icon}"></i>
+                        ${currentUser.currentTitle.name}
+                    </span>
+                `;
+            }
+            
+            // 显示管理员区域（如果是管理员）
+            if (currentUser.isAdmin) {
+                document.getElementById('adminSection').style.display = 'block';
+            }
         }
 
-        // 管理员授予专属称号（修复核心逻辑）
-        function grantExclusiveTitle(event) {
-            event.preventDefault();
-            
-            // 获取表单数据
-            const targetUserId = document.getElementById('targetUserId').value.trim();
-            const titleName = document.getElementById('exclusiveTitleName').value.trim();
-            const titleDesc = document.getElementById('exclusiveTitleDesc').value.trim();
-            const titleIcon = document.getElementById('exclusiveTitleIcon').value;
-            
-            // 验证数据
-            if (!targetUserId || !titleName || !titleDesc) {
-                showNotification('请填写完整的称号信息', 'error');
-                return;
+        // 更新同步状态
+        function updateSyncStatus(online, message) {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.className = 'sync-status';
+            if (online) {
+                statusEl.classList.add('online');
+                statusEl.innerHTML = `<i class="fas fa-check-circle"></i><span>${message}</span>`;
+            } else {
+                statusEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i><span>${message}</span>`;
             }
-            
-            // 确保目标用户有称号列表
-            if (!allUsersTitles[targetUserId]) {
-                allUsersTitles[targetUserId] = [];
-            }
-            
-            // 创建新称号
-            const newTitle = {
-                id: 'exclusive_' + Date.now(),
-                name: titleName,
-                description: titleDesc,
-                icon: titleIcon,
-                createdAt: new Date().toISOString(),
-                isExclusive: true,
-                grantedBy: currentUser.username
-            };
-            
-            // 添加到目标用户的称号列表
-            allUsersTitles[targetUserId].push(newTitle);
-            saveAllUsersTitles(); // 强制保存到本地存储
-            
-            // 重置表单
-            event.target.reset();
-            
-            // 显示成功通知
-            showNotification(`已成功授予称号：${titleName}`, 'success');
-            
-            // 关键修复：无论是否授予自己，都重新加载数据并刷新显示
-            loadUserTitles();
+        }
+
+        // 复制用户ID到剪贴板
+        function copyUserId() {
+            const userId = currentUser.userId;
+            navigator.clipboard.writeText(userId).then(() => {
+                showNotification('用户ID已复制到剪贴板', 'success');
+            }).catch(err => {
+                showNotification('复制失败，请手动复制', 'error');
+                console.error('复制失败:', err);
+            });
         }
 
         // 显示通知
@@ -633,30 +1061,67 @@
             const notification = document.getElementById('notification');
             const notificationText = document.getElementById('notificationText');
             
-            notificationText.textContent = message;
+            notificationText.innerHTML = message;
             notification.className = 'notification';
             notification.classList.add(type);
             notification.classList.add('show');
             
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            // 如果是加载通知，不自动关闭
+            if (!message.includes('loader')) {
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
         }
 
         // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
-                localStorage.removeItem('mainUserInfo');
+                localStorage.removeItem('cloudUserInfo');
                 window.location.reload();
             }
         }
+        // 获取当前登录用户的称号（假设你的网页能获取到当前用户ID）
+        async function loadUserTitles(currentUserId) {
+          try {
+            // 用你的服务器地址替换
+            const response = await fetch(`http://你的域名:3000/getTitles/${currentUserId}`);
+            const titles = await response.json();
+    
+            // 显示称号（根据你的网页样式修改）
+            let titleHtml = "";
+            titles.forEach(title => {
+              titleHtml += `<div class="title">${title.titleName} - ${title.description}</div>`;
+            });
+            document.getElementById("titlesContainer").innerHTML = titleHtml;
+          } catch (err) {
+            console.error("获取称号失败:", err);
+          }
+        }
 
+        // 页面加载时调用（传入当前登录用户的ID）
+        loadUserTitles("当前登录用户的ID");
         // 快速成为管理员（在浏览器控制台执行）
-        // makeMeAdmin = () => {
-        //     currentUser.isAdmin = true;
-        //     localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
-        //     window.location.reload();
+        // makeMeAdmin = async () => {
+        //     try {
+        //         const response = await fetch(`${API_BASE_URL}/users/${currentUser.userId}/admin`, {
+        //             method: 'PUT',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //             },
+        //             body: JSON.stringify({ isAdmin: true })
+        //         });
+        //         if (response.ok) {
+        //             currentUser.isAdmin = true;
+        //             localStorage.setItem('cloudUserInfo', JSON.stringify(currentUser));
+        //             document.getElementById('adminSection').style.display = 'block';
+        //             showNotification('已获得管理员权限', 'success');
+        //         }
+        //     } catch (error) {
+        //         console.error('成为管理员失败:', error);
+        //     }
         // }
     </script>
+    <div id="titlesContainer"></div>
 </body>
 </html>
