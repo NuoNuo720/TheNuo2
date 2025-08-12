@@ -482,9 +482,9 @@
                     };
                     localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
 
-                    showSuccess('注册成功！即将跳转到首页');
+                    showSuccess('注册成功！即将跳转到登录页面');
                     setTimeout(() => {
-                        window.location.href = `indexdaohang.html?token=${result.token}&username=${encodeURIComponent(result.username)}`;
+                        window.location.href = `indexlo.html?token=${result.token}&username=${encodeURIComponent(result.username)}`;
                     }, 1500);
                 } else {
                     if (response.status === 500) {
