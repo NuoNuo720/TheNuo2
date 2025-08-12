@@ -1,8 +1,9 @@
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); // 新增JWT依赖
 
 exports.handler = async (event) => {
-    // 设置响应头，支持跨域和JSON格式
+    // 设置响应头
     const headers = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
@@ -27,10 +28,9 @@ exports.handler = async (event) => {
         };
     }
 
-    let client; // 数据库客户端连接
+    let client;
 
     try {
-        // 解析请求数据
         if (!event.body) {
             return {
                 statusCode: 400,
@@ -80,20 +80,20 @@ exports.handler = async (event) => {
             };
         }
 
-        // 检查数据库连接字符串是否配置
+        // 验证环境变量
         if (!process.env.MONGODB_URI) {
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: '服务器配置错误，缺少数据库连接信息' })
-            };
+            throw new Error('MONGODB_URI环境变量未配置');
+        }
+        
+        if (!process.env.JWT_SECRET) {
+            throw new Error('JWT_SECRET环境变量未配置');
         }
 
         // 连接数据库
         client = new MongoClient(process.env.MONGODB_URI);
         await client.connect();
-        const db = client.db('userDB'); // 数据库名称
-        const usersCollection = db.collection('users'); // 集合名称
+        const db = client.db('userDB');
+        const usersCollection = db.collection('users');
 
         // 检查用户名是否已存在
         const existingUser = await usersCollection.findOne({ username });
@@ -115,26 +115,30 @@ exports.handler = async (event) => {
             };
         }
 
-        // 加密密码（使用bcrypt，安全存储）
+        // 加密密码
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // 生成用户唯一标识token
-        const token = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // 使用JWT生成令牌（与登录逻辑一致）
+        const token = jwt.sign(
+            { username: username },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
 
-        // 准备要存储的用户数据
+        // 准备用户数据
         const newUser = {
             username,
             email,
-            password: hashedPassword, // 存储加密后的密码，而非明文
+            password: hashedPassword,
             token,
             createdAt: new Date(),
             lastLogin: null,
             status: 'active'
         };
 
-        // 将用户数据插入数据库
-        await usersCollection.insertOne(newUser);
+        // 插入数据库
+        const result = await usersCollection.insertOne(newUser);
 
         // 返回注册成功响应
         return {
@@ -143,6 +147,7 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 message: '注册成功',
                 username: newUser.username,
+                id: result.insertedId.toString(), // 返回用户ID
                 token: newUser.token
             })
         };
@@ -154,12 +159,10 @@ exports.handler = async (event) => {
             headers,
             body: JSON.stringify({
                 error: '服务器内部错误',
-                // 开发环境显示详细错误，生产环境移除
                 details: process.env.NODE_ENV === 'development' ? error.message : undefined
             })
         };
     } finally {
-        // 确保数据库连接关闭
         if (client) {
             try {
                 await client.close();

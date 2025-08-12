@@ -232,30 +232,26 @@
     </style>
 </head>
 <body>
-    <!-- 加载动画 - 放在body最开始 -->
+    <!-- 加载动画 -->
     <div id="loader-wrapper">
       <div id="loader"></div>
       <p id="loading-text">加载中...</p >
     </div>
 
-    <!-- 注册表单容器 -->
     <div class="container">
         <div class="error-message" id="errorMsg"></div>
         <div class="success-message" id="successMsg"></div>
         
         <form id="registerForm">
+            <!-- 保持原有表单结构不变 -->
             <h2>注册</h2>
-            
-            <!-- 用户名 -->
             <label for="username">用户名</label>
             <input type="text" name="username" placeholder="请输入昵称" id="username" required>
             <div class="tip">用户名长度为3-20位字符</div>
             
-            <!-- 邮箱 -->
             <label for="email">邮箱</label>
             <input type="email" name="email" placeholder="请输入邮箱" id="email" required>
             
-            <!-- 密码 -->
             <label for="password">密码</label>
             <input type="password" name="password" placeholder="至少6位字符" id="password" required>
             <div class="password-strength">
@@ -263,7 +259,6 @@
             </div>
             <div class="tip">密码长度至少6位，包含字母和数字更安全</div>
             
-            <!-- 密码确认 -->
             <label for="confirmPassword">确认密码</label>
             <input type="password" name="confirmPassword" placeholder="再次输入密码" id="confirmPassword" required>
             
@@ -283,22 +278,20 @@
     <script>
         // 页面加载动画控制
         window.addEventListener('load', function() {
-            // 页面加载完成后延迟隐藏加载动画
             setTimeout(function() {
                 document.body.classList.add('loaded');
             }, 1000);
         });
 
-        // 页面加载完成后的初始化
+        // 页面初始化
         window.addEventListener('DOMContentLoaded', function() {
-            // 自动填充记住的用户名
             const savedUsername = localStorage.getItem('rememberedUsername');
             if (savedUsername) {
                 document.getElementById('username').value = savedUsername;
                 document.getElementById('rememberMe').checked = true;
             }
 
-            // 为密码输入框添加强度检测
+            // 密码强度检测
             const passwordInput = document.getElementById('password');
             const strengthBar = document.getElementById('strengthBar');
             const strengthContainer = document.querySelector('.password-strength');
@@ -309,7 +302,6 @@
                 if (password.length > 0) {
                     strengthContainer.style.display = 'block';
                     
-                    // 简单的密码强度检测
                     if (password.length < 6) {
                         strengthBar.className = 'strength-bar';
                     } else if (password.length < 8 || !/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
@@ -324,7 +316,7 @@
                 }
             });
 
-            // 添加实时验证
+            // 实时验证
             const formInputs = registerForm.querySelectorAll('input[required]');
             formInputs.forEach(input => {
                 input.addEventListener('blur', function() {
@@ -333,44 +325,37 @@
             });
         });
 
-        // 表单验证和提交逻辑
+        // 表单验证函数
         const registerForm = document.getElementById('registerForm');
         const errorMsg = document.getElementById('errorMsg');
         const successMsg = document.getElementById('successMsg');
         const submitBtn = document.getElementById('submitBtn');
 
-        // 显示错误信息
         function showError(message) {
             errorMsg.textContent = message;
             errorMsg.style.display = 'block';
             successMsg.style.display = 'none';
-            
-            // 5秒后自动隐藏错误信息
             setTimeout(() => {
                 errorMsg.style.display = 'none';
             }, 5000);
         }
 
-        // 显示成功信息
         function showSuccess(message) {
             successMsg.textContent = message;
             successMsg.style.display = 'block';
             errorMsg.style.display = 'none';
         }
 
-        // 隐藏所有消息
         function hideMessages() {
             errorMsg.style.display = 'none';
             successMsg.style.display = 'none';
         }
 
-        // 验证单个字段
         function validateField(field) {
             const value = field.value.trim();
             let isValid = true;
             let errorMessage = '';
 
-            // 移除之前的错误状态
             field.classList.remove('input-error');
 
             switch(field.id) {
@@ -402,25 +387,20 @@
                     break;
             }
 
-            if (!isValid) {
+            if (!isValid && value.length > 0) {
                 field.classList.add('input-error');
-                // 只在有值的情况下显示错误（避免刚点击就显示）
-                if (value.length > 0) {
-                    showError(errorMessage);
-                }
+                showError(errorMessage);
             }
 
             return isValid;
         }
 
-        // 验证整个表单
         function validateForm() {
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
-            // 检查所有字段
             let isFormValid = true;
             
             if (!username) {
@@ -454,28 +434,24 @@
             return isFormValid;
         }
 
-        // 表单提交处理
+        // 表单提交处理 - 主要修改部分
         registerForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             hideMessages();
 
-            // 验证表单
             if (!validateForm()) {
                 return;
             }
             
-            // 获取所有输入值
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const rememberMe = document.getElementById('rememberMe').checked;
 
-            // 防止重复提交
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner"></span> 注册中...';
 
             try {
-                // 发送注册请求到服务器
                 const response = await fetch('/.netlify/functions/register', {
                     method: 'POST',
                     headers: {
@@ -491,31 +467,36 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // 注册成功：处理"记住用户名"
+                    // 注册成功后按登录逻辑存储用户信息
                     if (rememberMe) {
                         localStorage.setItem('rememberedUsername', username);
                     } else {
                         localStorage.removeItem('rememberedUsername');
                     }
 
-                    showSuccess('注册成功！即将跳转到登录页');
+                    // 存储用户基础信息
+                    const currentUser = {
+                        username: result.username,
+                        token: result.token,
+                        loginTime: new Date().getTime()
+                    };
+                    localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+
+                    showSuccess('注册成功！即将跳转到首页');
                     setTimeout(() => {
-                        window.location.href = 'indexlo.html';
+                        window.location.href = `indexdaohang.html?token=${result.token}&username=${encodeURIComponent(result.username)}`;
                     }, 1500);
                 } else {
-                    // 注册失败
                     if (response.status === 500) {
                         showError('服务器内部错误，请稍后再试或联系管理员');
                     } else {
-                        showError(result.message || '注册失败，请重试');
+                        showError(result.error || '注册失败，请重试');
                     }
                 }
             } catch (error) {
-                // 网络错误
                 showError('网络连接错误，请检查网络后重试');
                 console.error('注册请求错误：', error);
             } finally {
-                // 恢复按钮状态
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '注册';
             }

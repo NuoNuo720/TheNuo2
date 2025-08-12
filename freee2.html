@@ -704,6 +704,23 @@
         
         // 初始化游戏
         function initGame() {
+            // 新增性能优化设置
+            gameState.performance = {
+                isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+                renderRate: 0, // 动态调整的渲染帧率
+                obstacleDensity: 0 // 动态障碍物密度
+            };
+            gameState.frameCounter = 0;
+            gameState.frameSkip = gameState.performance.isMobile ? 2 : 1; // 移动端每2帧渲染1次，提高性能
+            // 根据设备类型调整游戏参数
+            if (gameState.performance.isMobile) {
+                gameState.performance.renderRate = 30; // 手机端降低帧率
+                gameState.performance.obstacleDensity = 0.7; // 减少30%障碍物
+                gameState.electron.speed = 2.5; // 降低移动速度
+            } else {
+                gameState.performance.renderRate = 60;
+                gameState.performance.obstacleDensity = 1;
+            }
             // 初始化排行榜
             rankingSystem.init();
             
@@ -1041,6 +1058,12 @@
             if (gameState.inBossFight && gameState.boss) {
                 updateBoss();
                 updateBossProjectiles();
+            }
+            // 手机端简化视觉效果
+            if (gameState.isMobile) {
+                gameState.electron.element.style.filter = 'drop-shadow(0 0 4px currentColor)'; // 简化阴影
+            } else {
+                gameState.electron.element.style.filter = 'drop-shadow(0 0 8px currentColor)'; // 完整阴影
             }
         }
         
@@ -1400,32 +1423,41 @@
             
             const padding = 60;
             const protonSize = gameState.baseObstacleSize;
-            const maxAttempts = 80; // 增加尝试次数避免重叠
-            const allObstacles = [...gameState.traps];
+            // 移动端减少障碍物数量
+            const adjustedCount = gameState.isMobile ? Math.max(1, Math.floor(count * 0.7)) : count;
+            const maxAttempts = 100; // 增加尝试次数
+            const allObstacles = [...gameState.traps, {x: gameState.electron.x, y: gameState.electron.y, size: 100},{x: gameState.target.x, y: gameState.target.y, size: 100}];
             
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < adjustedCount; i++) {
                 let x, y, z;
                 let attempts = 0;
-                
+                let validPosition = false;
                 do {
                     x = Math.random() * (gameState.gameWidth - protonSize - padding * 2) + padding;
                     y = Math.random() * (gameState.gameHeight - protonSize - padding * 2) + padding;
                     z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
                     attempts++;
-                    
-                    if (attempts > maxAttempts / 2) {
-                        gameState.minObstacleDistance = Math.max(30, gameState.minObstacleDistance - 5);
-                    }
-                } while (
-                    // 远离电子
-                    (Math.abs(x - gameState.electron.x) < 120 && Math.abs(y - gameState.electron.y) < 120 && z === gameState.electron.z) ||
-                    // 远离目标
-                    (Math.abs(x - gameState.target.x) < 120 && Math.abs(y - gameState.target.y) < 120 && z === gameState.target.z) ||
-                    // 远离其他障碍物
-                    isPositionTooClose(x, y, protonSize, allObstacles) ||
-                    attempts >= maxAttempts
-                );
+                    // 检查是否与其他元素重叠
+                    validPosition = true;
+                    for (let j = 0; j < allObstacles.length; j++) {
+                        const obstacle = allObstacles[j];
+                        const dx = Math.abs(x - obstacle.x);
+                        const dy = Math.abs(y - obstacle.y);
+                        const minDistance = (protonSize + obstacle.size) / 2 + (gameState.isMobile ? 40 : 30);
                 
+                        if (dx < minDistance && dy < minDistance) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    if (attempts > maxAttempts / 2) {
+                        gameState.minObstacleDistance = Math.max(20, gameState.minObstacleDistance - 2);
+                    }
+                } while (!validPosition && attempts < maxAttempts);
+                // 如果找不到有效位置，仍然创建但发出警告
+                if (!validPosition) {
+                    console.warn("无法找到合适位置，可能会有重叠");
+                }
                 const proton = document.createElement('div');
                 proton.className = 'absolute bg-proton rounded-full proton-glow spin-slow depth-fade';
                 proton.style.width = `${protonSize}px`;
@@ -1455,46 +1487,59 @@
                 }
             });
             gameState.traps = [];
-            
+            // 移动端减少陷阱数量
+            const adjustedCount = gameState.isMobile ? Math.max(0, Math.floor(count * 0.6)) : count;
             const padding = 60;
             const trapSize = gameState.baseObstacleSize + 10;
-            const maxAttempts = 80; // 增加尝试次数避免重叠
-            const allObstacles = [...gameState.protons];
+            const maxAttempts = 100; // 增加尝试次数避免重叠
+            const allObstacles = [...gameState.protons,{x: gameState.electron.x, y: gameState.electron.y, size: 100},{x: gameState.target.x, y: gameState.target.y, size: 100}];
             
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < adjustedCount; i++) {
                 let x, y, z;
                 let attempts = 0;
-                
+                let validPosition = false;
                 do {
                     x = Math.random() * (gameState.gameWidth - trapSize - padding * 2) + padding;
                     y = Math.random() * (gameState.gameHeight - trapSize - padding * 2) + padding;
                     z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
                     attempts++;
                     
-                    if (attempts > maxAttempts / 2) {
-                        gameState.minObstacleDistance = Math.max(30, gameState.minObstacleDistance - 5);
+                    // 检查是否与其他元素重叠
+                    validPosition = true;
+                    for (let j = 0; j < allObstacles.length; j++) {
+                        const obstacle = allObstacles[j];
+                        const dx = Math.abs(x - obstacle.x);
+                        const dy = Math.abs(y - obstacle.y);
+                        const minDistance = (trapSize + obstacle.size) / 2 + (gameState.isMobile ? 50 : 40);
+                
+                        if (dx < minDistance && dy < minDistance) {
+                            validPosition = false;
+                            break;
+                        }
                     }
-                } while (
-                    // 远离电子
-                    (Math.abs(x - gameState.electron.x) < 150 && Math.abs(y - gameState.electron.y) < 150 && z === gameState.electron.z) ||
-                    // 远离目标
-                    (Math.abs(x - gameState.target.x) < 150 && Math.abs(y - gameState.target.y) < 150 && z === gameState.target.z) ||
-                    // 远离其他障碍物
-                    isPositionTooClose(x, y, trapSize, allObstacles) ||
-                    attempts >= maxAttempts
-                );
+                } while (!validPosition && attempts < maxAttempts);
                 
                 const trap = document.createElement('div');
-                trap.className = 'absolute bg-danger rounded-full trap-pulse depth-fade';
+                // 添加陷阱样式和贴图
+                trap.className = 'absolute charge-effect depth-fade';
                 trap.style.width = `${trapSize}px`;
                 trap.style.height = `${trapSize}px`;
                 trap.style.left = `${x}px`;
                 trap.style.top = `${y}px`;
                 trap.style.setProperty('--z-offset', `${z * 30}px`);
                 trap.style.setProperty('--z-absolute', Math.abs(z));
+                trap.style.color = '#EC4899'; // 陷阱颜色
                 trap.innerHTML = `
+                    <svg width="${trapSize}" height="${trapSize}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2" />
+                        <circle cx="20" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="1" />
+                        <path d="M20 5 L20 15 M20 25 L20 35 M5 20 L15 20 M25 20 L35 20" 
+                      stroke="currentColor" stroke-width="2" />
+                        <path d="M10 10 L14 14 M10 30 L14 26 M30 10 L26 14 M30 30 L26 26" 
+                      stroke="currentColor" stroke-width="2" />
+                    </svg>
                     <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">能量陷阱</div>
-                `;
+        `;
                 
                 gameState.gameArea.appendChild(trap);
                 const newTrap = { element: trap, x, y, z, size: trapSize };
@@ -1515,27 +1560,66 @@
             
             const fragmentSize = 20;
             const padding = 50;
-            const actualCount = Math.max(3, count); // 确保至少3个碎片
+            const minFragments = 3;
+            const maxFragments = 5;
+            let actualCount = Math.max(minFragments, Math.min(maxFragments, count));
             
-            for (let i = 0; i < actualCount; i++) {
+            // 移动端保持3-4个碎片
+            if (gameState.isMobile) {
+                actualCount = Math.min(4, actualCount);
+            }
+    
+            // 收集所有已有元素位置，用于碰撞检测
+            const allPositions = [{x: gameState.electron.x, y: gameState.electron.y, size: 80},{x: gameState.target.x, y: gameState.target.y, size: 80}];
+    
+            // 添加所有质子和陷阱位置
+            gameState.protons.forEach(p => allPositions.push({x: p.x, y: p.y, size: p.size + 20}));
+            gameState.traps.forEach(t => allPositions.push({x: t.x, y: t.y, size: t.size + 20}));
+    
+            let createdFragments = 0;
+            let totalAttempts = 0;
+            const maxTotalAttempts = actualCount * 100; // 总尝试次数上限
+    
+            // 确保生成足够的碎片，即使需要放宽条件
+            while (createdFragments < actualCount && totalAttempts < maxTotalAttempts) {
                 let x, y, z;
                 let attempts = 0;
-                const maxAttempts = 50;
-                
+                let validPosition = false;
+                const maxAttempts = 50; // 单个碎片最大尝试次数
+        
                 do {
+                    // 生成随机位置
                     x = Math.random() * (gameState.gameWidth - fragmentSize - padding * 2) + padding;
                     y = Math.random() * (gameState.gameHeight - fragmentSize - padding * 2) + padding;
                     z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
                     attempts++;
-                } while (
-                    // 不要太靠近电子或目标
-                    (Math.abs(x - gameState.electron.x) < 100 && Math.abs(y - gameState.electron.y) < 100) ||
-                    (Math.abs(x - gameState.target.x) < 100 && Math.abs(y - gameState.target.y) < 100) ||
-                    // 不要太靠近其他碎片
-                    isPositionTooClose(x, y, fragmentSize, gameState.fragments) ||
-                    attempts >= maxAttempts
-                );
+                    totalAttempts++;
+            
+                    // 检查是否与其他元素重叠
+                    validPosition = true;
+                    for (let j = 0; j < allPositions.length; j++) {
+                        const pos = allPositions[j];
+                        // 基础最小距离，最后几个碎片可以放宽条件
+                        const baseDistance = createdFragments < minFragments - 1 ? 30 : 20;
+                        const minDistance = (fragmentSize + pos.size) / 2 + baseDistance;
                 
+                        const dx = Math.abs(x - pos.x);
+                        const dy = Math.abs(y - pos.y);
+                
+                        if (dx < minDistance && dy < minDistance) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+            
+                    // 如果是必须生成的最后几个碎片，放宽条件
+                    if (!validPosition && createdFragments >= minFragments - 1 && attempts > maxAttempts / 2) {
+                        validPosition = true; // 强制通过，确保至少生成3个
+                    }
+            
+                } while (!validPosition && attempts < maxAttempts);
+        
+                // 创建碎片元素
                 const fragment = document.createElement('div');
                 fragment.className = 'absolute bg-quantum rounded-full quantum-pulse depth-fade';
                 fragment.style.width = `${fragmentSize}px`;
@@ -1545,9 +1629,37 @@
                 fragment.style.setProperty('--z-offset', `${z * 30}px`);
                 fragment.style.setProperty('--z-absolute', Math.abs(z));
                 fragment.innerHTML = `<i class="fa fa-diamond absolute inset-0 flex items-center justify-center text-white text-xs"></i>`;
-                
+        
                 gameState.gameArea.appendChild(fragment);
-                gameState.fragments.push({ element: fragment, x, y, z, size: fragmentSize });
+                const newFragment = { element: fragment, x, y, z, size: fragmentSize };
+                gameState.fragments.push(newFragment);
+                allPositions.push({x: x, y: y, size: fragmentSize + 20});
+                createdFragments++;
+            }
+    
+            // 确保最终至少有3个碎片，即使位置不太理想
+            if (gameState.fragments.length < minFragments) {
+                console.warn("碎片生成困难，强制补充到3个");
+                // 直接在安全区域补充碎片
+                const safePositions = [{x: padding, y: padding},{x: gameState.gameWidth - padding - fragmentSize, y: padding},{x: gameState.gameWidth / 2, y: gameState.gameHeight - padding - fragmentSize}];
+        
+                for (let i = gameState.fragments.length; i < minFragments; i++) {
+                    const pos = safePositions[i % safePositions.length];
+                    const z = 0;
+            
+                    const fragment = document.createElement('div');
+                    fragment.className = 'absolute bg-quantum rounded-full quantum-pulse depth-fade';
+                    fragment.style.width = `${fragmentSize}px`;
+                    fragment.style.height = `${fragmentSize}px`;
+                    fragment.style.left = `${pos.x}px`;
+                    fragment.style.top = `${pos.y}px`;
+                    fragment.style.setProperty('--z-offset', `${z * 30}px`);
+                    fragment.style.setProperty('--z-absolute', Math.abs(z));
+                    fragment.innerHTML = `<i class="fa fa-diamond absolute inset-0 flex items-center justify-center text-white text-xs"></i>`;
+            
+                    gameState.gameArea.appendChild(fragment);
+                    gameState.fragments.push({ element: fragment, x: pos.x, y: pos.y, z, size: fragmentSize });
+                }
             }
         }
         
@@ -1764,6 +1876,12 @@
         const frameInterval = 1000 / maxFps;
         
         function gameLoop(timestamp) {
+            // 移动端跳帧渲染，提高性能
+            gameState.frameCounter++;
+            if (gameState.frameCounter % gameState.frameSkip !== 0) {
+                gameState.gameLoop = requestAnimationFrame(gameLoop);
+                return;
+            }
             if (!timestamp) timestamp = performance.now();
             if (timestamp - lastFrameTime < frameInterval) {
                 gameState.gameLoop = requestAnimationFrame(gameLoop);
