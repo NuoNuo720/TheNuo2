@@ -867,8 +867,8 @@
 
             try {
                 // 【修改】用查询参数传递用户ID：?userId=xxx
-                const response = await fetch(`${API_BASE_URL}/api/titles?userId=${currentUserId}`);
-                console.log('接口请求地址:', `${API_BASE_URL}/api/titles?userId=${currentUserId}`);
+                const response = await fetch(`${API_BASE_URL}/.netlify/functions/titles?userId=${currentUserId}`);
+                console.log('接口请求地址:', `${API_BASE_URL}/.netlify/functions/titles?userId=${currentUserId}`);
                 console.log('接口返回状态:', response.status);
 
                 if (!response.ok) {
