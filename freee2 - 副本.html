@@ -519,110 +519,139 @@
         // 排行榜系统
         const rankingSystem = {
             rankings: [],
-            currentUser: null, // 记录当前登录用户
-            refreshInterval:null,
+            
             init() {
-                // 获取当前登录用户信息
                 try {
-                    const userInfoStr = localStorage.getItem('mainUserInfo');
-                    if (userInfoStr) {
-                        this.currentUser = JSON.parse(userInfoStr);
+                    // 测试localStorage可用性
+                    const testKey = 'quantum_test_' + Date.now();
+                    localStorage.setItem(testKey, 'test');
+                    localStorage.removeItem(testKey);
+                    
+                    const savedRankings = localStorage.getItem('electronAdventure2Rankings');
+                    if (savedRankings) {
+                        this.rankings = JSON.parse(savedRankings);
+                    } else {
+                        // 初始化默认数据
+                        this.rankings = [
+                            { name: '量子大师', score: 5000, date: this.formatDate(new Date()) },
+                            { name: '粒子专家', score: 3800, date: this.formatDate(new Date()) },
+                            { name: '电场行者', score: 2900, date: this.formatDate(new Date()) },
+                            { name: '电子学徒', score: 1800, date: this.formatDate(new Date()) },
+                            { name: '新手玩家', score: 950, date: this.formatDate(new Date()) }
+                        ];
+                        this.save();
                     }
                 } catch (e) {
-                    console.log('获取当前用户信息失败:', e);
+                    // 存储不可用时使用内存存储
+                    this.rankings = [
+                        { name: '量子大师', score: 5000, date: this.formatDate(new Date()) },
+                        { name: '粒子专家', score: 3800, date: this.formatDate(new Date()) },
+                        { name: '电场行者', score: 2900, date: this.formatDate(new Date()) }
+                    ];
+                    console.log('本地存储不可用，使用临时存储:', e);
                 }
+            },
 
-                // 从数据库加载排行榜
-                this.loadFromDatabase();
-                this.startAutoRefresh();
-            },
-            // 启动定时刷新（每30秒一次）
-            startAutoRefresh() {
-                // 先清除已有定时器（避免重复）
-                if (this.refreshInterval) {
-                    clearInterval(this.refreshInterval);
-                }
-                // 设置新定时器
-                this.refreshInterval = setInterval(() => {
-                    // 只有在排行榜弹窗打开时才刷新（避免无效请求）
-                    if (!elements.rankingModal.classList.contains('hidden')) {
-                        this.loadFromDatabase();
-                    }
-                }, 30000); // 30秒 = 30000毫秒
-            },
-    
-            // 停止定时刷新（页面关闭或不需要时）
-            stopAutoRefresh() {
-                if (this.refreshInterval) {
-                    clearInterval(this.refreshInterval);
-                    this.refreshInterval = null;
-                }
-            },
-            async loadFromDatabase() {
+            save() {
                 try {
-                    // 显示加载状态
-                    const rankingListEl = document.getElementById('rankingList');
-                    rankingListEl.innerHTML = '<div class="text-center p-4 text-slate-400">加载排行榜中...</div>';
-
-                    // 构造请求头（携带token）
-                    const headers = { 'Content-Type': 'application/json' };
-                    if (this.currentUser?.token) {
-                        headers['Authorization'] = `Bearer ${this.currentUser.token}`;
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('electronAdventure2Rankings', JSON.stringify(this.rankings));
+                        return true;
                     }
-
-                    // 请求数据库数据
-                    const response = await fetch('/.netlify/functions/getScores', { headers });
-                    if (!response.ok) throw new Error('加载失败');
-
-                    this.rankings = await response.json();
-                    this.render();
-                } catch (error) {
-                    console.error('排行榜加载失败:', error);
-                    const rankingListEl = document.getElementById('rankingList');
-                    rankingListEl.innerHTML = `
-                        <div class="text-center p-4 text-red-400">
-                            排行榜加载失败<br>
-                            <button class="mt-2 text-sm text-quantum" onclick="rankingSystem.loadFromDatabase()">重试</button>
-                        </div>
-                    `;
+                } catch (e) {
+                    console.error('排行榜保存失败:', e);
                 }
+                return false;
             },
 
-            // 移除本地存储相关代码，改为从数据库加载
+            addScore(score) {
+                if (typeof score !== 'number' || isNaN(score)) {
+                    console.error('无效分数:', score);
+                    return false;
+                }
+                
+                // 获取玩家名称
+                let playerName = '量子游客';
+                try {
+                    const userInfoStr = localStorage.getItem('quantumUserInfo');
+                    if (userInfoStr) {
+                        const userInfo = JSON.parse(userInfoStr);
+                        if (userInfo?.username) {
+                            playerName = userInfo.username;
+                        }
+                    }
+                } catch (e) {
+                    console.log('使用默认用户名:', e);
+                }
+                const normalizedName = playerName.slice(0, 10) || '量子游客';
+                
+                // 查找并更新或添加记录
+                const existingIndex = this.rankings.findIndex(item => item.name === normalizedName);
+                
+                if (existingIndex !== -1) {
+                    if (score > this.rankings[existingIndex].score) {
+                        this.rankings[existingIndex] = {
+                            name: normalizedName,
+                            score: score,
+                            date: this.formatDate(new Date())
+                        };
+                    }
+                } else {
+                    this.rankings.push({
+                        name: normalizedName,
+                        score: score,
+                        date: this.formatDate(new Date())
+                    });
+                }
+                
+                // 排序并保留前10
+                this.rankings.sort((a, b) => b.score - a.score);
+                this.rankings = this.rankings.slice(0, 10);
+                
+                // 保存并更新显示
+                const saved = this.save();
+                this.render();
+                return saved;
+            },
+
+            formatDate(date) {
+                return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            },
 
             render() {
                 const rankingListEl = document.getElementById('rankingList');
                 if (!rankingListEl) return;
-
+                
                 rankingListEl.innerHTML = '';
-
+                
                 if (this.rankings.length === 0) {
-                    rankingListEl.innerHTML = '<div class="text-center p-4 text-slate-400">暂无玩家数据</div>';
+                    const emptyItem = document.createElement('div');
+                    emptyItem.className = 'text-center p-4 text-slate-400';
+                    emptyItem.textContent = '暂无记录，快来创造第一个高分吧！';
+                    rankingListEl.appendChild(emptyItem);
                     return;
                 }
-
-                this.rankings.forEach((item) => {
-                    const isCurrentUser = this.currentUser && item.username === this.currentUser.username;
+                
+                this.rankings.forEach((item, index) => {
                     const rankItem = document.createElement('div');
                     rankItem.className = `flex justify-between items-center p-2 rounded-lg ${
-                        item.rank < 4 ? 'bg-yellow-900/30' : isCurrentUser ? 'bg-blue-900/30' : 'bg-slate-700/50'
+                                index < 3 ? 'bg-yellow-900/30' : 'bg-slate-700/50'
                     }`;
-
+            
                     let rankIcon = '';
-                    if (item.rank === 1) rankIcon = '<i class="fa fa-trophy text-yellow-500 mr-2"></i>';
-                    if (item.rank === 2) rankIcon = '<i class="fa fa-trophy text-gray-400 mr-2"></i>';
-                    if (item.rank === 3) rankIcon = '<i class="fa fa-trophy text-amber-700 mr-2"></i>';
-
+                    if (index === 0) rankIcon = '<i class="fa fa-trophy text-yellow-500 mr-2"></i>';
+                    if (index === 1) rankIcon = '<i class="fa fa-trophy text-gray-400 mr-2"></i>';
+                    if (index === 2) rankIcon = '<i class="fa fa-trophy text-amber-700 mr-2"></i>';
+            
                     rankItem.innerHTML = `
                         <div class="flex items-center">
-                            <span class="w-6 text-center font-bold ${item.rank < 4 ? 'text-yellow-400' : ''}">${item.rank}</span>
+                            <span class="w-6 text-center font-bold ${index < 3 ? 'text-yellow-400' : ''}">${index + 1}</span>
                             ${rankIcon}
-                            <img src="${item.avatar}" alt="${item.username}" class="w-6 h-6 rounded-full ml-1 mr-2">
-                            <span class="${isCurrentUser ? 'font-bold text-blue-400' : ''}">${item.username}${isCurrentUser ? '（你）' : ''}</span>
+                            <span class="ml-1">${item.name}</span>
                         </div>
                         <div class="flex items-center">
                             <span class="font-bold text-quantum mr-4">${item.score}</span>
-                            <span class="text-xs text-slate-400">${item.lastLogin}</span>
+                            <span class="text-xs text-slate-400">${item.date}</span>
                         </div>
                     `;
                     rankingListEl.appendChild(rankItem);
@@ -738,12 +767,9 @@
             elements.rankingBtn.addEventListener('click', () => {
                 rankingSystem.render();
                 elements.rankingModal.classList.remove('hidden');
-                rankingSystem.loadFromDatabase(); // 立即刷新一次
-                rankingSystem.startAutoRefresh(); // 重启定时刷新
             });
             elements.closeRankingBtn.addEventListener('click', () => {
                 elements.rankingModal.classList.add('hidden');
-                rankingSystem.stopAutoRefresh(); // 关闭时停止刷新
             });
             
             elements.techBtn.addEventListener('click', () => {
@@ -1999,9 +2025,7 @@
             elements.techModal.classList.add('hidden');
             elements.helpModal.classList.add('hidden');
             elements.bossWarningModal.classList.add('hidden');
-            if (rankingSystem.currentUser) {
-                syncScoreToDatabase(gameState.score);
-            }
+            
             // 开始第一关
             startLevel();
         }
@@ -2013,25 +2037,7 @@
             elements.modalBtn.textContent = buttonText;
             elements.messageModal.classList.remove('hidden');
         }
-        async function syncScoreToDatabase(score) {
-            try {
-                const userInfo = JSON.parse(localStorage.getItem('mainUserInfo'));
-                const response = await fetch('/.netlify/functions/updateScore', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${userInfo.token}`
-                    },
-                    body: JSON.stringify({ score })
-                });
-
-                if (!response.ok) throw new Error('分数同步失败');
-                console.log('分数已同步到数据库');
-            } catch (error) {
-                console.error('分数同步失败:', error);
-                // 可选择本地缓存，后续重试
-            }
-        }
+        
         // 初始化游戏
         window.addEventListener('load', initGame);
     </script>
