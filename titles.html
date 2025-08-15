@@ -647,6 +647,10 @@
             </h3>
             <form class="grant-form" onsubmit="grantExclusiveTitle(event)">
                 <div class="form-group">
+                    <label for="adminToken">管理员密钥</label>
+                    <input type="password" id="adminToken" placeholder="输入管理员密钥" required>
+                </div>
+                <div class="form-group">
                     <label for="targetUserId">目标用户ID</label>
                     <input type="text" id="targetUserId" placeholder="输入要授予的用户ID" required>
                 </div>
@@ -1048,7 +1052,53 @@
                 notification.classList.remove('show');
             }, 3000);
         }
+        // 管理员给其他用户授予称号（跨设备核心函数）
+        async function grantTitleToUser(event) {
+            event.preventDefault(); // 阻止表单刷新
 
+            // 1. 获取输入的信息
+            const adminToken = document.getElementById("adminToken").value;
+            const targetUserId = document.getElementById("targetUserId").value; // 朋友的userId
+            const titleName = document.getElementById("titleName").value;
+            const description = document.getElementById("titleDesc").value;
+
+            // 2. 调用后端接口（替换成你部署后的后端地址！）
+            const API_URL = "https://your-title-server.onrender.com"; // 部署后的地址
+            try {
+                const response = await fetch(`${API_URL}/api/admin/grantTitle`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        adminToken,
+                        targetUserId,
+                        titleName,
+                        description,
+                        icon: "trophy", // 可自定义图标
+                        isExclusive: true // 是否专属称号
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message); // 提示“已给XXX授予称号”
+                    event.target.reset(); // 清空表单
+                } else {
+                    alert("失败：" + result.error);
+                }
+            } catch (err) {
+                alert("网络错误，检查后端地址是否正确");
+            }
+        }
+
+        // （可选）让自己成为管理员：页面加载时显示管理员界面
+        document.addEventListener("DOMContentLoaded", () => {
+            // 只有你自己的账号显示管理员界面（替换成你的userId）
+            const MY_ADMIN_USER_ID = "test"; // 你的userId
+            const currentUser = JSON.parse(localStorage.getItem("cloudUserInfo"));
+            if (currentUser && currentUser.userId === MY_ADMIN_USER_ID) {
+                document.getElementById("adminSection").style.display = "block";
+            }
+        });
         // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {

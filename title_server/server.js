@@ -73,5 +73,32 @@ app.post('/syncWithCode', async (req, res) => {
 
 // 启动服务（端口3000）
 app.listen(3000, () => {
-  console.log('极简后端启动：http://localhost:3000');
+  console.log('极简后端启动：http:// thenuo2.netlify.app');
+});
+// 管理员给指定用户授予称号（跨账号核心接口）
+app.post('/api/admin/grantTitle', async (req, res) => {
+  try {
+    const { adminToken, targetUserId, titleName, description, icon, isExclusive } = req.body;
+
+    // 1. 验证管理员权限（简单版：用固定token，正式环境可换成密码/登录验证）
+    const ADMIN_TOKEN = "NuoNuo001"; // 自己设置一个管理员密钥（比如 "admin123"）
+    if (adminToken !== ADMIN_TOKEN) {
+      return res.json({ error: "无管理员权限" });
+    }
+
+    // 2. 给目标用户（朋友的userId）添加称号到数据库
+    const newTitle = new Title({
+      userId: targetUserId, // 朋友的用户ID
+      titleName,
+      description,
+      icon: icon || "trophy",
+      isExclusive: isExclusive || false,
+      createdAt: new Date().toLocaleDateString()
+    });
+    await newTitle.save();
+
+    res.json({ success: true, message: `已给用户 ${targetUserId} 授予称号：${titleName}` });
+  } catch (err) {
+    res.json({ error: "授予失败", detail: err.message });
+  }
 });
