@@ -841,9 +841,52 @@
         }
 
         // 加载当前用户的专属称号
-        function loadUserTitles() {
-            const userTitles = allUsersTitles[currentUser.id] || [];
-            renderTitleGrid(userTitles);
+        async function loadUserTitles() {
+            // 1. 从本地存储获取当前登录用户的ID（关键：必须和授予时用的32位ID一致）
+            const userInfo = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const currentUserId = userInfo.userId; // 这里必须是32位ID
+  
+            if (!currentUserId) {
+                alert('未检测到用户ID，请重新登录');
+                return;
+            }
+
+            try {
+                // 2. 发送请求获取称号（确保URL正确）
+                const response = await fetch(`${API_BASE_URL}/api/titles/${currentUserId}`);
+    
+                // 3. 打印调试信息（方便排查）
+                console.log('请求的用户ID:', currentUserId);
+                console.log('接口返回状态:', response.status);
+    
+                const titles = await response.json();
+                console.log('获取到的称号:', titles); // 这里能看到是否有数据
+
+                // 4. 渲染到页面
+                const titleContainer = document.getElementById('userTitles');
+                if (titles.length === 0) {
+                    titleContainer.innerHTML = '<p class="no-titles">暂无称号，快去获取吧~</p>';
+                    return;
+                }
+
+                // 生成称号列表HTML
+                let titlesHTML = '';
+                titles.forEach(title => {
+                    titlesHTML += `
+                        <div class="title-card">
+                            <i class="fas fa-${title.icon || 'trophy'} title-icon"></i>
+                            <h4 class="title-name">${title.titleName}</h4>
+                            <p class="title-desc">${title.description}</p>
+                            <span class="title-date">获得于 ${title.createdAt}</span>
+                        </div>
+                    `;
+                });
+                titleContainer.innerHTML = titlesHTML;
+
+            } catch (err) {
+                console.error('加载称号失败:', err);
+                document.getElementById('userTitles').innerHTML = '<p class="error-msg">加载失败，请重试</p>';
+            }
         }
 
         // 渲染称号列表
@@ -1106,7 +1149,10 @@
                 window.location.reload();
             }
         }
-
+        // 页面加载时自动执行
+        window.onload = function() {
+            loadUserTitles(); // 确保页面加载时就获取称号
+        };
         // 快速成为管理员（在浏览器控制台执行）
         // makeMeAdmin = () => {
         //     currentUser.isAdmin = true;
