@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script>
-        // 配置Tailwind自定义颜色和字体
         tailwind.config = {
             theme: {
                 extend: {
@@ -61,10 +60,18 @@
             }
             .level-card:hover:not(.locked) {
                 transform: translateY(-5px);
+                box-shadow: 0 8px 16px rgba(108, 99, 255, 0.3);
+            }
+            .level-detail {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.5s ease;
+            }
+            .level-detail.active {
+                max-height: 500px;
             }
         }
     </style>
-    <!-- 引入Google字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-dark text-light font-game min-h-screen overflow-x-hidden">
@@ -79,7 +86,7 @@
                     <i class="fa fa-bolt text-light text-xl"></i>
                 </div>
                 <h1 class="text-[clamp(1.2rem,3vw,1.8rem)] font-bold text-light text-shadow-lg">
-                    自由电子冒险3
+                    自由电子冒险3(关卡1-5尚未完善 敬请期待)
                 </h1>
             </div>
             
@@ -130,6 +137,21 @@
             </div>
         </div>
 
+        <!-- 剧情介绍 -->
+        <div class="mb-8 bg-dark/70 border border-primary/20 rounded-xl p-4 md:p-6">
+            <h3 class="text-xl font-semibold mb-3 flex items-center">
+                <i class="fa fa-book text-primary mr-2"></i>
+                剧情背景
+            </h3>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                量子风暴过后，你发现自己作为自由电子获得了维度穿梭能力。10个平行宇宙正被"熵增军团"侵蚀，它们试图打破维度平衡，让所有宇宙归于混沌。
+                你的任务是收集散落在各个维度的"本源粒子"，组合成"平衡核心"，阻止维度崩塌。
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                第一站，你将进入"经典物理维度"，这里的规则相对稳定，适合掌握基本的粒子收集和维度穿梭技能。但要小心，熵增军团的先遣队已经到达...
+            </p>
+        </div>
+
         <!-- 维度选择 -->
         <div class="mb-8">
             <h3 class="text-xl font-semibold mb-4 flex items-center">
@@ -160,76 +182,138 @@
             </div>
         </div>
 
-        <!-- 关卡列表 - 响应式网格布局 -->
+        <!-- 关卡列表 - 第一周解锁的5关 -->
         <div>
             <h3 class="text-xl font-semibold mb-4 flex items-center">
                 <i class="fa fa-map-signs text-primary mr-2"></i>
-                经典物理维度 - 关卡
+                经典物理维度 - 关卡 (第1周)
             </h3>
+            
+            <!-- 关卡详情区域 -->
+            <div id="level-details" class="mb-6 bg-dark/50 border border-primary/30 rounded-xl p-4 hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 id="detail-level-title" class="text-xl font-bold"></h3>
+                        <p id="detail-level-desc" class="text-gray-300 mt-1"></p>
+                    </div>
+                    <button id="close-detail" class="text-gray-400 hover:text-light">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">关卡目标</h4>
+                        <ul id="detail-objectives" class="list-disc pl-5 text-gray-300 space-y-1"></ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">可用粒子</h4>
+                        <div id="detail-particles" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">游戏操作</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="bg-dark/70 p-2 rounded border border-gray-700">
+                                <span class="text-gray-400">方向键/WASD</span>
+                                <p>移动电子</p>
+                            </div>
+                            <div class="bg-dark/70 p-2 rounded border border-gray-700">
+                                <span class="text-gray-400">空格</span>
+                                <p>粒子组合</p>
+                            </div>
+                            <div class="bg-dark/70 p-2 rounded border border-gray-700">
+                                <span class="text-gray-400">C键</span>
+                                <p>打开组合面板</p>
+                            </div>
+                            <div class="bg-dark/70 p-2 rounded border border-gray-700">
+                                <span class="text-gray-400">Shift键</span>
+                                <p>维度穿梭（后期解锁）</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">提示</h4>
+                        <p id="detail-hint" class="text-gray-300 bg-dark/70 p-3 rounded-lg border border-gray-700"></p>
+                    </div>
+                    
+                    <button id="start-level" class="w-full bg-primary hover:bg-primary/80 text-light py-3 rounded-lg transition-colors font-semibold mt-4">
+                        开始关卡
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 关卡卡片网格 -->
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                <!-- 关卡1-5（已解锁） -->
-                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer">
+                <!-- 关卡1-1 -->
+                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer" data-level="1-1">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-dimension1/30 text-light px-2 py-1 rounded-lg text-sm font-bold">1-1</span>
                         <i class="fa fa-star text-yellow-400"></i>
                     </div>
                     <div class="aspect-square rounded-lg bg-dimension1/20 mb-2 flex items-center justify-center overflow-hidden">
-                        <img src="https://picsum.photos/200/200?random=1" alt="经典物理维度关卡1" class="w-full h-full object-cover">
+                        <img src="https://picsum.photos/200/200?random=1" alt="经典物理维度关卡1-1：牛顿的考验" class="w-full h-full object-cover">
                     </div>
                     <h4 class="font-semibold text-sm">牛顿的考验</h4>
                     <p class="text-gray-400 text-xs mt-1">基础粒子收集</p>
                 </div>
 
-                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer">
+                <!-- 关卡1-2 -->
+                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer" data-level="1-2">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-dimension1/30 text-light px-2 py-1 rounded-lg text-sm font-bold">1-2</span>
                         <i class="fa fa-star-o text-yellow-400"></i>
                     </div>
                     <div class="aspect-square rounded-lg bg-dimension1/20 mb-2 flex items-center justify-center overflow-hidden">
-                        <img src="https://picsum.photos/200/200?random=2" alt="经典物理维度关卡2" class="w-full h-full object-cover">
+                        <img src="https://picsum.photos/200/200?random=2" alt="经典物理维度关卡1-2：力场迷宫" class="w-full h-full object-cover">
                     </div>
                     <h4 class="font-semibold text-sm">力场迷宫</h4>
                     <p class="text-gray-400 text-xs mt-1">躲避重力陷阱</p>
                 </div>
 
-                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer">
+                <!-- 关卡1-3 -->
+                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer" data-level="1-3">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-dimension1/30 text-light px-2 py-1 rounded-lg text-sm font-bold">1-3</span>
                         <i class="fa fa-star-o text-yellow-400"></i>
                     </div>
                     <div class="aspect-square rounded-lg bg-dimension1/20 mb-2 flex items-center justify-center overflow-hidden">
-                        <img src="https://picsum.photos/200/200?random=3" alt="经典物理维度关卡3" class="w-full h-full object-cover">
+                        <img src="https://picsum.photos/200/200?random=3" alt="经典物理维度关卡1-3：能量守恒" class="w-full h-full object-cover">
                     </div>
                     <h4 class="font-semibold text-sm">能量守恒</h4>
                     <p class="text-gray-400 text-xs mt-1">粒子组合初体验</p>
                 </div>
 
-                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer">
+                <!-- 关卡1-4 -->
+                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer" data-level="1-4">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-dimension1/30 text-light px-2 py-1 rounded-lg text-sm font-bold">1-4</span>
                         <i class="fa fa-star-o text-yellow-400"></i>
                     </div>
                     <div class="aspect-square rounded-lg bg-dimension1/20 mb-2 flex items-center justify-center overflow-hidden">
-                        <img src="https://picsum.photos/200/200?random=4" alt="经典物理维度关卡4" class="w-full h-full object-cover">
+                        <img src="https://picsum.photos/200/200?random=4" alt="经典物理维度关卡1-4：动量传递" class="w-full h-full object-cover">
                     </div>
                     <h4 class="font-semibold text-sm">动量传递</h4>
                     <p class="text-gray-400 text-xs mt-1">推动能量核心</p>
                 </div>
 
-                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer">
+                <!-- 关卡1-5（BOSS关） -->
+                <div class="level-card bg-dimension1/10 border border-dimension1 rounded-xl p-3 glow cursor-pointer" data-level="1-5">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-dimension1/30 text-light px-2 py-1 rounded-lg text-sm font-bold">1-5</span>
                         <i class="fa fa-star-o text-yellow-400"></i>
                     </div>
                     <div class="aspect-square rounded-lg bg-dimension1/20 mb-2 flex items-center justify-center overflow-hidden">
-                        <img src="https://picsum.photos/200/200?random=5" alt="经典物理维度关卡5" class="w-full h-full object-cover">
+                        <img src="https://picsum.photos/200/200?random=5" alt="经典物理维度关卡1-5：维度BOSS战" class="w-full h-full object-cover">
                     </div>
                     <h4 class="font-semibold text-sm">维度BOSS战</h4>
                     <p class="text-gray-400 text-xs mt-1">对抗熵增守卫</p>
                 </div>
 
-                <!-- 关卡6-10（锁定，下周解锁） -->
-                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked">
+                <!-- 下周解锁的关卡 -->
+                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked" data-level="1-6">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-gray-700 text-gray-400 px-2 py-1 rounded-lg text-sm font-bold">1-6</span>
                         <i class="fa fa-lock text-gray-500"></i>
@@ -241,7 +325,7 @@
                     <p class="text-gray-500 text-xs mt-1">敬请期待</p>
                 </div>
 
-                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked">
+                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked" data-level="1-7">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-gray-700 text-gray-400 px-2 py-1 rounded-lg text-sm font-bold">1-7</span>
                         <i class="fa fa-lock text-gray-500"></i>
@@ -253,7 +337,7 @@
                     <p class="text-gray-500 text-xs mt-1">敬请期待</p>
                 </div>
 
-                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked">
+                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked" data-level="1-8">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-gray-700 text-gray-400 px-2 py-1 rounded-lg text-sm font-bold">1-8</span>
                         <i class="fa fa-lock text-gray-500"></i>
@@ -265,7 +349,7 @@
                     <p class="text-gray-500 text-xs mt-1">敬请期待</p>
                 </div>
 
-                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked">
+                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked" data-level="1-9">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-gray-700 text-gray-400 px-2 py-1 rounded-lg text-sm font-bold">1-9</span>
                         <i class="fa fa-lock text-gray-500"></i>
@@ -277,7 +361,7 @@
                     <p class="text-gray-500 text-xs mt-1">敬请期待</p>
                 </div>
 
-                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked">
+                <div class="level-card bg-gray-800/50 border border-gray-700 rounded-xl p-3 cursor-not-allowed locked" data-level="1-10">
                     <div class="flex justify-between items-start mb-2">
                         <span class="bg-gray-700 text-gray-400 px-2 py-1 rounded-lg text-sm font-bold">1-10</span>
                         <i class="fa fa-lock text-gray-500"></i>
@@ -292,7 +376,7 @@
         </div>
 
         <!-- 游戏提示区 -->
-        <div class="mt-8 bg-dark/70 border border-primary/20 rounded-xl p-4">
+        <div class="mt-8 bg-dark/70 border border-primary/20 rounded-xl p-4 mb-20 sm:mb-8">
             <h3 class="text-lg font-semibold mb-2 flex items-center">
                 <i class="fa fa-lightbulb-o text-yellow-400 mr-2"></i>
                 游戏提示
@@ -378,11 +462,93 @@
         </div>
     </div>
 
+    <!-- 关卡数据和游戏逻辑 -->
     <script>
+        // 前五关的详细游戏内容
+        const levelData = {
+            "1-1": {
+                title: "1-1: 牛顿的考验",
+                description: "经典物理维度的入门关卡，学习基本的粒子收集和移动",
+                objectives: [
+                    "收集10个费米子",
+                    "收集5个玻色子",
+                    "到达终点传送门"
+                ],
+                particles: [
+                    { name: "费米子", color: "#6C63FF", icon: "fa-microchip", description: "基础粒子，用于组合简单能力" },
+                    { name: "玻色子", color: "#FF6584", icon: "fa-bolt", description: "能量粒子，提供动力" }
+                ],
+                hint: "使用方向键或WASD移动，靠近粒子即可自动收集。地面的蓝色箭头会指引你前往终点，新手建议沿箭头路线前进。"
+            },
+            "1-2": {
+                title: "1-2: 力场迷宫",
+                description: "充满重力陷阱的迷宫，需要精确控制移动",
+                objectives: [
+                    "避开所有红色重力陷阱",
+                    "找到3个能量节点并激活",
+                    "在3分钟内到达出口"
+                ],
+                particles: [
+                    { name: "费米子", color: "#6C63FF", icon: "fa-microchip", description: "基础粒子" },
+                    { name: "量子晶簇", color: "#4ECDC4", icon: "fa-diamond", description: "补充维度能量" }
+                ],
+                hint: "红色区域会产生强引力，靠近会被吸附并持续损失能量。激活能量节点（蓝色球体）可以暂时关闭附近5米内的陷阱，持续15秒。"
+            },
+            "1-3": {
+                title: "1-3: 能量守恒",
+                description: "首次接触粒子组合系统，学习基础配方",
+                objectives: [
+                    "学习费米子+玻色子的组合配方（光子束）",
+                    "使用光子束融化3处冰墙",
+                    "收集隐藏的维度日志（位于东北角落）",
+                    "到达终点"
+                ],
+                particles: [
+                    { name: "费米子", color: "#6C63FF", icon: "fa-microchip" },
+                    { name: "玻色子", color: "#FF6584", icon: "fa-bolt" },
+                    { name: "希格斯玻色子", color: "#FFD166", icon: "fa-star", description: "稀有粒子，强化组合效果" }
+                ],
+                hint: "按C键打开组合界面，尝试1个费米子+2个玻色子的组合，会生成光子束（按空格发射）。冰墙只有光子束可以融化，日志藏在需要二段跳才能到达的平台上。"
+            },
+            "1-4": {
+                title: "1-4: 动量传递",
+                description: "利用动量原理推动能量核心，解开机关",
+                objectives: [
+                    "推动3个能量核心到指定位置（蓝色标记）",
+                    "组合出至少2种不同的粒子能力",
+                    "保持能量在50%以上到达终点",
+                    "不触发任何警报"
+                ],
+                particles: [
+                    { name: "费米子", color: "#6C63FF", icon: "fa-microchip" },
+                    { name: "玻色子", color: "#FF6584", icon: "fa-bolt" },
+                    { name: "希格斯玻色子", color: "#FFD166", icon: "fa-star" }
+                ],
+                hint: "从高处撞击能量核心可以获得更大动量（核心质量是你的3倍）。组合2个希格斯玻色子+1个费米子可生成动能护盾，能抵抗冲击力。注意：核心离开轨道会触发警报！"
+            },
+            "1-5": {
+                title: "1-5: 维度BOSS战 - 熵增守卫",
+                description: "经典物理维度的守护者，测试你的综合能力",
+                objectives: [
+                    "击败熵增守卫（生命值：3000）",
+                    "破解BOSS的三种防御机制",
+                    "收集BOSS掉落的本源粒子",
+                    "存活到最后"
+                ],
+                particles: [
+                    { name: "费米子", color: "#6C63FF", icon: "fa-microchip" },
+                    { name: "玻色子", color: "#FF6584", icon: "fa-bolt" },
+                    { name: "希格斯玻色子", color: "#FFD166", icon: "fa-star" },
+                    { name: "反物质粒子", color: "#06D6A0", icon: "fa-atom", description: "对BOSS造成额外伤害" }
+                ],
+                hint: "BOSS的护盾每30秒切换一次属性（蓝色→红色→黄色），使用对应属性的粒子组合才能有效伤害：蓝色用费米子组合，红色用玻色子组合，黄色用希格斯玻色子组合。当它释放冲击波时，躲在场地中央的能量屏障后。"
+            }
+        };
+
         // 创建粒子背景效果
         function createParticles() {
             const container = document.getElementById('particle-container');
-            const particleCount = window.innerWidth < 640 ? 30 : 50; // 手机端少一些粒子
+            const particleCount = window.innerWidth < 640 ? 30 : 50;
             
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
@@ -407,7 +573,6 @@
                 // 随机动画
                 const duration = Math.random() * 30 + 20; // 20-50秒
                 const delay = Math.random() * 10; // 0-10秒延迟
-                const direction = Math.random() > 0.5 ? 1 : -1; // 左右方向
                 
                 particle.style.animation = `
                     float ${duration}s ease-in-out ${delay}s infinite,
@@ -432,9 +597,60 @@
         `;
         document.head.appendChild(style);
         
-        // 倒计时功能
+        // 关卡解锁系统 - 确保只显示5关
+        function initLevelSystem() {
+            // 固定显示5个已解锁关卡
+            const unlockedLevels = 5;
+            
+            // 更新UI显示
+            document.getElementById('unlocked-count').textContent = `${unlockedLevels}/50`;
+            document.getElementById('progress-bar').style.width = `${(unlockedLevels / 50) * 100}%`;
+            
+            // 根据解锁进度更新关卡状态
+            updateLevelCards(unlockedLevels);
+            
+            return unlockedLevels;
+        }
+
+        // 更新关卡卡片状态（锁定/解锁）
+        function updateLevelCards(unlockedCount) {
+            const levelCards = document.querySelectorAll('.level-card');
+            
+            // 遍历所有关卡卡片，设置锁定/解锁状态
+            levelCards.forEach((card, index) => {
+                // 关卡编号从1开始
+                const levelNumber = index + 1;
+                
+                // 如果关卡已解锁
+                if (levelNumber <= unlockedCount) {
+                    card.classList.remove('locked', 'bg-gray-800/50', 'border-gray-700', 'cursor-not-allowed');
+                    card.classList.add('bg-dimension1/10', 'border-dimension1', 'cursor-pointer', 'glow');
+                    
+                    // 更新卡片内容（移除锁定图标）
+                    const lockIcon = card.querySelector('.fa-lock');
+                    if (lockIcon) {
+                        lockIcon.parentNode.innerHTML = `<i class="fa fa-star-o text-yellow-400"></i>`;
+                    }
+                    
+                    // 更新图片（如果是锁定状态的图片）
+                    const imageContainer = card.querySelector('.aspect-square');
+                    if (imageContainer.querySelector('.fa-clock-o')) {
+                        imageContainer.innerHTML = `
+                            <img src="https://picsum.photos/200/200?random=${levelNumber}" 
+                                 alt="经典物理维度关卡${levelNumber}" 
+                                 class="w-full h-full object-cover">
+                        `;
+                    }
+                } else {
+                    // 未解锁关卡
+                    card.classList.add('locked', 'bg-gray-800/50', 'border-gray-700', 'cursor-not-allowed');
+                    card.classList.remove('bg-dimension1/10', 'border-dimension1', 'cursor-pointer', 'glow');
+                }
+            });
+        }
+        
+        // 倒计时功能 - 计算到下周五的时间
         function updateCountdown() {
-            // 计算到下周五的时间（示例）
             const now = new Date();
             let daysToFriday = (5 - now.getDay() + 7) % 7;
             if (daysToFriday === 0) daysToFriday = 7; // 如果今天是周五，设置为下周
@@ -459,8 +675,56 @@
             document.getElementById('modal-countdown').textContent = timeString;
         }
         
+        // 显示关卡详情
+        function showLevelDetail(levelId) {
+            const level = levelData[levelId];
+            if (!level) return;
+            
+            document.getElementById('detail-level-title').textContent = level.title;
+            document.getElementById('detail-level-desc').textContent = level.description;
+            
+            // 渲染目标列表
+            const objectivesList = document.getElementById('detail-objectives');
+            objectivesList.innerHTML = '';
+            level.objectives.forEach(obj => {
+                const li = document.createElement('li');
+                li.textContent = obj;
+                objectivesList.appendChild(li);
+            });
+            
+            // 渲染粒子列表
+            const particlesContainer = document.getElementById('detail-particles');
+            particlesContainer.innerHTML = '';
+            level.particles.forEach(particle => {
+                const particleEl = document.createElement('div');
+                particleEl.className = 'flex items-center space-x-2 bg-dark/50 px-3 py-2 rounded-lg border border-gray-700';
+                particleEl.innerHTML = `
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: ${particle.color}30; color: ${particle.color}">
+                        <i class="fa ${particle.icon} text-xs"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium text-sm">${particle.name}</div>
+                        <div class="text-gray-400 text-xs">${particle.description || '基础粒子'}</div>
+                    </div>
+                `;
+                particlesContainer.appendChild(particleEl);
+            });
+            
+            // 渲染提示
+            document.getElementById('detail-hint').textContent = level.hint;
+            
+            // 显示详情面板
+            document.getElementById('level-details').classList.remove('hidden');
+            
+            // 滚动到详情区域
+            document.getElementById('level-details').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
         // 初始化游戏
         function initGame() {
+            // 初始化关卡系统（固定显示5关）
+            const unlockedLevels = initLevelSystem();
+            
             // 创建粒子背景
             createParticles();
             
@@ -476,8 +740,9 @@
                         // 显示锁定提示
                         document.getElementById('lock-modal').classList.remove('hidden');
                     } else {
-                        // 这里可以添加进入关卡的逻辑
-                        alert(`进入关卡: ${card.querySelector('h4').textContent}`);
+                        // 显示关卡详情
+                        const levelId = card.getAttribute('data-level');
+                        showLevelDetail(levelId);
                     }
                 });
             });
@@ -487,6 +752,18 @@
                 document.getElementById('lock-modal').classList.add('hidden');
             });
             
+            // 关闭关卡详情
+            document.getElementById('close-detail').addEventListener('click', () => {
+                document.getElementById('level-details').classList.add('hidden');
+            });
+            
+            // 开始关卡按钮
+            document.getElementById('start-level').addEventListener('click', () => {
+                const currentLevel = document.getElementById('detail-level-title').textContent.split(':')[0].trim();
+                // 跳转到对应关卡的HTML文件
+                window.location.href = `levels/level-${currentLevel.replace('-', '-')}.html`;
+            });
+            
             // 声音切换按钮
             const soundToggle = document.getElementById('sound-toggle');
             soundToggle.addEventListener('click', () => {
@@ -494,11 +771,11 @@
                 if (icon.classList.contains('fa-volume-up')) {
                     icon.classList.remove('fa-volume-up');
                     icon.classList.add('fa-volume-off');
-                    // 这里可以添加关闭声音的逻辑
+                    alert('音效已关闭');
                 } else {
                     icon.classList.remove('fa-volume-off');
                     icon.classList.add('fa-volume-up');
-                    // 这里可以添加开启声音的逻辑
+                    alert('音效已开启');
                 }
             });
             
@@ -507,9 +784,8 @@
             dimensionBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     if (btn.classList.contains('locked')) {
-                        alert('该维度尚未解锁，完成前面的维度挑战以解锁');
+                        alert('该维度尚未解锁，完成经典物理维度的所有关卡以解锁量子维度');
                     } else {
-                        // 这里可以添加切换维度的逻辑
                         dimensionBtns.forEach(b => {
                             b.classList.remove('glow', 'glow-red');
                             b.style.opacity = '0.7';

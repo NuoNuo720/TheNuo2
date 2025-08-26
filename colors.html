@@ -40,6 +40,9 @@
                 transform: scale(1.05);
                 box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             }
+            .color-tile:active {
+                transform: scale(0.98); /* 增加触摸/点击反馈 */
+            }
             .pulse {
                 animation: pulse 1.5s infinite;
             }
@@ -101,21 +104,73 @@
             .tile-container {
                 --columns: 3;
             }
+            /* 移动端顶部导航优化：换行显示 */
+            .header-mobile-wrap {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .header-mobile-wrap > div {
+                width: 100%;
+                justify-content: center !important;
+            }
         }
-        .back-container {
-            position: fixed; /* 固定在视窗底部 */
-            bottom: 30px; /* 距离底部30px */
-            left: 25%; /* 水平居中 */
-            transform: translateX(-50%); /* 精确居中 */
-            color:yellow;
+        @media (max-width: 360px) {
+            .tile-container {
+                --columns: 2; /* 超小屏显示2列，避免色块过小 */
+            }
+            /* 移动端按钮优化：堆叠显示 */
+            .btn-wrap {
+                flex-direction: column;
+                padding: 0 20px;
+            }
+            .btn-wrap button {
+                width: 100% !important;
+            }
         }
 
+        /* 返回按钮样式优化：固定底部、视觉突出且不遮挡游戏区域 */
+        .back-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%; /* 完全水平居中 */
+            transform: translateX(-50%);
+            z-index: 10; /* 确保在游戏区域之上，但低于模态框 */
+            width: 100%;
+            max-width: 300px; /* 限制最大宽度 */
+            padding: 0 20px;
+        }
+        .back-to-home {
+            width: 100%;
+            background-color: rgba(245, 158, 11, 0.9); /* 半透明黄色，突出且不刺眼 */
+            color: white;
+            border: none;
+            border-radius: 50px; /* 圆形按钮，更美观 */
+            padding: 12px 20px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+        .back-to-home:hover {
+            background-color: #F59E0B; /* hover时加深颜色 */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+        .back-to-home:active {
+            transform: translateY(0); /* 点击反馈 */
+        }
     </style>
 </head>
 <body class="font-game min-h-screen flex flex-col">
-    <!-- 顶部导航 -->
+    <!-- 顶部导航：优化移动端换行显示 -->
     <header class="bg-white shadow-md py-4 px-6">
-        <div class="container mx-auto flex justify-between items-center">
+        <div class="container mx-auto flex header-mobile-wrap justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="fa fa-paint-brush text-primary text-2xl"></i>
                 <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-dark">色盲派对</h1>
@@ -134,7 +189,7 @@
     </header>
     
     <!-- 主游戏区域 -->
-    <main class="flex-grow container mx-auto px-4 py-8">
+    <main class="flex-grow container mx-auto px-4 py-8 pb-24"> <!-- 增加底部内边距，避免被返回按钮遮挡 -->
         <!-- 游戏状态显示 -->
         <div class="mb-8 text-center">
             <div class="inline-block px-6 py-3 bg-primary/10 rounded-full mb-4">
@@ -156,8 +211,8 @@
             <!-- 提示信息 -->
             <div id="message" class="text-center py-4 px-6 rounded-lg mb-8 hidden"></div>
             
-            <!-- 控制按钮 -->
-            <div class="flex flex-wrap justify-center gap-4">
+            <!-- 控制按钮：优化移动端堆叠显示 -->
+            <div class="flex btn-wrap flex-wrap justify-center gap-4">
                 <button id="startBtn" class="bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-8 rounded-full transition-all flex items-center gap-2 pulse">
                     <i class="fa fa-play"></i>
                     <span>开始游戏</span>
@@ -183,11 +238,11 @@
                 每一级别都会生成一组相似的颜色，其中有一个颜色不同，
                 你需要在限定时间内找到它。
             </p>
-            <div class="flex justify-center gap-6 text-sm text-gray-400">
-                <div>
+            <div class="flex justify-center gap-6 text-sm text-gray-400 flex-wrap"> <!-- 移动端换行 -->
+                <div class="mb-2 sm:mb-0">
                     <i class="fa fa-keyboard-o mr-1"></i> 点击色块选择
                 </div>
-                <div>
+                <div class="mb-2 sm:mb-0">
                     <i class="fa fa-signal mr-1"></i> 级别越高难度越大
                 </div>
                 <div>
@@ -221,10 +276,19 @@
         </div>
     </div>
 
+    <!-- 返回导航页面按钮：优化样式和位置 -->
+    <div class="back-container">
+        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">
+            <i class="fa fa-arrow-left"></i>
+            <span>返回导航页面</span>
+        </button>
+    </div>
+
     <script>
-        // 游戏状态
+        // 游戏状态：新增isAnswered状态锁，防止重复点击正确答案加分
         const gameState = {
             isPlaying: false,
+            isAnswered: false, // 关键：标记当前回合是否已提交答案（true=已提交，禁止再次点击）
             level: 1,
             score: 0,
             timeLeft: 30,
@@ -246,6 +310,7 @@
         const finalLevelDisplay = document.getElementById('finalLevel');
         const finalScoreDisplay = document.getElementById('finalScore');
         const playAgainBtn = document.getElementById('playAgainBtn');
+        const backBtn = document.querySelector('.back-to-home'); // 返回按钮
         
         // 初始化游戏
         function initGame() {
@@ -260,11 +325,21 @@
             restartBtn.addEventListener('click', restartGame);
             nextLevelBtn.addEventListener('click', goToNextLevel);
             playAgainBtn.addEventListener('click', restartGame);
+            // 游戏进行中点击返回按钮：增加确认提示
+            backBtn.addEventListener('click', function(e) {
+                if (gameState.isPlaying) {
+                    const confirmLeave = confirm('当前游戏正在进行中，确定要返回导航页吗？');
+                    if (!confirmLeave) {
+                        e.preventDefault(); // 取消跳转
+                    }
+                }
+            });
         }
         
-        // 开始游戏
+        // 开始游戏：重置isAnswered状态
         function startGame() {
             gameState.isPlaying = true;
+            gameState.isAnswered = false; // 初始化为“未提交答案”
             gameState.level = 1;
             gameState.score = 0;
             gameState.timeLeft = 30;
@@ -281,7 +356,7 @@
             startTimer();
         }
         
-        // 重新开始游戏
+        // 重新开始游戏：重置isAnswered状态
         function restartGame() {
             // 清除计时器
             if (gameState.timer) {
@@ -294,11 +369,14 @@
             startGame();
         }
         
-        // 进入下一级别
+        // 进入下一级别：重置isAnswered状态
         function goToNextLevel() {
             gameState.level++;
-            gameState.timeLeft = Math.max(10, 30 - (gameState.level - 1) * 2); // 随级别增加减少时间
-            gameState.tilesCount = Math.min(25, 12 + (gameState.level - 1)); // 随级别增加增加色块数量
+            gameState.isAnswered = false; // 进入下一级前重置为“未提交答案”
+            // 优化时间递减逻辑：最低保留8秒，避免时间过短无法操作
+            gameState.timeLeft = Math.max(8, 30 - (gameState.level - 1) * 2); 
+            // 优化色块数量：最高20个（避免过多导致色块过小）
+            gameState.tilesCount = Math.min(20, 12 + (gameState.level - 1)); 
             
             updateGameInfo();
             generateColorTiles();
@@ -325,7 +403,7 @@
                     endGame();
                 }
                 
-                // 最后5秒警告
+                // 最后5秒警告：增加闪烁动画
                 if (gameState.timeLeft <= 5) {
                     timeDisplay.classList.add('text-danger', 'animate-pulse');
                 } else {
@@ -334,17 +412,24 @@
             }, 1000);
         }
         
-        // 生成颜色方块
+        // 生成颜色方块：优化难度梯度，避免早期难度过高
         function generateColorTiles(isPreview = false) {
             gameBoard.innerHTML = '';
             
-            // 根据级别确定颜色差异程度
-            const difficulty = Math.max(5, 40 - (gameState.level - 1) * 3); // 数值越小差异越小，难度越大
-            
-            // 随机生成基础颜色的HSL值
+            // 难度梯度优化：级别1-5差异较大，后续逐步减小差异
+            let difficulty;
+            if (gameState.level <= 5) {
+                difficulty = 30 - (gameState.level - 1) * 4; // 级别1-5：差异从30降至14，难度平缓提升
+            } else if (gameState.level <= 10) {
+                difficulty = 14 - (gameState.level - 6) * 2; // 级别6-10：差异从14降至4，难度稳步增加
+            } else {
+                difficulty = Math.max(2, 4 - (gameState.level - 11) * 0.5); // 级别11+：差异最低2，避免难度过高无法分辨
+            }
+
+            // 随机生成基础颜色的HSL值（确保颜色更鲜艳，避免灰暗色难以分辨）
             const hue = Math.floor(Math.random() * 360);
-            const saturation = 50 + Math.floor(Math.random() * 30); // 50-80%
-            const lightness = 40 + Math.floor(Math.random() * 20); // 40-60%
+            const saturation = 60 + Math.floor(Math.random() * 25); // 60-85%（更高饱和度，颜色更鲜明）
+            const lightness = 45 + Math.floor(Math.random() * 15); // 45-60%（适中亮度，避免过暗或过亮）
             
             // 生成目标颜色（与基础颜色有差异）
             let targetHue, targetSaturation, targetLightness;
@@ -353,30 +438,30 @@
             const changeType = Math.floor(Math.random() * 3);
             
             switch (changeType) {
-                case 0: // 改变色相
+                case 0: // 改变色相（最易分辨，早期级别优先）
                     targetHue = (hue + difficulty) % 360;
                     targetSaturation = saturation;
                     targetLightness = lightness;
                     break;
-                case 1: // 改变饱和度
+                case 1: // 改变饱和度（中等难度）
                     targetHue = hue;
-                    targetSaturation = Math.max(0, Math.min(100, saturation + difficulty));
+                    targetSaturation = Math.max(20, Math.min(100, saturation + difficulty)); // 限制在20-100%，避免无意义差异
                     targetLightness = lightness;
                     break;
-                case 2: // 改变亮度
+                case 2: // 改变亮度（最难分辨，高级别概率增加）
                     targetHue = hue;
                     targetSaturation = saturation;
-                    targetLightness = Math.max(0, Math.min(100, lightness + difficulty));
+                    targetLightness = Math.max(20, Math.min(80, lightness + difficulty)); // 限制在20-80%，确保可见性
                     break;
             }
             
             // 生成目标色块的索引
             gameState.targetIndex = Math.floor(Math.random() * gameState.tilesCount);
             
-            // 创建颜色方块
+            // 创建颜色方块：增加触摸反馈，适配移动端
             for (let i = 0; i < gameState.tilesCount; i++) {
                 const tile = document.createElement('div');
-                tile.classList.add('color-tile', 'rounded-lg', 'shadow-md', 'cursor-pointer', 'aspect-square');
+                tile.classList.add('color-tile', 'rounded-lg', 'shadow-md', 'cursor-pointer', 'aspect-square', 'select-none'); // 禁止文本选中
                 
                 // 设置颜色
                 let color;
@@ -387,93 +472,144 @@
                 }
                 
                 tile.style.backgroundColor = color;
+                // 增加触摸反馈样式（针对移动端）
+                tile.style.touchAction = 'manipulation';
+                tile.style.userSelect = 'none';
                 
-                // 添加点击事件（预览模式不添加）
+                // 添加点击事件（预览模式不添加 + 已提交答案时不响应）
                 if (!isPreview) {
-                    tile.addEventListener('click', () => checkAnswer(i, tile));
+                    tile.addEventListener('click', () => {
+                        if (gameState.isAnswered) return; // 关键：已提交答案则忽略点击
+                        checkAnswer(i, tile);
+                    });
+                    // 移动端触摸事件优化（避免300ms延迟 + 已提交答案时不响应）
+                    tile.addEventListener('touchstart', (e) => {
+                        if (gameState.isAnswered) return; // 关键：已提交答案则忽略触摸
+                        e.preventDefault(); // 阻止默认触摸行为
+                        checkAnswer(i, tile);
+                    }, { passive: false });
                 }
                 
                 gameBoard.appendChild(tile);
             }
             
-            // 添加淡入动画
+            // 添加淡入动画（避免闪烁）
             gameBoard.classList.remove('fade-in');
             setTimeout(() => {
                 gameBoard.classList.add('fade-in');
             }, 10);
         }
         
-        // 检查答案
+        // 检查答案：优化反馈速度和视觉效果，设置isAnswered锁
         function checkAnswer(index, tile) {
             if (!gameState.isPlaying) return;
+            
+            // 1. 标记为“已提交答案”，锁定后续交互
+            gameState.isAnswered = true;
             
             // 清除计时器
             clearInterval(gameState.timer);
             
             if (index === gameState.targetIndex) {
-                // 回答正确
-                tile.classList.add('ring-4', 'ring-success', 'ring-offset-2');
+                // 回答正确：增加成功动画
+                tile.classList.add('ring-4', 'ring-success', 'ring-offset-2', 'scale-105');
+                setTimeout(() => {
+                    tile.classList.remove('scale-105');
+                }, 200);
                 
-                // 计算得分（基于剩余时间）
-                const levelScore = Math.floor(100 * (gameState.timeLeft / 30) * gameState.level);
+                // 计算得分（优化得分逻辑：级别越高、剩余时间越多，得分倍数越高）
+                const timeMultiplier = gameState.timeLeft / 30; // 0.33-1倍（基于剩余时间）
+                const levelMultiplier = 1 + (gameState.level - 1) * 0.1; // 1-2倍（基于级别，每级+10%）
+                const levelScore = Math.floor(100 * timeMultiplier * levelMultiplier);
                 gameState.score += levelScore;
                 
-                // 显示成功消息
-                showMessage(`正确！获得 ${levelScore} 分`, 'success');
+                // 显示成功消息（带分数动画）
+                showMessage(`正确！获得 <span class="font-bold text-success animate-pulse">${levelScore}</span> 分`, 'success');
                 
-                // 更新分数
-                scoreDisplay.textContent = gameState.score;
+                // 更新分数（增加数字滚动动画）
+                updateScoreWithAnimation(gameState.score);
                 
-                // 显示下一级按钮
-                nextLevelBtn.classList.remove('hidden');
+                // 显示下一级按钮（延迟显示，提升体验）
+                setTimeout(() => {
+                    nextLevelBtn.classList.remove('hidden');
+                    nextLevelBtn.classList.add('fade-in');
+                }, 500);
             } else {
-                // 回答错误，显示正确答案
+                // 回答错误：显示错误反馈并高亮正确答案
                 tile.classList.add('ring-4', 'ring-danger', 'ring-offset-2', 'shake');
                 
-                // 高亮正确答案
-                const tiles = gameBoard.querySelectorAll('.color-tile');
-                tiles[gameState.targetIndex].classList.add('ring-4', 'ring-success', 'ring-offset-2');
+                // 高亮正确答案（延迟显示，给用户反应时间）
+                setTimeout(() => {
+                    const tiles = gameBoard.querySelectorAll('.color-tile');
+                    tiles[gameState.targetIndex].classList.add('ring-4', 'ring-success', 'ring-offset-2', 'scale-105');
+                }, 300);
                 
                 // 显示错误消息
-                showMessage('错误！再接再厉', 'danger');
+                showMessage('错误！正确答案已标注', 'danger');
                 
-                // 游戏结束
-                setTimeout(endGame, 1500);
+                // 游戏结束（延迟跳转，让用户看到正确答案）
+                setTimeout(endGame, 1800);
             }
         }
         
-        // 显示消息
+        // 显示消息：优化样式和动画
         function showMessage(text, type) {
-            messageDisplay.textContent = text;
-            messageDisplay.classList.remove('hidden', 'bg-success/20', 'text-success', 'bg-danger/20', 'text-danger');
+            messageDisplay.innerHTML = text; // 支持HTML内容（如分数高亮）
+            messageDisplay.classList.remove('hidden', 'bg-success/20', 'text-success', 'bg-danger/20', 'text-danger', 'fade-in');
             
             if (type === 'success') {
-                messageDisplay.classList.add('bg-success/20', 'text-success');
+                messageDisplay.classList.add('bg-success/20', 'text-success', 'fade-in');
             } else {
-                messageDisplay.classList.add('bg-danger/20', 'text-danger');
+                messageDisplay.classList.add('bg-danger/20', 'text-danger', 'fade-in');
             }
+        }
+        
+        // 更新分数：增加数字滚动动画（提升视觉体验）
+        function updateScoreWithAnimation(targetScore) {
+            const currentScore = parseInt(scoreDisplay.textContent);
+            if (currentScore === targetScore) return;
+            
+            const step = Math.ceil(Math.abs(targetScore - currentScore) / 20); // 分20步滚动，速度均匀
+            let tempScore = currentScore;
+            
+            const scoreTimer = setInterval(() => {
+                if (tempScore < targetScore) {
+                    tempScore = Math.min(tempScore + step, targetScore);
+                } else {
+                    tempScore = Math.max(tempScore - step, targetScore);
+                }
+                
+                scoreDisplay.textContent = tempScore;
+                
+                if (tempScore === targetScore) {
+                    clearInterval(scoreTimer);
+                }
+            }, 30);
         }
         
         // 更新游戏信息显示
         function updateGameInfo() {
-            scoreDisplay.textContent = gameState.score;
+            updateScoreWithAnimation(gameState.score); // 分数用动画更新
             timeDisplay.textContent = gameState.timeLeft;
             levelDisplay.textContent = gameState.level;
             timeDisplay.classList.remove('text-danger', 'animate-pulse');
             messageDisplay.classList.add('hidden');
         }
         
-        // 结束游戏
+        // 结束游戏：优化模态框显示逻辑，重置isAnswered状态
         function endGame() {
             gameState.isPlaying = false;
+            gameState.isAnswered = false; // 重置状态，避免影响下次游戏
             clearInterval(gameState.timer);
             
-            // 更新最终分数
+            // 更新最终分数和级别
             finalLevelDisplay.textContent = gameState.level;
             finalScoreDisplay.textContent = gameState.score;
             
-            // 显示游戏结束模态框
-            gameOverModal.classList.remove('hidden');
+            // 显示游戏结束模态框（增加淡入动画）
+            setTimeout(() => {
+                gameOverModal.classList.remove('hidden');
+            }, 300);
             
             // 更新按钮状态
             restartBtn.classList.add('hidden');
@@ -483,10 +619,13 @@
         
         // 初始化游戏
         window.addEventListener('DOMContentLoaded', initGame);
+
+        // 窗口大小变化时重新渲染色块（适配移动端旋转屏幕）
+        window.addEventListener('resize', () => {
+            if (gameState.isPlaying && !gameState.isAnswered) { // 仅在游戏中且未提交答案时重新渲染
+                generateColorTiles();
+            }
+        });
     </script>
-    <div class="back-container">
-        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
-    </div>
 </body>
 </html>
-    

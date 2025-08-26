@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>扑克牌赛马游戏（修复版）</title>
+    <title>扑克牌赛马游戏（新增胜率记录功能）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
@@ -52,25 +52,26 @@
                 background: rgba(255, 255, 255, 0.1);
                 border-radius: 50%;
             }
-            .checkpoint {
-                position: absolute;
-                width: 2px;
-                height: 100%;
-                background-color: blue;
-                z-index: 10;
-            }
-            .checkpoint-label {
-                position: absolute;
-                top: -20px;
-                color: blue;
-                font-size: 10px;
-                font-weight: bold;
-                transform: translateX(-50%);
-                white-space: nowrap;
-            }
             .bet-option-selected {
                 border: 3px solid #4CAF50;
                 transform: scale(1.05);
+            }
+            .horse-transition {
+                transition: left 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+            }
+            .card-flip {
+                animation: flip 0.5s ease-out;
+            }
+            @keyframes flip {
+                0% { transform: rotateY(0deg); }
+                100% { transform: rotateY(360deg); }
+            }
+            .modal-popup {
+                animation: popup 0.3s ease-out;
+            }
+            @keyframes popup {
+                0% { transform: scale(0.8); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
             }
         }
     </style>
@@ -82,24 +83,29 @@
             <p class="text-gray-600 text-lg">每步对应一个关卡，先到终点者胜！</p>
         </header>
 
-        <!-- 用户信息和分数 -->
-        <div class="bg-white rounded-lg p-4 mb-6 shadow-md flex justify-between items-center">
+        <!-- 用户信息：包含胜率显示 -->
+        <div class="bg-white rounded-lg p-4 mb-6 shadow-md flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center">
                 <i class="fa fa-user-circle text-2xl text-primary mr-2"></i>
                 <span class="font-bold">玩家</span>
             </div>
+            <!-- 竞猜胜率展示 -->
+            <div class="flex items-center bg-blue-50 px-4 py-2 rounded-full">
+                <i class="fa fa-bar-chart text-blue-500 mr-2"></i>
+                <span class="font-bold text-primary">竞猜记录: <span id="betRecord">0/0</span> (胜率: <span id="winRate">0.0</span>%)</span>
+            </div>
+            <!-- 分数显示 -->
             <div class="flex items-center bg-primary/10 px-4 py-2 rounded-full">
                 <i class="fa fa-trophy text-yellow-500 mr-2"></i>
                 <span class="font-bold text-primary">当前分数: <span id="userScore">100</span></span>
             </div>
         </div>
 
-        <!-- 竞猜区域 (开始游戏前显示) -->
+        <!-- 竞猜区域 -->
         <div id="bettingSection" class="bg-white rounded-xl p-6 mb-8 shadow-md">
             <h2 class="text-xl font-bold text-primary mb-6 text-center">请选择你认为会获胜的牌</h2>
             
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <!-- 黑桃投注选项 -->
                 <div class="bet-option cursor-pointer rounded-lg p-4 text-center transition-all duration-300 hover:bg-gray-100" data-suit="spades">
                     <div class="card bg-white rounded-lg card-shadow h-24 w-16 mx-auto mb-2 flex items-center justify-center text-spades text-2xl">
                         <i class="fa fa-spade"></i> A
@@ -107,8 +113,6 @@
                     <p class="font-bold text-spades">黑桃 A</p>
                     <p class="text-sm text-gray-500">赔率: 3:1</p>
                 </div>
-                
-                <!-- 红桃投注选项 -->
                 <div class="bet-option cursor-pointer rounded-lg p-4 text-center transition-all duration-300 hover:bg-gray-100" data-suit="hearts">
                     <div class="card bg-white rounded-lg card-shadow h-24 w-16 mx-auto mb-2 flex items-center justify-center text-hearts text-2xl">
                         <i class="fa fa-heart"></i> A
@@ -116,8 +120,6 @@
                     <p class="font-bold text-hearts">红桃 A</p>
                     <p class="text-sm text-gray-500">赔率: 3:1</p>
                 </div>
-                
-                <!-- 梅花投注选项 -->
                 <div class="bet-option cursor-pointer rounded-lg p-4 text-center transition-all duration-300 hover:bg-gray-100" data-suit="clubs">
                     <div class="card bg-white rounded-lg card-shadow h-24 w-16 mx-auto mb-2 flex items-center justify-center text-clubs text-2xl">
                         <i class="fa fa-club"></i> A
@@ -125,8 +127,6 @@
                     <p class="font-bold text-clubs">梅花 A</p>
                     <p class="text-sm text-gray-500">赔率: 3:1</p>
                 </div>
-                
-                <!-- 方块投注选项 -->
                 <div class="bet-option cursor-pointer rounded-lg p-4 text-center transition-all duration-300 hover:bg-gray-100" data-suit="diamonds">
                     <div class="card bg-white rounded-lg card-shadow h-24 w-16 mx-auto mb-2 flex items-center justify-center text-diamonds text-2xl">
                         <i class="fa fa-diamond"></i> A
@@ -148,22 +148,23 @@
                 <button id="confirmBetButton" class="bg-primary hover:bg-primary/80 text-white px-8 py-3 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                     确认投注并开始游戏
                 </button>
-                <button id="backBtn" onclick="window.location.href='24gameinformation.html'">[点击打开个人信息栏]</button>
+                <button id="backBtn" onclick="window.location.href='24gameinformation.html'" class="mt-4 bg-gray-200 hover:bg-gray-300 text-primary px-6 py-2 rounded-lg transition-all">
+                    <i class="fa fa-user-circle mr-1"></i> 打开个人信息栏
+                </button>
             </div>
         </div>
 
         <!-- 游戏状态信息 -->
-        <div id="gameInfoSection" class="bg-white rounded-lg p-4 mb-6 shadow-md flex justify-between items-center hidden">
+        <div id="gameInfoSection" class="bg-white rounded-lg p-4 mb-6 shadow-md flex flex-wrap justify-between items-center gap-4 hidden">
             <div id="gameStatus" class="text-primary font-bold text-xl">游戏进行中...</div>
-            <div>
-                <span class="text-gray-600 mr-4">当前关卡: <span id="currentCheckpointDisplay">0</span></span>
+            <div class="flex flex-wrap items-center gap-4">
+                <span class="text-gray-600">当前关卡: <span id="currentCheckpointDisplay">0</span></span>
                 <span id="currentBetInfo" class="text-gray-600"></span>
             </div>
         </div>
 
         <!-- 赛道区域 -->
         <div id="trackSection" class="bg-secondary rounded-xl p-6 mb-8 shadow-lg hidden">
-            <!-- 终点线 -->
             <div class="flex justify-between items-center mb-2">
                 <div class="w-16 text-center font-bold text-primary">起点</div>
                 <div class="flex-1 h-4 bg-red-600 mb-2 relative">
@@ -178,7 +179,7 @@
                 <div class="track flex items-center mb-4 relative">
                     <div class="w-16 text-spades font-bold">黑桃 A <span class="text-sm">(步数: <span id="spadesSteps">0</span>)</span></div>
                     <div class="flex-1 h-16 track-line relative">
-                        <div id="spadesHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 transition-all duration-500 w-12 h-16 z-20">
+                        <div id="spadesHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 horse-transition w-12 h-16 z-20">
                             <div class="card bg-white rounded-lg card-shadow h-full flex items-center justify-center text-spades text-3xl">
                                 <i class="fa fa-spade"></i> A
                             </div>
@@ -190,7 +191,7 @@
                 <div class="track flex items-center mb-4 relative">
                     <div class="w-16 text-hearts font-bold">红桃 A <span class="text-sm">(步数: <span id="heartsSteps">0</span>)</span></div>
                     <div class="flex-1 h-16 track-line relative">
-                        <div id="heartsHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 transition-all duration-500 w-12 h-16 z-20">
+                        <div id="heartsHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 horse-transition w-12 h-16 z-20">
                             <div class="card bg-white rounded-lg card-shadow h-full flex items-center justify-center text-hearts text-3xl">
                                 <i class="fa fa-heart"></i> A
                             </div>
@@ -202,7 +203,7 @@
                 <div class="track flex items-center mb-4 relative">
                     <div class="w-16 text-clubs font-bold">梅花 A <span class="text-sm">(步数: <span id="clubsSteps">0</span>)</span></div>
                     <div class="flex-1 h-16 track-line relative">
-                        <div id="clubsHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 transition-all duration-500 w-12 h-16 z-20">
+                        <div id="clubsHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 horse-transition w-12 h-16 z-20">
                             <div class="card bg-white rounded-lg card-shadow h-full flex items-center justify-center text-clubs text-3xl">
                                 <i class="fa fa-club"></i> A
                             </div>
@@ -214,7 +215,7 @@
                 <div class="track flex items-center relative">
                     <div class="w-16 text-diamonds font-bold">方块 A <span class="text-sm">(步数: <span id="diamondsSteps">0</span>)</span></div>
                     <div class="flex-1 h-16 track-line relative">
-                        <div id="diamondsHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 transition-all duration-500 w-12 h-16 z-20">
+                        <div id="diamondsHorse" class="horse absolute left-0 top-1/2 -translate-y-1/2 horse-transition w-12 h-16 z-20">
                             <div class="card bg-white rounded-lg card-shadow h-full flex items-center justify-center text-diamonds text-3xl">
                                 <i class="fa fa-diamond"></i> A
                             </div>
@@ -262,33 +263,41 @@
                 <li>当所有A都前进到相同步数（到达同一关卡）时，会翻开对应关卡的暗牌</li>
                 <li>暗牌的花色对应的A需要后退一步</li>
                 <li>率先到达终点（5步）的A获胜，猜对的玩家赢得赌注×3的分数</li>
+                <li>若牌组用尽仍无获胜者，将重新洗牌继续比赛</li>
             </ul>
         </div>
     </div>
 
     <!-- 获胜弹窗 -->
     <div id="winnerModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl p-8 max-w-md w-full text-center shadow-2xl transform transition-all">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full text-center shadow-2xl transform transition-all modal-popup">
             <h2 class="text-2xl font-bold text-primary mb-4">比赛结束！</h2>
             <div id="winnerIcon" class="text-5xl mx-auto mb-6"></div>
             <p id="winnerText" class="text-xl mb-4"></p>
             <div id="betResult" class="text-xl mb-6 font-bold"></div>
-            <button id="restartButton" class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-lg transition-all duration-300">
-                再来一局
-            </button>
+            <div class="flex gap-4 justify-center">
+                <button id="restartButton" class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-lg transition-all duration-300">
+                    再来一局
+                </button>
+                <button id="backToHomeButton" onclick="window.location.href='24gameinformation.html'" class="bg-gray-200 hover:bg-gray-300 text-primary px-6 py-3 rounded-lg transition-all duration-300">
+                    返回个人中心
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        // 游戏状态
+        // 游戏状态：新增胜率记录相关字段
         const gameState = {
             isRunning: false,
-            totalCheckpoints: 5, // 5个关卡暗牌
-            finishLine: 5, // 缩短路程到5步即可到达终点
+            totalCheckpoints: 5,
+            finishLine: 5,
             user: {
                 score: 100,
                 selectedHorse: null,
-                betAmount: 0
+                betAmount: 0,
+                betTotal: 0,    // 总投注次数
+                betWin: 0       // 猜对获胜次数
             },
             horses: {
                 spades: { element: null, steps: 0, elementSteps: null, name: "黑桃 A" },
@@ -297,65 +306,64 @@
                 diamonds: { element: null, steps: 0, elementSteps: null, name: "方块 A" }
             },
             deck: [],
-            hiddenCards: [], // 5张关卡暗牌
-            revealedHiddenCards: [], // 已翻开的关卡索引
-            currentCheckpoint: 0, // 当前关卡（0表示未到达任何关卡）
+            hiddenCards: [],
+            revealedHiddenCards: [],
+            currentCheckpoint: 0,
             winner: null
         };
 
-        // DOM元素
+        // DOM元素：新增胜率显示相关元素
         const elements = {
-            // 分数和用户信息
             userScore: document.getElementById('userScore'),
             currentCheckpointDisplay: document.getElementById('currentCheckpointDisplay'),
-            
-            // 竞猜区域
+            betRecord: document.getElementById('betRecord'),    // 竞猜记录（猜对/总次数）
+            winRate: document.getElementById('winRate'),        // 胜率
             bettingSection: document.getElementById('bettingSection'),
             betOptions: document.querySelectorAll('.bet-option'),
             betAmounts: document.querySelectorAll('.bet-amount'),
             confirmBetButton: document.getElementById('confirmBetButton'),
-            
-            // 游戏信息
             gameInfoSection: document.getElementById('gameInfoSection'),
             gameStatus: document.getElementById('gameStatus'),
             currentBetInfo: document.getElementById('currentBetInfo'),
-            
-            // 赛道区域
             trackSection: document.getElementById('trackSection'),
-            
-            // 游戏控制区
             gameControlsSection: document.getElementById('gameControlsSection'),
             drawButton: document.getElementById('drawButton'),
             currentCard: document.getElementById('currentCard'),
             hiddenCardsContainer: document.getElementById('hiddenCards'),
             revealedHiddenCard: document.getElementById('revealedHiddenCard'),
             revealedCard: document.getElementById('revealedCard'),
-            
-            // 弹窗
             winnerModal: document.getElementById('winnerModal'),
             winnerIcon: document.getElementById('winnerIcon'),
             winnerText: document.getElementById('winnerText'),
             betResult: document.getElementById('betResult'),
-            restartButton: document.getElementById('restartButton')
+            restartButton: document.getElementById('restartButton'),
+            backToHomeButton: document.getElementById('backToHomeButton')
         };
 
-        // 初始化游戏
+        // 初始化游戏：加载localStorage中的胜率数据
         function initGame() {
+            // 从localStorage加载历史数据（如果有）
+            const savedData = localStorage.getItem('pokerHorseData');
+            if (savedData) {
+                const { score, betTotal, betWin } = JSON.parse(savedData);
+                gameState.user.score = score;
+                gameState.user.betTotal = betTotal;
+                gameState.user.betWin = betWin;
+            }
+
             // 获取马匹元素和步数显示元素
             gameState.horses.spades.element = document.getElementById('spadesHorse');
             gameState.horses.spades.elementSteps = document.getElementById('spadesSteps');
-            
             gameState.horses.hearts.element = document.getElementById('heartsHorse');
             gameState.horses.hearts.elementSteps = document.getElementById('heartsSteps');
-            
             gameState.horses.clubs.element = document.getElementById('clubsHorse');
             gameState.horses.clubs.elementSteps = document.getElementById('clubsSteps');
-            
             gameState.horses.diamonds.element = document.getElementById('diamondsHorse');
             gameState.horses.diamonds.elementSteps = document.getElementById('diamondsSteps');
 
-            // 显示初始分数和关卡
+            // 显示初始数据
             updateScoreDisplay();
+            updateWinRateDisplay();  // 更新胜率显示
             elements.currentCheckpointDisplay.textContent = gameState.currentCheckpoint;
 
             // 绑定事件监听
@@ -367,13 +375,9 @@
             // 竞猜选项点击
             elements.betOptions.forEach(option => {
                 option.addEventListener('click', () => {
-                    // 移除其他选项的选中状态
                     elements.betOptions.forEach(opt => opt.classList.remove('bet-option-selected'));
-                    // 添加当前选项的选中状态
                     option.classList.add('bet-option-selected');
-                    // 记录选中的马匹
                     gameState.user.selectedHorse = option.dataset.suit;
-                    // 检查是否可以确认投注
                     checkBetReady();
                 });
             });
@@ -381,20 +385,16 @@
             // 投注金额点击
             elements.betAmounts.forEach(amount => {
                 amount.addEventListener('click', () => {
-                    // 移除其他金额的选中状态
                     elements.betAmounts.forEach(amt => amt.classList.remove('bg-primary', 'text-white'));
-                    // 添加当前金额的选中状态
                     amount.classList.add('bg-primary', 'text-white');
-                    // 记录投注金额
                     const betAmt = parseInt(amount.dataset.amount);
-                    // 检查余额是否足够
-                    if (betAmt <= gameState.user.score) {
+                    if (betAmt <= gameState.user.score && betAmt > 0) {
                         gameState.user.betAmount = betAmt;
                     } else {
-                        showMessage("余额不足，无法投注该金额");
+                        showMessage(`余额不足（当前: ${gameState.user.score}分），无法投注该金额`);
                         gameState.user.betAmount = 0;
+                        amount.classList.remove('bg-primary', 'text-white');
                     }
-                    // 检查是否可以确认投注
                     checkBetReady();
                 });
             });
@@ -416,70 +416,57 @@
 
         // 投注后开始游戏
         function startGameAfterBet() {
-            // 扣除投注金额
+            if (gameState.user.betAmount > gameState.user.score) {
+                showMessage("投注金额超过余额，无法开始游戏");
+                return;
+            }
             gameState.user.score -= gameState.user.betAmount;
             updateScoreDisplay();
+            saveDataToLocalStorage();  // 保存数据到localStorage
 
-            // 显示当前投注信息
             const horseName = gameState.horses[gameState.user.selectedHorse].name;
-            elements.currentBetInfo.textContent = `投注: ${horseName} ${gameState.user.betAmount}分`;
+            elements.currentBetInfo.innerHTML = `<span class="font-semibold text-primary">投注: ${horseName} ${gameState.user.betAmount}分</span>`;
 
-            // 切换显示区域
             elements.bettingSection.classList.add('hidden');
-            elements.gameInfoSection.classList.remove('hidden');
-            elements.trackSection.classList.remove('hidden');
-            elements.gameControlsSection.classList.remove('hidden');
+            setTimeout(() => {
+                elements.gameInfoSection.classList.remove('hidden');
+                elements.trackSection.classList.remove('hidden');
+                elements.gameControlsSection.classList.remove('hidden');
+            }, 200);
 
-            // 初始化游戏
             initRaceGame();
         }
 
         // 初始化赛马游戏
         function initRaceGame() {
-            // 重置游戏状态
             resetRaceState();
-            
-            // 创建牌组
             createDeck();
-            
-            // 洗牌
             shuffleDeck();
-            
-            // 生成5张暗牌（关卡牌）
             createHiddenCards();
-            
-            // 更新UI状态
             elements.gameStatus.textContent = "游戏进行中...";
             gameState.isRunning = true;
-            // 确保翻牌按钮是启用的
             elements.drawButton.disabled = false;
         }
 
         // 重置赛马状态
         function resetRaceState() {
-            // 重置马匹步数
             Object.values(gameState.horses).forEach(horse => {
                 horse.steps = 0;
                 updateHorsePosition(horse);
                 horse.elementSteps.textContent = horse.steps;
             });
             
-            // 重置其他状态
             gameState.deck = [];
             gameState.hiddenCards = [];
             gameState.revealedHiddenCards = [];
             gameState.currentCheckpoint = 0;
             gameState.winner = null;
             elements.currentCheckpointDisplay.textContent = gameState.currentCheckpoint;
-            
-            // 清空UI
             elements.currentCard.className = 'w-32 h-48 card-back card-shadow mb-6 flex items-center justify-center';
             elements.currentCard.innerHTML = '<span class="text-white text-xl font-bold">点击翻牌</span>';
             elements.hiddenCardsContainer.innerHTML = '';
             elements.revealedHiddenCard.classList.add('hidden');
             elements.winnerModal.classList.add('hidden');
-            // 确保翻牌按钮是启用的
-            elements.drawButton.disabled = false;
         }
 
         // 创建牌组
@@ -487,11 +474,10 @@
             const suits = ['spades', 'hearts', 'clubs', 'diamonds'];
             const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
             
-            // 生成两副完整的牌
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 3; i++) {
                 suits.forEach(suit => {
                     values.forEach(value => {
-                        if (value !== 'A') { // 排除A，因为A是赛马
+                        if (value !== 'A') {
                             gameState.deck.push({ suit, value });
                         }
                     });
@@ -509,15 +495,13 @@
 
         // 创建5张暗牌（关卡牌）
         function createHiddenCards() {
-            // 从牌组顶部取5张牌作为暗牌（对应5个关卡）
             for (let i = 0; i < gameState.totalCheckpoints; i++) {
+                if (gameState.deck.length === 0) createDeck();
                 gameState.hiddenCards.push(gameState.deck.shift());
                 
-                // 创建暗牌UI
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card-back w-16 h-24 card-shadow';
                 cardElement.dataset.index = i;
-                // 添加关卡标记
                 const label = document.createElement('div');
                 label.className = 'absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-blue-600';
                 label.textContent = `第${i+1}关`;
@@ -529,41 +513,35 @@
 
         // 翻牌
         function drawCard() {
-            if (!gameState.isRunning || gameState.deck.length === 0) return;
+            if (!gameState.isRunning) return;
             
-            // 从牌组顶部取一张牌
-            const card = gameState.deck.shift();
-            
-            // 显示当前牌
-            displayCard(card);
-            
-            // 移动对应的马（前进1步）
-            moveHorse(card.suit);
-            
-            // 检查是否所有马都到达当前可开启的关卡
-            checkAllReachedCheckpoint();
-            
-            // 检查是否有获胜者
-            checkWinner();
-            
-            // 如果牌组用完了，禁用翻牌按钮
             if (gameState.deck.length === 0) {
-                elements.drawButton.disabled = true;
-                elements.gameStatus.textContent = "牌已用完";
+                showMessage("牌组已用尽，正在重新洗牌...");
+                createDeck();
+                shuffleDeck();
+                elements.gameStatus.textContent = "牌组已重新洗牌，继续游戏！";
             }
+            
+            const card = gameState.deck.shift();
+            elements.currentCard.classList.add('card-flip');
+            setTimeout(() => {
+                displayCard(card);
+                setTimeout(() => elements.currentCard.classList.remove('card-flip'), 500);
+            }, 100);
+            
+            moveHorse(card.suit);
+            checkAllReachedCheckpoint();
+            checkWinner();
         }
 
         // 显示牌
         function displayCard(card) {
-            // 清除之前的类
             elements.currentCard.className = 'w-32 h-48 card-shadow mb-6 flex items-center justify-center rounded-lg bg-white';
-            
-            // 设置牌的内容
             const suitIcon = getSuitIcon(card.suit);
             elements.currentCard.innerHTML = `
                 <div class="flex flex-col items-center justify-center w-full h-full p-2">
                     <div class="text-${card.suit} text-lg self-start">${suitIcon} ${card.value}</div>
-                    <div class="text-${card.suit} text-3xl">${suitIcon}</div>
+                    <div class="text-${card.suit} text-3xl my-1">${suitIcon}</div>
                     <div class="text-${card.suit} text-lg self-end">${suitIcon} ${card.value}</div>
                 </div>
             `;
@@ -585,12 +563,13 @@
             const horse = gameState.horses[suit];
             if (!horse) return;
             
-            // 前进1步（不超过终点步数）
             if (horse.steps < gameState.finishLine) {
                 horse.steps++;
                 updateHorsePosition(horse);
                 horse.elementSteps.textContent = horse.steps;
                 elements.gameStatus.textContent = `${horse.name} 前进到第${horse.steps}步！`;
+            } else {
+                elements.gameStatus.textContent = `${horse.name} 已到达终点，无法继续前进！`;
             }
         }
 
@@ -599,42 +578,38 @@
             const horse = gameState.horses[suit];
             if (!horse) return;
             
-            // 后退1步（不小于0）
             if (horse.steps > 0) {
                 horse.steps--;
                 updateHorsePosition(horse);
                 horse.elementSteps.textContent = horse.steps;
                 elements.gameStatus.textContent = `${horse.name} 后退到第${horse.steps}步！`;
+            } else {
+                elements.gameStatus.textContent = `${horse.name} 已在起点，无法继续后退！`;
             }
         }
 
-        // 更新马匹位置（根据步数计算位置百分比）
+        // 更新马匹位置
         function updateHorsePosition(horse) {
-            // 计算位置百分比（5步到达终点，每步20%）
-            const position = (horse.steps / gameState.finishLine) * 100;
+            const maxPosition = 95;
+            const position = Math.min((horse.steps / gameState.finishLine) * 100, maxPosition);
             horse.element.style.left = `${position}%`;
         }
 
         // 检查是否所有马都到达当前关卡
         function checkAllReachedCheckpoint() {
-            // 当前需要检查的关卡（从1开始）
             const targetCheckpoint = gameState.currentCheckpoint + 1;
-            
-            // 如果已经过了所有关卡，不再检查
+                
             if (targetCheckpoint > gameState.totalCheckpoints) return;
-            
-            // 检查是否所有马都达到或超过当前关卡所需步数
-            const allReached = Object.values(gameState.horses).every(horse => horse.steps >= targetCheckpoint);
-            
-            if (allReached) {
-                // 更新当前关卡
+                
+            const allReached = Object.values(gameState.horses).every(horse => horse.steps === targetCheckpoint);
+                
+            if (allReached && !gameState.revealedHiddenCards.includes(targetCheckpoint - 1)) {
                 gameState.currentCheckpoint = targetCheckpoint;
                 elements.currentCheckpointDisplay.textContent = gameState.currentCheckpoint;
                 elements.gameStatus.textContent = `所有A都到达了第${targetCheckpoint}关，翻开关卡牌！`;
-                
-                // 翻开对应的暗牌（如果还有未翻开的）
+                    
                 if (targetCheckpoint <= gameState.hiddenCards.length) {
-                    revealHiddenCard(targetCheckpoint - 1); // 数组索引从0开始
+                    revealHiddenCard(targetCheckpoint - 1);
                 }
             }
         }
@@ -642,49 +617,53 @@
         // 翻开指定的暗牌
         function revealHiddenCard(index) {
             if (index >= gameState.hiddenCards.length || gameState.revealedHiddenCards.includes(index)) return;
-            
+                
             const hiddenCard = gameState.hiddenCards[index];
             gameState.revealedHiddenCards.push(index);
-            
-            // 更新暗牌UI
+                
             const cardElements = elements.hiddenCardsContainer.querySelectorAll('.card-back, .card-shadow.rounded-lg.bg-white');
             const cardElement = cardElements[index];
-            
-            // 替换为翻开的牌
-            const suitIcon = getSuitIcon(hiddenCard.suit);
-            cardElement.className = 'w-16 h-24 card-shadow rounded-lg bg-white flex items-center justify-center relative';
-            cardElement.innerHTML = `
-                <div class="flex flex-col items-center justify-center w-full h-full p-1">
-                    <div class="text-${hiddenCard.suit} text-xs self-start">${suitIcon} ${hiddenCard.value}</div>
-                    <div class="text-${hiddenCard.suit} text-lg">${suitIcon}</div>
-                </div>
-                <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-blue-600">
-                    第${index+1}关
-                </div>
-            `;
-            
-            // 在显示区域展示
-            elements.revealedHiddenCard.classList.remove('hidden');
-            elements.revealedCard.className = 'w-24 h-32 card-shadow rounded-lg bg-white flex items-center justify-center';
-            elements.revealedCard.innerHTML = `
-                <div class="flex flex-col items-center justify-center w-full h-full p-2">
-                    <div class="text-${hiddenCard.suit} text-sm self-start">${suitIcon} ${hiddenCard.value}</div>
-                    <div class="text-${hiddenCard.suit} text-2xl">${suitIcon}</div>
-                    <div class="text-${hiddenCard.suit} text-sm self-end">${suitIcon} ${hiddenCard.value}</div>
-                </div>
-            `;
-            
-            // 让对应花色的马后退一步
-            moveHorseBack(hiddenCard.suit);
+                
+            cardElement.classList.add('card-flip');
+                
+            setTimeout(() => {
+                const suitIcon = getSuitIcon(hiddenCard.suit);
+                cardElement.className = 'w-16 h-24 card-shadow rounded-lg bg-white flex items-center justify-center relative';
+                cardElement.innerHTML = `
+                    <div class="flex flex-col items-center justify-center w-full h-full p-1">
+                        <div class="text-${hiddenCard.suit} text-xs self-start">${suitIcon} ${hiddenCard.value}</div>
+                        <div class="text-${hiddenCard.suit} text-lg">${suitIcon}</div>
+                    </div>
+                    <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-blue-600">
+                        第${index+1}关
+                    </div>
+                `;
+                    
+                setTimeout(() => cardElement.classList.remove('card-flip'), 500);
+                    
+                elements.revealedHiddenCard.classList.remove('hidden');
+                elements.revealedCard.className = 'w-24 h-32 card-shadow rounded-lg bg-white flex items-center justify-center';
+                elements.revealedCard.innerHTML = `
+                    <div class="flex flex-col items-center justify-center w-full h-full p-2">
+                        <div class="text-${hiddenCard.suit} text-sm self-start">${suitIcon} ${hiddenCard.value}</div>
+                        <div class="text-${hiddenCard.suit} text-2xl">${suitIcon}</div>
+                        <div class="text-${hiddenCard.suit} text-sm self-end">${suitIcon} ${hiddenCard.value}</div>
+                    </div>
+                `;
+                    
+                setTimeout(() => {
+                    moveHorseBack(hiddenCard.suit);
+                    checkWinner();
+                }, 1000);
+            }, 300);
         }
 
-        // 检查是否有获胜者（到达终点步数）
+        // 检查是否有获胜者
         function checkWinner() {
             if (gameState.winner) return;
-            
-            // 检查每匹马是否到达终点步数
+                
             for (const [suit, horse] of Object.entries(gameState.horses)) {
-                if (horse.steps >= gameState.finishLine) {
+                if (horse.steps === gameState.finishLine) {
                     gameState.winner = suit;
                     endGame();
                     return;
@@ -692,75 +671,132 @@
             }
         }
 
-        // 结束游戏
+        // 结束游戏：更新胜率记录
         function endGame() {
             gameState.isRunning = false;
             elements.drawButton.disabled = true;
-            
-            // 确定获胜者信息
+                
             const winnerHorse = gameState.horses[gameState.winner];
             elements.gameStatus.textContent = `${winnerHorse.name} 率先到达终点，获胜！`;
-            
-            // 检查是否猜对
+                
+            // 更新投注记录和胜率
+            gameState.user.betTotal += 1;  // 总投注次数+1
+            let isWin = gameState.user.selectedHorse === gameState.winner;
+            if (isWin) {
+                gameState.user.betWin += 1;  // 猜对次数+1
+            }
+                
+            // 计算投注结果并更新分数
             let betResultText = "";
-            if (gameState.user.selectedHorse === gameState.winner) {
-                // 猜对了，赢得赌注×3
+            if (isWin) {
                 const winnings = gameState.user.betAmount * 3;
                 gameState.user.score += winnings;
                 betResultText = `恭喜！你猜对了，赢得 ${winnings} 分！`;
             } else {
-                // 猜错了，失去赌注
                 betResultText = `很遗憾，你猜错了，损失 ${gameState.user.betAmount} 分！`;
             }
+            
+            // 更新显示并保存数据
             updateScoreDisplay();
-            
-            // 显示获胜弹窗
-            elements.winnerText.textContent = `${winnerHorse.name} 赢得了比赛！`;
-            elements.betResult.textContent = betResultText;
-            
-            const suitIcon = getSuitIcon(gameState.winner);
-            elements.winnerIcon.className = `text-${gameState.winner}`;
-            elements.winnerIcon.innerHTML = suitIcon;
-            
-            elements.winnerModal.classList.remove('hidden');
+            updateWinRateDisplay();  // 更新胜率显示
+            saveDataToLocalStorage();  // 保存到localStorage
+                
+            setTimeout(() => {
+                elements.winnerText.textContent = `${winnerHorse.name} 赢得了比赛！`;
+                elements.betResult.textContent = betResultText;
+                    
+                const suitIcon = getSuitIcon(gameState.winner);
+                elements.winnerIcon.className = `text-${gameState.winner}`;
+                elements.winnerIcon.innerHTML = suitIcon;
+                    
+                elements.winnerModal.classList.remove('hidden');
+            }, 1000);
         }
 
         // 更新分数显示
         function updateScoreDisplay() {
-            elements.userScore.textContent = gameState.user.score;
+            const targetScore = gameState.user.score;
+            const currentScore = parseInt(elements.userScore.textContent);
+                
+            if (currentScore === targetScore) {
+                elements.userScore.textContent = targetScore;
+                return;
+            }
+                
+            let tempScore = currentScore;
+            const step = targetScore > currentScore ? 1 : -1;
+            const scoreInterval = setInterval(() => {
+                tempScore += step;
+                elements.userScore.textContent = tempScore;
+                    
+                if ((step > 0 && tempScore >= targetScore) || (step < 0 && tempScore <= targetScore)) {
+                    elements.userScore.textContent = targetScore;
+                    clearInterval(scoreInterval);
+                }
+            }, 20);
         }
 
-        // 重新开始游戏 - 修复了无法翻牌的问题
+        // 新增：更新胜率显示
+        function updateWinRateDisplay() {
+            // 显示格式：猜对次数/总次数
+            elements.betRecord.textContent = `${gameState.user.betWin}/${gameState.user.betTotal}`;
+            
+            // 计算胜率（保留1位小数，避免除以0）
+            let winRate = 0;
+            if (gameState.user.betTotal > 0) {
+                winRate = (gameState.user.betWin / gameState.user.betTotal * 100).toFixed(1);
+            }
+            elements.winRate.textContent = winRate;
+        }
+
+        // 新增：保存数据到localStorage
+        function saveDataToLocalStorage() {
+            const saveData = {
+                score: gameState.user.score,
+                betTotal: gameState.user.betTotal,
+                betWin: gameState.user.betWin
+            };
+            localStorage.setItem('pokerHorseData', JSON.stringify(saveData));
+        }
+
+        // 重新开始游戏
         function restartGame() {
-            // 重置用户投注信息
             gameState.user.selectedHorse = null;
             gameState.user.betAmount = 0;
-            
-            // 重置UI选中状态
+                
             elements.betOptions.forEach(opt => opt.classList.remove('bet-option-selected'));
             elements.betAmounts.forEach(amt => amt.classList.remove('bg-primary', 'text-white'));
             elements.confirmBetButton.disabled = true;
-            
-            // 切换显示区域
-            elements.bettingSection.classList.remove('hidden');
+                
+            elements.winnerModal.classList.add('hidden');
+                
             elements.gameInfoSection.classList.add('hidden');
             elements.trackSection.classList.add('hidden');
             elements.gameControlsSection.classList.add('hidden');
-            
-            // 隐藏弹窗
-            elements.winnerModal.classList.add('hidden');
-            
-            // 重置游戏状态
+                
+            setTimeout(() => {
+                elements.bettingSection.classList.remove('hidden');
+            }, 200);
+                
             gameState.isRunning = false;
-            elements.drawButton.disabled = false; // 确保翻牌按钮被启用
+            gameState.winner = null;
         }
 
         // 显示消息提示
         function showMessage(text) {
-            alert(text);
+            const messageEl = document.createElement('div');
+            messageEl.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white px-6 py-3 rounded-lg shadow-lg z-50 modal-popup';
+            messageEl.textContent = text;
+            document.body.appendChild(messageEl);
+                
+            setTimeout(() => {
+                messageEl.style.opacity = '0';
+                messageEl.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => document.body.removeChild(messageEl), 300);
+            }, 3000);
         }
 
-        // 初始化游戏
+        // 页面加载完成后初始化游戏
         window.addEventListener('DOMContentLoaded', initGame);
     </script>
 </body>

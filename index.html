@@ -1,151 +1,166 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome.</title>
   <style>
-        /* 重置默认样式 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    /* 重置默认样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body,
-        html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
 
-        /* 封面容器样式 */
-        .cover-container {
-            width: 100%;
-            height: 100vh;
-            /* 使用你提供的封面图片作为背景 */
-            background: url('333.jpg') no-repeat center center;
-            background-size: cover;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
+    /* 封面容器样式 - 优化背景兜底和兼容性 */
+    .cover-container {
+      width: 100%;
+      height: 100vh;
+      background: #f5f5f5 url('333.jpg') no-repeat center center; /* 背景色兜底 */
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
 
-        /* 按钮样式 */
-        .enter-btn {
-            padding: 15px 40px;
-            font-size: 24px;
-            color: #00004d;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            position: relative;
-            z-index: 3;
-        }
+    /* 按钮样式 - 增强视觉反馈 */
+    .enter-btn {
+      padding: 15px 40px;
+      font-size: 24px;
+      color: #00004d;
+      background: transparent;
+      border: 2px solid #00004d; /* 添加边框 */
+      border-radius: 8px; /* 圆角 */
+      cursor: pointer;
+      position: relative;
+      z-index: 3;
+      transition: all 0.3s ease; /* 统一过渡 */
+    }
 
-        /* 按钮 hover 效果（可根据实际需求调整） */
-        .enter-btn:hover {
-            transform: scale(1.05);
-            transition: transform 0.3s ease;
-        }
-        .cover-container ul {
-            position:absolute;
-            top:70px;
-            left:42.5%;
-            transform:translateX(-50%);
-            z-index:2;
-            list-style:none;}
-        .cover-container li {
-            color:yellow;
-            font-size:16px;
-            margin-bottom:10px;
-            cursor:pointer;           
-        
-        
+    .enter-btn:hover {
+      transform: scale(1.05);
+      background-color: rgba(0, 0, 68, 0.1); /* 淡蓝背景 */
+    }
 
-        }
-        .aaa {
-            z-index=1}
-        .box{
-            width:300px;
-                    
-            background-color:rgba(0,0,0,0.2);
-            margin:10px auto;
-            border-radius:20px;
-            padding : 10px 0;}
-        h1{
-            position:relative;
-            color:#0000004d;
-            font-size:60px}
-        h1::before {
-            content:attr(data-text);
-            position:absolute;
-            overflow:hidden;
-            max-width:7em;
-            white-space:nowrap;
-            color:purple;
-            animation:loading 10s linear;
-        }
-        @keyframes loading {
-            0% {
-                max-width:0;
-            }
-        }
-        li:hover {
-            color:blue;
-            cursor:pointer;
-        }
-        li:hover:nth-child(3)::after {
-            content:"你干嘛~诶哟~";
-            margin-left:20px;
-                    
-        }
-        li:hover:first-child::after {
-            content:"半猫诺丷";
-            margin-left:20px;
-                    
-        }
-        li:hover:nth-child(2)::after {
-             content:"2025/8/1 at 5:30 P.M.";
-            margin-left:20px;
-                    
-        }
-        li:hover:nth-child(4)::after {
-            content:"正在开发中...";
-            margin-left:20px;
-                    
-        }
-    </style>
+    /* 菜单样式 - 修复居中问题 */
+    .cover-container ul {
+      position: absolute;
+      top: 70px;
+      left: 50%; /* 正确居中 */
+      transform: translateX(-50%);
+      z-index: 2;
+      list-style: none;
+    }
+
+    .cover-container li {
+      color: yellow;
+      font-size: 16px;
+      margin-bottom: 15px; /* 增大间距 */
+      cursor: pointer;
+      transition: color 0.3s ease; /* 颜色过渡更流畅 */
+    }
+
+    /* 动态标题样式 */
+    h1 {
+      position: relative;
+      color: rgba(0, 0, 0, 0.3); /* 优化透明色写法（原#0000004d） */
+      font-size: 60px;
+      margin-bottom: 40px; /* 与按钮拉开距离 */
+    }
+
+    h1::before {
+      content: attr(data-text);
+      position: absolute;
+      overflow: hidden;
+      max-width: 7em;
+      white-space: nowrap;
+      color: purple;
+      animation: loading 10s linear;
+    }
+
+    @keyframes loading {
+      0% { max-width: 0; }
+      100% { max-width: 7em; } /* 明确结束状态，避免兼容性问题 */
+    }
+
+    /* 菜单hover效果 */
+    li:hover {
+      color: blue;
+    }
+
+    li:hover:first-child::after {
+      content: "半猫诺丷";
+      margin-left: 20px;
+    }
+
+    li:hover:nth-child(2)::after {
+      content: "2025/8/1 at 5:30 P.M.";
+      margin-left: 20px;
+    }
+
+    li:hover:nth-child(3)::after {
+      content: "你干嘛~诶哟~";
+      margin-left: 20px;
+    }
+
+    li:hover:nth-child(4)::after {
+      content: "正在开发中...";
+      margin-left: 20px;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 36px;
+      }
+      .enter-btn {
+        font-size: 18px;
+        padding: 12px 30px;
+      }
+      .cover-container li {
+        font-size: 14px;
+      }
+    }
+  </style>
 </head>
-
 <body>
-    <!-- 封面容器 -->
-    <div class="cover-container">
-        
-        <ul>
-            <li>开发者</li>
-            <li class="second">首次发布时间</li>
-            <li>篮球</li>
-            <li>更多</li>
-        </ul>
-        <h1 data-text="Loading...">Loading...</hi>
-        
-        <!-- 点击进入按钮，这里使用 JavaScript 实现跳转，你也可以直接用 a 标签的 href 属性 -->
-        <button class="enter-btn" onclick="goToWebsite()">[Come                  Here]</button>
-    
-    </div>
-    
-    <script>
-        // 跳转函数，替换下方的网址为你实际要跳转的网站地址
-        function goToWebsite() {
-            window.location.href = "indexlo.html"; 
-        }
-    </script>
-    
+  <!-- 封面容器 -->
+  <div class="cover-container">
+    <!-- 顶部交互菜单 -->
+    <ul>
+      <li>开发者</li>
+      <li class="second">首次发布时间</li>
+      <li>篮球</li>
+      <li>更多</li>
+    </ul>
 
+    <!-- 动态加载标题 - 修复闭合标签 -->
+    <h1 data-text="Loading...">Loading...</h1>
 
+    <!-- 进入按钮 -->
+    <button class="enter-btn" onclick="goToWebsite()">[Come Here]</button>
+  </div>
+
+  <script>
+    // 跳转函数 - 可添加加载提示优化体验
+    function goToWebsite() {
+      // 可选：添加“跳转中”提示
+      const btn = document.querySelector('.enter-btn');
+      btn.textContent = "Jumping...";
+      btn.disabled = true; // 防止重复点击
+      
+      // 延迟跳转（模拟加载效果），也可直接跳转
+      setTimeout(() => {
+        window.location.href = "indexlo.html"; 
+      }, 500);
+    }
+  </script>
 </body>
-
 </html>

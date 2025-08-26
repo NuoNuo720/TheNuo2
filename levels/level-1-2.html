@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自由电子冒险3 - 1-2：力场迷宫</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body {
+            overflow: hidden;
+            touch-action: none;
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        #player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #6C63FF;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(108, 99, 255, 0.8);
+            z-index: 10;
+        }
+        
+        /* 能量碎片样式 */
+        .energy-shard {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+            z-index: 5;
+            animation: float 3s infinite ease-in-out;
+        }
+        .energy-shard::after {
+            content: "⚡";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .energy-shard:hover::after {
+            opacity: 1;
+        }
+        
+        /* 费米子 - 次要能量源 */
+        .fermion {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #6C63FF;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(108, 99, 255, 0.8);
+            z-index: 5;
+            animation: pulse 2s infinite;
+        }
+        
+        /* 量子晶簇 - 主要能量源 */
+        .quantum-cluster {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: #4ECDC4;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+            z-index: 5;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* 传送门 - 下一关入口 */
+        #portal {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(78,205,196,0.8) 0%, rgba(78,205,196,0.2) 70%);
+            box-shadow: 0 0 20px rgba(78,205,196,0.6);
+            z-index: 5;
+            animation: portalPulse 2s infinite;
+            opacity: 0.3;
+            transition: all 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        #portal.active {
+            opacity: 1;
+            box-shadow: 0 0 30px rgba(78,205,196,0.8);
+        }
+        #portal::after {
+            content: "下一关";
+            position: absolute;
+            top: -25px;
+            font-size: 12px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        @keyframes portalPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 能量节点 - 重点修复样式 */
+        .energy-node {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #4ECDC4;
+            box-shadow: 0 0 15px rgba(78, 205, 196, 0.8);
+            z-index: 5;
+            cursor: pointer;
+            transition: all 0.3s;
+            animation: nodePulse 3s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .energy-node::after {
+            content: "按C激活";
+            position: absolute;
+            top: -25px;
+            font-size: 11px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .energy-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(78, 205, 196, 1);
+        }
+        .energy-node:hover::after {
+            opacity: 1;
+        }
+        .energy-node.nearby {
+            animation: nodeAttention 1s infinite;
+        }
+        @keyframes nodeAttention {
+            0%, 100% { box-shadow: 0 0 20px rgba(78, 205, 196, 1); }
+            50% { box-shadow: 0 0 30px rgba(78, 205, 196, 1); }
+        }
+        @keyframes nodePulse {
+            0% { box-shadow: 0 0 15px rgba(78, 205, 196, 0.8); }
+            50% { box-shadow: 0 0 25px rgba(78, 205, 196, 1); }
+            100% { box-shadow: 0 0 15px rgba(78, 205, 196, 0.8); }
+        }
+        .energy-node.activated {
+            background-color: #3a9e96;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+            animation: none;
+            content: "✓";
+        }
+        .energy-node.activated::after {
+            content: "已激活";
+        }
+        
+        /* 重力陷阱 */
+        .gravity-trap {
+            position: absolute;
+            background-color: rgba(255, 101, 132, 0.3);
+            border: 2px solid #FF6584;
+            border-radius: 8px;
+            z-index: 4;
+            box-shadow: 0 0 15px rgba(255, 101, 132, 0.5);
+            transition: all 0.5s;
+        }
+        .gravity-trap::after {
+            content: "重力陷阱";
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .gravity-trap.inactive {
+            background-color: rgba(255, 101, 132, 0.1);
+            border: 2px solid rgba(255, 101, 132, 0.5);
+            box-shadow: none;
+        }
+        
+        /* 墙壁 */
+        .wall {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 6;
+        }
+        
+        /* 游戏界面HUD */
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            box-sizing: border-box;
+        }
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+        }
+        .item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+        #energy-bar {
+            width: 100px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #energy-fill {
+            height: 100%;
+            width: 100%;
+            background-color: #4ECDC4;
+            transition: width 0.3s;
+        }
+        #timer {
+            color: #FF6584;
+            font-weight: bold;
+        }
+        #shard-count {
+            color: #FFD700;
+        }
+        
+        /* 关卡完成弹窗 */
+        #level-completed, #level-failed {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(25, 25, 45, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            z-index: 200;
+            display: none;
+            min-width: 300px;
+            max-width: 90%;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+        #level-completed {
+            border: 2px solid #6C63FF;
+        }
+        #level-failed {
+            border: 2px solid #FF6584;
+        }
+        .stats {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .stats p {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* 移动设备控制按钮 */
+        #mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            justify-content: space-between;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+        .control-pad {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+        .control-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .up { top: 0; left: 40px; }
+        .down { bottom: 0; left: 40px; }
+        .left { top: 40px; left: 0; }
+        .right { top: 40px; right: 0; }
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 101, 132, 0.2);
+            border: 2px solid #FF6584;
+            color: white;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+        }
+        
+        /* 粒子收集动画 */
+        @keyframes collect {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(2); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .collecting {
+            animation: collect 0.3s forwards;
+        }
+        
+        /* 提示信息 */
+        .tooltip {
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 100;
+            display: none;
+        }
+        
+        /* 收集提示 */
+        .collect-notification {
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            z-index: 20;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-30px); opacity: 0; }
+        }
+        
+        /* 节点激活特效 */
+        .node-effect {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(78, 205, 196, 0.3);
+            z-index: 4;
+            animation: nodeEffect 1s forwards;
+        }
+        @keyframes nodeEffect {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        /* 按键提示 */
+        .key-prompt {
+            position: absolute;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 20;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 玩家 -->
+        <div id="player"></div>
+        
+        <!-- 终点传送门 - 下一关入口 -->
+        <div id="portal">→</div>
+    </div>
+    
+    <!-- 游戏界面HUD -->
+    <div id="hud">
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(78, 205, 196, 0.3); color: #4ECDC4;">
+                <i class="fa fa-battery-full"></i>
+            </div>
+            <span>能量: <div id="energy-bar"><div id="energy-fill"></div></div></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(255, 215, 0, 0.3); color: #FFD700;">
+                <i class="fa fa-bolt"></i>
+            </div>
+            <span>能量碎片: <span id="shard-count">0</span>/10</span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(255, 101, 132, 0.3); color: #FF6584;">
+                <i class="fa fa-clock-o"></i>
+            </div>
+            <span>时间: <span id="timer">03:00</span></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(108, 99, 255, 0.3); color: #6C63FF;">
+                <i class="fa fa-diamond"></i>
+            </div>
+            <span>能量节点: <span id="node-count">0</span>/3</span>
+        </div>
+        <div class="hud-item">
+            <button id="pause-btn" class="bg-black/50 hover:bg-black/70 p-2 rounded-lg transition-colors">
+                <i class="fa fa-pause"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 提示信息 -->
+    <div class="tooltip" id="tooltip">使用方向键移动，靠近能量节点按C键激活</div>
+    
+    <!-- 关卡完成弹窗 -->
+    <div id="level-completed">
+        <h2 class="text-2xl font-bold text-white mb-2">关卡完成！</h2>
+        <p class="text-gray-300 mb-4">恭喜你通过了"力场迷宫"</p>
+        <div class="stats text-white">
+            <p><span>激活的能量节点：</span> <span>3/3</span></p>
+            <p><span>收集的能量碎片：</span> <span id="final-shards">0</span>/10</p>
+            <p><span>剩余时间：</span> <span id="final-time">01:45</span></p>
+        </div>
+        <button id="next-level" class="bg-[#6C63FF] hover:bg-[#6C63FF]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold mt-4">
+            进入下一关 <i class="fa fa-arrow-right ml-1"></i>
+        </button>
+    </div>
+    
+    <!-- 关卡失败弹窗 -->
+    <div id="level-failed">
+        <h2 class="text-2xl font-bold text-white mb-2">挑战失败</h2>
+        <p class="text-gray-300 mb-4">你的能量耗尽或时间已到</p>
+        <div class="stats text-white">
+            <p><span>激活的能量节点：</span> <span id="failed-nodes">0</span>/3</p>
+            <p><span>收集的能量碎片：</span> <span id="failed-shards">0</span>/10</p>
+        </div>
+        <button id="restart-level" class="bg-[#FF6584] hover:bg-[#FF6584]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold mt-4">
+            重新开始
+        </button>
+    </div>
+    
+    <!-- 移动设备控制按钮 -->
+    <div id="mobile-controls">
+        <div class="control-pad">
+            <div class="control-btn up" data-key="ArrowUp">↑</div>
+            <div class="control-btn down" data-key="ArrowDown">↓</div>
+            <div class="control-btn left" data-key="ArrowLeft">←</div>
+            <div class="control-btn right" data-key="ArrowRight">→</div>
+        </div>
+        <button class="action-btn" id="mobile-action">激活</button>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            player: {
+                x: 50,
+                y: 50,
+                speed: 4,
+                width: 20,
+                height: 20,
+                energy: 100
+            },
+            keys: {},
+            collectibles: {
+                energyShards: [],  // 能量碎片
+                fermions: [],      // 费米子
+                quantumClusters: [] // 量子晶簇
+            },
+            collected: {
+                energyShards: 0,
+                fermions: 0,
+                quantumClusters: 0
+            },
+            totalShards: 10, // 总能量碎片数量
+            energyNodes: [],
+            activatedNodes: 0,
+            requiredNodes: 3,
+            gravityTraps: [],
+            walls: [],
+            portal: {
+                x: 0,
+                y: 0,
+                width: 60,
+                height: 60,
+                active: false
+            },
+            gameContainer: null,
+            containerWidth: 0,
+            containerHeight: 0,
+            isCompleted: false,
+            isFailed: false,
+            paused: false,
+            timeRemaining: 180, // 3分钟
+            trapCooldown: {},
+            showTooltip: true
+        };
+
+        // DOM元素
+        const elements = {
+            player: document.getElementById('player'),
+            portal: document.getElementById('portal'),
+            nodeCount: document.getElementById('node-count'),
+            shardCount: document.getElementById('shard-count'),
+            energyFill: document.getElementById('energy-fill'),
+            timer: document.getElementById('timer'),
+            levelCompleted: document.getElementById('level-completed'),
+            levelFailed: document.getElementById('level-failed'),
+            finalTime: document.getElementById('final-time'),
+            finalShards: document.getElementById('final-shards'),
+            failedNodes: document.getElementById('failed-nodes'),
+            failedShards: document.getElementById('failed-shards'),
+            nextLevel: document.getElementById('next-level'),
+            restartLevel: document.getElementById('restart-level'),
+            pauseBtn: document.getElementById('pause-btn'),
+            gameContainer: document.getElementById('game-container'),
+            tooltip: document.getElementById('tooltip'),
+            mobileAction: document.getElementById('mobile-action')
+        };
+
+        // 初始化游戏
+        function init() {
+            gameState.gameContainer = elements.gameContainer;
+            gameState.containerWidth = gameState.gameContainer.clientWidth;
+            gameState.containerHeight = gameState.gameContainer.clientHeight;
+            
+            // 设置玩家初始位置
+            gameState.player.x = 50;
+            gameState.player.y = 50;
+            updatePlayerPosition();
+            
+            // 创建迷宫墙壁
+            createWalls();
+            
+            // 创建重力陷阱
+            createGravityTraps();
+            
+            // 创建能量节点（修复交互问题的核心部分）
+            createEnergyNodes();
+            
+            // 设置传送门位置
+            gameState.portal.x = gameState.containerWidth - 100;
+            gameState.portal.y = gameState.containerHeight - 100;
+            elements.portal.style.left = `${gameState.portal.x}px`;
+            elements.portal.style.top = `${gameState.portal.y}px`;
+            
+            // 生成收集品
+            generateCollectibles();
+            
+            // 事件监听 - 增强的交互处理
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            window.addEventListener('resize', handleResize);
+            elements.nextLevel.addEventListener('click', goToNextLevel);
+            elements.restartLevel.addEventListener('click', restartLevel);
+            elements.pauseBtn.addEventListener('click', togglePause);
+            elements.mobileAction.addEventListener('click', activateNearbyNode);
+            elements.mobileAction.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                activateNearbyNode();
+            });
+            
+            // 启动计时器
+            startTimer();
+            
+            // 开始游戏循环
+            gameLoop();
+        }
+
+        // 创建能量节点（修复的核心部分）
+        function createEnergyNodes() {
+            // 三个节点分别位于不同区域，确保玩家容易找到
+            const nodes = [
+                {x: gameState.containerWidth * 0.3, y: gameState.containerHeight * 0.25},
+                {x: gameState.containerWidth * 0.6, y: gameState.containerHeight * 0.5},
+                {x: gameState.containerWidth * 0.25, y: gameState.containerHeight * 0.75}
+            ];
+            
+            // 创建节点元素
+            nodes.forEach((node, index) => {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'energy-node';
+                nodeElement.style.left = `${node.x}px`;
+                nodeElement.style.top = `${node.y}px`;
+                nodeElement.dataset.id = index;
+                nodeElement.textContent = (index + 1); // 显示节点编号
+                
+                // 修复：添加多种交互方式确保节点能被激活
+                // 1. 点击激活
+                nodeElement.addEventListener('click', () => activateNode(index));
+                
+                // 2. 触摸激活（移动设备）
+                nodeElement.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    activateNode(index);
+                });
+                
+                // 3. 鼠标悬停时显示提示
+                nodeElement.addEventListener('mouseenter', () => {
+                    showNodePrompt(node.x + 40, node.y, index);
+                });
+                
+                nodeElement.addEventListener('mouseleave', () => {
+                    removeNodePrompt(index);
+                });
+                
+                gameState.gameContainer.appendChild(nodeElement);
+                gameState.energyNodes.push({
+                    ...node, 
+                    id: index, 
+                    activated: false,
+                    element: nodeElement // 保存元素引用，便于后续操作
+                });
+            });
+        }
+        
+        // 显示节点操作提示
+        function showNodePrompt(x, y, nodeId) {
+            // 先移除已有的提示
+            removeNodePrompt(nodeId);
+            
+            const prompt = document.createElement('div');
+            prompt.className = 'key-prompt';
+            prompt.style.left = `${x}px`;
+            prompt.style.top = `${y}px`;
+            prompt.textContent = '按C激活';
+            prompt.dataset.nodeId = nodeId;
+            
+            gameState.gameContainer.appendChild(prompt);
+        }
+        
+        // 移除节点操作提示
+        function removeNodePrompt(nodeId) {
+            const existingPrompt = document.querySelector(`.key-prompt[data-nodeId="${nodeId}"]`);
+            if (existingPrompt) {
+                existingPrompt.remove();
+            }
+        }
+
+        // 激活能量节点（完全修复的激活逻辑）
+        function activateNode(index) {
+            const node = gameState.energyNodes[index];
+            if (node.activated) return;
+            
+            // 检查玩家是否在节点附近（扩大检测范围，确保更容易激活）
+            const distance = getDistance(
+                gameState.player.x + gameState.player.width/2,
+                gameState.player.y + gameState.player.height/2,
+                node.x + 17.5, // 节点中心（节点大小已调整为35px）
+                node.y + 17.5
+            );
+            
+            // 修复：扩大激活范围至70px，更容易触发
+            if (distance < 70) {
+                // 激活节点
+                node.activated = true;
+                gameState.activatedNodes++;
+                elements.nodeCount.textContent = gameState.activatedNodes;
+                
+                // 更新节点样式
+                node.element.classList.add('activated');
+                node.element.textContent = "✓";
+                
+                // 添加明显的激活特效
+                createNodeEffect(node.x + 17.5, node.y + 17.5);
+                
+                // 播放激活音效（视觉替代）
+                createActivationRipple(node.x + 17.5, node.y + 17.5);
+                
+                // 显示明确的激活提示
+                showNotification(node.x + 30, node.y, `节点 ${index+1} 已激活!`, "#4ECDC4");
+                
+                // 暂时关闭附近的陷阱
+                deactivateNearbyTraps(node.x, node.y, 150);
+                
+                // 检查是否所有节点都已激活，如果是则激活传送门
+                if (gameState.activatedNodes >= gameState.requiredNodes) {
+                    activatePortal();
+                }
+            } else {
+                // 修复：当玩家太远时显示提示
+                showNotification(
+                    node.x + 17.5, 
+                    node.y - 20, 
+                    "靠近后按C激活", 
+                    "#FFD700"
+                );
+            }
+        }
+        
+        // 创建激活波纹特效
+        function createActivationRipple(x, y) {
+            for (let i = 1; i <= 3; i++) {
+                const ripple = document.createElement('div');
+                ripple.style.position = 'absolute';
+                ripple.style.width = `${10 + i * 20}px`;
+                ripple.style.height = `${10 + i * 20}px`;
+                ripple.style.left = `${x - (10 + i * 20)/2}px`;
+                ripple.style.top = `${y - (10 + i * 20)/2}px`;
+                ripple.style.borderRadius = '50%';
+                ripple.style.border = `2px solid rgba(78, 205, 196, ${0.8 - i * 0.2})`;
+                ripple.style.zIndex = '4';
+                ripple.style.animation = `ripple ${1 + i * 0.3}s forwards`;
+                
+                gameState.gameContainer.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, (1 + i * 0.3) * 1000);
+            }
+        }
+        
+        // 添加波纹动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                0% { transform: scale(0); opacity: 1; }
+                100% { transform: scale(1); opacity: 0; }
+            }
+            @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 创建节点激活特效
+        function createNodeEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'node-effect';
+            effect.style.left = `${x - 40}px`;
+            effect.style.top = `${y - 40}px`;
+            gameState.gameContainer.appendChild(effect);
+            
+            // 动画结束后移除元素
+            setTimeout(() => {
+                effect.remove();
+            }, 1000);
+        }
+
+        // 激活传送门
+        function activatePortal() {
+            gameState.portal.active = true;
+            elements.portal.classList.add('active');
+            
+            // 显示明确提示
+            elements.tooltip.textContent = "所有节点已激活，进入传送门前往下一关!";
+            elements.tooltip.style.display = 'block';
+            
+            setTimeout(() => {
+                elements.tooltip.style.display = 'none';
+            }, 5000);
+        }
+
+        // 关闭附近的陷阱
+        function deactivateNearbyTraps(x, y, radius) {
+            gameState.gravityTraps.forEach(trap => {
+                const distance = getDistance(x, y, trap.x + trap.width/2, trap.y + trap.height/2);
+                if (distance < radius) {
+                    trap.active = false;
+                    gameState.trapCooldown[trap.id] = 15000; // 15秒
+                    
+                    // 更新陷阱样式
+                    const trapElement = document.querySelector(`.gravity-trap[data-id="${trap.id}"]`);
+                    trapElement.classList.add('inactive');
+                    
+                    // 显示提示
+                    showNotification(trap.x + trap.width, trap.y, "陷阱已关闭!", "#FF6584");
+                }
+            });
+        }
+
+        // 显示收集提示
+        function showNotification(x, y, text, color) {
+            const notification = document.createElement('div');
+            notification.className = 'collect-notification';
+            notification.style.left = `${x}px`;
+            notification.style.top = `${y}px`;
+            notification.style.color = color;
+            notification.textContent = text;
+            
+            gameState.gameContainer.appendChild(notification);
+            
+            // 动画结束后移除
+            setTimeout(() => {
+                notification.remove();
+            }, 1000);
+        }
+
+        // 计算两点之间的距离
+        function getDistance(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // 生成收集品
+        function generateCollectibles() {
+            // 将屏幕分成6个区域，确保收集品分布均匀
+            const regions = [
+                {xMin: 0.1, xMax: 0.4, yMin: 0.1, yMax: 0.4},  // 左上
+                {xMin: 0.6, xMax: 0.9, yMin: 0.1, yMax: 0.4},  // 右上
+                {xMin: 0.1, xMax: 0.4, yMin: 0.6, yMax: 0.9},  // 左下
+                {xMin: 0.6, xMax: 0.9, yMin: 0.6, yMax: 0.9},  // 右下
+                {xMin: 0.1, xMax: 0.4, yMin: 0.4, yMax: 0.6},  // 左中
+                {xMin: 0.6, xMax: 0.9, yMin: 0.4, yMax: 0.6}   // 右中
+            ];
+            
+            // 生成能量碎片
+            for (let i = 0; i < gameState.totalShards; i++) {
+                const region = regions[i % regions.length];
+                let x, y;
+                
+                // 确保不在墙壁内
+                do {
+                    x = gameState.containerWidth * (region.xMin + Math.random() * (region.xMax - region.xMin));
+                    y = gameState.containerHeight * (region.yMin + Math.random() * (region.yMax - region.yMin));
+                } while (isPositionInWall(x, y));
+                
+                const shard = document.createElement('div');
+                shard.className = 'energy-shard';
+                shard.style.left = `${x}px`;
+                shard.style.top = `${y}px`;
+                
+                gameState.gameContainer.appendChild(shard);
+                gameState.collectibles.energyShards.push({
+                    element: shard,
+                    x,
+                    y
+                });
+            }
+            
+            // 生成费米子
+            regions.forEach(region => {
+                let x, y;
+                do {
+                    x = gameState.containerWidth * (region.xMin + Math.random() * (region.xMax - region.xMin));
+                    y = gameState.containerHeight * (region.yMin + Math.random() * (region.yMax - region.yMin));
+                } while (isPositionInWall(x, y));
+                
+                const fermion = document.createElement('div');
+                fermion.className = 'fermion';
+                fermion.style.left = `${x}px`;
+                fermion.style.top = `${y}px`;
+                
+                gameState.gameContainer.appendChild(fermion);
+                gameState.collectibles.fermions.push({
+                    element: fermion,
+                    x,
+                    y
+                });
+            });
+            
+            // 生成量子晶簇
+            regions.forEach(region => {
+                let x, y;
+                do {
+                    x = gameState.containerWidth * (region.xMin + Math.random() * (region.xMax - region.xMin));
+                    y = gameState.containerHeight * (region.yMin + Math.random() * (region.yMax - region.yMin));
+                } while (isPositionInWall(x, y));
+                
+                const cluster = document.createElement('div');
+                cluster.className = 'quantum-cluster';
+                cluster.style.left = `${x}px`;
+                cluster.style.top = `${y}px`;
+                
+                gameState.gameContainer.appendChild(cluster);
+                gameState.collectibles.quantumClusters.push({
+                    element: cluster,
+                    x,
+                    y
+                });
+            });
+        }
+
+        // 检查位置是否在墙壁内
+        function isPositionInWall(x, y) {
+            return gameState.walls.some(wall => {
+                return x > wall.x && x < wall.x + wall.width &&
+                       y > wall.y && y < wall.y + wall.height;
+            });
+        }
+
+        // 处理键盘按下（增强的按键检测）
+        function handleKeyDown(e) {
+            gameState.keys[e.key] = true;
+            
+            // 修复：同时支持小写c和大写C，确保兼容性
+            if (e.key.toLowerCase() === 'c') {
+                activateNearbyNode();
+            }
+        }
+
+        // 处理键盘释放
+        function handleKeyUp(e) {
+            gameState.keys[e.key] = false;
+        }
+
+        // 激活附近的节点（优化的检测逻辑）
+        function activateNearbyNode() {
+            // 修复：遍历所有节点，检查是否有可激活的
+            let activated = false;
+            gameState.energyNodes.forEach((node, index) => {
+                if (!node.activated) {
+                    const distance = getDistance(
+                        gameState.player.x + gameState.player.width/2,
+                        gameState.player.y + gameState.player.height/2,
+                        node.x + 17.5, // 节点中心
+                        node.y + 17.5
+                    );
+                    
+                    // 修复：扩大检测范围
+                    if (distance < 70) {
+                        activateNode(index);
+                        activated = true;
+                    }
+                }
+            });
+            
+            // 修复：如果没有激活任何节点，显示提示
+            if (!activated) {
+                showNotification(
+                    gameState.player.x + 25, 
+                    gameState.player.y - 20, 
+                    "附近没有可激活的节点", 
+                    "#FF6584"
+                );
+            }
+        }
+
+        // 更新玩家位置
+        function updatePlayerPosition() {
+            elements.player.style.left = `${gameState.player.x}px`;
+            elements.player.style.top = `${gameState.player.y}px`;
+            
+            // 检查玩家是否靠近任何节点，提供视觉反馈
+            checkNearbyNodes();
+        }
+        
+        // 检查玩家是否靠近节点并提供反馈
+        function checkNearbyNodes() {
+            gameState.energyNodes.forEach(node => {
+                if (!node.activated) {
+                    const distance = getDistance(
+                        gameState.player.x + gameState.player.width/2,
+                        gameState.player.y + gameState.player.height/2,
+                        node.x + 17.5,
+                        node.y + 17.5
+                    );
+                    
+                    // 玩家靠近时，节点有特殊动画
+                    if (distance < 100) {
+                        node.element.classList.add('nearby');
+                        // 显示提示
+                        if (distance < 80 && gameState.showTooltip) {
+                            elements.tooltip.textContent = "按C键激活能量节点";
+                            elements.tooltip.style.display = 'block';
+                            
+                            setTimeout(() => {
+                                elements.tooltip.style.display = 'none';
+                            }, 2000);
+                            
+                            gameState.showTooltip = false;
+                            setTimeout(() => {
+                                gameState.showTooltip = true;
+                            }, 3000);
+                        }
+                    } else {
+                        node.element.classList.remove('nearby');
+                    }
+                }
+            });
+        }
+
+        // 移动玩家并检测碰撞
+        function movePlayer() {
+            let newX = gameState.player.x;
+            let newY = gameState.player.y;
+            
+            // 计算新位置
+            if (gameState.keys.ArrowUp || gameState.keys.KeyW) {
+                newY = Math.max(0, newY - gameState.player.speed);
+            }
+            if (gameState.keys.ArrowDown || gameState.keys.KeyS) {
+                newY = Math.min(
+                    gameState.containerHeight - gameState.player.height, 
+                    newY + gameState.player.speed
+                );
+            }
+            if (gameState.keys.ArrowLeft || gameState.keys.KeyA) {
+                newX = Math.max(0, newX - gameState.player.speed);
+            }
+            if (gameState.keys.ArrowRight || gameState.keys.KeyD) {
+                newX = Math.min(
+                    gameState.containerWidth - gameState.player.width, 
+                    newX + gameState.player.speed
+                );
+            }
+            
+            // 检测与墙壁的碰撞
+            const wouldCollideWithWall = gameState.walls.some(wall => {
+                return newX < wall.x + wall.width &&
+                       newX + gameState.player.width > wall.x &&
+                       newY < wall.y + wall.height &&
+                       newY + gameState.player.height > wall.y;
+            });
+            
+            // 如果不会碰撞，更新位置
+            if (!wouldCollideWithWall) {
+                gameState.player.x = newX;
+                gameState.player.y = newY;
+                updatePlayerPosition();
+            }
+        }
+
+        // 检测碰撞和收集
+        function checkCollisions() {
+            // 检测与能量碎片的碰撞
+            gameState.collectibles.energyShards = gameState.collectibles.energyShards.filter(shard => {
+                if (isColliding(
+                    gameState.player, 
+                    {x: shard.x, y: shard.y, width: 10, height: 10}
+                )) {
+                    shard.element.classList.add('collecting');
+                    showNotification(shard.x + 10, shard.y, "+5碎片", "#FFD700");
+                    
+                    setTimeout(() => {
+                        if (shard.element && shard.element.parentNode) {
+                            shard.element.remove();
+                        }
+                    }, 300);
+                    
+                    gameState.collected.energyShards++;
+                    elements.shardCount.textContent = gameState.collected.energyShards;
+                    gameState.player.energy = Math.min(100, gameState.player.energy + 5);
+                    updateEnergyBar();
+                    return false;
+                }
+                return true;
+            });
+            
+            // 检测与费米子的碰撞
+            gameState.collectibles.fermions = gameState.collectibles.fermions.filter(fermion => {
+                if (isColliding(
+                    gameState.player, 
+                    {x: fermion.x, y: fermion.y, width: 8, height: 8}
+                )) {
+                    fermion.element.classList.add('collecting');
+                    showNotification(fermion.x + 10, fermion.y, "+2能量", "#6C63FF");
+                    
+                    setTimeout(() => {
+                        fermion.element.remove();
+                    }, 300);
+                    
+                    gameState.collected.fermions++;
+                    gameState.player.energy = Math.min(100, gameState.player.energy + 2);
+                    updateEnergyBar();
+                    return false;
+                }
+                return true;
+            });
+            
+            // 检测与量子晶簇的碰撞
+            gameState.collectibles.quantumClusters = gameState.collectibles.quantumClusters.filter(cluster => {
+                if (isColliding(
+                    gameState.player, 
+                    {x: cluster.x, y: cluster.y, width: 14, height: 14}
+                )) {
+                    cluster.element.classList.add('collecting');
+                    showNotification(cluster.x + 15, cluster.y, "+20能量", "#4ECDC4");
+                    
+                    setTimeout(() => {
+                        cluster.element.remove();
+                    }, 300);
+                    
+                    gameState.collected.quantumClusters++;
+                    gameState.player.energy = Math.min(100, gameState.player.energy + 20);
+                    updateEnergyBar();
+                    return false;
+                }
+                return true;
+            });
+            
+            // 检测与重力陷阱的碰撞
+            gameState.gravityTraps.forEach(trap => {
+                if (trap.active && isColliding(gameState.player, trap)) {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 0.1);
+                    updateEnergyBar();
+                    
+                    if (Math.random() < 0.1) {
+                        showNotification(
+                            gameState.player.x + 25, 
+                            gameState.player.y, 
+                            "-能量", 
+                            "#FF6584"
+                        );
+                    }
+                    
+                    // 重力吸引效果
+                    const trapCenterX = trap.x + trap.width / 2;
+                    const trapCenterY = trap.y + trap.height / 2;
+                    const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                    const playerCenterY = gameState.player.y + gameState.player.height / 2;
+                    
+                    const dx = trapCenterX - playerCenterX;
+                    const dy = trapCenterY - playerCenterY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 0) {
+                        const force = 0.5 * (1 - distance / (trap.width / 2));
+                        gameState.player.x += (dx / distance) * force;
+                        gameState.player.y += (dy / distance) * force;
+                        updatePlayerPosition();
+                    }
+                }
+            });
+            
+            // 检测能量是否耗尽
+            if (gameState.player.energy <= 0 && !gameState.isFailed) {
+                failLevel();
+            }
+            
+            // 检测是否激活所有节点并到达传送门
+            if (
+                gameState.portal.active &&
+                isColliding(gameState.player, gameState.portal) &&
+                !gameState.isCompleted
+            ) {
+                completeLevel();
+            }
+        }
+
+        // 更新陷阱状态
+        function updateTraps(deltaTime) {
+            gameState.gravityTraps.forEach(trap => {
+                if (gameState.trapCooldown[trap.id] > 0) {
+                    gameState.trapCooldown[trap.id] -= deltaTime;
+                    
+                    if (gameState.trapCooldown[trap.id] <= 0) {
+                        trap.active = true;
+                        const trapElement = document.querySelector(`.gravity-trap[data-id="${trap.id}"]`);
+                        trapElement.classList.remove('inactive');
+                        
+                        showNotification(trap.x + trap.width, trap.y, "陷阱已激活!", "#FF6584");
+                    }
+                }
+            });
+        }
+
+        // 碰撞检测函数
+        function isColliding(a, b) {
+            return a.x < b.x + b.width &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.height &&
+                   a.y + a.height > b.y;
+        }
+
+        // 更新能量条
+        function updateEnergyBar() {
+            elements.energyFill.style.width = `${gameState.player.energy}%`;
+            
+            if (gameState.player.energy < 30) {
+                elements.energyFill.style.backgroundColor = '#FF6584';
+                
+                if (gameState.player.energy < 20 && gameState.showTooltip) {
+                    elements.tooltip.textContent = "能量过低！收集量子晶簇和能量碎片补充";
+                    elements.tooltip.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        elements.tooltip.style.display = 'none';
+                    }, 3000);
+                    
+                    gameState.showTooltip = false;
+                    setTimeout(() => {
+                        gameState.showTooltip = true;
+                    }, 5000);
+                }
+            } else {
+                elements.energyFill.style.backgroundColor = '#4ECDC4';
+            }
+        }
+
+        // 启动计时器
+        function startTimer() {
+            setInterval(() => {
+                if (!gameState.paused && !gameState.isCompleted && !gameState.isFailed) {
+                    gameState.timeRemaining--;
+                    
+                    if (gameState.timeRemaining % 60 === 0 && gameState.timeRemaining > 0) {
+                        gameState.player.energy = Math.max(0, gameState.player.energy - 5);
+                        updateEnergyBar();
+                    }
+                    
+                    const minutes = Math.floor(gameState.timeRemaining / 60);
+                    const seconds = gameState.timeRemaining % 60;
+                    elements.timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (gameState.timeRemaining <= 0) {
+                        failLevel();
+                    }
+                    
+                    if (gameState.timeRemaining <= 30) {
+                        elements.timer.style.color = '#FF6584';
+                        elements.timer.style.animation = 'blink 1s infinite';
+                        
+                        if (gameState.timeRemaining === 30 && gameState.showTooltip) {
+                            elements.tooltip.textContent = "时间不多了！尽快激活所有节点";
+                            elements.tooltip.style.display = 'block';
+                            
+                            setTimeout(() => {
+                                elements.tooltip.style.display = 'none';
+                            }, 3000);
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        // 完成关卡
+        function completeLevel() {
+            gameState.isCompleted = true;
+            elements.finalTime.textContent = elements.timer.textContent;
+            elements.finalShards.textContent = gameState.collected.energyShards;
+            elements.levelCompleted.style.display = 'block';
+        }
+
+        // 关卡失败
+        function failLevel() {
+            gameState.isFailed = true;
+            elements.failedNodes.textContent = gameState.activatedNodes;
+            elements.failedShards.textContent = gameState.collected.energyShards;
+            elements.levelFailed.style.display = 'block';
+        }
+
+        // 前往下一关
+        function goToNextLevel() {
+            alert('即将进入下一关：量子隧道！');
+            window.location.href = 'level-1-3.html';
+        }
+
+        // 重新开始关卡
+        function restartLevel() {
+            window.location.reload();
+        }
+
+        // 切换暂停状态
+        function togglePause() {
+            gameState.paused = !gameState.paused;
+            elements.pauseBtn.innerHTML = gameState.paused ? 
+                '<i class="fa fa-play"></i>' : 
+                '<i class="fa fa-pause"></i>';
+                
+            if (gameState.paused) {
+                const pauseMenu = document.createElement('div');
+                pauseMenu.style.position = 'fixed';
+                pauseMenu.style.top = '50%';
+                pauseMenu.style.left = '50%';
+                pauseMenu.style.transform = 'translate(-50%, -50%)';
+                pauseMenu.style.backgroundColor = 'rgba(25, 25, 45, 0.95)';
+                pauseMenu.style.border = '2px solid #6C63FF';
+                pauseMenu.style.borderRadius = '15px';
+                pauseMenu.style.padding = '20px';
+                pauseMenu.style.textAlign = 'center';
+                pauseMenu.style.zIndex = '300';
+                pauseMenu.style.minWidth = '200px';
+                pauseMenu.innerHTML = `
+                    <h3 class="text-xl font-bold text-white mb-4">游戏暂停</h3>
+                    <button id="resume-btn" class="bg-[#6C63FF] hover:bg-[#6C63FF]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold mb-2">
+                        继续游戏
+                    </button>
+                    <button id="restart-btn" class="bg-[#FF6584] hover:bg-[#FF6584]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold">
+                        重新开始
+                    </button>
+                `;
+                document.body.appendChild(pauseMenu);
+                
+                document.getElementById('resume-btn').addEventListener('click', () => {
+                    gameState.paused = false;
+                    elements.pauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
+                    pauseMenu.remove();
+                });
+                
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    window.location.reload();
+                });
+            }
+        }
+
+        // 处理窗口大小变化
+        function handleResize() {
+            gameState.containerWidth = gameState.gameContainer.clientWidth;
+            gameState.containerHeight = gameState.gameContainer.clientHeight;
+            
+            gameState.player.x = Math.min(gameState.player.x, gameState.containerWidth - gameState.player.width);
+            gameState.player.y = Math.min(gameState.player.y, gameState.containerHeight - gameState.player.height);
+            updatePlayerPosition();
+        }
+
+        // 创建迷宫墙壁
+        function createWalls() {
+            const wallSize = Math.min(gameState.containerWidth, gameState.containerHeight) / 12;
+            
+            const walls = [
+                // 外框墙壁
+                {x: 0, y: 0, width: gameState.containerWidth, height: 10},
+                {x: 0, y: 0, width: 10, height: gameState.containerHeight},
+                {x: 0, y: gameState.containerHeight - 10, width: gameState.containerWidth, height: 10},
+                {x: gameState.containerWidth - 10, y: 0, width: 10, height: gameState.containerHeight},
+                
+                // 横向墙壁 - 均匀分布
+                {x: wallSize * 2, y: wallSize * 1, width: wallSize * 3, height: 10},
+                {x: wallSize * 6, y: wallSize * 1, width: wallSize * 3, height: 10},
+                
+                {x: wallSize * 1, y: wallSize * 3, width: wallSize * 3, height: 10},
+                {x: wallSize * 6, y: wallSize * 3, width: wallSize * 3, height: 10},
+                
+                {x: wallSize * 2, y: wallSize * 5, width: wallSize * 3, height: 10},
+                {x: wallSize * 6, y: wallSize * 5, width: wallSize * 3, height: 10},
+                
+                {x: wallSize * 1, y: wallSize * 7, width: wallSize * 3, height: 10},
+                {x: wallSize * 6, y: wallSize * 7, width: wallSize * 3, height: 10},
+                
+                // 纵向墙壁 - 均匀分布
+                {x: wallSize * 2, y: wallSize * 2, width: 10, height: wallSize * 2},
+                {x: wallSize * 6, y: wallSize * 2, width: 10, height: wallSize * 2},
+                
+                {x: wallSize * 2, y: wallSize * 4, width: 10, height: wallSize * 2},
+                {x: wallSize * 6, y: wallSize * 4, width: 10, height: wallSize * 2},
+                
+                {x: wallSize * 2, y: wallSize * 6, width: 10, height: wallSize * 2},
+                {x: wallSize * 6, y: wallSize * 6, width: 10, height: wallSize * 2}
+            ];
+            
+            walls.forEach(wall => {
+                const wallElement = document.createElement('div');
+                wallElement.className = 'wall';
+                wallElement.style.left = `${wall.x}px`;
+                wallElement.style.top = `${wall.y}px`;
+                wallElement.style.width = `${wall.width}px`;
+                wallElement.style.height = `${wall.height}px`;
+                
+                gameState.gameContainer.appendChild(wallElement);
+                gameState.walls.push(wall);
+            });
+        }
+
+        // 创建重力陷阱
+        function createGravityTraps() {
+            const trapSize = Math.min(gameState.containerWidth, gameState.containerHeight) / 15;
+            
+            const traps = [
+                {x: gameState.containerWidth * 0.2, y: gameState.containerHeight * 0.2, width: trapSize, height: trapSize},
+                {x: gameState.containerWidth * 0.7, y: gameState.containerHeight * 0.3, width: trapSize, height: trapSize},
+                {x: gameState.containerWidth * 0.3, y: gameState.containerHeight * 0.6, width: trapSize, height: trapSize},
+                {x: gameState.containerWidth * 0.8, y: gameState.containerHeight * 0.8, width: trapSize, height: trapSize}
+            ];
+            
+            traps.forEach((trap, index) => {
+                const trapElement = document.createElement('div');
+                trapElement.className = 'gravity-trap';
+                trapElement.style.left = `${trap.x}px`;
+                trapElement.style.top = `${trap.y}px`;
+                trapElement.style.width = `${trap.width}px`;
+                trapElement.style.height = `${trap.height}px`;
+                trapElement.dataset.id = index;
+                
+                gameState.gameContainer.appendChild(trapElement);
+                gameState.gravityTraps.push({...trap, id: index, active: true});
+                gameState.trapCooldown[index] = 0;
+            });
+        }
+
+        // 游戏主循环
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            const deltaTime = timestamp - lastTime || 0;
+            lastTime = timestamp;
+            
+            if (!gameState.paused && !gameState.isCompleted && !gameState.isFailed) {
+                movePlayer();
+                checkCollisions();
+                updateTraps(deltaTime);
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 启动游戏
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

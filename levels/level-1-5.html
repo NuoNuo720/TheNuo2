@@ -1,0 +1,2962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维度    粒子战斗：经典    熵增守卫</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6C63FF',
+                        secondary: '#FF6584',
+                        accent: '#FFD166',
+                        danger: '#E71D36',
+                        success: '#06D6A0',
+                        dark: '#19192D',
+                        darker: '#101020'
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 0 10px rgba(108, 99, 255, 0.8);
+            }
+            .glow {
+                box-shadow: 0 0 15px rgba(108, 99, 255, 0.8);
+            }
+            .glow-red {
+                box-shadow: 0 0 15px rgba(231, 29, 54, 0.8);
+            }
+            .glow-yellow {
+                box-shadow: 0 0 15px rgba(255, 209, 102, 0.8);
+            }
+            .pixel-corners {
+                clip-path: polygon(
+                    0% 6px, 6px 0%, calc(100% - 6px) 0%, 100% 6px,
+                    100% calc(100% - 6px), calc(100% - 6px) 100%,
+                    6px 100%, 0% calc(100% - 6px)
+                );
+            }
+        }
+    </style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+            background-color: #0A0A16;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #particle-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        #player {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #6C63FF;
+            border-radius: 8px;
+            z-index: 5;
+            transition: transform 0.1s;
+        }
+        
+        #player.shield-active {
+            background-color: rgba(46, 196, 182, 0.8);
+            box-shadow: 0 0 15px rgba(46, 196, 182, 0.8);
+        }
+        
+        #player.damaged {
+            animation: damageFlash 0.5s;
+        }
+        
+        #boss {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-color: #E71D36;
+            border-radius: 15px;
+            z-index: 5;
+            transition: transform 0.2s, background-color 0.3s;
+        }
+        
+        #boss.shield-active {
+            box-shadow: 0 0 20px rgba(231, 29, 54, 0.8);
+            border: 2px solid rgba(231, 29, 54, 0.8);
+        }
+        
+        #boss.enraged {
+            background-color: #EF476F;
+            animation: enragePulse 0.5s infinite alternate;
+            box-shadow: 0 0 30px rgba(231, 29, 54, 0.9);
+        }
+        
+        .boss-shield-generator {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(46, 196, 182, 0.6);
+            border-radius: 50%;
+            z-index: 4;
+            transition: opacity 0.3s;
+            box-shadow: 0 0 10px rgba(46, 196, 182, 0.6);
+        }
+        
+        .boss-shield-generator.hit {
+            background-color: rgba(255, 209, 102, 0.8);
+            box-shadow: 0 0 15px rgba(255, 209, 102, 0.8);
+        }
+        
+        .boss-shield-generator.targeted {
+            animation: highlight 2s infinite;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 3;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .particle.fermion {
+            background-color: #6C63FF;
+            box-shadow: 0 0 5px rgba(108, 99, 255, 0.8);
+        }
+        
+        .particle.boson {
+            background-color: #FF6584;
+            box-shadow: 0 0 5px rgba(255, 101, 132, 0.8);
+        }
+        
+        .particle.higgs {
+            background-color: #FFD166;
+            box-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
+            
+            z-index: 4;
+        }
+        
+        
+        
+        .collection-effect {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 6;
+        }
+        
+        .explosion {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 7;
+        }
+        
+        #photon-beam {
+            position: absolute;
+            background-color: rgba(108, 99, 255, 0.7);
+            transform-origin: left center;
+            z-index: 7;
+            display: none;
+            box-shadow: 0 0 10px rgba(108, 99, 255, 0.8);
+        }
+        
+        .boss-projectile {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: rgba(231, 29, 54, 0.8);
+            border-radius: 50%;
+            z-index: 7;
+            box-shadow: 0 0 5px rgba(231, 29, 54, 0.8);
+        }
+        
+        .boss-laser {
+            position: absolute;
+            background-color: rgba(231, 29, 54, 0.7);
+            transform-origin: left center;
+            z-index: 7;
+            box-shadow: 0 0 15px rgba(231, 29, 54, 0.8);
+        }
+        
+        .wall {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.1);
+            z-index: 6;
+        }
+        
+        .platform {
+            position: absolute;
+            background-color: rgba(108, 99, 255, 0.2);
+            z-index: 6;
+        }
+        
+        #hud {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            z-index: 100;
+        }
+        .hud-item {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .item-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #boss-name {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            z-index: 100;
+            font-weight: bold;
+        }
+        #boss-health {
+            position: fixed;
+            top: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            height: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            z-index: 100;
+        }
+        #boss-health-fill {
+            height: 100%;
+            width: 100%;
+            background-color: #E71D36;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        
+        #player-health {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30%;
+            height: 8px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            z-index: 100;
+        }
+        #player-health-fill {
+            height: 100%;
+            width: 100%;
+            background-color: #6C63FF;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(25, 25, 45, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 9999;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: notificationSlideIn 0.3s forwards, notificationSlideOut 0.3s 2.7s forwards;
+        }
+        
+        .combat-hint {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(25, 25, 45, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            z-index: 9998;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeInOut 4s forwards;
+            border-left: 4px solid #FFD166;
+        }
+        
+        #combine-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(15, 15, 35, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            z-index: 200;
+            display: none;
+        }
+        .panel-title {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .particle-counts {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .count-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .count-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        .recipes {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .recipe {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .recipe:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        .recipe.available {
+            border: 1px solid #FFD166;
+            box-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
+        }
+        .recipe-ingredients {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        .ingredient {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .recipe-name {
+            color: white;
+            font-size: 14px;
+        }
+        
+        #level-completed, #game-over, #cutscene, #game-guide {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        #level-completed, #game-over {
+            display: none;
+        }
+        #cutscene-title {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #6C63FF;
+        }
+        #cutscene-text {
+            font-size: 16px;
+            max-width: 600px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        button {
+            background-color: #6C63FF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #5a52e0;
+        }
+        
+        #mobile-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            display: none;
+        }
+        .control-pad {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        .control-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+        .up {
+            top: 0;
+            left: 40px;
+        }
+        .down {
+            bottom: 0;
+            left: 40px;
+        }
+        .left {
+            top: 40px;
+            left: 0;
+        }
+        .right {
+            top: 40px;
+            right: 0;
+        }
+        .action-btn, .combine-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .action-btn {
+            background-color: rgba(231, 29, 54, 0.7);
+        }
+        .combine-btn {
+            background-color: rgba(46, 196, 182, 0.7);
+        }
+        
+        #global-guide-container {
+            position: absolute;
+            z-index: 150;
+            pointer-events: none;
+        }
+        #global-guide {
+            background-color: rgba(15, 15, 35, 0.95);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            max-width: 200px;
+            font-size: 14px;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .guide-arrow {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(15, 15, 35, 0.95);
+            transform: rotate(45deg);
+            pointer-events: none;
+        }
+        
+        #game-guide {
+            display: none;
+        }
+        
+        .guide-content {
+            max-width: 600px;
+            background-color: rgba(15, 15, 35, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .guide-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #6C63FF;
+        }
+        
+        .guide-section {
+            margin-bottom: 20px;
+        }
+        
+        .guide-section h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #FFD166;
+        }
+        
+        .guide-controls {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 15px;
+            margin-bottom: 15px;
+        }
+        
+        .control-key {
+            font-family: monospace;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 3px;
+            text-align: center;
+        }
+        
+        @keyframes pulse {
+            from { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.3); }
+            to { box-shadow: 0 0 0 8px rgba(108, 99, 255, 0); }
+        }
+        
+        @keyframes pulse-arrow {
+            0% { opacity: 0.6; transform: scale(1) rotate(45deg); }
+            50% { opacity: 1; transform: scale(1.1) rotate(45deg); }
+            100% { opacity: 0.6; transform: scale(1) rotate(45deg); }
+        }
+        
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.5); }
+            50% { box-shadow: 0 0 0 8px rgba(108, 99, 255, 0.3); }
+            100% { box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.5); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes damageFlash {
+            0% { background-color: inherit; }
+            20% { background-color: #E71D36; }
+            40% { background-color: inherit; }
+            60% { background-color: #E71D36; }
+            80% { background-color: inherit; }
+            100% { background-color: inherit; }
+        }
+        
+        @keyframes collectPulse {
+            0% { transform: scale(0.5); opacity: 0.8; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        @keyframes enragePulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+        
+        @keyframes notificationSlideIn {
+            from { transform: translate(-50%, 100px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        
+        @keyframes notificationSlideOut {
+            from { transform: translate(-50%, 0); opacity: 1; }
+            to { transform: translate(-50%, 100px); opacity: 0; }
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            10% { opacity: 1; transform: translate(-50%, 0); }
+            80% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+        
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            #boss-health {
+                width: 80%;
+            }
+            #player-health {
+                width: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="particle-bg"></div>
+        <div id="player"></div>
+        <div id="photon-beam"></div>
+        <div id="boss"></div>
+        <div id="boss-name">熵增守卫 - 经典形态</div>
+        <div id="boss-health">
+            <div id="boss-health-fill"></div>
+        </div>
+        <div id="player-health">
+            <div id="player-health-fill"></div>
+        </div>
+    </div>
+    
+    <div id="hud">
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(108, 99, 255, 0.3); color: #6C63FF;">
+                <i class="fa fa-microchip"></i>
+            </div>
+            <span>费米子: <span id="fermion-count">0</span></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(255, 101, 132, 0.3); color: #FF6584;">
+                <i class="fa fa-bolt"></i>
+            </div>
+            <span>玻色子: <span id="boson-count">0</span></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(255, 209, 102, 0.3); color: #FFD166;">
+                <i class="fa fa-star"></i>
+            </div>
+            <span>希格斯: <span id="higgs-count">0</span></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(231, 29, 54, 0.3); color: #E71D36;">
+                <i class="fa fa-shield"></i>
+            </div>
+            <span>BOSS护盾: <span id="boss-shield-status">激活中</span></span>
+        </div>
+        <div class="hud-item">
+            <button id="pause-btn" class="bg-black/50 hover:bg-black/70 p-2 rounded-lg transition-colors">
+                <i class="fa fa-pause"></i>
+            </button>
+        </div>
+        <div class="hud-item">
+            <button id="show-guide" class="bg-black/50 hover:bg-black/70 p-2 rounded-lg transition-colors">
+                <i class="fa fa-question"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div id="combine-panel">
+        <div class="panel-title">
+            <span>粒子组合</span>
+            <button id="close-panel" class="text-gray-400 hover:text-white">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="particle-counts">
+            <div class="count-item">
+                <div class="count-icon" style="background-color: rgba(108, 99, 255, 0.3); color: #6C63FF;">
+                    <i class="fa fa-microchip"></i>
+                </div>
+                <span id="panel-fermion">0</span>
+            </div>
+            <div class="count-item">
+                <div class="count-icon" style="background-color: rgba(255, 101, 132, 0.3); color: #FF6584;">
+                    <i class="fa fa-bolt"></i>
+                </div>
+                <span id="panel-boson">0</span>
+            </div>
+            <div class="count-item">
+                <div class="count-icon" style="background-color: rgba(255, 209, 102, 0.3); color: #FFD166;">
+                    <i class="fa fa-star"></i>
+                </div>
+                <span id="panel-higgs">0</span>
+            </div>
+        </div>
+        <div class="recipes">
+            <div class="recipe" id="recipe-photon" data-fermion="1" data-boson="2" data-higgs="0" data-result="photon">
+                <div class="recipe-ingredients">
+                    <div class="ingredient" style="background-color: #6C63FF;">1</div>
+                    <div class="ingredient" style="background-color: #FF6584;">2</div>
+                </div>
+                <div class="recipe-name">光子束</div>
+            </div>
+            <div class="recipe" id="recipe-shield" data-fermion="2" data-boson="0" data-higgs="1" data-result="shield">
+                <div class="recipe-ingredients">
+                    <div class="ingredient" style="background-color: #6C63FF;">2</div>
+                    <div class="ingredient" style="background-color: #FFD166;">1</div>
+                </div>
+                <div class="recipe-name">动能护盾</div>
+            </div>
+            <div class="recipe" id="recipe-jump" data-fermion="1" data-boson="1" data-higgs="1" data-result="jump">
+                <div class="recipe-ingredients">
+                    <div class="ingredient" style="background-color: #6C63FF;">1</div>
+                    <div class="ingredient" style="background-color: #FF6584;">1</div>
+                    <div class="ingredient" style="background-color: #FFD166;">1</div>
+                </div>
+                <div class="recipe-name">强化跳跃</div>
+            </div>
+            <div class="recipe" id="recipe-ultimate" data-fermion="3" data-boson="3" data-higgs="2" data-result="ultimate">
+                <div class="recipe-ingredients">
+                    <div class="ingredient" style="background-color: #6C63FF;">3</div>
+                    <div class="ingredient" style="background-color: #FF6584;">3</div>
+                    <div class="ingredient" style="background-color: #FFD166;">2</div>
+                </div>
+                <div class="recipe-name">维度冲击</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="level-completed">
+        <h2 class="text-2xl font-bold text-white mb-2">经典维度解放！</h2>
+        <p class="text-gray-300 mb-4">恭喜你击败了熵增守卫！</p>
+        <div class="mb-4">
+            <p class="text-white">收集的希格斯玻色子：<span id="final-higgs">3</span>/5</p>
+            <p class="text-white">战斗评级：<span id="battle-rating">A+</span></p>
+        </div>
+        <p class="text-gray-300 mb-6">维度屏障已暂时稳定，但熵增军团正在其他维度扩张...</p>
+        <button id="next-dimension" class="bg-primary hover:bg-primary/80 text-white py-2 px-6 rounded-lg transition-colors font-bold">
+            前往量子维度 <i class="fa fa-arrow-right ml-1"></i>
+        </button>
+    </div>
+    
+    <div id="game-over">
+        <h2 class="text-2xl font-bold text-white mb-2">战斗失败</h2>
+        <p class="text-gray-300 mb-6">熵增守卫仍在肆虐，请重新挑战！</p>
+        <button id="restart-battle" class="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded-lg transition-colors font-bold">
+            重新战斗 <i class="fa fa-refresh ml-1"></i>
+        </button>
+    </div>
+    
+    <div id="cutscene">
+        <div id="cutscene-title">经典维度最终战</div>
+        <div id="cutscene-text">
+            "维度屏障在熵增守卫的攻击下摇摇欲坠！这个扭曲物理法则的怪物正在吸收经典维度的能量核心。<br><br>
+            它的护盾由三个能量发生器维持，先摧毁发生器才能对其造成伤害。<br><br>
+            小心它的动能冲击和能量光束！"
+        </div>
+        <button id="start-battle">开始战斗</button>
+    </div>
+    
+    <div id="game-guide">
+        <div class="guide-content">
+            <div class="guide-title">游戏指南</div>
+            
+            <div class="guide-section">
+                <h3>基本操作</h3>
+                <div class="guide-controls">
+                    <div class="control-key">WASD/方向键</div>
+                    <div>移动角色</div>
+                    <div class="control-key">空格</div>
+                    <div>发射光子束</div>
+                    <div class="control-key">C</div>
+                    <div>打开粒子组合面板</div>
+                    <div class="control-key">V</div>
+                    <div>释放终极技能</div>
+                    <div class="control-key">P</div>
+                    <div>暂停游戏</div>
+                </div>
+            </div>
+            
+            <div class="guide-section">
+                <h3>游戏目标</h3>
+                <p>收集不同类型的粒子，组合成特殊能力，摧毁BOSS的护盾发生器，最终击败熵增守卫。</p>
+            </div>
+            
+            <div class="guide-section">
+                <h3>粒子组合</h3>
+                <ul>
+                    <li><strong>光子束</strong>：1费米子 + 2玻色子（基础攻击）</li>
+                    <li><strong>动能护盾</strong>：2费米子 + 1希格斯（防御伤害）</li>
+                    <li><strong>强化跳跃</strong>：1费米子 + 1玻色子 + 1希格斯（解锁二段跳）</li>
+                    <li><strong>维度冲击</strong>：3费米子 + 3玻色子 + 2希格斯（强力AOE）</li>
+                </ul>
+            </div>
+            
+            <button id="close-guide" class="w-full bg-primary hover:bg-primary/80 text-white py-2 px-6 rounded-lg transition-colors font-bold">
+                开始游戏
+            </button>
+        </div>
+    </div>
+    
+    <div id="mobile-controls">
+        <div class="control-pad">
+            <div class="control-btn up" data-key="ArrowUp"></div>
+            <div class="control-btn down" data-key="ArrowDown"></div>
+            <div class="control-btn left" data-key="ArrowLeft"></div>
+            <div class="control-btn right" data-key="ArrowRight"></div>
+        </div>
+        <div style="display: flex; gap: 20px;">
+            <button class="action-btn" id="mobile-shoot">空格</button>
+            <button class="combine-btn" id="mobile-combine">C</button>
+        </div>
+    </div>
+    
+    <div id="global-guide-container">
+        <div id="global-guide"></div>
+        <div class="guide-arrow"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameState = {
+                player: {
+                    x: 100,
+                    y: 500,
+                    speed: 5,
+                    width: 30,
+                    height: 30,
+                    direction: 0,
+                    jumpCount: 0,
+                    isOnGround: true,
+                    velocityX: 0,
+                    velocityY: 0,
+                    health: 100
+                },
+                boss: {
+                    x: 0,
+                    y: 0,
+                    width: 80,
+                    height: 80,
+                    health: 300,
+                    maxHealth: 300,
+                    velocityX: 0,
+                    velocityY: 0,
+                    speed: 2,
+                    phase: 1,
+                    attackCooldown: 0,
+                    maxAttackCooldown: 3000,
+                    shieldActive: true,
+                    shieldGenerators: [
+                        { id: 1, x: 0, y: 0, health: 50, active: true },
+                        { id: 2, x: 0, y: 0, health: 50, active: true },
+                        { id: 3, x: 0, y: 0, health: 50, active: true }
+                    ],
+                    projectiles: [],
+                    lasers: []
+                },
+                keys: {},
+                particles: {
+                    fermions: [],
+                    bosons: [],
+                    higgs: []
+                },
+                collected: {
+                    fermions: 0,
+                    bosons: 0,
+                    higgs: 0
+                },
+                abilities: {
+                    photonBeam: {
+                        available: false,
+                        active: false,
+                        cooldown: 0,
+                        maxCooldown: 1500
+                    },
+                    shield: {
+                        available: false,
+                        active: false,
+                        duration: 0,
+                        maxDuration: 5000
+                    },
+                    doubleJump: {
+                        available: false
+                    },
+                    ultimate: {
+                        available: false,
+                        active: false,
+                        cooldown: 0,
+                        maxCooldown: 15000
+                    }
+                },
+                walls: [],
+                platforms: [],
+                gameContainer: null,
+                containerWidth: 0,
+                containerHeight: 0,
+                isCompleted: false,
+                gameOver: false,
+                paused: false,
+                battleStarted: false,
+                gravity: 0.35,
+                jumpForce: -9,
+                lastTimestamp: 0,
+                guide: {
+                    currentStep: 0,
+                    stepsCompleted: [],
+                    hints: []
+                },
+                combatHints: {
+                    lastHintTime: 0,
+                    hintCooldown: 8000
+                }
+            };
+
+            const elements = {
+                player: document.getElementById('player'),
+                boss: document.getElementById('boss'),
+                bossHealth: document.getElementById('boss-health-fill'),
+                bossName: document.getElementById('boss-name'),
+                bossShieldStatus: document.getElementById('boss-shield-status'),
+                playerHealth: document.getElementById('player-health-fill'),
+                photonBeam: document.getElementById('photon-beam'),
+                fermionCount: document.getElementById('fermion-count'),
+                bosonCount: document.getElementById('boson-count'),
+                higgsCount: document.getElementById('higgs-count'),
+                levelCompleted: document.getElementById('level-completed'),
+                finalHiggs: document.getElementById('final-higgs'),
+                battleRating: document.getElementById('battle-rating'),
+                nextDimension: document.getElementById('next-dimension'),
+                gameOver: document.getElementById('game-over'),
+                restartBattle: document.getElementById('restart-battle'),
+                pauseBtn: document.getElementById('pause-btn'),
+                gameContainer: document.getElementById('game-container'),
+                combinePanel: document.getElementById('combine-panel'),
+                closePanel: document.getElementById('close-panel'),
+                panelFermion: document.getElementById('panel-fermion'),
+                panelBoson: document.getElementById('panel-boson'),
+                panelHiggs: document.getElementById('panel-higgs'),
+                recipePhoton: document.getElementById('recipe-photon'),
+                recipeShield: document.getElementById('recipe-shield'),
+                recipeJump: document.getElementById('recipe-jump'),
+                recipeUltimate: document.getElementById('recipe-ultimate'),
+                mobileShoot: document.getElementById('mobile-shoot'),
+                mobileCombine: document.getElementById('mobile-combine'),
+                cutscene: document.getElementById('cutscene'),
+                startBattle: document.getElementById('start-battle'),
+                gameGuide: document.getElementById('game-guide'),
+                showGuide: document.getElementById('show-guide'),
+                closeGuide: document.getElementById('close-guide'),
+                globalGuide: document.getElementById('global-guide'),
+                guideArrow: document.querySelector('.guide-arrow'),
+                globalGuideContainer: document.getElementById('global-guide-container'),
+                particleBg: document.getElementById('particle-bg')
+            };
+
+            const guideSteps = [
+                {
+                    id: 'movement',
+                    text: '使用WASD或方向键移动角色，探索战斗区域。',
+                    position: 'bottom',
+                    targetX: 100,
+                    targetY: 500,
+                    checkCondition: () => {
+                        const distanceMoved = Math.abs(gameState.player.x - 100) + Math.abs(gameState.player.y - 500);
+                        return distanceMoved > 100;
+                    }
+                },
+                {
+                    id: 'jump',
+                    text: '按上方向键或W跳跃，到达更高的平台。',
+                    position: 'right',
+                    targetX: 100,
+                    targetY: 500,
+                    checkCondition: () => gameState.player.jumpCount > 0
+                },
+                {
+                    id: 'collect-fermion',
+                    text: '靠近蓝色的费米子进行收集，它们是合成能力的基础材料。',
+                    position: 'top',
+                    findTarget: () => {
+                        if (gameState.particles.fermions.length > 0) {
+                            return gameState.particles.fermions[0];
+                        }
+                        return null;
+                    },
+                    checkCondition: () => gameState.collected.fermions > 0
+                },
+                {
+                    id: 'collect-boson',
+                    text: '收集粉色的玻色子，它们能帮助你合成攻击能力。',
+                    position: 'top',
+                    findTarget: () => {
+                        if (gameState.particles.bosons.length > 0) {
+                            return gameState.particles.bosons[0];
+                        }
+                        return null;
+                    },
+                    checkCondition: () => gameState.collected.bosons > 0
+                },
+                {
+                    id: 'collect-higgs',
+                    text: '金色的希格斯玻色子很稀有，收集它们可以合成强力能力！',
+                    position: 'top',
+                    findTarget: () => {
+                        if (gameState.particles.higgs.length > 0) {
+                            return gameState.particles.higgs[0];
+                        }
+                        return null;
+                    },
+                    checkCondition: () => gameState.collected.higgs > 0
+                },
+                {
+                    id: 'open-combine-panel',
+                    text: '按C键打开粒子组合面板，合成特殊能力。',
+                    position: 'left',
+                    targetX: gameState.containerWidth - 50,
+                    targetY: 30,
+                    checkCondition: () => elements.combinePanel.style.display === 'block'
+                },
+                {
+                    id: 'craft-photon',
+                    text: '合成光子束能力（1费米子+2玻色子），这是你的基础攻击手段。',
+                    position: 'top',
+                    targetElement: elements.recipePhoton,
+                    checkCondition: () => gameState.abilities.photonBeam.available
+                },
+                {
+                    id: 'use-photon',
+                    text: '按空格键发射光子束，尝试攻击BOSS的护盾发生器。',
+                    position: 'bottom',
+                    targetX: gameState.player.x,
+                    targetY: gameState.player.y,
+                    checkCondition: () => !gameState.abilities.photonBeam.active && gameState.abilities.photonBeam.cooldown > 0
+                },
+                {
+                    id: 'generator-weakness',
+                    text: 'BOSS的护盾由这三个发生器维持，先摧毁它们才能伤害BOSS。',
+                    position: 'bottom',
+                    findTarget: () => {
+                        return gameState.boss.shieldGenerators.find(g => g.active);
+                    },
+                    checkCondition: () => gameState.boss.shieldGenerators.some(g => !g.active)
+                },
+                {
+                    id: 'double-jump',
+                    text: '当你收集足够粒子后，合成强化跳跃能力，可以进行二段跳到达更高处。',
+                    position: 'right',
+                    targetElement: elements.recipeJump,
+                    checkCondition: () => gameState.abilities.doubleJump.available
+                }
+            ];
+
+            const combatHintMessages = [
+                {
+                    condition: () => gameState.battleStarted && 
+                                 gameState.collected.fermions >= 1 && 
+                                 gameState.collected.bosons >= 2 && 
+                                 !gameState.abilities.photonBeam.available,
+                    message: "你有足够的粒子合成光子束了！按C键打开组合面板"
+                },
+                {
+                    condition: () => gameState.battleStarted && 
+                                 gameState.abilities.photonBeam.available && 
+                                 gameState.boss.shieldActive &&
+                                 gameState.boss.shieldGenerators.filter(g => g.active).length > 0,
+                    message: "攻击BOSS的护盾发生器来解除它的防御！"
+                },
+                {
+                    condition: () => gameState.battleStarted && 
+                                 !gameState.boss.shieldActive &&
+                                 gameState.abilities.photonBeam.available,
+                    message: "BOSS的护盾已解除，现在可以直接攻击它了！"
+                },
+                {
+                    condition: () => gameState.battleStarted && 
+                                 gameState.player.health < 30 && 
+                                 !gameState.abilities.shield.active &&
+                                 gameState.collected.fermions >= 2 &&
+                                 gameState.collected.higgs >= 1,
+                    message: "你的生命值很低！合成动能护盾来保护自己"
+                },
+                {
+                    condition: () => gameState.battleStarted && 
+                                 gameState.boss.phase === 3 &&
+                                 gameState.collected.fermions >= 3 &&
+                                 gameState.collected.bosons >= 3 &&
+                                 gameState.collected.higgs >= 2,
+                    message: "BOSS进入狂暴状态！使用维度冲击可以造成大量伤害"
+                },
+                {
+                    condition: () => gameState.battleStarted && 
+                                 gameState.particles.higgs.length > 0 &&
+                                 Date.now() - gameState.combatHints.lastHintTime > 15000,
+                    message: "附近有希格斯玻色子！靠近它进行收集"
+                }
+            ];
+
+            function init() {
+                console.log('游戏初始化开始');
+                
+                gameState.gameContainer = elements.gameContainer;
+                gameState.containerWidth = gameState.gameContainer.clientWidth;
+                gameState.containerHeight = gameState.gameContainer.clientHeight;
+                console.log(`容器尺寸: ${gameState.containerWidth}x${gameState.containerHeight}`);
+                
+                createBackgroundParticles();
+                initBossPositions();
+                createWallsAndPlatforms();
+                
+                window.addEventListener('keydown', handleKeyDown);
+                window.addEventListener('keyup', handleKeyUp);
+                window.addEventListener('resize', function() {
+                    // 保存当前容器尺寸
+                    const oldWidth = gameState.containerWidth;
+                    const oldHeight = gameState.containerHeight;
+    
+                    // 更新容器尺寸
+                    gameState.containerWidth = elements.gameContainer.offsetWidth;
+                    gameState.containerHeight = elements.gameContainer.offsetHeight;
+    
+                    // 只有当尺寸变化明显时才重新生成
+                    if (Math.abs(oldWidth - gameState.containerWidth) > 50 || 
+                        Math.abs(oldHeight - gameState.containerHeight) > 50) {
+                        createWallsAndPlatforms();
+                    }
+                });
+                window.addEventListener('load', () => {
+                    gameState.containerWidth = gameState.gameContainer.clientWidth;
+                    gameState.containerHeight = gameState.gameContainer.clientHeight;
+                    handleResize();
+                });
+                
+                elements.nextDimension.addEventListener('click', goToNextDimension);
+                elements.restartBattle.addEventListener('click', restartBattle);
+                elements.pauseBtn.addEventListener('click', togglePause);
+                elements.closePanel.addEventListener('click', toggleCombinePanel);
+                elements.recipePhoton.addEventListener('click', () => combineParticles('photon'));
+                elements.recipeShield.addEventListener('click', () => combineParticles('shield'));
+                elements.recipeJump.addEventListener('click', () => combineParticles('jump'));
+                elements.recipeUltimate.addEventListener('click', () => combineParticles('ultimate'));
+                elements.startBattle.addEventListener('click', startBattle);
+                elements.showGuide.addEventListener('click', () => elements.gameGuide.style.display = 'flex');
+                elements.closeGuide.addEventListener('click', () => elements.gameGuide.style.display = 'none');
+                
+                elements.globalGuide.addEventListener('click', hideCurrentGuide);
+                
+                setupMobileControls();
+                
+                updatePlayerPosition();
+                
+                requestAnimationFrame(gameLoop);
+                console.log('游戏初始化完成');
+            }
+
+            function createBackgroundParticles() {
+                const particleCount = 100;
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    const size = Math.random() * 3 + 1;
+                    particle.style.position = 'absolute';
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.borderRadius = '50%';
+                    particle.style.backgroundColor = i % 5 === 0 ? 'rgba(108, 99, 255, 0.5)' : 'rgba(255, 255, 255, 0.2)';
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.top = `${Math.random() * 100}%`;
+                    particle.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
+                    particle.style.animationDelay = `${Math.random() * 5}s`;
+                    particle.style.zIndex = 1;
+                    
+                    elements.particleBg.appendChild(particle);
+                }
+            }
+
+            function initBossPositions() {
+                gameState.boss.x = gameState.containerWidth - 200;
+                gameState.boss.y = 200;
+                
+                gameState.boss.shieldGenerators[0].x = gameState.boss.x - 150;
+                gameState.boss.shieldGenerators[0].y = gameState.boss.y - 100;
+                
+                gameState.boss.shieldGenerators[1].x = gameState.boss.x + 150;
+                gameState.boss.shieldGenerators[1].y = gameState.boss.y;
+                
+                gameState.boss.shieldGenerators[2].x = gameState.boss.x - 100;
+                gameState.boss.shieldGenerators[2].y = gameState.boss.y + 150;
+                
+                if (gameState.containerWidth < 768) {
+                    gameState.boss.x = gameState.containerWidth - 150;
+                    
+                    gameState.boss.shieldGenerators[0].x = gameState.boss.x - 100;
+                    gameState.boss.shieldGenerators[0].y = gameState.boss.y - 80;
+                    
+                    gameState.boss.shieldGenerators[1].x = gameState.boss.x + 80;
+                    gameState.boss.shieldGenerators[1].y = gameState.boss.y;
+                    
+                    gameState.boss.shieldGenerators[2].x = gameState.boss.x - 80;
+                    gameState.boss.shieldGenerators[2].y = gameState.boss.y + 100;
+                }
+                
+                createShieldGenerators();
+                updateBossPosition();
+            }
+
+            function createShieldGenerators() {
+                const existingGenerators = document.querySelectorAll('.boss-shield-generator');
+                existingGenerators.forEach(generator => generator.remove());
+                
+                gameState.boss.shieldGenerators.forEach(generator => {
+                    const generatorElement = document.createElement('div');
+                    generatorElement.className = 'boss-shield-generator';
+                    generatorElement.dataset.id = generator.id;
+                    generatorElement.style.left = `${generator.x}px`;
+                    generatorElement.style.top = `${generator.y}px`;
+                    
+                    gameState.gameContainer.appendChild(generatorElement);
+                });
+            }
+
+            function createWallsAndPlatforms() {
+                // 清空现有元素和状态
+                document.querySelectorAll('.wall, .platform').forEach(el => el.remove());
+                gameState.walls = [];
+                gameState.platforms = [];
+    
+                const wallThickness = 10;
+                const isMobile = gameState.containerWidth < 768;
+    
+                // 根据设备类型调整平台尺寸
+                const platformWidth = isMobile ? gameState.containerWidth * 0.7 : 200;
+                const platformHeight = 10;
+                const platformCount = isMobile ? 4 : 7; // 移动端减少平台数量
+    
+                // 边界墙（保持不变）
+                const walls = [
+                    {x: 0, y: 0, width: gameState.containerWidth, height: wallThickness},
+                    {x: 0, y: 0, width: wallThickness, height: gameState.containerHeight},
+                    {x: 0, y: gameState.containerHeight - wallThickness, width: gameState.containerWidth, height: wallThickness},
+                    {x: gameState.containerWidth - wallThickness, y: 0, width: wallThickness, height: gameState.containerHeight}
+                ];
+    
+                // 动态生成平台（根据设备类型调整）
+                const platforms = [];
+                const verticalSpacing = isMobile ? 180 : 150; // 移动端增加垂直间距
+    
+                for (let i = 0; i < platformCount; i++) {
+                    // 移动端：平台居中且宽度适配屏幕
+                    // 桌面端：平台左右交错分布
+                    const xPos = isMobile 
+                        ? (gameState.containerWidth - platformWidth) / 2 
+                        : (i % 2 === 0) 
+                            ? 50 + (i * 20) 
+                            : gameState.containerWidth - platformWidth - 50 - (i * 10);
+        
+                    const yPos = gameState.containerHeight - 150 - (i * verticalSpacing);
+        
+                    // 确保平台在可见区域内
+                    if (yPos > 50) {
+                        platforms.push({
+                            x: xPos,
+                            y: yPos,
+                            width: platformWidth,
+                            height: platformHeight
+                        });
+                    }
+                }
+    
+                // 添加额外的移动设备优化：底部控制区域无平台
+                if (isMobile) {
+                    const controlAreaHeight = 150; // 控制区域高度
+                    platforms.forEach(platform => {
+                        if (platform.y > gameState.containerHeight - controlAreaHeight - 50) {
+                            platform.y = gameState.containerHeight - controlAreaHeight - 60;
+                        }
+                    });
+                }
+    
+                // 创建墙元素
+                walls.forEach(wall => {
+                    const wallElement = document.createElement('div');
+                    wallElement.className = 'wall';
+                    wallElement.style.left = `${wall.x}px`;
+                    wallElement.style.top = `${wall.y}px`;
+                    wallElement.style.width = `${wall.width}px`;
+                    wallElement.style.height = `${wall.height}px`;
+        
+                    gameState.gameContainer.appendChild(wallElement);
+                    gameState.walls.push(wall);
+                });
+    
+                // 创建平台元素
+                platforms.forEach(platform => {
+                    const platformElement = document.createElement('div');
+                    platformElement.className = 'platform';
+                    platformElement.style.left = `${platform.x}px`;
+                    platformElement.style.top = `${platform.y}px`;
+                    platformElement.style.width = `${platform.width}px`;
+                    platformElement.style.height = `${platform.height}px`;
+        
+                    gameState.gameContainer.appendChild(platformElement);
+                    gameState.platforms.push(platform);
+                });
+            }
+
+            function startBattle() {
+                console.log('战斗开始');
+                elements.cutscene.style.display = 'none';
+                elements.gameGuide.style.display = 'none';
+                gameState.battleStarted = true;
+                
+                generateInitialParticles();
+                startGuideSystem();
+                setTimeout(showCombatHint, 3000);
+            }
+
+            function showCombatHint() {
+                if (!gameState.battleStarted || gameState.paused || gameState.isCompleted || gameState.gameOver) {
+                    return;
+                }
+                
+                if (Date.now() - gameState.combatHints.lastHintTime < gameState.combatHints.hintCooldown) {
+                    setTimeout(showCombatHint, 1000);
+                    return;
+                }
+                
+                for (let hint of combatHintMessages) {
+                    if (hint.condition()) {
+                        const hintElement = document.createElement('div');
+                        hintElement.className = 'combat-hint';
+                        hintElement.textContent = hint.message;
+                        document.body.appendChild(hintElement);
+                        
+                        gameState.combatHints.lastHintTime = Date.now();
+                        
+                        setTimeout(() => {
+                            if (hintElement.parentNode) {
+                                hintElement.parentNode.removeChild(hintElement);
+                            }
+                        }, 4000);
+                        
+                        if (hint.message.includes("护盾发生器")) {
+                            const activeGenerator = gameState.boss.shieldGenerators.find(g => g.active);
+                            if (activeGenerator) {
+                                const generatorElement = document.querySelector(`.boss-shield-generator[data-id="${activeGenerator.id}"]`);
+                                if (generatorElement) {
+                                    generatorElement.classList.add('targeted');
+                                    setTimeout(() => {
+                                        generatorElement.classList.remove('targeted');
+                                    }, 4000);
+                                }
+                            }
+                        }
+                        
+                        if (hint.message.includes("希格斯玻色子")) {
+                            if (gameState.particles.higgs.length > 0) {
+                                const higgsParticle = gameState.particles.higgs[0];
+                                higgsParticle.element.style.boxShadow = '0 0 20px rgba(255, 209, 102, 1)';
+                                setTimeout(() => {
+                                    higgsParticle.element.style.boxShadow = '';
+                                }, 4000);
+                            }
+                        }
+                        
+                        checkRecipeAvailability();
+                        break;
+                    }
+                }
+                
+                setTimeout(showCombatHint, 2000);
+            }
+
+            function checkRecipeAvailability() {
+                if (gameState.collected.fermions >= 1 && gameState.collected.bosons >= 2) {
+                    elements.recipePhoton.classList.add('available');
+                } else {
+                    elements.recipePhoton.classList.remove('available');
+                }
+                
+                if (gameState.collected.fermions >= 2 && gameState.collected.higgs >= 1) {
+                    elements.recipeShield.classList.add('available');
+                } else {
+                    elements.recipeShield.classList.remove('available');
+                }
+                
+                if (gameState.collected.fermions >= 1 && gameState.collected.bosons >= 1 && gameState.collected.higgs >= 1) {
+                    elements.recipeJump.classList.add('available');
+                } else {
+                    elements.recipeJump.classList.remove('available');
+                }
+                
+                if (gameState.collected.fermions >= 3 && gameState.collected.bosons >= 3 && gameState.collected.higgs >= 2) {
+                    elements.recipeUltimate.classList.add('available');
+                } else {
+                    elements.recipeUltimate.classList.remove('available');
+                }
+            }
+
+            function startGuideSystem() {
+                gameState.guide.currentStep = 0;
+                gameState.guide.stepsCompleted = [];
+                showCurrentGuideStep();
+            }
+
+            function showCurrentGuideStep() {
+                if (gameState.guide.currentStep >= guideSteps.length) {
+                    hideCurrentGuide();
+                    return;
+                }
+                
+                const currentStep = guideSteps[gameState.guide.currentStep];
+                if (!currentStep) return;
+                
+                ['top', 'bottom', 'left', 'right'].forEach(pos => {
+                    elements.globalGuide.classList.remove(pos);
+                });
+                
+                elements.globalGuide.classList.add(currentStep.position || 'bottom');
+                elements.globalGuide.textContent = currentStep.text;
+                
+                let targetX, targetY;
+                
+                if (currentStep.targetElement) {
+                    const rect = currentStep.targetElement.getBoundingClientRect();
+                    const containerRect = elements.gameContainer.getBoundingClientRect();
+                    targetX = rect.left - containerRect.left + rect.width / 2;
+                    targetY = rect.top - containerRect.top + rect.height / 2;
+                } else if (currentStep.findTarget) {
+                    const target = currentStep.findTarget();
+                    if (target) {
+                        if (target.element) {
+                            target.element.classList.add('highlight-target', 'particle-guide');
+                        }
+                        targetX = target.x + (target.width || 10) / 2;
+                        targetY = target.y + (target.height || 10) / 2;
+                    } else {
+                        completeGuideStep();
+                        return;
+                    }
+                } else {
+                    targetX = currentStep.targetX;
+                    targetY = currentStep.targetY;
+                }
+                
+                const guideWidth = elements.globalGuide.offsetWidth || 200;
+                const guideHeight = elements.globalGuide.offsetHeight || 100;
+                let guideX, guideY;
+                let arrowStyle = '';
+                
+                switch (currentStep.position || 'bottom') {
+                    case 'top':
+                        guideX = targetX - guideWidth / 2;
+                        guideY = targetY - guideHeight - 20;
+                        elements.globalGuide.style.top = `${guideY}px`;
+                        elements.globalGuide.style.left = `${guideX}px`;
+                        arrowStyle = `top: ${targetY - 15}px; left: ${targetX - 15}px; transform: rotate(-135deg);`;
+                        break;
+                    case 'bottom':
+                        guideX = targetX - guideWidth / 2;
+                        guideY = targetY + 20;
+                        elements.globalGuide.style.top = `${guideY}px`;
+                        elements.globalGuide.style.left = `${guideX}px`;
+                        arrowStyle = `top: ${targetY - 15}px; left: ${targetX - 15}px; transform: rotate(45deg);`;
+                        break;
+                    case 'left':
+                        guideX = targetX - guideWidth - 20;
+                        guideY = targetY - guideHeight / 2;
+                        elements.globalGuide.style.left = `${guideX}px`;
+                        elements.globalGuide.style.top = `${guideY}px`;
+                        arrowStyle = `top: ${targetY - 15}px; left: ${targetX - 15}px; transform: rotate(135deg);`;
+                        break;
+                    case 'right':
+                        guideX = targetX + 20;
+                        guideY = targetY - guideHeight / 2;
+                        elements.globalGuide.style.left = `${guideX}px`;
+                        elements.globalGuide.style.top = `${guideY}px`;
+                        arrowStyle = `top: ${targetY - 15}px; left: ${targetX - 15}px; transform: rotate(-45deg);`;
+                        break;
+                    default:
+                        elements.globalGuide.style.left = '50%';
+                        elements.globalGuide.style.top = '50%';
+                        elements.globalGuide.style.transform = 'translate(-50%, -50%)';
+                        arrowStyle = 'display: none;';
+                }
+                
+                elements.guideArrow.style = arrowStyle;
+                elements.globalGuide.style.display = 'block';
+                elements.guideArrow.style.display = 'block';
+            }
+
+            function hideCurrentGuide() {
+                document.querySelectorAll('.highlight-target').forEach(el => {
+                    el.classList.remove('highlight-target', 'particle-guide');
+                });
+                
+                elements.globalGuide.style.display = 'none';
+                elements.guideArrow.style.display = 'none';
+            }
+
+            function completeGuideStep() {
+                if (gameState.guide.currentStep < guideSteps.length) {
+                    const currentStepId = guideSteps[gameState.guide.currentStep].id;
+                    gameState.guide.stepsCompleted.push(currentStepId);
+                    gameState.guide.currentStep++;
+                    hideCurrentGuide();
+                    setTimeout(showCurrentGuideStep, 1000);
+                }
+            }
+
+            function generateInitialParticles() {
+                console.log('生成初始粒子');
+                for (let i = 0; i < 40; i++) {
+                    spawnParticle('fermion');
+                }
+                
+                for (let i = 0; i < 45; i++) {
+                    spawnParticle('boson');
+                }
+                
+                for (let i = 0; i < 10; i++) {
+                    spawnParticle('higgs');
+                }
+            }
+
+            function spawnParticle(type,recursionCount = 0) {
+                if (recursionCount > 10) {
+                    console.warn(`无法为类型${type}找到合适的生成位置，使用默认位置`);
+                    // 使用边缘位置作为备选
+                    const x = type === 'fermion' ? 60 : 80;
+                    const y = type === 'boson' ? 60 : 80;
+                    // 强制生成粒子
+                    createParticleElement(type, x, y);
+                    return;
+                }
+                const padding = 50;
+                const x = padding + Math.random() * (gameState.containerWidth - padding * 2);
+                const y = padding + Math.random() * (gameState.containerHeight - padding * 2);
+                
+                const particleArray = gameState.particles[type + 's'];
+                if (!Array.isArray(particleArray)) {
+                    gameState.particles[type + 's'] = [];
+                }
+                
+                if (!isPositionInWall(x, y)) {
+                    const particle = document.createElement('div');
+                    particle.className = `particle ${type}`;
+                    particle.style.left = `${x}px`;
+                    particle.style.top = `${y}px`;
+                    particle.dataset.type = type;
+                    
+                    if (type === 'fermion') {
+                        particle.style.width = '8px';
+                        particle.style.height = '8px';
+                    } else if (type === 'boson') {
+                        particle.style.width = '10px';
+                        particle.style.height = '10px';
+                    } else if (type === 'higgs') {
+                        particle.style.width = '16px';
+                        particle.style.height = '16px';
+                        
+                    }
+                    
+                    gameState.gameContainer.appendChild(particle);
+                    
+                    const particleData = {
+                        element: particle,
+                        x,
+                        y,
+                        width: type === 'fermion' ? 8 : (type === 'boson' ? 10 : 16),
+                        height: type === 'fermion' ? 8 : (type === 'boson' ? 10 : 16)
+                    };
+                    
+                    // 修复希格斯粒子移动问题 - 增加更活跃的移动行为
+                    if (type === 'higgs') {
+                        // 初始速度更快
+                        particleData.velocityX = (Math.random() - 0.5) * 1.5;
+                        particleData.velocityY = (Math.random() - 0.5) * 1.5;
+                        particleData.avoidPlayer = true;
+                        
+                        // 添加移动更新函数
+                        particleData.update = function(deltaTime) {
+                            // 更频繁地改变方向
+                            if (Math.random() < 0.02) {
+                                this.velocityX += (Math.random() - 0.5) * 0.8;
+                                this.velocityY += (Math.random() - 0.5) * 0.8;
+                            }
+                            
+                            // 限制最大速度
+                            const speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+                            if (speed > 2) {
+                                this.velocityX = (this.velocityX / speed) * 2;
+                                this.velocityY = (this.velocityY / speed) * 2;
+                            }
+                            
+                            // 应用速度
+                            this.x += this.velocityX;
+                            this.y += this.velocityY;
+                            
+                            // 更新DOM位置
+                            this.element.style.left = `${this.x}px`;
+                            this.element.style.top = `${this.y}px`;
+                        };
+                    }
+                    
+                    gameState.particles[type + 's'].push(particleData);
+                } else {
+                    spawnParticle(type,recursionCount + 1);
+                }
+            }
+
+            function isPositionInWall(x, y) {
+                const inWall = gameState.walls.some(wall => {
+                    return x > wall.x && x < wall.x + wall.width &&
+                           y > wall.y && y < wall.y + wall.height;
+                });
+                
+                const inPlatform = gameState.platforms.some(platform => {
+                    return x > platform.x && x < platform.x + platform.width &&
+                           y > platform.y && y < platform.y + platform.height;
+                });
+                
+                return inWall || inPlatform;
+            }
+
+            function handleKeyDown(e) {
+                if (!gameState.battleStarted) return;
+                
+                gameState.keys[e.key] = true;
+                
+                if (e.key === ' ' && gameState.abilities.photonBeam.available && 
+                    gameState.abilities.photonBeam.cooldown <= 0) {
+                    firePhotonBeam();
+                }
+                
+                if (e.key === 'v' || e.key === 'V') {
+                    useUltimateAbility();
+                }
+                
+                if (e.key === 'c' || e.key === 'C') {
+                    toggleCombinePanel();
+                    checkRecipeAvailability();
+                }
+                
+                if (e.key === 'p' || e.key === 'P') {
+                    togglePause();
+                }
+                
+                if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && 
+                    gameState.player.jumpCount < (gameState.abilities.doubleJump.available ? 2 : 1)) {
+                    jump();
+                }
+            }
+
+            function handleKeyUp(e) {
+                gameState.keys[e.key] = false;
+            }
+
+            function setupMobileControls() {
+                const controlBtns = document.querySelectorAll('.control-btn');
+                controlBtns.forEach(btn => {
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!gameState.battleStarted) return;
+                        
+                        const key = btn.getAttribute('data-key');
+                        gameState.keys[key] = true;
+                        
+                        if (key === 'ArrowUp' && 
+                            gameState.player.jumpCount < (gameState.abilities.doubleJump.available ? 2 : 1)) {
+                            jump();
+                        }
+                        btn.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                    }, { passive: false });
+                    
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const key = btn.getAttribute('data-key');
+                        gameState.keys[key] = false;
+                        btn.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                    }, { passive: false });
+                    
+                    
+                });
+                
+                elements.mobileShoot.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!gameState.battleStarted) return;
+                    
+                    if (gameState.abilities.photonBeam.available && gameState.abilities.photonBeam.cooldown <= 0) {
+                        firePhotonBeam();
+                    }
+                }, { passive: false });
+                
+                elements.mobileCombine.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!gameState.battleStarted) return;
+                    
+                    toggleCombinePanel();
+                    checkRecipeAvailability();
+                }, { passive: false });
+                
+                elements.mobileShoot.addEventListener('touchstart', () => {
+                    elements.mobileShoot.style.backgroundColor = 'rgba(231, 29, 54, 0.9)';
+                });
+    
+                elements.mobileShoot.addEventListener('touchend', () => {
+                    elements.mobileShoot.style.backgroundColor = 'rgba(231, 29, 54, 0.7)';
+                });
+    
+                elements.mobileCombine.addEventListener('touchstart', () => {
+                    elements.mobileCombine.style.backgroundColor = 'rgba(46, 196, 182, 0.9)';
+                });
+    
+                elements.mobileCombine.addEventListener('touchend', () => {
+                    elements.mobileCombine.style.backgroundColor = 'rgba(46, 196, 182, 0.7)';
+                });
+            }
+
+            function toggleCombinePanel() {
+                const isVisible = elements.combinePanel.style.display !== 'none';
+                
+                if (isVisible) {
+                    elements.combinePanel.style.display = 'none';
+                } else {
+                    elements.panelFermion.textContent = gameState.collected.fermions;
+                    elements.panelBoson.textContent = gameState.collected.bosons;
+                    elements.panelHiggs.textContent = gameState.collected.higgs;
+                    
+                    elements.combinePanel.style.display = 'block';
+                }
+            }
+
+            function combineParticles(result) {
+                if (result === 'photon') {
+                    if (gameState.collected.fermions >= 1 && gameState.collected.bosons >= 2) {
+                        gameState.collected.fermions -= 1;
+                        gameState.collected.bosons -= 2;
+                        updateParticleCounts();
+                        elements.panelFermion.textContent = gameState.collected.fermions;
+                        elements.panelBoson.textContent = gameState.collected.bosons;
+                        gameState.abilities.photonBeam.available = true;
+                        showNotification('成功组合出光子束！按空格键发射');
+                        toggleCombinePanel();
+                    } else {
+                        showNotification('粒子不足！需要1个费米子和2个玻色子');
+                    }
+                } else if (result === 'shield') {
+                    if (gameState.collected.fermions >= 2 && gameState.collected.higgs >= 1) {
+                        gameState.collected.fermions -= 2;
+                        gameState.collected.higgs -= 1;
+                        updateParticleCounts();
+                        elements.panelFermion.textContent = gameState.collected.fermions;
+                        elements.panelHiggs.textContent = gameState.collected.higgs;
+                        gameState.abilities.shield.available = true;
+                        gameState.abilities.shield.active = true;
+                        gameState.abilities.shield.duration = gameState.abilities.shield.maxDuration;
+                        elements.player.classList.add('shield-active');
+                        showNotification('动能护盾已激活！可以抵抗冲击力');
+                        toggleCombinePanel();
+                    } else {
+                        showNotification('粒子不足！需要2个费米子和1个希格斯玻色子');
+                    }
+                } else if (result === 'jump') {
+                    if (gameState.collected.fermions >= 1 && gameState.collected.bosons >= 1 && 
+                        gameState.collected.higgs >= 1) {
+                        gameState.collected.fermions -= 1;
+                        gameState.collected.bosons -= 1;
+                        gameState.collected.higgs -= 1;
+                        updateParticleCounts();
+                        elements.panelFermion.textContent = gameState.collected.fermions;
+                        elements.panelBoson.textContent = gameState.collected.bosons;
+                        elements.panelHiggs.textContent = gameState.collected.higgs;
+                        gameState.abilities.doubleJump.available = true;
+                        showNotification('强化跳跃已解锁！可以进行二段跳');
+                        toggleCombinePanel();
+                    } else {
+                        showNotification('粒子不足！需要1个费米子、1个玻色子和1个希格斯玻色子');
+                    }
+                } else if (result === 'ultimate') {
+                    if (gameState.collected.fermions >= 3 && gameState.collected.bosons >= 3 && 
+                        gameState.collected.higgs >= 2 && gameState.abilities.ultimate.cooldown <= 0) {
+                        gameState.collected.fermions -= 3;
+                        gameState.collected.bosons -= 3;
+                        gameState.collected.higgs -= 2;
+                        updateParticleCounts();
+                        elements.panelFermion.textContent = gameState.collected.fermions;
+                        elements.panelBoson.textContent = gameState.collected.bosons;
+                        elements.panelHiggs.textContent = gameState.collected.higgs;
+                        gameState.abilities.ultimate.available = true;
+                        gameState.abilities.ultimate.active = true;
+                        gameState.abilities.ultimate.cooldown = gameState.abilities.ultimate.maxCooldown;
+                        showNotification('维度冲击已准备就绪！按V键释放');
+                        toggleCombinePanel();
+                    } else {
+                        if (gameState.abilities.ultimate.cooldown > 0) {
+                            showNotification('技能冷却中！请稍后再试');
+                        } else {
+                            showNotification('粒子不足！需要3个费米子、3个玻色子和2个希格斯玻色子');
+                        }
+                    }
+                }
+                
+                checkRecipeAvailability();
+            }
+
+            function showNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            function updateParticleCounts() {
+                elements.fermionCount.textContent = gameState.collected.fermions;
+                elements.bosonCount.textContent = gameState.collected.bosons;
+                elements.higgsCount.textContent = gameState.collected.higgs;
+            }
+
+            function jump() {
+                gameState.player.velocityY = gameState.jumpForce;
+                gameState.player.isOnGround = false;
+                gameState.player.jumpCount++;
+            }
+
+            function updatePlayerPosition() {
+                elements.player.style.left = `${gameState.player.x}px`;
+                elements.player.style.top = `${gameState.player.y}px`;
+            }
+
+            function updateBossPosition() {
+                elements.boss.style.left = `${gameState.boss.x}px`;
+                elements.boss.style.top = `${gameState.boss.y}px`;
+                
+                if (gameState.boss.phase === 3) {
+                    elements.boss.classList.add('enraged');
+                } else {
+                    elements.boss.classList.remove('enraged');
+                }
+                
+                if (gameState.boss.shieldActive) {
+                    elements.boss.classList.add('shield-active');
+                    elements.bossShieldStatus.textContent = "激活中";
+                    elements.bossShieldStatus.style.color = "#E71D36";
+                } else {
+                    elements.boss.classList.remove('shield-active');
+                    elements.bossShieldStatus.textContent = "已破坏";
+                    elements.bossShieldStatus.style.color = "#06D6A0";
+                }
+            }
+
+            function movePlayer(deltaTime) {
+                if (gameState.paused || gameState.isCompleted || gameState.gameOver) return;
+                
+                gameState.player.velocityX *= 0.9;
+                
+                if (gameState.keys.ArrowLeft || gameState.keys.KeyA) {
+                    gameState.player.velocityX = -gameState.player.speed;
+                    gameState.player.direction = 180;
+                }
+                if (gameState.keys.ArrowRight || gameState.keys.KeyD) {
+                    gameState.player.velocityX = gameState.player.speed;
+                    gameState.player.direction = 0;
+                }
+                
+                gameState.player.velocityY += gameState.gravity;
+                let newX = gameState.player.x + gameState.player.velocityX;
+                let newY = gameState.player.y + gameState.player.velocityY;
+                
+                let isOnGround = false;
+                const allColliders = [...gameState.walls, ...gameState.platforms];
+                
+                allColliders.forEach(collider => {
+                    if (
+                        newX < collider.x + collider.width &&
+                        newX + gameState.player.width > collider.x &&
+                        gameState.player.y + gameState.player.height <= collider.y &&
+                        newY + gameState.player.height >= collider.y &&
+                        gameState.player.velocityY > 0
+                    ) {
+                        newY = collider.y - gameState.player.height;
+                        gameState.player.velocityY = 0;
+                        isOnGround = true;
+                    }
+                    
+                    if (
+                        newX < collider.x + collider.width &&
+                        newX + gameState.player.width > collider.x &&
+                        gameState.player.y >= collider.y + collider.height &&
+                        newY <= collider.y + collider.height &&
+                        gameState.player.velocityY < 0
+                    ) {
+                        newY = collider.y + collider.height;
+                        gameState.player.velocityY = 0;
+                    }
+                });
+                
+                let canMoveX = true;
+                allColliders.forEach(collider => {
+                    if (
+                        newX + gameState.player.width >= collider.x &&
+                        newX <= collider.x + collider.width &&
+                        newY < collider.y + collider.height &&
+                        newY + gameState.player.height > collider.y
+                    ) {
+                        canMoveX = false;
+                        gameState.player.velocityX = 0;
+                    }
+                });
+                
+                checkParticleCollection();
+                
+                if (canMoveX) {
+                    gameState.player.x = newX;
+                }
+                gameState.player.y = newY;
+                
+                gameState.player.isOnGround = isOnGround;
+                if (isOnGround) {
+                    gameState.player.jumpCount = 0;
+                }
+                
+                if (gameState.player.x < 0) gameState.player.x = 0;
+                if (gameState.player.x + gameState.player.width > gameState.containerWidth) {
+                    gameState.player.x = gameState.containerWidth - gameState.player.width;
+                }
+                
+                updatePlayerPosition();
+            }
+
+            
+
+            function bossAI(deltaTime) {
+                if (gameState.paused || gameState.isCompleted || gameState.gameOver || !gameState.battleStarted) return;
+                
+                checkBossPhase();
+                
+                const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                const playerCenterY = gameState.player.y + gameState.player.height / 2;
+                const bossCenterX = gameState.boss.x + gameState.boss.width / 2;
+                const bossCenterY = gameState.boss.y + gameState.boss.height / 2;
+                
+                const distanceToPlayer = getDistance(bossCenterX, bossCenterY, playerCenterX, playerCenterY);
+                const desiredDistance = gameState.boss.phase === 3 ? 150 : 250;
+                
+                if (distanceToPlayer > desiredDistance + 30) {
+                    const angle = Math.atan2(playerCenterY - bossCenterY, playerCenterX - bossCenterX);
+                    gameState.boss.velocityX = Math.cos(angle) * gameState.boss.speed;
+                    gameState.boss.velocityY = Math.sin(angle) * gameState.boss.speed;
+                } else if (distanceToPlayer < desiredDistance - 30) {
+                    const angle = Math.atan2(bossCenterY - playerCenterY, bossCenterX - playerCenterX);
+                    gameState.boss.velocityX = Math.cos(angle) * gameState.boss.speed;
+                    gameState.boss.velocityY = Math.sin(angle) * gameState.boss.speed;
+                } else {
+                    gameState.boss.velocityX *= 0.9;
+                    gameState.boss.velocityY *= 0.9;
+                }
+                
+                gameState.boss.velocityY += gameState.gravity * 0.3;
+                
+                let newX = gameState.boss.x + gameState.boss.velocityX;
+                let newY = gameState.boss.y + gameState.boss.velocityY;
+                
+                if (newX < 0) newX = 0;
+                if (newX + gameState.boss.width > gameState.containerWidth) {
+                    newX = gameState.containerWidth - gameState.boss.width;
+                }
+                if (newY < 0) newY = 0;
+                if (newY + gameState.boss.height > gameState.containerHeight) {
+                    newY = gameState.containerHeight - gameState.boss.height;
+                }
+                
+                gameState.boss.x = newX;
+                gameState.boss.y = newY;
+                
+                updateBossPosition();
+                
+                gameState.boss.attackCooldown -= deltaTime;
+                if (gameState.boss.attackCooldown <= 0) {
+                    if (gameState.boss.phase === 1) {
+                        fireBossProjectiles();
+                    } else if (gameState.boss.phase === 2) {
+                        if (Math.random() > 0.5) {
+                            fireBossProjectiles();
+                        } else {
+                            fireBossLaser();
+                        }
+                    } else {
+                        if (Math.random() > 0.3) {
+                            fireBossProjectiles(5);
+                        } else {
+                            fireBossLaser(true);
+                        }
+                    }
+                    
+                    gameState.boss.attackCooldown = gameState.boss.maxAttackCooldown - (gameState.boss.phase - 1) * 800;
+                }
+                
+                updateBossProjectiles(deltaTime);
+                updateBossLasers(deltaTime);
+                checkPlayerBossCollision();
+                checkProjectileHits();
+                checkParticlesOutOfBounds();
+            }
+
+            function checkParticlesOutOfBounds() {
+                const boundaryPadding = 50;
+                const minX = -boundaryPadding;
+                const maxX = gameState.containerWidth + boundaryPadding;
+                const minY = -boundaryPadding;
+                const maxY = gameState.containerHeight + boundaryPadding;
+                
+                for (let i = gameState.particles.fermions.length - 1; i >= 0; i--) {
+                    const particle = gameState.particles.fermions[i];
+                    if (particle.x < minX || particle.x > maxX || particle.y < minY || particle.y > maxY) {
+                        particle.element.remove();
+                        gameState.particles.fermions.splice(i, 1);
+                    }
+                }
+                
+                for (let i = gameState.particles.bosons.length - 1; i >= 0; i--) {
+                    const particle = gameState.particles.bosons[i];
+                    if (particle.x < minX || particle.x > maxX || particle.y < minY || particle.y > maxY) {
+                        particle.element.remove();
+                        gameState.particles.bosons.splice(i, 1);
+                    }
+                }
+                for (let i = gameState.particles.higgs.length - 1; i >= 0; i--) {
+                    const particle = gameState.particles.higgs[i];
+                    if (particle.x < minX || particle.x > maxX || particle.y < minY || particle.y > maxY) {
+                        particle.element.remove();
+                        gameState.particles.higgs.splice(i, 1);
+                    }
+                }
+            }
+
+            function checkBossPhase() {
+                if (gameState.boss.health < gameState.boss.maxHealth * 0.3) {
+                    gameState.boss.phase = 3;
+                    gameState.boss.speed = 3;
+                    elements.bossName.textContent = "熵增守卫 - 狂暴形态";
+                } else if (gameState.boss.health < gameState.boss.maxHealth * 0.6) {
+                    gameState.boss.phase = 2;
+                    gameState.boss.speed = 2.5;
+                    elements.bossName.textContent = "熵增守卫 - 强化形态";
+                }
+                
+                const activeGenerators = gameState.boss.shieldGenerators.filter(g => g.active).length;
+                gameState.boss.shieldActive = activeGenerators > 0;
+            }
+
+            function fireBossProjectiles(count = 3) {
+                const bossCenterX = gameState.boss.x + gameState.boss.width / 2;
+                const bossCenterY = gameState.boss.y + gameState.boss.height / 2;
+                const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                const playerCenterY = gameState.player.y + gameState.player.height / 2;
+                
+                const baseAngle = Math.atan2(playerCenterY - bossCenterY, playerCenterX - bossCenterX);
+                
+                for (let i = 0; i < count; i++) {
+                    const angle = baseAngle + (i - Math.floor(count/2)) * 0.3;
+                    const speed = 4 + gameState.boss.phase * 0.5;
+                    
+                    const projectile = document.createElement('div');
+                    projectile.className = 'boss-projectile';
+                    projectile.style.left = `${bossCenterX}px`;
+                    projectile.style.top = `${bossCenterY}px`;
+                    
+                    gameState.gameContainer.appendChild(projectile);
+                    
+                    gameState.boss.projectiles.push({
+                        element: projectile,
+                        x: bossCenterX,
+                        y: bossCenterY,
+                        velocityX: Math.cos(angle) * speed,
+                        velocityY: Math.sin(angle) * speed,
+                        lifetime: 5000
+                    });
+                }
+            }
+
+            function fireBossLaser(wide = false) {
+                const bossCenterX = gameState.boss.x + gameState.boss.width / 2;
+                const bossCenterY = gameState.boss.y + gameState.boss.height / 2;
+                const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                const playerCenterY = gameState.player.y + gameState.player.height / 2;
+                
+                const baseAngle = Math.atan2(playerCenterY - bossCenterY, playerCenterX - bossCenterX);
+                const laserLength = gameState.containerWidth * 0.7;
+                const laserWidth = wide ? 30 : 10;
+                
+                if (wide) {
+                    for (let i = -1; i <= 1; i++) {
+                        createLaser(bossCenterX, bossCenterY, baseAngle + i * 0.2, laserLength, laserWidth);
+                    }
+                } else {
+                    createLaser(bossCenterX, bossCenterY, baseAngle, laserLength, laserWidth);
+                }
+            }
+
+            function createLaser(x, y, angle, length, width) {
+                const laser = document.createElement('div');
+                laser.className = 'boss-laser';
+                laser.style.width = `${length}px`;
+                laser.style.height = `${width}px`;
+                
+                laser.style.left = `${x}px`;
+                laser.style.top = `${y - width/2}px`;
+                laser.style.transform = `rotate(${angle}rad)`;
+                laser.style.display = 'block';
+                
+                gameState.gameContainer.appendChild(laser);
+                
+                gameState.boss.lasers.push({
+                    element: laser,
+                    x,
+                    y,
+                    angle,
+                    length,
+                    width,
+                    duration: 1500
+                });
+            }
+
+            function updateBossProjectiles(deltaTime) {
+                for (let i = gameState.boss.projectiles.length - 1; i >= 0; i--) {
+                    const projectile = gameState.boss.projectiles[i];
+                    
+                    projectile.x += projectile.velocityX;
+                    projectile.y += projectile.velocityY;
+                    projectile.lifetime -= deltaTime;
+                    
+                    projectile.element.style.left = `${projectile.x}px`;
+                    projectile.element.style.top = `${projectile.y}px`;
+                    
+                    if (projectile.x < 0 || projectile.x > gameState.containerWidth ||
+                        projectile.y < 0 || projectile.y > gameState.containerHeight ||
+                        projectile.lifetime <= 0) {
+                        
+                        projectile.element.remove();
+                        gameState.boss.projectiles.splice(i, 1);
+                    }
+                }
+            }
+
+            function updateBossLasers(deltaTime) {
+                for (let i = gameState.boss.lasers.length - 1; i >= 0; i--) {
+                    const laser = gameState.boss.lasers[i];
+                    
+                    laser.duration -= deltaTime;
+                    
+                    if (laser.duration <= 0) {
+                        laser.element.style.display = 'none';
+                        laser.element.remove();
+                        gameState.boss.lasers.splice(i, 1);
+                    }
+                }
+            }
+
+            function firePhotonBeam() {
+                gameState.abilities.photonBeam.active = true;
+                gameState.abilities.photonBeam.cooldown = gameState.abilities.photonBeam.maxCooldown;
+                
+                const beamWidth = 10;
+                const beamLength = 300;
+                
+                elements.photonBeam.style.width = `${beamLength}px`;
+                elements.photonBeam.style.height = `${beamWidth}px`;
+                elements.photonBeam.style.left = `${gameState.player.x + gameState.player.width/2}px`;
+                elements.photonBeam.style.top = `${gameState.player.y + gameState.player.height/2 - beamWidth/2}px`;
+                elements.photonBeam.style.transform = `rotate(${gameState.player.direction}deg)`;
+                elements.photonBeam.style.display = 'block';
+                
+                checkPhotonHits();
+                
+                setTimeout(() => {
+                    elements.photonBeam.style.display = 'none';
+                    gameState.abilities.photonBeam.active = false;
+                }, 100);
+            }
+
+            function checkPhotonHits() {
+                const beamX = gameState.player.x + gameState.player.width/2;
+                const beamY = gameState.player.y + gameState.player.height/2;
+                const beamAngle = gameState.player.direction * Math.PI / 180;
+                
+                const beamEndX = beamX + Math.cos(beamAngle) * 300;
+                const beamEndY = beamY + Math.sin(beamAngle) * 300;
+                
+                for (let i = gameState.boss.shieldGenerators.length - 1; i >= 0; i--) {
+                    const generator = gameState.boss.shieldGenerators[i];
+                    if (generator.active && isLineIntersectsCircle(
+                        beamX, beamY, beamEndX, beamEndY,
+                        generator.x + 20, generator.y + 20, 20
+                    )) {
+                        generator.health -= 10;
+                        
+                        const generatorElement = document.querySelector(`.boss-shield-generator[data-id="${generator.id}"]`);
+                        if (generatorElement) {
+                            generatorElement.style.opacity = generator.health / 50;
+                            generatorElement.classList.add('hit');
+                            setTimeout(() => {
+                                generatorElement.classList.remove('hit');
+                            }, 200);
+                            
+                            if (generator.health <= 0) {
+                                generator.active = false;
+                                generatorElement.style.display = 'none';
+                                createExplosion(generator.x + 20, generator.y + 20, 40, 'rgba(46, 196, 182, 0.6)');
+                                spawnParticlesOnDestroy(generator.x, generator.y);
+                                showNotification('护盾发生器已摧毁！');
+                            }
+                        }
+                    }
+                }
+                
+                if (!gameState.boss.shieldActive && isLineIntersectsCircle(
+                    beamX, beamY, beamEndX, beamEndY,
+                    gameState.boss.x + 40, gameState.boss.y + 40, 40
+                )) {
+                    gameState.boss.health -= 15;
+                    updateBossHealth();
+                    
+                    elements.boss.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        elements.boss.style.transform = 'scale(1)';
+                    }, 100);
+                    
+                    if (gameState.boss.health <= 0) {
+                        completeLevel();
+                    }
+                }
+            }
+
+            function createExplosion(x, y, size, color) {
+                const explosion = document.createElement('div');
+                explosion.className = 'explosion';
+                explosion.style.width = `${size}px`;
+                explosion.style.height = `${size}px`;
+                explosion.style.left = `${x - size/2}px`;
+                explosion.style.top = `${y - size/2}px`;
+                explosion.style.backgroundColor = color;
+                explosion.style.boxShadow = `0 0 ${size}px ${color}`;
+                explosion.style.animation = `collectPulse 0.6s forwards`;
+                
+                elements.gameContainer.appendChild(explosion);
+                
+                setTimeout(() => {
+                    explosion.remove();
+                }, 600);
+            }
+
+            function useUltimateAbility() {
+                if (!gameState.abilities.ultimate.active) return;
+                
+                gameState.abilities.ultimate.active = false;
+                
+                const explosion = document.createElement('div');
+                explosion.style.position = 'absolute';
+                explosion.style.width = '300px';
+                explosion.style.height = '300px';
+                explosion.style.borderRadius = '50%';
+                explosion.style.background = 'rgba(255, 209, 102, 0.5)';
+                explosion.style.boxShadow = '0 0 50px rgba(255, 209, 102, 0.8)';
+                explosion.style.left = `${gameState.player.x + gameState.player.width/2 - 150}px`;
+                explosion.style.top = `${gameState.player.y + gameState.player.height/2 - 150}px`;
+                explosion.style.zIndex = '15';
+                explosion.style.opacity = '0.8';
+                explosion.style.animation = 'pulse 0.8s forwards';
+                
+                elements.gameContainer.appendChild(explosion);
+                
+                const explosionRange = 150;
+                const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                const playerCenterY = gameState.player.y + gameState.player.height / 2;
+                
+                if (!gameState.boss.shieldActive) {
+                    const distanceToBoss = getDistance(
+                        playerCenterX, playerCenterY,
+                        gameState.boss.x + gameState.boss.width / 2,
+                        gameState.boss.y + gameState.boss.height / 2
+                    );
+                    
+                    if (distanceToBoss < explosionRange) {
+                        gameState.boss.health -= 80;
+                        updateBossHealth();
+                        
+                        elements.boss.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            elements.boss.style.transform = 'scale(1)';
+                        }, 200);
+                        
+                        if (gameState.boss.health <= 0) {
+                            completeLevel();
+                        }
+                    }
+                }
+                
+                gameState.boss.shieldGenerators.forEach(generator => {
+                    if (generator.active) {
+                        const distanceToGenerator = getDistance(
+                            playerCenterX, playerCenterY,
+                            generator.x + 20, generator.y + 20
+                        );
+                        
+                        if (distanceToGenerator < explosionRange) {
+                            generator.health -= 40;
+                            
+                            const generatorElement = document.querySelector(`.boss-shield-generator[data-id="${generator.id}"]`);
+                            if (generatorElement) {
+                                generatorElement.style.opacity = generator.health / 50;
+                                generatorElement.classList.add('hit');
+                                
+                                setTimeout(() => {
+                                    generatorElement.classList.remove('hit');
+                                }, 200);
+                                
+                                if (generator.health <= 0) {
+                                    generator.active = false;
+                                    generatorElement.style.display = 'none';
+                                    createExplosion(generator.x + 20, generator.y + 20, 40, 'rgba(46, 196, 182, 0.6)');
+                                    spawnParticlesOnDestroy(generator.x, generator.y);
+                                    showNotification('护盾发生器已摧毁！');
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                for (let i = gameState.boss.projectiles.length - 1; i >= 0; i--) {
+                    const projectile = gameState.boss.projectiles[i];
+                    const distanceToProjectile = getDistance(
+                        playerCenterX, playerCenterY,
+                        projectile.x, projectile.y
+                    );
+                    
+                    if (distanceToProjectile < explosionRange) {
+                        projectile.element.remove();
+                        gameState.boss.projectiles.splice(i, 1);
+                        createExplosion(projectile.x, projectile.y, 20, 'rgba(255, 209, 102, 0.6)');
+                    }
+                }
+                
+                setTimeout(() => {
+                    explosion.remove();
+                }, 800);
+                
+                showNotification('维度冲击释放！');
+            }
+
+            function checkPlayerBossCollision() {
+                if (gameState.paused || gameState.isCompleted || gameState.gameOver) return;
+                
+                const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                const playerCenterY = gameState.player.y + gameState.player.height / 2;
+                const bossCenterX = gameState.boss.x + gameState.boss.width / 2;
+                const bossCenterY = gameState.boss.y + gameState.boss.height / 2;
+                
+                const distance = getDistance(playerCenterX, playerCenterY, bossCenterX, bossCenterY);
+                const collisionDistance = (gameState.player.width + gameState.boss.width) / 2 - 20;
+                
+                if (distance < collisionDistance) {
+                    const damage = gameState.abilities.shield.active ? 5 : 10;
+                    takeDamage(damage);
+                    
+                    const angle = Math.atan2(playerCenterY - bossCenterY, playerCenterX - bossCenterX);
+                    gameState.player.velocityX = Math.cos(angle) * 8;
+                    gameState.player.velocityY = Math.sin(angle) * -5;
+                    gameState.player.isOnGround = false;
+                }
+            }
+
+            function checkProjectileHits() {
+                if (gameState.paused || gameState.isCompleted || gameState.gameOver) return;
+    
+                const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                const playerCenterY = gameState.player.y + gameState.player.height / 2;
+    
+                // 检查投射物是否击中玩家
+                for (let i = gameState.boss.projectiles.length - 1; i >= 0; i--) {
+                    const projectile = gameState.boss.projectiles[i];
+        
+                    const distance = getDistance(playerCenterX, playerCenterY, projectile.x, projectile.y);
+                    if (distance < gameState.player.width / 2) {
+                        projectile.element.remove();
+                        gameState.boss.projectiles.splice(i, 1);
+            
+                        // 根据是否有护盾计算伤害
+                        const damage = gameState.abilities.shield.active ? 8 : 15;
+                        takeDamage(damage);
+                        createExplosion(projectile.x, projectile.y, 20, 'rgba(231, 29, 54, 0.6)');
+            
+                        // 击退效果
+                        const angle = Math.atan2(
+                            playerCenterY - projectile.y,
+                            playerCenterX - projectile.x
+                        );
+                        gameState.player.velocityX = Math.cos(angle) * 5;
+                        gameState.player.velocityY = Math.sin(angle) * -5;
+                        gameState.player.isOnGround = false;
+                    }
+                }
+    
+                // 检查激光是否击中玩家
+                gameState.boss.lasers.forEach(laser => {
+                    const laserStartX = laser.x;
+                    const laserStartY = laser.y;
+                    const laserEndX = laser.x + Math.cos(laser.angle) * laser.length;
+                    const laserEndY = laser.y + Math.sin(laser.angle) * laser.length;
+        
+                    if (isLineIntersectsCircle(
+                        laserStartX, laserStartY, laserEndX, laserEndY,
+                        playerCenterX, playerCenterY, gameState.player.width / 2
+                    )) {
+                        const damage = gameState.abilities.shield.active ? 3 : 6;
+                        takeDamage(damage);
+                    }
+                });
+            }
+
+
+            function takeDamage(amount) {
+                gameState.player.health -= amount;
+                if (gameState.player.health < 0) gameState.player.health = 0;
+                
+                elements.playerHealth.style.width = `${gameState.player.health}%`;
+                elements.player.classList.add('damaged');
+                
+                setTimeout(() => {
+                    elements.player.classList.remove('damaged');
+                }, 500);
+                
+                if (gameState.player.health <= 0) {
+                    gameOver();
+                }
+            }
+
+            function checkParticleCollection() {
+                if (gameState.paused || !gameState.battleStarted) return;
+                
+                const playerCenterX = gameState.player.x + gameState.player.width / 2;
+                const playerCenterY = gameState.player.y + gameState.player.height / 2;
+                
+                // 收集费米子
+                for (let i = gameState.particles.fermions.length - 1; i >= 0; i--) {
+                    const particle = gameState.particles.fermions[i];
+                    const distance = getDistance(
+                        playerCenterX, playerCenterY,
+                        particle.x + particle.width / 2,
+                        particle.y + particle.height / 2
+                    );
+                    
+                    if (distance < 25) {
+                        gameState.collected.fermions++;
+                        updateParticleCounts();
+                        createCollectionEffect(particle.x, particle.y, 'rgba(108, 99, 255, 0.8)');
+                        
+                        particle.element.remove();
+                        gameState.particles.fermions.splice(i, 1);
+                        
+                        // 随机生成新粒子
+                        if (Math.random() < 0.7) {
+                            setTimeout(() => spawnParticle('fermion'), 2000);
+                        }
+                    }
+                }
+                
+                // 收集玻色子
+                for (let i = gameState.particles.bosons.length - 1; i >= 0; i--) {
+                    const particle = gameState.particles.bosons[i];
+                    const distance = getDistance(
+                        playerCenterX, playerCenterY,
+                        particle.x + particle.width / 2,
+                        particle.y + particle.height / 2
+                    );
+                    
+                    if (distance < 25) {
+                        gameState.collected.bosons++;
+                        updateParticleCounts();
+                        createCollectionEffect(particle.x, particle.y, 'rgba(255, 101, 132, 0.8)');
+                        
+                        particle.element.remove();
+                        gameState.particles.bosons.splice(i, 1);
+                        
+                        // 随机生成新粒子
+                        if (Math.random() < 0.7) {
+                            setTimeout(() => spawnParticle('boson'), 2000);
+                        }
+                    }
+                }
+                
+                // 收集希格斯玻色子
+                for (let i = gameState.particles.higgs.length - 1; i >= 0; i--) {
+                    const particle = gameState.particles.higgs[i];
+                    const distance = getDistance(
+                        playerCenterX, playerCenterY,
+                        particle.x + particle.width / 2,
+                        particle.y + particle.height / 2
+                    );
+                    
+                    if (distance < 30) {
+                        gameState.collected.higgs++;
+                        updateParticleCounts();
+                        createCollectionEffect(particle.x, particle.y, 'rgba(255, 209, 102, 0.8)', 30);
+                        
+                        particle.element.remove();
+                        gameState.particles.higgs.splice(i, 1);
+                        
+                        // 希格斯玻色子更稀有，生成概率更低
+                        if (Math.random() < 0.3) {
+                            setTimeout(() => spawnParticle('higgs'), 5000);
+                        }
+                        
+                        showNotification('获得希格斯玻色子！');
+                    }
+                }
+                
+                // 检查指南步骤是否完成
+                if (gameState.guide.currentStep < guideSteps.length) {
+                    const currentStep = guideSteps[gameState.guide.currentStep];
+                    if (currentStep.checkCondition && currentStep.checkCondition()) {
+                        completeGuideStep();
+                    }
+                }
+                
+                checkRecipeAvailability();
+            }
+
+            function createCollectionEffect(x, y, color, size = 20) {
+                const effect = document.createElement('div');
+                effect.className = 'collection-effect';
+                effect.style.width = `${size}px`;
+                effect.style.height = `${size}px`;
+                effect.style.left = `${x}px`;
+                effect.style.top = `${y}px`;
+                effect.style.backgroundColor = color;
+                effect.style.animation = `collectPulse 0.5s forwards`;
+                
+                elements.gameContainer.appendChild(effect);
+                
+                setTimeout(() => {
+                    effect.remove();
+                }, 500);
+            }
+
+            function spawnParticlesOnDestroy(x, y) {
+                // 发生器被摧毁时生成粒子
+                const particleCount = 3 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < particleCount; i++) {
+                    const particleType = i % 3 === 0 ? 'fermion' : (i % 3 === 1 ? 'boson' : 'higgs');
+                    const offsetX = (Math.random() - 0.5) * 60;
+                    const offsetY = (Math.random() - 0.5) * 60;
+                    
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.className = `particle ${particleType}`;
+                        particle.style.left = `${x + offsetX}px`;
+                        particle.style.top = `${y + offsetY}px`;
+                        particle.dataset.type = particleType;
+                        
+                        if (particleType === 'fermion') {
+                            particle.style.width = '8px';
+                            particle.style.height = '8px';
+                        } else if (particleType === 'boson') {
+                            particle.style.width = '10px';
+                            particle.style.height = '10px';
+                        } else if (particleType === 'higgs') {
+                            particle.style.width = '16px';
+                            particle.style.height = '16px';
+                        }
+                        
+                        elements.gameContainer.appendChild(particle);
+                        
+                        const particleData = {
+                            element: particle,
+                            x: x + offsetX,
+                            y: y + offsetY,
+                            width: particleType === 'fermion' ? 8 : (particleType === 'boson' ? 10 : 16),
+                            height: particleType === 'fermion' ? 8 : (particleType === 'boson' ? 10 : 16)
+                        };
+                        
+                        if (particleType === 'higgs') {
+                            particleData.velocityX = (Math.random() - 0.5) * 1.5;
+                            particleData.velocityY = (Math.random() - 0.5) * 1.5;
+                            particleData.avoidPlayer = true;
+                            particleData.update = function(deltaTime) {
+                                if (Math.random() < 0.02) {
+                                    this.velocityX += (Math.random() - 0.5) * 0.8;
+                                    this.velocityY += (Math.random() - 0.5) * 0.8;
+                                }
+                                
+                                const speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+                                if (speed > 2) {
+                                    this.velocityX = (this.velocityX / speed) * 2;
+                                    this.velocityY = (this.velocityY / speed) * 2;
+                                }
+                                
+                                this.x += this.velocityX;
+                                this.y += this.velocityY;
+                                this.element.style.left = `${this.x}px`;
+                                this.element.style.top = `${this.y}px`;
+                            };
+                        }
+                        
+                        gameState.particles[particleType + 's'].push(particleData);
+                    }, i * 100);
+                }
+            }
+
+            function updateBossHealth() {
+                const healthPercent = (gameState.boss.health / gameState.boss.maxHealth) * 100;
+                elements.bossHealth.style.width = `${healthPercent}%`;
+                
+                if (healthPercent < 30) {
+                    elements.bossHealth.style.backgroundColor = '#EF476F';
+                } else if (healthPercent < 60) {
+                    elements.bossHealth.style.backgroundColor = '#FFD166';
+                }
+            }
+
+            function completeLevel() {
+                gameState.isCompleted = true;
+                gameState.battleStarted = false;
+                
+                createExplosion(
+                    gameState.boss.x + gameState.boss.width / 2,
+                    gameState.boss.y + gameState.boss.height / 2,
+                    150, 'rgba(255, 209, 102, 0.8)'
+                );
+                
+                elements.boss.style.display = 'none';
+                
+                // 隐藏所有发生器
+                document.querySelectorAll('.boss-shield-generator').forEach(generator => {
+                    generator.style.display = 'none';
+                });
+                
+                // 隐藏所有弹丸和激光
+                document.querySelectorAll('.boss-projectile').forEach(projectile => {
+                    projectile.remove();
+                });
+                
+                document.querySelectorAll('.boss-laser').forEach(laser => {
+                    laser.remove();
+                });
+                
+                gameState.boss.projectiles = [];
+                gameState.boss.lasers = [];
+                
+                // 显示通关界面
+                setTimeout(() => {
+                    elements.finalHiggs.textContent = gameState.collected.higgs;
+                    
+                    // 计算战斗评级
+                    let rating = 'C';
+                    if (gameState.player.health > 70 && gameState.collected.higgs > 3) {
+                        rating = 'S';
+                    } else if (gameState.player.health > 50 || gameState.collected.higgs > 2) {
+                        rating = 'A';
+                    } else if (gameState.player.health > 30) {
+                        rating = 'B';
+                    }
+                    elements.battleRating.textContent = rating;
+                    
+                    elements.levelCompleted.style.display = 'flex';
+                }, 1500);
+            }
+
+            function gameOver() {
+                gameState.gameOver = true;
+                gameState.battleStarted = false;
+                
+                elements.player.style.display = 'none';
+                elements.gameOver.style.display = 'flex';
+            }
+
+            function goToNextDimension() {
+                showNotification('即将前往量子维度...');
+                setTimeout(() => {
+                    elements.levelCompleted.style.display = 'none';
+                    // 在实际游戏中，这里会加载下一个维度的场景
+                    restartBattle();
+                }, 1500);
+            }
+
+            function restartBattle() {
+                // 重置玩家状态
+                gameState.player.x = 100;
+                gameState.player.y = 500;
+                gameState.player.health = 100;
+                gameState.player.jumpCount = 0;
+                gameState.player.velocityX = 0;
+                gameState.player.velocityY = 0;
+                gameState.player.isOnGround = true;
+                
+                elements.player.style.display = 'block';
+                elements.player.classList.remove('shield-active');
+                elements.playerHealth.style.width = '100%';
+                elements.playerHealth.style.backgroundColor = '#6C63FF';
+                
+                // 重置BOSS状态
+                gameState.boss.health = gameState.boss.maxHealth;
+                gameState.boss.phase = 1;
+                gameState.boss.speed = 2;
+                gameState.boss.attackCooldown = gameState.boss.maxAttackCooldown;
+                gameState.boss.projectiles = [];
+                gameState.boss.lasers = [];
+                
+                elements.bossName.textContent = "熵增守卫 - 经典形态";
+                elements.bossHealth.style.width = '100%';
+                elements.bossHealth.style.backgroundColor = '#E71D36';
+                
+                // 重置护盾发生器
+                gameState.boss.shieldGenerators.forEach(generator => {
+                    generator.health = 50;
+                    generator.active = true;
+                });
+                createShieldGenerators();
+                initBossPositions();
+                
+                // 重置粒子
+                document.querySelectorAll('.particle').forEach(particle => {
+                    particle.remove();
+                });
+                gameState.particles.fermions = [];
+                gameState.particles.bosons = [];
+                gameState.particles.higgs = [];
+                gameState.collected.fermions = 0;
+                gameState.collected.bosons = 0;
+                gameState.collected.higgs = 0;
+                updateParticleCounts();
+                
+                // 重置能力
+                gameState.abilities.photonBeam.available = false;
+                gameState.abilities.photonBeam.active = false;
+                gameState.abilities.photonBeam.cooldown = 0;
+                gameState.abilities.shield.available = false;
+                gameState.abilities.shield.active = false;
+                gameState.abilities.doubleJump.available = false;
+                gameState.abilities.ultimate.available = false;
+                gameState.abilities.ultimate.active = false;
+                gameState.abilities.ultimate.cooldown = 0;
+                
+                // 隐藏界面
+                elements.gameOver.style.display = 'none';
+                elements.levelCompleted.style.display = 'none';
+                elements.combinePanel.style.display = 'none';
+                
+                // 重置游戏状态
+                gameState.isCompleted = false;
+                gameState.gameOver = false;
+                gameState.paused = false;
+                
+                // 重新开始战斗
+                startBattle();
+            }
+
+            function togglePause() {
+                gameState.paused = !gameState.paused;
+                elements.pauseBtn.innerHTML = gameState.paused ? 
+                    '<i class="fa fa-play"></i>' : '<i class="fa fa-pause"></i>';
+                
+                if (gameState.paused) {
+                    showNotification('游戏已暂停');
+                }
+            }
+
+            function handleResize() {
+                gameState.containerWidth = gameState.gameContainer.clientWidth;
+                gameState.containerHeight = gameState.gameContainer.clientHeight;
+                
+                // 重新定位BOSS和发生器
+                initBossPositions();
+                
+                // 确保玩家在屏幕内
+                if (gameState.player.x + gameState.player.width > gameState.containerWidth) {
+                    gameState.player.x = gameState.containerWidth - gameState.player.width;
+                }
+                if (gameState.player.y + gameState.player.height > gameState.containerHeight) {
+                    gameState.player.y = gameState.containerHeight - gameState.player.height;
+                }
+            }
+
+            function getDistance(x1, y1, x2, y2) {
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            function isLineIntersectsCircle(x1, y1, x2, y2, cx, cy, r) {
+                const lineLength = getDistance(x1, y1, x2, y2);
+                const dotProduct = ((cx - x1) * (x2 - x1) + (cy - y1) * (y2 - y1)) / (lineLength * lineLength);
+                
+                let closestX, closestY;
+                
+                if (dotProduct < 0) {
+                    closestX = x1;
+                    closestY = y1;
+                } else if (dotProduct > 1) {
+                    closestX = x2;
+                    closestY = y2;
+                } else {
+                    closestX = x1 + dotProduct * (x2 - x1);
+                    closestY = y1 + dotProduct * (y2 - y1);
+                }
+                
+                const distance = getDistance(closestX, closestY, cx, cy);
+                return distance <= r;
+            }
+
+            function gameLoop(timestamp) {
+                if (!gameState.lastTimestamp) gameState.lastTimestamp = timestamp;
+                const deltaTime = timestamp - gameState.lastTimestamp;
+                gameState.lastTimestamp = timestamp;
+                
+                if (!gameState.paused && gameState.battleStarted) {
+                    movePlayer(deltaTime);
+                    bossAI(deltaTime);
+                    gameState.particles.higgs.forEach(particle => {
+                        if (particle.update) {
+                            particle.update(deltaTime);
+                        }
+                    });
+                    
+                    // 更新能力状态
+                    if (gameState.abilities.photonBeam.cooldown > 0) {
+                        gameState.abilities.photonBeam.cooldown -= deltaTime;
+                    }
+                    
+                    if (gameState.abilities.shield.active) {
+                        gameState.abilities.shield.duration -= deltaTime;
+                        if (gameState.abilities.shield.duration <= 0) {
+                            gameState.abilities.shield.active = false;
+                            elements.player.classList.remove('shield-active');
+                            showNotification('动能护盾已失效');
+                        }
+                    }
+                    
+                    if (gameState.abilities.ultimate.cooldown > 0) {
+                        gameState.abilities.ultimate.cooldown -= deltaTime;
+                    }
+                    
+                    // 定期生成新粒子
+                    if (Math.random() < 0.005) {
+                        spawnParticle('fermion');
+                    }   
+                    if (Math.random() < 0.004) {
+                        spawnParticle('boson');
+                    }
+                    if (Math.random() < 0.001) {
+                        spawnParticle('higgs');
+                    }
+                }
+                requestAnimationFrame(gameLoop);
+            }
+            init();
+        });
+        function spawnParticle(type) {
+            if (!elements.gameContainer) return; // 确保容器存在
+            const particle = document.createElement('div');
+            particle.className = `particle ${type}`;
+    
+            // 随机生成屏幕内位置（避免超出边界）
+            const maxX = gameState.containerWidth - (type === 'higgs' ? 16 : (type === 'boson' ? 10 : 8));
+            const maxY = gameState.containerHeight - (type === 'higgs' ? 16 : (type === 'boson' ? 10 : 8));
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+    
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            particle.dataset.type = type;
+    
+            // 设置粒子尺寸（与 `spawnParticlesOnDestroy` 逻辑一致）
+            if (type === 'fermion') {
+                particle.style.width = '8px';
+                particle.style.height = '8px';
+            } else if (type === 'boson') {
+                particle.style.width = '10px';
+                particle.style.height = '10px';
+            } else if (type === 'higgs') {
+                particle.style.width = '16px';
+                particle.style.height = '16px';
+            }
+    
+            elements.gameContainer.appendChild(particle);
+    
+            // 将粒子添加到游戏状态管理数组
+            const particleData = {
+                element: particle,
+                x,
+                y,
+                width: type === 'fermion' ? 8 : (type === 'boson' ? 10 : 16),
+                height: type === 'fermion' ? 8 : (type === 'boson' ? 10 : 16)
+            };
+    
+            // 希格斯粒子添加特殊运动逻辑（与 `spawnParticlesOnDestroy` 一致）
+            if (type === 'higgs') {
+                particleData.velocityX = (Math.random() - 0.5) * 1.5;
+                particleData.velocityY = (Math.random() - 0.5) * 1.5;
+                particleData.avoidPlayer = true;
+                particleData.update = function(deltaTime) {
+                    if (Math.random() < 0.02) {
+                        this.velocityX += (Math.random() - 0.5) * 0.8;
+                        this.velocityY += (Math.random() - 0.5) * 0.8;
+                    }
+                    const speed = Math.sqrt(this.velocityX ** 2 + this.velocityY ** 2);
+                    if (speed > 2) {
+                        this.velocityX = (this.velocityX / speed) * 2;
+                        this.velocityY = (this.velocityY / speed) * 2;
+                    }
+                    this.x += this.velocityX;
+                    this.y += this.velocityY;
+                    this.element.style.left = `${this.x}px`;
+                    this.element.style.top = `${this.y}px`;
+                };
+            }
+    
+            gameState.particles[`${type}s`].push(particleData);
+        }
+    </script>
+</body>
+</html>

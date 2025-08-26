@@ -17,6 +17,7 @@
             color: #333;
             min-height: 100vh;
             padding: 20px;
+            padding-bottom: 100px; /* 避免底部按钮遮挡内容 */
         }
 
         header {
@@ -27,6 +28,11 @@
             border-radius: 12px;
             margin-bottom: 30px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s ease;
+        }
+
+        header:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
 
         h1 {
@@ -42,7 +48,7 @@
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .user-section:hover {
@@ -68,6 +74,12 @@
             color: white;
             font-size: 24px;
             font-weight: bold;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .user-avatar.logged {
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
         }
 
         .user-info h2 {
@@ -75,24 +87,43 @@
             font-size: 1.5rem;
         }
 
+        .user-info .login-tip {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
         .stats-container {
-            display: none; /* 默认隐藏统计数据 */
+            display: none;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
             margin-top: 10px;
             gap: 20px;
             flex-wrap: wrap;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .stat-item {
             flex: 1;
-            min-width: 150px;
+            min-width: 120px;
             text-align: center;
             padding: 10px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
         }
 
         .stat-item h3 {
@@ -107,11 +138,25 @@
             font-weight: bold;
         }
 
+        /* 区分游戏类型的标签 */
+        .game-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            color: white;
+            background: #3498db;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+        .game-tag.horse {
+            background: #e67e22; /* 与赛马游戏卡片配色一致 */
+        }
+
         .games-container {
             max-width: 1000px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 25px;
         }
 
@@ -121,13 +166,15 @@
             padding: 25px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            border-top: 3px solid transparent;
         }
 
         .game-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top-color: #3498db;
         }
 
         .game-icon {
@@ -141,7 +188,18 @@
             justify-content: center;
             color: white;
             font-size: 32px;
+            transition: background 0.3s ease, transform 0.3s ease;
         }
+
+        .game-card:hover .game-icon {
+            transform: scale(1.05);
+        }
+
+        .game-card:nth-child(1) .game-icon { background: #3498db; }
+        .game-card:nth-child(2) .game-icon { background: #e67e22; }
+        .game-card:nth-child(3) .game-icon { background: #2ecc71; }
+        .game-card:nth-child(4) .game-icon { background: #e74c3c; }
+        .game-card:nth-child(5) .game-icon { background: #95a5a6; }
 
         .game-card h2 {
             color: #2c3e50;
@@ -152,6 +210,7 @@
         .game-card p {
             color: #7f8c8d;
             margin-bottom: 20px;
+            font-size: 0.95rem;
         }
 
         .play-btn {
@@ -162,11 +221,20 @@
             border-radius: 6px;
             text-decoration: none;
             font-weight: bold;
-            transition: background 0.3s;
+            transition: background 0.3s ease, transform 0.2s ease;
+            width: 100%;
         }
 
         .play-btn:hover {
             background: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .play-btn.disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            pointer-events: none;
+            transform: none;
         }
 
         footer {
@@ -174,13 +242,17 @@
             margin-top: 50px;
             color: #7f8c8d;
             font-size: 0.9rem;
+            padding-bottom: 20px;
         }
+
         .back-container {
-            position: fixed; /* 固定在视窗底部 */
-            bottom: 30px; /* 距离底部30px */
-            left: 50%; /* 水平居中 */
-            transform: translateX(-50%); /* 精确居中 */
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
         }
+
         .back-to-home {
             padding: 12px 30px;
             background-color: #3498db;
@@ -190,132 +262,232 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
         }
+
         .back-to-home:hover {
             background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        @media (max-width: 375px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .user-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .stat-item {
+                min-width: 100px;
+                padding: 8px;
+            }
+
+            .stat-item .value {
+                font-size: 1.2rem;
+            }
+
+            .back-to-home {
+                padding: 10px 25px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <header>
         <h1>小游戏合集</h1>
-        <p>选择喜欢的游戏开始挑战吧！</p >
+        <p>选择喜欢的游戏开始挑战吧！</p>
     </header>
 
-    <!-- 个人信息模块 -->
-    <div class="user-section" onclick="toggleStats()">
+    <div class="user-section" id="userSection">
         <div class="user-header">
             <div class="user-avatar" id="userAvatar">U</div>
             <div class="user-info">
                 <h2 id="userName">点击查看个人信息</h2>
-                <p>24点游戏统计数据</p >
+                <p>游戏统计数据（24点 + 扑克赛马）</p>
+                <p class="login-tip" id="loginTip">登录后可保存游戏数据，<a href="indexlo.html" style="color:#e74c3c; text-decoration:underline;">点击前往登录</a>~</p>
             </div>
         </div>
-        <!-- 统计数据区域（默认隐藏） -->
         <div class="stats-container" id="statsContainer">
+            <!-- 24点游戏数据 -->
             <div class="stat-item">
-                <h3>总答题数</h3>
+                <h3>24点总答题数 <span class="game-tag">24点</span></h3>
                 <div class="value" id="totalQuestions">0</div>
             </div>
             <div class="stat-item">
-                <h3>未用提示答对</h3>
+                <h3>24点未提示答对 <span class="game-tag">24点</span></h3>
                 <div class="value" id="correctWithoutHint">0</div>
             </div>
             <div class="stat-item">
-                <h3>胜率</h3>
-                <div class="value" id="winRate">0.00%</div>
+                <h3>24点胜率 <span class="game-tag">24点</span></h3>
+                <div class="value" id="winRate24">0.00%</div>
+            </div>
+            <!-- 赛马游戏数据（新增） -->
+            <div class="stat-item">
+                <h3>赛马总投注 <span class="game-tag horse">赛马</span></h3>
+                <div class="value" id="horseTotalBet">0</div>
             </div>
             <div class="stat-item">
-                <h3>当前得分</h3>
+                <h3>赛马猜对次数 <span class="game-tag horse">赛马</span></h3>
+                <div class="value" id="horseWinBet">0</div>
+            </div>
+            <div class="stat-item">
+                <h3>赛马竞猜胜率 <span class="game-tag horse">赛马</span></h3>
+                <div class="value" id="horseWinRate">0.00%</div>
+            </div>
+            <!-- 通用：当前总得分 -->
+            <div class="stat-item">
+                <h3>当前总得分</h3>
                 <div class="value" id="userScore">0</div>
             </div>
         </div>
     </div>
 
-    <!-- 游戏卡片区域 -->
     <div class="games-container">
-        <!-- 24点游戏卡片 -->
-        <div class="game-card">
-            <div class="game-icon">⚡</div>
-            <h2>自由电子冒险</h2>
-            <p>自由电子冒险之旅</p >
-            <a href="e(finally).html" class="play-btn">开始游戏</a >
-        </div>
         <div class="game-card">
             <div class="game-icon">24</div>
             <h2>24点小游戏</h2>
-            <p>用4个数字通过加减乘除算出24，挑战你的计算能力</p >
-            <a href="24game.html" class="play-btn">开始游戏</a >
+            <p>用4个数字通过加减乘除算出24，挑战计算能力</p>
+            <a href="24game.html" class="play-btn">开始游戏</a>
         </div>
         <div class="game-card">
             <div class="game-icon">A</div>
             <h2>扑克赛马</h2>
-            <p>竞猜(非赌博)</p >
-            <a href="horse.html" class="play-btn">开始游戏</a >
+            <p>趣味竞猜（非赌博），轻松休闲</p>
+            <a href="horse.html" class="play-btn">开始游戏</a>
         </div>
         <div class="game-card">
             <div class="game-icon">Y</div>
             <h2>Yourscraft</h2>
-            <p>搭建属于你的世界</p >
-            <a href="yourscraft.html" class="play-btn">开始游戏</a >
+            <p>搭建创意世界，自由发挥想象</p>
+            <a href="yourscraft.html" class="play-btn">开始游戏</a>
         </div>
         <div class="game-card">
             <div class="game-icon">色</div>
             <h2>色盲派对</h2>
-            <p>轻松找不同</p >
-            <a href="colors.html" class="play-btn">开始游戏</a >
+            <p>找颜色差异，锻炼观察力</p>
+            <a href="colors.html" class="play-btn">开始游戏</a>
         </div>
-        <!-- 可添加其他游戏卡片 -->
         <div class="game-card">
             <div class="game-icon">🎮</div>
             <h2>更多游戏</h2>
-            <p>即将上线，敬请期待...</p >
-            <a href="#" class="play-btn" style="background:#95a5a6;cursor:not-allowed">敬请期待</a >
+            <p>即将上线，敬请期待...</p>
+            <a href="#" class="play-btn disabled">敬请期待</a>
         </div>
     </div>
     
     <footer>
-        <p>© 2025 小游戏合集 | 快乐游戏，轻松生活</p >
+        <p>© 2025 小游戏合集 | 快乐游戏，轻松生活</p>
     </footer>
-    
+
+    <div class="back-container">
+        <button class="back-to-home" onclick="navigateToHome()">返回导航页面</button>
+    </div>
+
     <script>
-        // 切换统计数据显示/隐藏
+        // 切换统计数据显示（点击用户区域触发）
         function toggleStats() {
             const statsContainer = document.getElementById('statsContainer');
+            const loginTip = document.getElementById('loginTip');
+            const isLoggedIn = !!localStorage.getItem('mainUserInfo');
+            
+            if (!isLoggedIn) {
+                // 未登录时显示登录提示，2秒后自动隐藏
+                loginTip.style.display = 'block';
+                setTimeout(() => loginTip.style.display = 'none', 2000);
+                return;
+            }
+            // 登录状态下，先更新最新数据再显示统计面板
+            initGameStats();
             statsContainer.style.display = statsContainer.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // 页面加载时获取用户信息和游戏数据
-        window.onload = function() {
-            // 获取当前登录用户
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo'));
-            const username = userInfo?.username || '游客';
-            
-            // 更新个人信息显示
-            document.getElementById('userName').textContent = username + '的游戏数据';
-            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase(); // 显示用户名首字母
+        // 返回导航页（底部按钮功能）
+        function navigateToHome() {
+            window.location.href = 'index.html';
+        }
 
-            // 加载24点游戏统计数据
-            if (username !== '游客') {
-                const gameData = JSON.parse(localStorage.getItem('userData_' + username) || '{"score":0,"total":0,"correctWithoutHint":0}');
-                const total = gameData.total || 0;
-                const correct = gameData.correctWithoutHint || 0;
-                const score = gameData.score || 0;
-                
-                // 计算胜率
-                const winRate = total > 0 ? (correct / total * 100).toFixed(2) : '0.00';
-                
-                // 更新统计数据显示
-                document.getElementById('totalQuestions').textContent = total;
-                document.getElementById('correctWithoutHint').textContent = correct;
-                document.getElementById('winRate').textContent = `${winRate}%`;
-                document.getElementById('userScore').textContent = score;
+        // 初始化用户信息（头像、用户名）
+        function initUserInfo() {
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+            const userNameEl = document.getElementById('userName');
+            const userAvatarEl = document.getElementById('userAvatar');
+            
+            if (userInfo && userInfo.username) {
+                // 登录状态：显示用户名和个性化头像
+                const username = decodeURIComponent(userInfo.username);
+                userNameEl.textContent = `${username}的游戏数据`;
+                userAvatarEl.textContent = username.charAt(0).toUpperCase(); // 头像显示用户名首字母
+                userAvatarEl.classList.add('logged'); // 登录状态头像样式
+            } else {
+                // 未登录状态：默认提示
+                userNameEl.textContent = '游客用户（未登录）';
+                userAvatarEl.textContent = 'U';
+                userAvatarEl.classList.remove('logged');
             }
+        }
+
+        // 初始化游戏数据（整合24点 + 赛马数据）
+        function initGameStats() {
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            if (!userInfoStr) return; // 未登录时不加载数据
+            
+            const userInfo = JSON.parse(userInfoStr);
+            const username = decodeURIComponent(userInfo.username);
+            
+            // 1. 加载24点游戏数据（原有逻辑保留，兼容历史数据）
+            const game24Data = JSON.parse(localStorage.getItem(`userData_${username}`) || '{"score":0,"total":0,"correctWithoutHint":0}');
+            const total24Questions = game24Data.total || 0;
+            const correct24WithoutHint = game24Data.correctWithoutHint || 0;
+            const score24 = game24Data.score || 0;
+            // 计算24点胜率（避免除以0）
+            const winRate24 = total24Questions > 0 ? (correct24WithoutHint / total24Questions * 100).toFixed(2) : '0.00';
+            
+            // 2. 加载赛马游戏数据（读取之前localStorage中存储的赛马记录）
+            const horseDataStr = localStorage.getItem(`pokerHorseData_${username}`) || localStorage.getItem('pokerHorseData');
+            const horseData = horseDataStr ? JSON.parse(horseDataStr) : { betTotal: 0, betWin: 0, score: 0 };
+            const horseTotalBet = horseData.betTotal || 0; // 赛马总投注次数
+            const horseWinBet = horseData.betWin || 0;     // 赛马猜对次数
+            const scoreHorse = horseData.score || 0;       // 赛马游戏当前分数
+            // 计算赛马胜率（避免除以0）
+            const horseWinRate = horseTotalBet > 0 ? (horseWinBet / horseTotalBet * 100).toFixed(2) : '0.00';
+            
+            // 3. 计算当前总得分（24点分数 + 赛马分数，取最大值避免负数）
+            const totalScore = Math.max(score24 + scoreHorse, 0);
+            
+            // 4. 更新页面数据显示
+            // 24点数据
+            document.getElementById('totalQuestions').textContent = total24Questions;
+            document.getElementById('correctWithoutHint').textContent = correct24WithoutHint;
+            document.getElementById('winRate24').textContent = `${winRate24}%`;
+            // 赛马数据
+            document.getElementById('horseTotalBet').textContent = horseTotalBet;
+            document.getElementById('horseWinBet').textContent = horseWinBet;
+            document.getElementById('horseWinRate').textContent = `${horseWinRate}%`;
+            // 总得分
+            document.getElementById('userScore').textContent = totalScore;
+            
+            // 5. 数据兼容处理：将旧的通用赛马数据（未关联用户）迁移到用户专属存储
+            if (localStorage.getItem('pokerHorseData') && !localStorage.getItem(`pokerHorseData_${username}`)) {
+                localStorage.setItem(`pokerHorseData_${username}`, horseDataStr);
+                // 可选：删除旧的通用数据，避免重复（若需要保留可注释此行）
+                // localStorage.removeItem('pokerHorseData');
+            }
+        }
+
+        // 页面加载完成后初始化
+        window.onload = function() {
+            initUserInfo(); // 初始化用户头像、用户名
+            // 绑定用户区域点击事件（切换统计面板显示）
+            document.getElementById('userSection').addEventListener('click', toggleStats);
         };
     </script>
-    <div class="back-container">
-        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
-    </div>
 </body>
 </html>

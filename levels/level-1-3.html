@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自由电子冒险3 - 1-3：能量守恒</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body {
+            overflow: hidden;
+            touch-action: none;
+            margin: 0;
+            background-color: #000;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        #player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #6C63FF;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(108, 99, 255, 0.8);
+            z-index: 10;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 5;
+        }
+        .fermion {
+            width: 8px;
+            height: 8px;
+            background-color: #6C63FF;
+            box-shadow: 0 0 6px rgba(108, 99, 255, 0.8);
+        }
+        .boson {
+            width: 10px;
+            height: 10px;
+            background-color: #FF6584;
+            box-shadow: 0 0 6px rgba(255, 101, 132, 0.8);
+        }
+        .higgs {
+            width: 12px;
+            height: 12px;
+            background-color: #FFD166;
+            box-shadow: 0 0 8px rgba(255, 209, 102, 0.8);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        #portal {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(78,205,196,0.8) 0%, rgba(78,205,196,0.2) 70%);
+            box-shadow: 0 0 20px rgba(78,205,196,0.6);
+            z-index: 5;
+            animation: pulse 2s infinite;
+        }
+        .portal-active {
+            animation: portalActive 1.5s infinite;
+        }
+        @keyframes portalActive {
+            0% { box-shadow: 0 0 20px rgba(78,205,196,0.6); }
+            50% { box-shadow: 0 0 30px rgba(78,205,196,0.8); }
+            100% { box-shadow: 0 0 20px rgba(78,205,196,0.6); }
+        }
+        .wall {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 6;
+        }
+        .ice-wall {
+            position: absolute;
+            background-color: rgba(144, 202, 249, 0.3);
+            border: 2px solid #90CAF9;
+            z-index: 6;
+            box-shadow: 0 0 10px rgba(144, 202, 249, 0.5);
+        }
+        .ice-wall.melted {
+            background-color: rgba(144, 202, 249, 0.1);
+            border: 2px solid rgba(144, 202, 249, 0.3);
+            box-shadow: none;
+        }
+        .log {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #8D6E63;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(141, 110, 99, 0.6);
+            cursor: pointer;
+            animation: logPulse 1.5s infinite;
+        }
+        @keyframes logPulse {
+            0% { transform: scale(1); box-shadow: 0 0 10px rgba(141, 110, 99, 0.6); }
+            50% { transform: scale(1.1); box-shadow: 0 0 15px rgba(141, 110, 99, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 10px rgba(141, 110, 99, 0.6); }
+        }
+        #photon-beam {
+            position: absolute;
+            background-color: rgba(255, 101, 132, 0.7);
+            transform-origin: left center;
+            z-index: 7;
+            display: none;
+        }
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+        #combine-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(25, 25, 45, 0.9);
+            border: 2px solid #6C63FF;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 100;
+            display: none;
+            width: 90%;
+            max-width: 400px;
+        }
+        .panel-title {
+            color: white;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .particle-counts {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+        }
+        .count-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .count-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        .recipes {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .recipe {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .recipe:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .recipe-ingredients {
+            display: flex;
+            gap: 5px;
+        }
+        .ingredient {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+        .recipe-name {
+            color: white;
+            font-weight: bold;
+        }
+        .recipe-locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .recipe-locked:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        #level-completed {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(25, 25, 45, 0.9);
+            border: 2px solid #6C63FF;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            z-index: 200;
+            display: none;
+            min-width: 300px;
+        }
+        #log-found {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(25, 25, 45, 0.9);
+            border: 2px solid #8D6E63;
+            border-radius: 15px;
+            padding: 20px;
+            z-index: 200;
+            display: none;
+            max-width: 300px;
+        }
+        #mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            justify-content: space-between;
+            z-index: 90;
+        }
+        .control-pad {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+        .control-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .up { top: 0; left: 40px; }
+        .down { bottom: 0; left: 40px; }
+        .left { top: 40px; left: 0; }
+        .right { top: 40px; right: 0; }
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 101, 132, 0.2);
+            border: 2px solid #FF6584;
+            color: white;
+            font-weight: bold;
+        }
+        .combine-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(108, 99, 255, 0.2);
+            border: 2px solid #6C63FF;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* 提示信息样式 */
+        .tooltip {
+            position: fixed;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            max-width: 300px;
+        }
+        
+        .floating-hint {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(25, 25, 45, 0.9);
+            border-left: 4px solid #FF6584;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            z-index: 150;
+            animation: float 3s ease-in-out infinite;
+            display: none;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(-50%, 0px); }
+            50% { transform: translate(-50%, -10px); }
+            100% { transform: translate(-50%, 0px); }
+        }
+        
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            .hud-item {
+                font-size: 12px;
+            }
+            .floating-hint {
+                bottom: 180px;
+                font-size: 12px;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 玩家 -->
+        <div id="player"></div>
+        
+        <!-- 光子束 -->
+        <div id="photon-beam"></div>
+        
+        <!-- 终点传送门 -->
+        <div id="portal"></div>
+    </div>
+    
+    <!-- 提示信息元素 -->
+    <div class="tooltip" id="tooltip"></div>
+    <div class="floating-hint" id="floating-hint"></div>
+    
+    <!-- 游戏界面HUD -->
+    <div id="hud">
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(108, 99, 255, 0.3); color: #6C63FF;">
+                <i class="fa fa-microchip"></i>
+            </div>
+            <span>费米子: <span id="fermion-count">0</span></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(255, 101, 132, 0.3); color: #FF6584;">
+                <i class="fa fa-bolt"></i>
+            </div>
+            <span>玻色子: <span id="boson-count">0</span></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(255, 209, 102, 0.3); color: #FFD166;">
+                <i class="fa fa-star"></i>
+            </div>
+            <span>希格斯: <span id="higgs-count">0</span></span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(78, 205, 196, 0.3); color: #4ECDC4;">
+                <i class="fa fa-shield"></i>
+            </div>
+            <span>冰墙: <span id="ice-wall-count">3</span>/3</span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(141, 110, 99, 0.3); color: #8D6E63;">
+                <i class="fa fa-book"></i>
+            </div>
+            <span>日志: <span id="log-count">0</span>/1</span>
+        </div>
+        <div class="hud-item">
+            <button id="pause-btn" class="bg-black/50 hover:bg-black/70 p-2 rounded-lg transition-colors">
+                <i class="fa fa-pause"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 粒子组合面板 -->
+    <div id="combine-panel">
+        <div class="panel-title">
+            <span>粒子组合</span>
+            <button id="close-panel" class="text-gray-400 hover:text-white">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="particle-counts">
+            <div class="count-item">
+                <div class="count-icon" style="background-color: rgba(108, 99, 255, 0.3); color: #6C63FF;">
+                    <i class="fa fa-microchip"></i>
+                </div>
+                <span id="panel-fermion">0</span>
+            </div>
+            <div class="count-item">
+                <div class="count-icon" style="background-color: rgba(255, 101, 132, 0.3); color: #FF6584;">
+                    <i class="fa fa-bolt"></i>
+                </div>
+                <span id="panel-boson">0</span>
+            </div>
+            <div class="count-item">
+                <div class="count-icon" style="background-color: rgba(255, 209, 102, 0.3); color: #FFD166;">
+                    <i class="fa fa-star"></i>
+                </div>
+                <span id="panel-higgs">0</span>
+            </div>
+        </div>
+        <div class="recipes">
+            <div class="recipe" id="recipe-photon" data-fermion="1" data-boson="2" data-higgs="0" data-result="photon">
+                <div class="recipe-ingredients">
+                    <div class="ingredient" style="background-color: #6C63FF;">1</div>
+                    <div class="ingredient" style="background-color: #FF6584;">2</div>
+                </div>
+                <div class="recipe-name">光子束</div>
+            </div>
+            <div class="recipe recipe-locked" id="recipe-shield" data-fermion="2" data-boson="0" data-higgs="1" data-result="shield">
+                <div class="recipe-ingredients">
+                    <div class="ingredient" style="background-color: #6C63FF;">2</div>
+                    <div class="ingredient" style="background-color: #FFD166;">1</div>
+                </div>
+                <div class="recipe-name">能量护盾 (未解锁)</div>
+            </div>
+            <div class="recipe recipe-locked" id="recipe-jump" data-fermion="1" data-boson="1" data-higgs="1" data-result="jump">
+                <div class="recipe-ingredients">
+                    <div class="ingredient" style="background-color: #6C63FF;">1</div>
+                    <div class="ingredient" style="background-color: #FF6584;">1</div>
+                    <div class="ingredient" style="background-color: #FFD166;">1</div>
+                </div>
+                <div class="recipe-name">强化跳跃 (未解锁)</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 关卡完成弹窗 -->
+    <div id="level-completed">
+        <h2 class="text-2xl font-bold text-white mb-2">关卡完成！</h2>
+        <p class="text-gray-300 mb-4">恭喜你通过了"能量守恒"</p>
+        <div class="mb-4">
+            <p class="text-white">融化的冰墙：3/3</p>
+            <p class="text-white">找到的日志：<span id="final-log">1</span>/1</p>
+        </div>
+        <button id="next-level" class="bg-[#6C63FF] hover:bg-[#6C63FF]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold">
+            下一关 <i class="fa fa-arrow-right ml-1"></i>
+        </button>
+    </div>
+    
+    <!-- 发现日志弹窗 -->
+    <div id="log-found">
+        <h3 class="text-xl font-bold text-white mb-2">发现维度日志</h3>
+        <p class="text-gray-300 mb-4 text-sm">
+            "量子风暴正在撕裂维度屏障。熵增军团利用反物质粒子加速这个过程。唯一的希望是找到并组合本源粒子，重建平衡核心。"
+        </p>
+        <button id="close-log" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors">
+            关闭
+        </button>
+    </div>
+    
+    <!-- 移动设备控制按钮 -->
+    <div id="mobile-controls">
+        <div class="control-pad">
+            <div class="control-btn up" data-key="ArrowUp">
+                <i class="fa fa-arrow-up"></i>
+            </div>
+            <div class="control-btn down" data-key="ArrowDown">
+                <i class="fa fa-arrow-down"></i>
+            </div>
+            <div class="control-btn left" data-key="ArrowLeft">
+                <i class="fa fa-arrow-left"></i>
+            </div>
+            <div class="control-btn right" data-key="ArrowRight">
+                <i class="fa fa-arrow-right"></i>
+            </div>
+        </div>
+        <div style="display: flex; gap: 20px;">
+            <button class="action-btn" id="mobile-shoot">
+                <span>发射</span>
+            </button>
+            <button class="combine-btn" id="mobile-combine">
+                <span>C</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            player: {
+                x: 50,
+                y: 50,
+                speed: 4,
+                width: 20,
+                height: 20,
+                direction: 0, // 面向角度（度）
+                hasDoubleJump: false,
+                jumpCount: 0,
+                isOnGround: true
+            },
+            keys: {},
+            particles: {
+                fermions: [],
+                bosons: [],
+                higgs: []
+            },
+            collected: {
+                fermions: 0,
+                bosons: 0,
+                higgs: 0
+            },
+            abilities: {
+                photonBeam: {
+                    available: false,
+                    active: false,
+                    cooldown: 0,
+                    maxCooldown: 2000,
+                    提示显示: false // 跟踪是否显示过提示
+                },
+                shield: {
+                    available: false,
+                    active: false,
+                    duration: 0,
+                    maxDuration: 5000
+                },
+                doubleJump: {
+                    available: true // 解锁二段跳帮助通关
+                }
+            },
+            iceWalls: [],
+            meltedIceWalls: 0,
+            requiredIceWalls: 3,
+            logFound: false,
+            logElement: null, // 存储日志元素引用
+            walls: [],
+            platforms: [],
+            portal: {
+                x: 0,
+                y: 0,
+                width: 50,
+                height: 50,
+                activated: false // 标记传送门是否激活
+            },
+            gameContainer: null,
+            containerWidth: 0,
+            containerHeight: 0,
+            isCompleted: false,
+            paused: false,
+            gravity: 0.25, // 降低重力，让跳跃更轻松
+            velocityY: 0,
+            jumpForce: -8.5, // 增加跳跃力
+            lastTimestamp: 0
+        };
+
+        // DOM元素
+        const elements = {
+            player: document.getElementById('player'),
+            portal: document.getElementById('portal'),
+            photonBeam: document.getElementById('photon-beam'),
+            fermionCount: document.getElementById('fermion-count'),
+            bosonCount: document.getElementById('boson-count'),
+            higgsCount: document.getElementById('higgs-count'),
+            iceWallCount: document.getElementById('ice-wall-count'),
+            logCount: document.getElementById('log-count'),
+            levelCompleted: document.getElementById('level-completed'),
+            finalLog: document.getElementById('final-log'),
+            logFound: document.getElementById('log-found'),
+            nextLevel: document.getElementById('next-level'),
+            closeLog: document.getElementById('close-log'),
+            pauseBtn: document.getElementById('pause-btn'),
+            gameContainer: document.getElementById('game-container'),
+            combinePanel: document.getElementById('combine-panel'),
+            closePanel: document.getElementById('close-panel'),
+            panelFermion: document.getElementById('panel-fermion'),
+            panelBoson: document.getElementById('panel-boson'),
+            panelHiggs: document.getElementById('panel-higgs'),
+            recipePhoton: document.getElementById('recipe-photon'),
+            mobileShoot: document.getElementById('mobile-shoot'),
+            mobileCombine: document.getElementById('mobile-combine'),
+            tooltip: document.getElementById('tooltip'),
+            floatingHint: document.getElementById('floating-hint')
+        };
+
+        // 显示提示信息
+        function showTooltip(message, x, y, duration = 3000) {
+            const tooltip = elements.tooltip;
+            tooltip.textContent = message;
+            tooltip.style.left = `${x}px`;
+            tooltip.style.top = `${y}px`;
+            tooltip.style.opacity = '1';
+            
+            setTimeout(() => {
+                tooltip.style.opacity = '0';
+            }, duration);
+        }
+
+        // 显示浮动提示
+        function showFloatingHint(message, duration = 5000) {
+            const hint = elements.floatingHint;
+            hint.textContent = message;
+            hint.style.display = 'block';
+            
+            setTimeout(() => {
+                hint.style.display = 'none';
+            }, duration);
+        }
+
+        // 初始化游戏
+        function init() {
+            // 设置游戏容器尺寸
+            gameState.gameContainer = elements.gameContainer;
+            gameState.containerWidth = gameState.gameContainer.clientWidth;
+            gameState.containerHeight = gameState.gameContainer.clientHeight;
+            
+            // 设置玩家初始位置（左下角）
+            gameState.player.x = 50;
+            gameState.player.y = gameState.containerHeight - 100;
+            updatePlayerPosition();
+            
+            // 创建墙壁和平台
+            createWallsAndPlatforms();
+            
+            // 创建冰墙
+            createIceWalls();
+            
+            // 创建日志
+            createLog();
+            
+            // 设置传送门位置（右上角）
+            gameState.portal.x = gameState.containerWidth - 100;
+            gameState.portal.y = 100;
+            elements.portal.style.left = `${gameState.portal.x}px`;
+            elements.portal.style.top = `${gameState.portal.y}px`;
+            
+            // 生成粒子
+            generateParticles();
+            
+            // 显示初始提示
+            setTimeout(() => {
+                showFloatingHint("使用方向键移动，上键跳跃（可二段跳），按C打开粒子组合面板");
+            }, 1000);
+            
+            // 事件监听
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            window.addEventListener('resize', handleResize);
+            elements.nextLevel.addEventListener('click', goToNextLevel);
+            elements.closeLog.addEventListener('click', () => {
+                elements.logFound.style.display = 'none';
+            });
+            elements.pauseBtn.addEventListener('click', togglePause);
+            elements.closePanel.addEventListener('click', toggleCombinePanel);
+            elements.recipePhoton.addEventListener('click', () => combineParticles('photon'));
+            
+            // 移动设备触摸控制
+            setupMobileControls();
+            
+            // 开始游戏循环
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 创建墙壁和平台
+        function createWallsAndPlatforms() {
+            // 墙壁大小根据屏幕调整
+            const wallThickness = 10;
+            const basePlatformWidth = gameState.containerWidth < 768 ? 100 : 140;
+            
+            // 外框墙壁
+            const walls = [
+                {x: 0, y: 0, width: gameState.containerWidth, height: wallThickness},
+                {x: 0, y: 0, width: wallThickness, height: gameState.containerHeight},
+                {x: 0, y: gameState.containerHeight - wallThickness, width: gameState.containerWidth, height: wallThickness},
+                {x: gameState.containerWidth - wallThickness, y: 0, width: wallThickness, height: gameState.containerHeight}
+            ];
+            
+            // 电脑端平台布局：形成从左下到右上的连续路径
+            let platforms = [
+                // 起点附近平台
+                {x: 100, y: gameState.containerHeight - 150, width: basePlatformWidth, height: wallThickness},
+                
+                // 中间平台组（向右上方延伸）
+                {x: 300, y: gameState.containerHeight - 220, width: basePlatformWidth, height: wallThickness},
+                {x: 180, y: gameState.containerHeight - 300, width: basePlatformWidth, height: wallThickness},
+                {x: 400, y: gameState.containerHeight - 380, width: basePlatformWidth, height: wallThickness},
+                {x: 280, y: gameState.containerHeight - 460, width: basePlatformWidth, height: wallThickness},
+                {x: 500, y: gameState.containerHeight - 540, width: basePlatformWidth, height: wallThickness},
+                
+                // 靠近终点的平台
+                {x: 600, y: gameState.containerHeight - 400, width: basePlatformWidth, height: wallThickness},
+                {x: 700, y: gameState.containerHeight - 250, width: basePlatformWidth, height: wallThickness},
+                {x: 550, y: gameState.containerHeight - 180, width: basePlatformWidth, height: wallThickness}
+            ];
+            
+            // 移动端平台布局：更紧凑的跳跃路径
+            if (gameState.containerWidth < 768) {
+                platforms = [
+                    {x: gameState.containerWidth * 0.15, y: gameState.containerHeight - 150, width: gameState.containerWidth * 0.35, height: wallThickness},
+                    {x: gameState.containerWidth * 0.45, y: gameState.containerHeight - 220, width: gameState.containerWidth * 0.35, height: wallThickness},
+                    {x: gameState.containerWidth * 0.2, y: gameState.containerHeight - 300, width: gameState.containerWidth * 0.35, height: wallThickness},
+                    {x: gameState.containerWidth * 0.5, y: gameState.containerHeight - 380, width: gameState.containerWidth * 0.35, height: wallThickness},
+                    {x: gameState.containerWidth * 0.25, y: gameState.containerHeight - 460, width: gameState.containerWidth * 0.35, height: wallThickness},
+                    {x: gameState.containerWidth * 0.55, y: gameState.containerHeight - 520, width: gameState.containerWidth * 0.35, height: wallThickness},
+                    {x: gameState.containerWidth * 0.3, y: gameState.containerHeight - 380, width: gameState.containerWidth * 0.35, height: wallThickness},
+                    {x: gameState.containerWidth * 0.6, y: gameState.containerHeight - 250, width: gameState.containerWidth * 0.35, height: wallThickness}
+                ];
+            }
+            
+            // 创建墙壁元素
+            walls.forEach(wall => {
+                const wallElement = document.createElement('div');
+                wallElement.className = 'wall';
+                wallElement.style.left = `${wall.x}px`;
+                wallElement.style.top = `${wall.y}px`;
+                wallElement.style.width = `${wall.width}px`;
+                wallElement.style.height = `${wall.height}px`;
+                
+                gameState.gameContainer.appendChild(wallElement);
+                gameState.walls.push(wall);
+            });
+            
+            // 创建平台元素
+            platforms.forEach(platform => {
+                const platformElement = document.createElement('div');
+                platformElement.className = 'wall';
+                platformElement.style.left = `${platform.x}px`;
+                platformElement.style.top = `${platform.y}px`;
+                platformElement.style.width = `${platform.width}px`;
+                platformElement.style.height = `${platform.height}px`;
+                
+                gameState.gameContainer.appendChild(platformElement);
+                gameState.platforms.push(platform);
+            });
+        }
+
+        // 创建冰墙（位置调整为不阻碍主要路径）
+        function createIceWalls() {
+            const iceWalls = [
+                {x: 250, y: gameState.containerHeight - 250, width: 10, height: 80},
+                {x: 450, y: gameState.containerHeight - 420, width: 10, height: 80},
+                {x: 650, y: gameState.containerHeight - 300, width: 10, height: 80}
+            ];
+            
+            // 适配小屏幕
+            if (gameState.containerWidth < 768) {
+                iceWalls[0].x = gameState.containerWidth * 0.3;
+                iceWalls[0].y = gameState.containerHeight - 280;
+                
+                iceWalls[1].x = gameState.containerWidth * 0.6;
+                iceWalls[1].y = gameState.containerHeight - 450;
+                
+                iceWalls[2].x = gameState.containerWidth * 0.7;
+                iceWalls[2].y = gameState.containerHeight - 330;
+            }
+            
+            // 创建冰墙元素
+            iceWalls.forEach((wall, index) => {
+                const wallElement = document.createElement('div');
+                wallElement.className = 'ice-wall';
+                wallElement.style.left = `${wall.x}px`;
+                wallElement.style.top = `${wall.y}px`;
+                wallElement.style.width = `${wall.width}px`;
+                wallElement.style.height = `${wall.height}px`;
+                wallElement.dataset.id = index;
+                
+                // 添加鼠标悬停提示
+                wallElement.addEventListener('mouseenter', (e) => {
+                    showTooltip("使用光子束可以融化冰墙", e.clientX + 10, e.clientY + 10);
+                });
+                
+                gameState.gameContainer.appendChild(wallElement);
+                gameState.iceWalls.push({...wall, id: index, melted: false});
+            });
+        }
+
+        // 创建日志
+        function createLog() {
+            // 日志位置调整到通关路径上
+            const logX = gameState.containerWidth < 768 ? gameState.containerWidth * 0.7 : 600;
+            const logY = gameState.containerHeight < 500 ? gameState.containerHeight - 200 : 200;
+            
+            const logElement = document.createElement('div');
+            logElement.className = 'log';
+            logElement.style.left = `${logX}px`;
+            logElement.style.top = `${logY}px`;
+            logElement.innerHTML = '<i class="fa fa-book"></i>';
+            
+            // 存储日志元素引用
+            gameState.logElement = logElement;
+            
+            // 添加鼠标悬停提示
+            logElement.addEventListener('mouseenter', (e) => {
+                showTooltip("点击收集日志", e.clientX + 10, e.clientY + 10);
+            });
+            
+            // 日志点击事件
+            logElement.addEventListener('click', findLog);
+            logElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                findLog();
+            });
+            
+            gameState.gameContainer.appendChild(logElement);
+        }
+
+        // 发现日志
+        function findLog() {
+            if (gameState.logFound) return;
+            
+            // 获取日志元素的位置
+            const logRect = gameState.logElement.getBoundingClientRect();
+            const gameRect = gameState.gameContainer.getBoundingClientRect();
+            
+            // 计算日志在游戏容器中的位置
+            const logX = logRect.left - gameRect.left + logRect.width / 2;
+            const logY = logRect.top - gameRect.top + logRect.height / 2;
+            
+            // 计算玩家中心位置
+            const playerX = gameState.player.x + gameState.player.width / 2;
+            const playerY = gameState.player.y + gameState.player.height / 2;
+            
+            // 检查玩家是否在日志附近
+            const distance = getDistance(playerX, playerY, logX, logY);
+            
+            if (distance < 60) {
+                gameState.logFound = true;
+                elements.logCount.textContent = '1';
+                elements.logFound.style.display = 'block';
+                
+                // 移除日志元素
+                gameState.logElement.remove();
+                
+                // 检查是否满足解锁传送门的条件
+                checkPortalActivation();
+            } else {
+                // 显示提示告诉玩家需要靠近
+                showFloatingHint("靠近日志后点击收集");
+            }
+        }
+
+        // 检查是否激活传送门
+        function checkPortalActivation() {
+            // 当所有冰墙都被融化且日志被收集时，激活传送门
+            if (gameState.meltedIceWalls >= gameState.requiredIceWalls && gameState.logFound) {
+                gameState.portal.activated = true;
+                elements.portal.classList.add('portal-active');
+                showFloatingHint("所有目标已完成！前往传送门通关", 5000);
+            }
+        }
+
+        // 生成粒子
+        function generateParticles() {
+            // 生成费米子（15个）
+            for (let i = 0; i < 15; i++) {
+                spawnParticle('fermion');
+            }
+            
+            // 生成玻色子（20个）
+            for (let i = 0; i < 20; i++) {
+                spawnParticle('boson');
+            }
+            
+            // 生成希格斯玻色子（3个）
+            for (let i = 0; i < 3; i++) {
+                spawnParticle('higgs');
+            }
+        }
+
+        // 生成单个粒子
+        function spawnParticle(type) {
+            // 根据粒子类型获取尺寸
+            let size = 8; // fermion默认尺寸
+            if (type === 'boson') size = 10;
+            if (type === 'higgs') size = 12;
+            
+            // 确保粒子在屏幕可见范围内生成，优先在路径上生成
+            const x = Math.random() * (gameState.containerWidth - size * 2) + size;
+            const y = Math.random() * (gameState.containerHeight - size * 2) + size;
+            
+            // 确保粒子不在墙壁内
+            if (!isPositionInWall(x, y)) {
+                const particle = document.createElement('div');
+                particle.className = `particle ${type}`;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.dataset.type = type;
+                
+                gameState.gameContainer.appendChild(particle);
+                // 根据粒子类型使用明确的数组引用
+                if (type === 'fermion') {
+                    gameState.particles.fermions.push({
+                        element: particle,
+                        x,
+                        y
+                    });
+                } else if (type === 'boson') {
+                    gameState.particles.bosons.push({
+                        element: particle,
+                        x,
+                        y
+                    });
+                } else if (type === 'higgs') {
+                    gameState.particles.higgs.push({
+                        element: particle,
+                        x,
+                        y
+                    });
+                }
+            } else {
+                // 如果在墙内，重新生成
+                spawnParticle(type);
+            }
+        }
+
+        // 检查位置是否在墙壁内
+        function isPositionInWall(x, y) {
+            // 检查是否与墙壁碰撞
+            const inWall = gameState.walls.some(wall => {
+                return x > wall.x && x < wall.x + wall.width &&
+                       y > wall.y && y < wall.y + wall.height;
+            });
+            
+            // 检查是否与平台碰撞
+            const inPlatform = gameState.platforms.some(platform => {
+                return x > platform.x && x < platform.x + platform.width &&
+                       y > platform.y && y < platform.y + platform.height;
+            });
+            
+            return inWall || inPlatform;
+        }
+
+        // 处理键盘按下
+        function handleKeyDown(e) {
+            gameState.keys[e.key] = true;
+            
+            // 空格发射光子束
+            if (e.key === ' ' && gameState.abilities.photonBeam.available) {
+                if (gameState.abilities.photonBeam.cooldown <= 0) {
+                    firePhotonBeam();
+                } else {
+                    // 显示冷却提示
+                    const remaining = Math.ceil(gameState.abilities.photonBeam.cooldown / 1000);
+                    showTooltip(`技能冷却中，剩余${remaining}秒`, 
+                               e.clientX, e.clientY - 30, 1000);
+                }
+            }
+            
+            // C键打开组合面板
+            if (e.key === 'c' || e.key === 'C') {
+                toggleCombinePanel();
+            }
+            
+            // 上键跳跃
+            if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && 
+                (gameState.player.isOnGround || (gameState.abilities.doubleJump.available && gameState.player.jumpCount < 2))) {
+                jump();
+            }
+        }
+
+        // 处理键盘释放
+        function handleKeyUp(e) {
+            gameState.keys[e.key] = false;
+        }
+
+        // 设置移动设备控制
+        function setupMobileControls() {
+            const controlBtns = document.querySelectorAll('.control-btn');
+            controlBtns.forEach(btn => {
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const key = btn.getAttribute('data-key');
+                    gameState.keys[key] = true;
+                    
+                    // 上键跳跃
+                    if (key === 'ArrowUp' && 
+                        (gameState.player.isOnGround || (gameState.abilities.doubleJump.available && gameState.player.jumpCount < 2))) {
+                        jump();
+                    }
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    const key = btn.getAttribute('data-key');
+                    gameState.keys[key] = false;
+                });
+            });
+            
+            // 射击按钮
+            elements.mobileShoot.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState.abilities.photonBeam.available) {
+                    if (gameState.abilities.photonBeam.cooldown <= 0) {
+                        firePhotonBeam();
+                    } else {
+                        // 显示冷却提示
+                        const remaining = Math.ceil(gameState.abilities.photonBeam.cooldown / 1000);
+                        showFloatingHint(`技能冷却中，剩余${remaining}秒`, 1000);
+                    }
+                } else {
+                    showFloatingHint("需要先组合光子束技能", 1500);
+                }
+            });
+            
+            // 组合面板按钮
+            elements.mobileCombine.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleCombinePanel();
+            });
+        }
+
+        // 切换组合面板
+        function toggleCombinePanel() {
+            const isVisible = elements.combinePanel.style.display !== 'none';
+            
+            if (isVisible) {
+                elements.combinePanel.style.display = 'none';
+            } else {
+                // 更新面板中的粒子数量
+                elements.panelFermion.textContent = gameState.collected.fermions;
+                elements.panelBoson.textContent = gameState.collected.bosons;
+                elements.panelHiggs.textContent = gameState.collected.higgs;
+                
+                elements.combinePanel.style.display = 'block';
+            }
+        }
+
+        // 组合粒子
+        function combineParticles(result) {
+            if (result === 'photon') {
+                // 需要1个费米子和2个玻色子
+                if (gameState.collected.fermions >= 1 && gameState.collected.bosons >= 2) {
+                    // 消耗粒子
+                    gameState.collected.fermions -= 1;
+                    gameState.collected.bosons -= 2;
+                    
+                    // 更新UI
+                    updateParticleCounts();
+                    elements.panelFermion.textContent = gameState.collected.fermions;
+                    elements.panelBoson.textContent = gameState.collected.bosons;
+                    
+                    // 解锁光子束能力
+                    gameState.abilities.photonBeam.available = true;
+                    
+                    // 关闭面板
+                    toggleCombinePanel();
+                    
+                    // 显示技能使用提示
+                    if (!gameState.abilities.photonBeam.提示显示) {
+                        gameState.abilities.photonBeam.提示显示 = true;
+                        if (window.innerWidth < 768) {
+                            showFloatingHint("光子束已解锁！点击右下角发射按钮使用", 5000);
+                        } else {
+                            showFloatingHint("光子束已解锁！按空格键发射，可融化冰墙", 5000);
+                        }
+                    }
+                } else {
+                    showFloatingHint('粒子不足！需要1个费米子和2个玻色子', 2000);
+                }
+            }
+        }
+
+        // 更新粒子计数UI
+        function updateParticleCounts() {
+            elements.fermionCount.textContent = gameState.collected.fermions;
+            elements.bosonCount.textContent = gameState.collected.bosons;
+            elements.higgsCount.textContent = gameState.collected.higgs;
+        }
+
+        // 跳跃功能
+        function jump() {
+            gameState.velocityY = gameState.jumpForce;
+            gameState.player.isOnGround = false;
+            gameState.player.jumpCount++;
+        }
+
+        // 更新玩家位置
+        function updatePlayerPosition() {
+            elements.player.style.left = `${gameState.player.x}px`;
+            elements.player.style.top = `${gameState.player.y}px`;
+        }
+
+        // 移动玩家并应用重力
+        function movePlayer() {
+            let newX = gameState.player.x;
+            
+            // 水平移动
+            if (gameState.keys.ArrowLeft || gameState.keys.KeyA) {
+                newX = Math.max(0, newX - gameState.player.speed);
+                gameState.player.direction = 180; // 向左
+            }
+            if (gameState.keys.ArrowRight || gameState.keys.KeyD) {
+                newX = Math.min(
+                    gameState.containerWidth - gameState.player.width, 
+                    newX + gameState.player.speed
+                );
+                gameState.player.direction = 0; // 向右
+            }
+            
+            // 应用重力
+            gameState.velocityY += gameState.gravity;
+            let newY = gameState.player.y + gameState.velocityY;
+            
+            // 检测与地面/平台的碰撞（垂直）
+            let isOnGround = false;
+            
+            // 检查与墙壁的碰撞
+            const allColliders = [...gameState.walls, ...gameState.platforms];
+            allColliders.forEach(collider => {
+                // 垂直碰撞检测
+                if (
+                    newX < collider.x + collider.width &&
+                    newX + gameState.player.width > collider.x &&
+                    gameState.player.y + gameState.player.height <= collider.y &&
+                    newY + gameState.player.height >= collider.y &&
+                    gameState.velocityY > 0
+                ) {
+                    // 落在平台上
+                    newY = collider.y - gameState.player.height;
+                    gameState.velocityY = 0;
+                    isOnGround = true;
+                }
+                
+                // 头部碰撞
+                if (
+                    newX < collider.x + collider.width &&
+                    newX + gameState.player.width > collider.x &&
+                    gameState.player.y >= collider.y + collider.height &&
+                    newY <= collider.y + collider.height &&
+                    gameState.velocityY < 0
+                ) {
+                    newY = collider.y + collider.height;
+                    gameState.velocityY = 0;
+                }
+            });
+            
+            // 水平碰撞检测
+            let canMoveX = true;
+            allColliders.forEach(collider => {
+                if (
+                    newX + gameState.player.width >= collider.x &&
+                    newX <= collider.x + collider.width &&
+                    newY < collider.y + collider.height &&
+                    newY + gameState.player.height > collider.y
+                ) {
+                    canMoveX = false;
+                }
+            });
+            
+            // 冰墙碰撞检测（只检测未融化的）
+            gameState.iceWalls.forEach(wall => {
+                if (!wall.melted &&
+                    newX + gameState.player.width >= wall.x &&
+                    newX <= wall.x + wall.width &&
+                    newY < wall.y + wall.height &&
+                    newY + gameState.player.height > wall.y
+                ) {
+                    canMoveX = false;
+                }
+            });
+            
+            // 更新位置
+            if (canMoveX) {
+                gameState.player.x = newX;
+            }
+            gameState.player.y = newY;
+            
+            // 更新地面状态
+            gameState.player.isOnGround = isOnGround;
+            if (isOnGround) {
+                gameState.player.jumpCount = 0; // 重置跳跃计数
+            }
+            
+            updatePlayerPosition();
+        }
+
+        // 发射光子束
+        function firePhotonBeam() {
+            gameState.abilities.photonBeam.active = true;
+            gameState.abilities.photonBeam.cooldown = gameState.abilities.photonBeam.maxCooldown;
+            
+            // 设置光子束位置和方向
+            const beamWidth = 10;
+            const beamLength = 200;
+            
+            elements.photonBeam.style.width = `${beamLength}px`;
+            elements.photonBeam.style.height = `${beamWidth}px`;
+            elements.photonBeam.style.left = `${gameState.player.x + gameState.player.width/2}px`;
+            elements.photonBeam.style.top = `${gameState.player.y + gameState.player.height/2 - beamWidth/2}px`;
+            elements.photonBeam.style.transform = `rotate(${gameState.player.direction}deg)`;
+            elements.photonBeam.style.display = 'block';
+            
+            // 检测是否击中冰墙
+            checkPhotonHit();
+            
+            // 光束持续时间
+            setTimeout(() => {
+                elements.photonBeam.style.display = 'none';
+                gameState.abilities.photonBeam.active = false;
+            }, 500);
+        }
+
+        // 检测光子束是否击中冰墙
+        function checkPhotonHit() {
+            const beamX = gameState.player.x + gameState.player.width/2;
+            const beamY = gameState.player.y + gameState.player.height/2;
+            const beamAngle = gameState.player.direction * Math.PI / 180; // 转为弧度
+            
+            // 计算光束终点
+            const beamEndX = beamX + Math.cos(beamAngle) * 200;
+            const beamEndY = beamY + Math.sin(beamAngle) * 200;
+            
+            // 检测每面冰墙是否被光束击中
+            gameState.iceWalls.forEach(wall => {
+                if (!wall.melted && isLineIntersectsRect(
+                    beamX, beamY, beamEndX, beamEndY,
+                    wall.x, wall.y, wall.width, wall.height
+                )) {
+                    // 融化冰墙
+                    wall.melted = true;
+                    gameState.meltedIceWalls++;
+                    
+                    // 更新UI
+                    elements.iceWallCount.textContent = gameState.meltedIceWalls;
+                    
+                    // 更新冰墙样式
+                    const wallElement = document.querySelector(`.ice-wall[data-id="${wall.id}"]`);
+                    if (wallElement) {
+                        wallElement.classList.add('melted');
+                        
+                        // 添加融化效果动画
+                        setTimeout(() => {
+                            wallElement.style.opacity = '0.5';
+                        }, 1000);
+                    }
+                    
+                    // 显示提示
+                    showFloatingHint(`冰墙已融化！还剩 ${gameState.requiredIceWalls - gameState.meltedIceWalls} 个`, 2000);
+                    
+                    // 检查是否满足解锁传送门的条件
+                    checkPortalActivation();
+                }
+            });
+        }
+
+        // 线段与矩形相交检测
+        function isLineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
+            // 矩形四条边的线段
+            const rectEdges = [
+                {x1: rx, y1: ry, x2: rx + rw, y2: ry},          // 上
+                {x1: rx + rw, y1: ry, x2: rx + rw, y2: ry + rh}, // 右
+                {x1: rx, y1: ry + rh, x2: rx + rw, y2: ry + rh}, // 下
+                {x1: rx, y1: ry, x2: rx, y2: ry + rh}           // 左
+            ];
+            
+            // 检查线段是否与矩形的任何一条边相交
+            for (const edge of rectEdges) {
+                if (isLineIntersectsLine(
+                    x1, y1, x2, y2,
+                    edge.x1, edge.y1, edge.x2, edge.y2
+                )) {
+                    return true;
+                }
+            }
+            
+            // 检查线段是否完全在矩形内部
+            if (isPointInRect(x1, y1, rx, ry, rw, rh) && 
+                isPointInRect(x2, y2, rx, ry, rw, rh)) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // 线段与线段相交检测
+        function isLineIntersectsLine(x1, y1, x2, y2, x3, y3, x4, y4) {
+            // 计算分母
+            const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (den === 0) return false; // 平行线
+            
+            // 计算分子
+            const tNum = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4);
+            const uNum = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3));
+            
+            const t = tNum / den;
+            const u = uNum / den;
+            
+            // 检查是否在线段范围内
+            return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+        }
+
+        // 点是否在矩形内
+        function isPointInRect(x, y, rx, ry, rw, rh) {
+            return x >= rx && x <= rx + rw && y >= ry && y <= ry + rh;
+        }
+
+        // 计算两点之间的距离
+        function getDistance(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // 检查玩家是否收集粒子
+        function checkParticleCollection() {
+            // 检查费米子
+            for (let i = gameState.particles.fermions.length - 1; i >= 0; i--) {
+                const particle = gameState.particles.fermions[i];
+                const distance = getDistance(
+                    gameState.player.x + gameState.player.width/2,
+                    gameState.player.y + gameState.player.height/2,
+                    particle.x,
+                    particle.y
+                );
+                
+                if (distance < 25) {
+                    // 收集粒子
+                    gameState.collected.fermions++;
+                    updateParticleCounts();
+                    
+                    // 显示收集提示
+                    showTooltip("收集到费米子", 
+                               gameState.player.x + 30, 
+                               gameState.player.y, 
+                               1000);
+                    
+                    // 移除粒子
+                    particle.element.remove();
+                    gameState.particles.fermions.splice(i, 1);
+                }
+            }
+            
+            // 检查玻色子
+            for (let i = gameState.particles.bosons.length - 1; i >= 0; i--) {
+                const particle = gameState.particles.bosons[i];
+                const distance = getDistance(
+                    gameState.player.x + gameState.player.width/2,
+                    gameState.player.y + gameState.player.height/2,
+                    particle.x,
+                    particle.y
+                );
+                
+                if (distance < 25) {
+                    // 收集粒子
+                    gameState.collected.bosons++;
+                    updateParticleCounts();
+                    
+                    // 显示收集提示
+                    showTooltip("收集到玻色子", 
+                               gameState.player.x + 30, 
+                               gameState.player.y, 
+                               1000);
+                    
+                    // 移除粒子
+                    particle.element.remove();
+                    gameState.particles.bosons.splice(i, 1);
+                }
+            }
+            
+            // 检查希格斯玻色子
+            for (let i = gameState.particles.higgs.length - 1; i >= 0; i--) {
+                const particle = gameState.particles.higgs[i];
+                const distance = getDistance(
+                    gameState.player.x + gameState.player.width/2,
+                    gameState.player.y + gameState.player.height/2,
+                    particle.x,
+                    particle.y
+                );
+                
+                if (distance < 25) {
+                    // 收集粒子
+                    gameState.collected.higgs++;
+                    updateParticleCounts();
+                    
+                    // 显示收集提示
+                    showTooltip("收集到希格斯玻色子", 
+                               gameState.player.x + 30, 
+                               gameState.player.y, 
+                               1000);
+                    
+                    // 移除粒子
+                    particle.element.remove();
+                    gameState.particles.higgs.splice(i, 1);
+                }
+            }
+        }
+
+        // 检查玩家是否到达传送门
+        function checkPortalEntry() {
+            const distance = getDistance(
+                gameState.player.x + gameState.player.width/2,
+                gameState.player.y + gameState.player.height/2,
+                gameState.portal.x + gameState.portal.width/2,
+                gameState.portal.y + gameState.portal.height/2
+            );
+            
+            if (distance < 30) {
+                // 只有当传送门已激活时才能通关
+                if (gameState.portal.activated) {
+                    checkLevelCompletion();
+                } else {
+                    showTooltip("需要先完成所有任务才能激活传送门", 
+                               gameState.portal.x + 60, 
+                               gameState.portal.y, 
+                               2000);
+                }
+            }
+        }
+
+        // 检查关卡是否完成
+        function checkLevelCompletion() {
+            // 关卡完成条件：所有冰墙融化 + 找到日志 + 到达传送门
+            if (gameState.meltedIceWalls >= gameState.requiredIceWalls && 
+                gameState.logFound && 
+                gameState.portal.activated &&
+                !gameState.isCompleted) {
+                
+                gameState.isCompleted = true;
+                elements.finalLog.textContent = gameState.logFound ? '1' : '0';
+                elements.levelCompleted.style.display = 'block';
+            }
+        }
+
+        // 处理窗口大小变化
+        function handleResize() {
+            gameState.containerWidth = gameState.gameContainer.clientWidth;
+            gameState.containerHeight = gameState.gameContainer.clientHeight;
+        }
+
+        // 切换暂停状态
+        function togglePause() {
+            gameState.paused = !gameState.paused;
+            const icon = elements.pauseBtn.querySelector('i');
+            if (gameState.paused) {
+                icon.classList.remove('fa-pause');
+                icon.classList.add('fa-play');
+                showFloatingHint("游戏已暂停，点击继续", 2000);
+            } else {
+                icon.classList.remove('fa-play');
+                icon.classList.add('fa-pause');
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // 前往下一关
+        function goToNextLevel() {
+            // 在完整游戏中，这里会导航到1-4关
+            alert('即将进入下一关！');
+            // window.location.href = 'level-1-4.html';
+        }
+
+        // 游戏主循环
+        function gameLoop(timestamp) {
+            if (gameState.paused || gameState.isCompleted) return;
+            
+            // 计算时间差，使游戏速度不受帧率影响
+            const deltaTime = timestamp - (gameState.lastTimestamp || timestamp);
+            gameState.lastTimestamp = timestamp;
+            
+            // 更新玩家位置
+            movePlayer();
+            
+            // 检查粒子收集
+            checkParticleCollection();
+            
+            // 检查传送门进入
+            checkPortalEntry();
+            
+            // 更新技能冷却
+            if (gameState.abilities.photonBeam.cooldown > 0) {
+                gameState.abilities.photonBeam.cooldown -= deltaTime;
+            }
+            
+            // 继续游戏循环
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 页面加载完成后初始化游戏
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

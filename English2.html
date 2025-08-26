@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外研版高二选修一英语单词默写</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        neutral: '#6B7280',
+                        light: '#F3F4F6',
+                        dark: '#1F2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .btn-primary {
+                @apply bg-primary text-white py-2 px-4 rounded-lg transition-all duration-300 hover:bg-primary/90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50;
+            }
+            .btn-secondary {
+                @apply bg-secondary text-white py-2 px-4 rounded-lg transition-all duration-300 hover:bg-secondary/90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-secondary/50;
+            }
+            .btn-accent {
+                @apply bg-accent text-white py-2 px-4 rounded-lg transition-all duration-300 hover:bg-accent/90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent/50;
+            }
+            .input-field {
+                @apply border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+            .progress-bar {
+                @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+            }
+            .progress-value {
+                @apply h-full bg-primary rounded-full transition-all duration-500 ease-out;
+            }
+            .unit-btn {
+                @apply input-field text-left py-3 transition-all duration-300;
+            }
+            .unit-btn.active {
+                @apply border-primary bg-primary/5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-book text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-primary">外研版高二选修一单词默写</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="progress-text" class="hidden md:inline-block text-neutral">进度: 0/0</span>
+                <div class="hidden md:block progress-bar w-40">
+                    <div id="progress-bar" class="progress-value" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 介绍卡片 -->
+        <div id="intro-card" class="bg-white rounded-xl shadow-md p-6 mb-8 card-hover">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i>欢迎使用单词默写练习
+            </h2>
+            <p class="text-neutral mb-4">这个工具匹配外研版高二选修一教材，帮助你针对性练习各单元单词。</p>
+            
+            <div class="mb-6">
+                <h3 class="font-semibold mb-3">选择单元:</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="unit-selector">
+                    <!-- 单元按钮将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <button id="start-btn" class="btn-primary w-full" disabled>
+                <i class="fa fa-play mr-2"></i>开始练习
+            </button>
+        </div>
+
+        <!-- 练习卡片 -->
+        <div id="quiz-card" class="bg-white rounded-xl shadow-md p-6 mb-8 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fa fa-question-circle text-primary mr-2"></i><span id="current-unit-title">单词默写</span>
+                </h2>
+                <span id="current-word" class="bg-light px-3 py-1 rounded-full text-sm font-medium">第 1 题 / 共 0 题</span>
+            </div>
+            
+            <div class="mb-6">
+                <p id="word-definition" class="text-lg mb-2">单词释义将在这里显示</p>
+                <div class="flex items-center mb-2">
+                    <span>请写出对应的英语单词: </span>
+                    <input type="text" id="answer-input" class="input-field ml-2 flex-1" placeholder="在此输入答案">
+                </div>
+                <div id="pronunciation" class="text-sm text-neutral italic mt-2 hidden">
+                    <i class="fa fa-volume-up mr-1"></i>
+                    <span>发音: </span>
+                    <button id="play-audio" class="text-primary hover:underline ml-1">播放</button>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-3">
+                <button id="check-btn" class="btn-primary">
+                    <i class="fa fa-check mr-2"></i>检查答案
+                </button>
+                <button id="hint-btn" class="btn-accent">
+                    <i class="fa fa-lightbulb-o mr-2"></i>提示
+                </button>
+                <button id="skip-btn" class="btn-secondary ml-auto">
+                    <i class="fa fa-forward mr-2"></i>跳过
+                </button>
+            </div>
+            
+            <div id="feedback" class="mt-6 hidden">
+                <div id="correct-feedback" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg hidden">
+                    <div class="flex items-start">
+                        <i class="fa fa-check-circle text-secondary text-xl mt-1 mr-3"></i>
+                        <div>
+                            <p class="font-medium">正确！</p>
+                            <p id="correct-message" class="text-sm mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="wrong-feedback" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg hidden">
+                    <div class="flex items-start">
+                        <i class="fa fa-times-circle text-red-500 text-xl mt-1 mr-3"></i>
+                        <div>
+                            <p class="font-medium">不正确</p>
+                            <p id="wrong-message" class="text-sm mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果卡片 -->
+        <div id="result-card" class="bg-white rounded-xl shadow-md p-6 mb-8 hidden">
+            <h2 class="text-xl font-bold mb-6 flex items-center">
+                <i class="fa fa-bar-chart text-primary mr-2"></i>练习结果
+            </h2>
+            
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-primary/10 mb-4">
+                    <span id="score-display" class="text-4xl font-bold text-primary">0</span>
+                    <span class="text-xl font-bold text-primary ml-1">/100</span>
+                </div>
+                <p id="result-message" class="text-lg"></p>
+                <p id="result-unit" class="text-neutral mt-2"></p>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="font-semibold mb-3">单词掌握情况</h3>
+                <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    <div id="results-list"></div>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <button id="restart-btn" class="btn-primary flex-1">
+                    <i class="fa fa-refresh mr-2"></i>重新练习
+                </button>
+                <button id="back-btn" class="btn-secondary flex-1">
+                    <i class="fa fa-arrow-left mr-2"></i>选择其他单元
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>外研版高二选修一单词默写练习 &copy; 2025</p>
+            <p class="text-sm text-gray-400 mt-2">匹配教材的针对性单词练习工具</p>
+        </div>
+    </footer>
+
+    <script>
+        // 外研版高二选修一单词按单元分类（匹配教材内容）
+        const wordUnits = {
+            unit1: {
+                title: "第一单元：Face values",
+                words: [
+                    { word: "superficial", definition: "adj. 表面的；肤浅的", pronunciation: "/ˌsuːpəˈfɪʃl/" },
+                    { word: "prejudice", definition: "n. 偏见；成见 v. 使有偏见", pronunciation: "/ˈpredʒədɪs/" },
+                    { word: "stereotype", definition: "n. 模式化观念；刻板印象", pronunciation: "/ˈsteriətaɪp/" },
+                    { word: "discriminate", definition: "v. 区别对待；歧视", pronunciation: "/dɪˈskrɪmɪneɪt/" },
+                    { word: "judgement", definition: "n. 判断；看法", pronunciation: "/ˈdʒʌdʒmənt/" },
+                    { word: "self-esteem", definition: "n. 自尊；自尊心", pronunciation: "/ˌself ɪˈstiːm/" },
+                    { word: "confident", definition: "adj. 自信的；有信心的", pronunciation: "/ˈkɒnfɪdənt/" },
+                    { word: "external", definition: "adj. 外部的；表面的", pronunciation: "/ɪkˈstɜːnl/" },
+                    { word: "internal", definition: "adj. 内在的；内部的", pronunciation: "/ɪnˈtɜːnl/" },
+                    { word: "profound", definition: "adj. 深刻的；深远的", pronunciation: "/prəˈfaʊnd/" }
+                ]
+            },
+            unit2: {
+                title: "第二单元：On the move",
+                words: [
+                    { word: "commute", definition: "v. 通勤；上下班往返", pronunciation: "/kəˈmjuːt/" },
+                    { word: "congestion", definition: "n. 拥挤；堵塞", pronunciation: "/kənˈdʒestʃən/" },
+                    { word: "sustain", definition: "v. 维持；支撑；承受", pronunciation: "/səˈsteɪn/" },
+                    { word: "implement", definition: "v. 实施；执行；贯彻", pronunciation: "/ˈɪmplɪment/" },
+                    { word: "facilitate", definition: "v. 促进；使便利", pronunciation: "/fəˈsɪlɪteɪt/" },
+                    { word: "efficient", definition: "adj. 高效的；有能力的", pronunciation: "/ɪˈfɪʃnt/" },
+                    { word: "alternative", definition: "adj. 可供替代的 n. 选择", pronunciation: "/ɔːlˈtɜːnətɪv/" },
+                    { word: "priority", definition: "n. 优先事项；重点", pronunciation: "/praɪˈɒrəti/" },
+                    { word: "infrastructure", definition: "n. 基础设施；公共建设", pronunciation: "/ˈɪnfrəstrʌktʃə(r)/" },
+                    { word: "accessibility", definition: "n. 可到达；易接近", pronunciation: "/əkˌsesəˈbɪləti/" }
+                ]
+            },
+            unit3: {
+                title: "第三单元：Faster, higher, stronger",
+                words: [
+                    { word: "ambition", definition: "n. 雄心；抱负；野心", pronunciation: "/æmˈbɪʃn/" },
+                    { word: "perseverance", definition: "n. 毅力；坚韧不拔", pronunciation: "/ˌpɜːsəˈvɪərəns/" },
+                    { word: "triumph", definition: "n. 胜利；成功 v. 战胜", pronunciation: "/ˈtraɪʌmf/" },
+                    { word: "endurance", definition: "n. 忍耐力；持久力", pronunciation: "/ɪnˈdjʊərəns/" },
+                    { word: "commitment", definition: "n. 投入；奉献；承诺", pronunciation: "/kəˈmɪtmənt/" },
+                    { word: "discipline", definition: "n. 自律；纪律 v. 训练", pronunciation: "/ˈdɪsəplɪn/" },
+                    { word: "potential", definition: "adj. 潜在的 n. 潜力", pronunciation: "/pəˈtenʃl/" },
+                    { word: "突破", definition: "breakthrough", pronunciation: "/ˈbreɪkθruː/" },
+                    { word: "卓越", definition: "excellence", pronunciation: "/ˈeksələns/" },
+                    { word: "激励", definition: "motivate", pronunciation: "/ˈməʊtɪveɪt/" }
+                ]
+            },
+            unit4: {
+                title: "第四单元：Meeting the muse",
+                words: [
+                    { word: "masterpiece", definition: "n. 杰作；代表作", pronunciation: "/ˈmɑːstəpiːs/" },
+                    { word: "inspiration", definition: "n. 灵感；启发", pronunciation: "/ˌɪnspəˈreɪʃn/" },
+                    { word: "interpret", definition: "v. 诠释；解释；翻译", pronunciation: "/ɪnˈtɜːprət/" },
+                    { word: "convey", definition: "v. 表达；传递；运送", pronunciation: "/kənˈveɪ/" },
+                    { word: "aesthetic", definition: "adj. 美学的；审美的", pronunciation: "/iːsˈθetɪk/" },
+                    { word: "authentic", definition: "adj. 真实的；正宗的", pronunciation: "/ɔːˈθentɪk/" },
+                    { word: "original", definition: "adj. 原创的；起初的", pronunciation: "/əˈrɪdʒənl/" },
+                    { word: "symbol", definition: "n. 象征；符号", pronunciation: "/ˈsɪmbl/" },
+                    { word: "evoke", definition: "v. 唤起；引起", pronunciation: "/ɪˈvəʊk/" },
+                    { word: "mastery", definition: "n. 精通；掌握", pronunciation: "/ˈmɑːstəri/" }
+                ]
+            },
+            unit5: {
+                title: "第五单元：Revealing nature",
+                words: [
+                    { word: "phenomenon", definition: "n. 现象；奇事", pronunciation: "/fəˈnɒmɪnən/" },
+                    { word: "hypothesis", definition: "n. 假设；假说", pronunciation: "/haɪˈpɒθəsɪs/" },
+                    { word: "analyze", definition: "v. 分析；研究", pronunciation: "/ˈænəlaɪz/" },
+                    { word: "verify", definition: "v. 核实；证实", pronunciation: "/ˈverɪfaɪ/" },
+                    { word: "evolution", definition: "n. 进化；演变", pronunciation: "/ˌiːvəˈluːʃn/" },
+                    { word: "diverse", definition: "adj. 多样的；不同的", pronunciation: "/daɪˈvɜːs/" },
+                    { word: "sustain", definition: "v. 维持；支撑；承受", pronunciation: "/səˈsteɪn/" },
+                    { word: "adaptation", definition: "n. 适应；改编", pronunciation: "/ˌædæpˈteɪʃn/" },
+                    { word: "species", definition: "n. 物种；种类", pronunciation: "/ˈspiːʃiːz/" },
+                    { word: "ecosystem", definition: "n. 生态系统", pronunciation: "/ˈiːkəʊsɪstəm/" }
+                ]
+            }
+            // 可以根据需要继续添加更多单元
+        };
+
+        // 全局变量
+        let currentUnit = null;
+        let currentWords = [];
+        let currentIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+
+        // DOM元素
+        const introCard = document.getElementById('intro-card');
+        const quizCard = document.getElementById('quiz-card');
+        const resultCard = document.getElementById('result-card');
+        const unitSelector = document.getElementById('unit-selector');
+        const currentUnitTitle = document.getElementById('current-unit-title');
+        
+        const wordDefinition = document.getElementById('word-definition');
+        const answerInput = document.getElementById('answer-input');
+        const currentWordIndicator = document.getElementById('current-word');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const pronunciation = document.getElementById('pronunciation');
+        const pronunciationText = document.querySelector('#pronunciation span');
+        const playAudioBtn = document.getElementById('play-audio');
+        
+        const correctFeedback = document.getElementById('correct-feedback');
+        const wrongFeedback = document.getElementById('wrong-feedback');
+        const correctMessage = document.getElementById('correct-message');
+        const wrongMessage = document.getElementById('wrong-message');
+        const feedback = document.getElementById('feedback');
+        
+        const scoreDisplay = document.getElementById('score-display');
+        const resultMessage = document.getElementById('result-message');
+        const resultUnit = document.getElementById('result-unit');
+        const resultsList = document.getElementById('results-list');
+
+        // 按钮
+        const startBtn = document.getElementById('start-btn');
+        const checkBtn = document.getElementById('check-btn');
+        const hintBtn = document.getElementById('hint-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const backBtn = document.getElementById('back-btn');
+
+        // 初始化
+        function init() {
+            // 生成单元选择按钮
+            generateUnitButtons();
+            
+            // 设置事件监听器
+            startBtn.addEventListener('click', startQuiz);
+            checkBtn.addEventListener('click', checkAnswer);
+            hintBtn.addEventListener('click', showHint);
+            skipBtn.addEventListener('click', skipWord);
+            restartBtn.addEventListener('click', restartQuiz);
+            backBtn.addEventListener('click', showIntroCard);
+            
+            // 回车键提交答案
+            answerInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkAnswer();
+                }
+            });
+            
+            // 播放发音按钮
+            playAudioBtn.addEventListener('click', playPronunciation);
+        }
+
+        // 生成单元选择按钮
+        function generateUnitButtons() {
+            unitSelector.innerHTML = '';
+            
+            for (const [unitId, unitData] of Object.entries(wordUnits)) {
+                const button = document.createElement('button');
+                button.className = 'unit-btn';
+                button.dataset.unit = unitId;
+                button.innerHTML = `
+                    <i class="fa fa-check-circle text-primary mr-2 opacity-0"></i>
+                    ${unitData.title}
+                `;
+                
+                button.addEventListener('click', () => {
+                    // 重置所有按钮状态
+                    document.querySelectorAll('.unit-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.querySelector('i').classList.add('opacity-0');
+                    });
+                    
+                    // 设置当前选中按钮状态
+                    button.classList.add('active');
+                    button.querySelector('i').classList.remove('opacity-0');
+                    
+                    // 设置当前单元
+                    currentUnit = unitId;
+                    startBtn.disabled = false;
+                });
+                
+                unitSelector.appendChild(button);
+            }
+        }
+
+        // 显示介绍卡片
+        function showIntroCard() {
+            introCard.classList.remove('hidden');
+            quizCard.classList.add('hidden');
+            resultCard.classList.add('hidden');
+            
+            // 重置进度条显示
+            progressBar.style.width = '0%';
+            progressText.textContent = '进度: 0/0';
+        }
+
+        // 显示练习卡片
+        function showQuizCard() {
+            introCard.classList.add('hidden');
+            quizCard.classList.remove('hidden');
+            resultCard.classList.add('hidden');
+        }
+
+        // 显示结果卡片
+        function showResultCard() {
+            introCard.classList.add('hidden');
+            quizCard.classList.add('hidden');
+            resultCard.classList.remove('hidden');
+            
+            // 重置进度条显示
+            progressBar.style.width = '100%';
+            progressText.textContent = `进度: ${currentWords.length}/${currentWords.length}`;
+            
+            updateResultCard();
+        }
+
+        // 开始测验
+        function startQuiz() {
+            if (!currentUnit) return;
+            
+            // 从选中的单元获取单词
+            currentWords = [...wordUnits[currentUnit].words];
+            // 打乱单词顺序
+            shuffleArray(currentWords);
+            // 初始化变量
+            currentIndex = 0;
+            score = 0;
+            userAnswers = [];
+            
+            // 更新UI
+            currentUnitTitle.textContent = wordUnits[currentUnit].title;
+            updateQuizUI();
+            showQuizCard();
+        }
+
+        // 更新测验UI
+        function updateQuizUI() {
+            if (currentIndex < currentWords.length) {
+                const currentWord = currentWords[currentIndex];
+                wordDefinition.textContent = currentWord.definition;
+                answerInput.value = '';
+                answerInput.focus();
+                currentWordIndicator.textContent = `第 ${currentIndex + 1} 题 / 共 ${currentWords.length} 题`;
+                
+                // 更新进度
+                const progress = ((currentIndex / currentWords.length) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `进度: ${currentIndex}/${currentWords.length}`;
+                
+                // 显示发音信息
+                if (currentWord.pronunciation) {
+                    pronunciationText.textContent = `发音: ${currentWord.pronunciation}`;
+                    pronunciation.classList.remove('hidden');
+                } else {
+                    pronunciation.classList.add('hidden');
+                }
+                
+                // 重置反馈
+                feedback.classList.add('hidden');
+                correctFeedback.classList.add('hidden');
+                wrongFeedback.classList.add('hidden');
+            } else {
+                // 所有单词完成，显示结果
+                showResultCard();
+            }
+        }
+
+        // 检查答案
+        function checkAnswer() {
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            const correctAnswer = currentWords[currentIndex].word.toLowerCase();
+            
+            // 保存用户答案
+            userAnswers.push({
+                word: currentWords[currentIndex].word,
+                definition: currentWords[currentIndex].definition,
+                userAnswer: userAnswer,
+                isCorrect: userAnswer === correctAnswer
+            });
+            
+            // 显示反馈
+            feedback.classList.remove('hidden');
+            
+            if (userAnswer === correctAnswer) {
+                // 答案正确
+                correctFeedback.classList.remove('hidden');
+                wrongFeedback.classList.add('hidden');
+                correctMessage.textContent = `正确答案是: ${currentWords[currentIndex].word}`;
+                score++;
+                // 添加正确动画
+                correctFeedback.classList.add('animate-pulse');
+                setTimeout(() => {
+                    correctFeedback.classList.remove('animate-pulse');
+                }, 1000);
+            } else {
+                // 答案错误
+                correctFeedback.classList.add('hidden');
+                wrongFeedback.classList.remove('hidden');
+                wrongMessage.textContent = `正确答案是: ${currentWords[currentIndex].word}，你的答案: ${userAnswer}`;
+            }
+            
+            // 禁用按钮防止重复提交
+            checkBtn.disabled = true;
+            hintBtn.disabled = true;
+            
+            // 2秒后自动进入下一个单词
+            setTimeout(() => {
+                currentIndex++;
+                checkBtn.disabled = false;
+                hintBtn.disabled = false;
+                updateQuizUI();
+            }, 2000);
+        }
+
+        // 显示提示
+        function showHint() {
+            const correctAnswer = currentWords[currentIndex].word;
+            // 显示单词的前两个字母作为提示
+            const hint = correctAnswer.substring(0, 2);
+            answerInput.value = hint;
+            answerInput.focus();
+            answerInput.setSelectionRange(hint.length, hint.length);
+        }
+
+        // 跳过单词
+        function skipWord() {
+            // 记录为错误答案
+            userAnswers.push({
+                word: currentWords[currentIndex].word,
+                definition: currentWords[currentIndex].definition,
+                userAnswer: '跳过',
+                isCorrect: false
+            });
+            
+            currentIndex++;
+            updateQuizUI();
+        }
+
+        // 更新结果卡片
+        function updateResultCard() {
+            // 计算得分
+            const percentage = Math.round((score / currentWords.length) * 100);
+            scoreDisplay.textContent = percentage;
+            
+            // 设置结果消息
+            let message = '';
+            if (percentage >= 90) {
+                message = '太棒了！你对这些单词掌握得非常好！';
+            } else if (percentage >= 70) {
+                message = '不错！继续努力，你会做得更好！';
+            } else if (percentage >= 50) {
+                message = '还可以，但需要更多练习来巩固这些单词。';
+            } else {
+                message = '加油！多花点时间记忆这些单词，你会进步的！';
+            }
+            resultMessage.textContent = message;
+            resultUnit.textContent = `单元: ${wordUnits[currentUnit].title}`;
+            
+            // 显示所有单词的结果
+            resultsList.innerHTML = '';
+            userAnswers.forEach((item, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = `p-3 rounded-lg ${item.isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`;
+                
+                resultItem.innerHTML = `
+                    <div class="font-medium">${index + 1}. ${item.definition}</div>
+                    <div class="flex flex-wrap gap-x-4 mt-1 text-sm">
+                        <div>正确答案: <span class="font-medium">${item.word}</span></div>
+                        <div>你的答案: <span class="font-medium">${item.userAnswer || '未作答'}</span></div>
+                    </div>
+                `;
+                
+                resultsList.appendChild(resultItem);
+            });
+        }
+
+        // 重新开始测验
+        function restartQuiz() {
+            currentIndex = 0;
+            score = 0;
+            userAnswers = [];
+            updateQuizUI();
+            showQuizCard();
+        }
+
+        // 播放单词发音（使用Web Speech API）
+        function playPronunciation() {
+            const word = currentWords[currentIndex].word;
+            
+            // 检查浏览器是否支持语音合成
+            if ('speechSynthesis' in window) {
+                // 停止任何正在播放的语音
+                window.speechSynthesis.cancel();
+                
+                // 创建新的语音实例
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US'; // 使用美式英语发音
+                utterance.rate = 0.9; // 语速稍慢
+                
+                // 播放语音
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('抱歉，你的浏览器不支持语音播放功能。');
+            }
+        }
+
+        // 打乱数组顺序（Fisher-Yates算法）
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

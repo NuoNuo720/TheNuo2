@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自由电子冒险3 - 1-1：牛顿的考验</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body {
+            overflow: hidden;
+            touch-action: none;
+            margin: 0;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        #player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #6C63FF;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(108, 99, 255, 0.8);
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 5;
+            transition: all 0.2s ease-out;
+        }
+        .fermion {
+            width: 8px;
+            height: 8px;
+            background-color: #6C63FF;
+            box-shadow: 0 0 6px rgba(108, 99, 255, 0.8);
+        }
+        .boson {
+            width: 10px;
+            height: 10px;
+            background-color: #FF6584;
+            box-shadow: 0 0 6px rgba(255, 101, 132, 0.8);
+        }
+        #portal {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(78,205,196,0.8) 0%, rgba(78,205,196,0.2) 70%);
+            box-shadow: 0 0 20px rgba(78,205,196,0.6);
+            z-index: 5;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .guide-arrow {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-top: 3px solid rgba(108, 99, 255, 0.5);
+            border-right: 3px solid rgba(108, 99, 255, 0.5);
+            transform: rotate(45deg);
+            z-index: 4;
+            animation: arrowPulse 2s infinite;
+        }
+        @keyframes arrowPulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            box-sizing: border-box;
+        }
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+        #level-completed {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(25, 25, 45, 0.9);
+            border: 2px solid #6C63FF;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            z-index: 200;
+            display: none;
+            min-width: 300px;
+        }
+        #mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            justify-content: space-between;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+        .control-pad {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+        .control-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.1s ease;
+        }
+        .control-btn:active, .action-btn:active {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
+        .up { top: 0; left: 40px; }
+        .down { bottom: 0; left: 40px; }
+        .left { top: 40px; left: 0; }
+        .right { top: 40px; right: 0; }
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 101, 132, 0.2);
+            border: 2px solid #FF6584;
+            color: white;
+            font-weight: bold;
+            transition: all 0.1s ease;
+        }
+        
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+        }
+
+        #particles-counter {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            z-index: 100;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 玩家 -->
+        <div id="player"></div>
+        
+        <!-- 终点传送门 -->
+        <div id="portal"></div>
+    </div>
+    
+    <!-- 游戏界面HUD -->
+    <div id="hud">
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(108, 99, 255, 0.3); color: #6C63FF;">
+                <i class="fa fa-microchip"></i>
+            </div>
+            <span>费米子: <span id="fermion-count">0</span>/10</span>
+        </div>
+        <div class="hud-item">
+            <div class="item-icon" style="background-color: rgba(255, 101, 132, 0.3); color: #FF6584;">
+                <i class="fa fa-bolt"></i>
+            </div>
+            <span>玻色子: <span id="boson-count">0</span>/5</span>
+        </div>
+        <div class="hud-item">
+            <button id="pause-btn" class="bg-black/50 hover:bg-black/70 p-2 rounded-lg transition-colors">
+                <i class="fa fa-pause"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 剩余粒子计数器 -->
+    <div id="particles-counter">
+        剩余: 费米子 <span id="remaining-fermions">10</span> | 玻色子 <span id="remaining-bosons">5</span>
+    </div>
+    
+    <!-- 关卡完成弹窗 -->
+    <div id="level-completed">
+        <h2 class="text-2xl font-bold text-white mb-2">关卡完成！</h2>
+        <p class="text-gray-300 mb-4">恭喜你通过了"牛顿的考验"</p>
+        <div class="mb-4">
+            <p class="text-gray-400">收集的粒子：</p>
+            <p class="text-white">费米子: <span id="final-fermion">10</span>/10</p>
+            <p class="text-white">玻色子: <span id="final-boson">5</span>/5</p>
+        </div>
+        <button id="next-level" class="bg-primary hover:bg-primary/80 text-white py-2 px-6 rounded-lg transition-colors font-bold">
+            下一关 <i class="fa fa-arrow-right ml-1"></i>
+        </button>
+    </div>
+    
+    <!-- 移动设备控制按钮 -->
+    <div id="mobile-controls">
+        <div class="control-pad">
+            <div class="control-btn up" data-key="ArrowUp"></div>
+            <div class="control-btn down" data-key="ArrowDown"></div>
+            <div class="control-btn left" data-key="ArrowLeft"></div>
+            <div class="control-btn right" data-key="ArrowRight"></div>
+        </div>
+        <button class="action-btn" id="mobile-action">C</button>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            player: {
+                x: 50,
+                y: 50,
+                speed: 5,
+                width: 20,
+                height: 20
+            },
+            keys: {},
+            particles: {
+                fermions: [],
+                bosons: []
+            },
+            collected: {
+                fermions: 0,
+                bosons: 0
+            },
+            required: {
+                fermions: 10,
+                bosons: 5
+            },
+            portal: {
+                x: 0,
+                y: 0,
+                width: 50,
+                height: 50
+            },
+            gameContainer: null,
+            containerWidth: 0,
+            containerHeight: 0,
+            isCompleted: false,
+            paused: false
+        };
+
+        // DOM元素
+        const elements = {
+            player: document.getElementById('player'),
+            portal: document.getElementById('portal'),
+            fermionCount: document.getElementById('fermion-count'),
+            bosonCount: document.getElementById('boson-count'),
+            remainingFermions: document.getElementById('remaining-fermions'),
+            remainingBosons: document.getElementById('remaining-bosons'),
+            levelCompleted: document.getElementById('level-completed'),
+            finalFermion: document.getElementById('final-fermion'),
+            finalBoson: document.getElementById('final-boson'),
+            nextLevel: document.getElementById('next-level'),
+            pauseBtn: document.getElementById('pause-btn'),
+            gameContainer: document.getElementById('game-container')
+        };
+
+        // 初始化游戏
+        function init() {
+            // 设置游戏容器尺寸
+            gameState.gameContainer = elements.gameContainer;
+            gameState.containerWidth = gameState.gameContainer.clientWidth;
+            gameState.containerHeight = gameState.gameContainer.clientHeight;
+            
+            // 设置玩家初始位置（左侧中间）
+            gameState.player.x = 50;
+            gameState.player.y = gameState.containerHeight / 2;
+            updatePlayerPosition();
+            
+            // 设置传送门位置（右侧底部）
+            gameState.portal.x = gameState.containerWidth - 100;
+            gameState.portal.y = gameState.containerHeight - 100;
+            elements.portal.style.left = `${gameState.portal.x}px`;
+            elements.portal.style.top = `${gameState.portal.y}px`;
+            
+            // 生成粒子
+            generateParticles();
+            
+            // 生成引导箭头
+            generateGuideArrows();
+            
+            // 事件监听
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            window.addEventListener('resize', handleResize);
+            elements.nextLevel.addEventListener('click', goToNextLevel);
+            elements.pauseBtn.addEventListener('click', togglePause);
+            
+            // 移动设备触摸控制
+            setupMobileControls();
+            
+            // 开始游戏循环
+            gameLoop();
+        }
+
+        // 生成粒子
+        function generateParticles() {
+            // 清除任何现有粒子
+            document.querySelectorAll('.particle').forEach(particle => {
+                particle.remove();
+            });
+            gameState.particles.fermions = [];
+            gameState.particles.bosons = [];
+            
+            // 获取引导路径点，使粒子沿路径分布
+            const pathPoints = getPathPoints();
+            
+            // 生成费米子（10个）
+            for (let i = 0; i < gameState.required.fermions; i++) {
+                // 沿路径分布粒子，增加找到的可能性
+                const pointIndex = Math.min(i % pathPoints.length, pathPoints.length - 1);
+                const basePoint = pathPoints[pointIndex];
+                
+                // 在路径点周围随机分布
+                const x = basePoint.x + (Math.random() * 100 - 50);
+                const y = basePoint.y + (Math.random() * 100 - 50);
+                
+                // 确保粒子在容器内
+                const constrainedX = Math.max(30, Math.min(gameState.containerWidth - 30, x));
+                const constrainedY = Math.max(30, Math.min(gameState.containerHeight - 30, y));
+                
+                const fermion = document.createElement('div');
+                fermion.className = 'particle fermion';
+                fermion.style.left = `${constrainedX}px`;
+                fermion.style.top = `${constrainedY}px`;
+                fermion.dataset.type = 'fermion';
+                
+                gameState.gameContainer.appendChild(fermion);
+                gameState.particles.fermions.push({
+                    element: fermion,
+                    x: constrainedX,
+                    y: constrainedY
+                });
+            }
+            
+            // 生成玻色子（5个）
+            for (let i = 0; i < gameState.required.bosons; i++) {
+                // 沿路径分布粒子
+                const pointIndex = Math.min(i % pathPoints.length, pathPoints.length - 1);
+                const basePoint = pathPoints[pointIndex];
+                
+                // 在路径点周围随机分布
+                const x = basePoint.x + (Math.random() * 80 - 40);
+                const y = basePoint.y + (Math.random() * 80 - 40);
+                
+                // 确保粒子在容器内
+                const constrainedX = Math.max(30, Math.min(gameState.containerWidth - 30, x));
+                const constrainedY = Math.max(30, Math.min(gameState.containerHeight - 30, y));
+                
+                const boson = document.createElement('div');
+                boson.className = 'particle boson';
+                boson.style.left = `${constrainedX}px`;
+                boson.style.top = `${constrainedY}px`;
+                boson.dataset.type = 'boson';
+                
+                gameState.gameContainer.appendChild(boson);
+                gameState.particles.bosons.push({
+                    element: boson,
+                    x: constrainedX,
+                    y: constrainedY
+                });
+            }
+            
+            // 更新剩余粒子计数
+            updateRemainingParticles();
+        }
+
+        // 获取路径点
+        function getPathPoints() {
+            const points = [
+                {x: 150, y: gameState.containerHeight / 2},
+                {x: gameState.containerWidth * 0.3, y: gameState.containerHeight / 2 - 50},
+                {x: gameState.containerWidth * 0.5, y: gameState.containerHeight / 2 + 30},
+                {x: gameState.containerWidth * 0.7, y: gameState.containerHeight / 2 - 20},
+                {x: gameState.portal.x - 30, y: gameState.portal.y}
+            ];
+            
+            // 确保在小屏幕上适配
+            if (gameState.containerWidth < 768) {
+                points.forEach((point, i) => {
+                    point.x = (gameState.containerWidth / 5) * (i + 1);
+                });
+            }
+            
+            return points;
+        }
+
+        // 生成引导箭头
+        function generateGuideArrows() {
+            // 先清除现有箭头
+            document.querySelectorAll('.guide-arrow').forEach(arrow => {
+                arrow.remove();
+            });
+            
+            // 创建从起点到终点的路径点
+            const pathPoints = getPathPoints();
+            
+            // 创建箭头
+            pathPoints.forEach((point, i) => {  // 修复：添加索引参数i
+                const arrow = document.createElement('div');
+                arrow.className = 'guide-arrow';
+                
+                // 计算箭头方向（指向下一个点）
+                const nextPoint = pathPoints[i + 1] || gameState.portal;
+                const angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * 180 / Math.PI;
+                arrow.style.transform = `rotate(${angle + 45}deg)`;
+                
+                arrow.style.left = `${point.x}px`;
+                arrow.style.top = `${point.y}px`;
+                
+                gameState.gameContainer.appendChild(arrow);
+            });
+        }
+
+        // 处理键盘按下
+        function handleKeyDown(e) {
+            gameState.keys[e.key] = true;
+        }
+
+        // 处理键盘释放
+        function handleKeyUp(e) {
+            gameState.keys[e.key] = false;
+        }
+
+        // 设置移动设备控制
+        function setupMobileControls() {
+            const controlBtns = document.querySelectorAll('.control-btn');
+            controlBtns.forEach(btn => {
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const key = btn.getAttribute('data-key');
+                    gameState.keys[key] = true;
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    const key = btn.getAttribute('data-key');
+                    gameState.keys[key] = false;
+                });
+                
+                // 鼠标支持，方便测试
+                btn.addEventListener('mousedown', (e) => {
+                    const key = btn.getAttribute('data-key');
+                    gameState.keys[key] = true;
+                });
+                
+                btn.addEventListener('mouseup', (e) => {
+                    const key = btn.getAttribute('data-key');
+                    gameState.keys[key] = false;
+                });
+            });
+            
+            // 动作按钮
+            const actionBtn = document.getElementById('mobile-action');
+            actionBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                showControlsHint();
+            });
+            
+            actionBtn.addEventListener('mousedown', (e) => {
+                showControlsHint();
+            });
+        }
+
+        // 显示控制提示
+        function showControlsHint() {
+            alert('在后续关卡中，此按钮将用于粒子组合（按C键）');
+        }
+
+        // 更新玩家位置
+        function updatePlayerPosition() {
+            elements.player.style.left = `${gameState.player.x}px`;
+            elements.player.style.top = `${gameState.player.y}px`;
+        }
+
+        // 移动玩家
+        function movePlayer() {
+            // 上下左右移动
+            if (gameState.keys.ArrowUp || gameState.keys.KeyW) {
+                gameState.player.y = Math.max(0, gameState.player.y - gameState.player.speed);
+            }
+            if (gameState.keys.ArrowDown || gameState.keys.KeyS) {
+                gameState.player.y = Math.min(
+                    gameState.containerHeight - gameState.player.height, 
+                    gameState.player.y + gameState.player.speed
+                );
+            }
+            if (gameState.keys.ArrowLeft || gameState.keys.KeyA) {
+                gameState.player.x = Math.max(0, gameState.player.x - gameState.player.speed);
+            }
+            if (gameState.keys.ArrowRight || gameState.keys.KeyD) {
+                gameState.player.x = Math.min(
+                    gameState.containerWidth - gameState.player.width, 
+                    gameState.player.x + gameState.player.speed
+                );
+            }
+            
+            updatePlayerPosition();
+        }
+
+        // 更新剩余粒子计数
+        function updateRemainingParticles() {
+            const remainingFermions = gameState.required.fermions - gameState.collected.fermions;
+            const remainingBosons = gameState.required.bosons - gameState.collected.bosons;
+            
+            elements.remainingFermions.textContent = remainingFermions;
+            elements.remainingBosons.textContent = remainingBosons;
+        }
+
+        // 检测碰撞
+        function checkCollisions() {
+            // 检测与费米子的碰撞
+            gameState.particles.fermions = gameState.particles.fermions.filter(fermion => {
+                if (isColliding(
+                    gameState.player, 
+                    {x: fermion.x, y: fermion.y, width: 8, height: 8}
+                )) {
+                    // 添加收集动画
+                    fermion.element.style.transform = 'scale(1.5)';
+                    fermion.element.style.opacity = '0';
+                    
+                    // 延迟移除元素以显示动画
+                    setTimeout(() => {
+                        if (fermion.element && fermion.element.parentNode) {
+                            fermion.element.remove();
+                        }
+                    }, 200);
+                    
+                    // 更新计数
+                    gameState.collected.fermions++;
+                    elements.fermionCount.textContent = gameState.collected.fermions;
+                    updateRemainingParticles();
+                    
+                    return false;
+                }
+                return true;
+            });
+            
+            // 检测与玻色子的碰撞
+            gameState.particles.bosons = gameState.particles.bosons.filter(boson => {
+                if (isColliding(
+                    gameState.player, 
+                    {x: boson.x, y: boson.y, width: 10, height: 10}
+                )) {
+                    // 添加收集动画
+                    boson.element.style.transform = 'scale(1.5)';
+                    boson.element.style.opacity = '0';
+                    
+                    // 延迟移除元素以显示动画
+                    setTimeout(() => {
+                        if (boson.element && boson.element.parentNode) {
+                            boson.element.remove();
+                        }
+                    }, 200);
+                    
+                    // 更新计数
+                    gameState.collected.bosons++;
+                    elements.bosonCount.textContent = gameState.collected.bosons;
+                    updateRemainingParticles();
+                    
+                    return false;
+                }
+                return true;
+            });
+            
+            // 检测是否收集完所有粒子并到达传送门
+            if (
+                gameState.collected.fermions >= gameState.required.fermions &&
+                gameState.collected.bosons >= gameState.required.bosons &&
+                isColliding(gameState.player, gameState.portal) &&
+                !gameState.isCompleted
+            ) {
+                completeLevel();
+            }
+        }
+
+        // 碰撞检测函数
+        function isColliding(a, b) {
+            return a.x < b.x + b.width &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.height &&
+                   a.y + a.height > b.y;
+        }
+
+        // 完成关卡
+        function completeLevel() {
+            gameState.isCompleted = true;
+            elements.finalFermion.textContent = gameState.collected.fermions;
+            elements.finalBoson.textContent = gameState.collected.bosons;
+            elements.levelCompleted.style.display = 'block';
+            
+            // 保存关卡进度
+            localStorage.setItem('level-1-1-completed', 'true');
+        }
+
+        // 前往下一关
+        function goToNextLevel() {
+            window.location.href = 'level-1-2.html';
+        }
+
+        // 切换暂停状态
+        function togglePause() {
+            gameState.paused = !gameState.paused;
+            elements.pauseBtn.innerHTML = gameState.paused ? 
+                '<i class="fa fa-play"></i>' : 
+                '<i class="fa fa-pause"></i>';
+                
+            if (gameState.paused) {
+                alert('游戏已暂停\n按确定继续');
+                // 移除强制取消暂停的代码，修复暂停功能
+            }
+        }
+
+        // 处理窗口大小变化
+        function handleResize() {
+            gameState.containerWidth = gameState.gameContainer.clientWidth;
+            gameState.containerHeight = gameState.gameContainer.clientHeight;
+            
+            // 重新生成引导箭头以适应新尺寸
+            generateGuideArrows();
+        }
+
+        // 游戏主循环
+        function gameLoop() {
+            if (!gameState.paused && !gameState.isCompleted) {
+                movePlayer();
+                checkCollisions();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 启动游戏
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

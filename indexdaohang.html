@@ -482,6 +482,11 @@
             .user-area {
                 gap: 10px;
             }
+            
+            /* 移动端隐藏称号徽章，避免布局错乱 */
+            .title-badge {
+                display: none;
+            }
         }
 
         @media (max-width: 480px) {
@@ -556,6 +561,13 @@
                 <h2 class="card-title">English words</h2>
                 <p class="card-desc">检验和提升你的英文单词储备量</p>
             </div>
+            <div class="nav-card" onclick="navigateTo('English2.html')">
+                <div class="card-icon">
+                    <i class="fas fa-spell-check"></i>
+                </div>
+                <h2 class="card-title">English words 2nd</h2>
+                <p class="card-desc">高二选修一专属模式</p>
+            </div>
 
             <!-- 更新公告 -->
             <div class="nav-card" onclick="navigateTo('versions.html')">
@@ -572,7 +584,7 @@
                     <i class="fas fa-gamepad"></i>
                 </div>
                 <h2 class="card-title">小游戏合集</h2>
-                <p class="card-desc">自由电子冒险[hot] 24点 等interesting小游戏</p>
+                <p class="card-desc">Interesting Games</p>
             </div>
             
             <!-- 好友列表 -->
@@ -581,7 +593,16 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <h2 class="card-title">好友列表</h2>
-                <p class="card-desc">管理你的好友和联系人，一起互动</p>
+                <p class="card-desc">管理你的好友和联系人，一起互动(目前有bug 等待修复中...)</p>
+            </div>
+
+            <!-- 自由电子冒险1 -->
+            <div class="nav-card" onclick="navigateTo('e(finally).html')">
+                <div class="card-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <h2 class="card-title">自由电子冒险</h2>
+                <p class="card-desc">自由电子冒险之旅！</p>
             </div>
 
             <!-- 自由电子冒险2 -->
@@ -593,15 +614,23 @@
                 <p class="card-desc">自由电子冒险之旅！</p>
             </div>
             
-            <!-- 新模式 -->
-            <div class="nav-card" onclick="showDisabledNotice('自由电子冒险3')">
+            <!-- 自由电子冒险3 -->
+            <div class="nav-card" onclick="navigateTo('freee3.html')">
                 <div class="card-icon">
                     <i class="fas fa-gamepad"></i>
                 </div>
                 <h2 class="card-title">自由电子冒险3</h2>
                 <p class="card-desc">自由电子冒险之旅！</p>
             </div>
-
+            <!-- 新模式 -->
+            <div class="nav-card" onclick="showDisabledNotice('自由电子冒险4')">
+                <div class="card-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <h2 class="card-title">自由电子冒险4</h2>
+                <p class="card-desc">自由电子冒险之旅！</p>
+            </div>
+            
             <!-- 更多功能 -->
             <div class="nav-card" onclick="showComingSoonNotice()">
                 <div class="card-icon">
@@ -611,12 +640,12 @@
                 <p class="card-desc">持续更新中，即将上线更多实用工具</p>
             </div>
             <!-- 管理员登录页面 -->
-            <div class="nav-card" onclick="navigateTo('admin-login.html')">
+            <div class="nav-card" onclick="navigateTo('admin-login.html', 'admin')">
                 <div class="card-icon">
                     <i class="fas fa-cogs"></i>
                 </div>
                 <h2 class="card-title">我是管理员?</h2>
-                <p class="card-desc">管理员特殊功能登录页面...(勿进 无返回按钮)</p>
+                <p class="card-desc">管理员特殊功能登录页面...(可通过浏览器返回键退出)</p>
             </div>
         </div>
     </div>
@@ -691,42 +720,69 @@
 
         // 检查URL参数，显示登录成功信息
         function checkLoginParams() {
-            
             const params = new URLSearchParams(window.location.search);
             if (params.has('loginSuccess')) {
                 showNotification('欢迎回来！登录成功', 'success');
             }
         }
 
-        // 检查登录状态
+        // 合并后的checkLoginStatus函数，包含登录状态判断和称号加载
         function checkLoginStatus() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
             const userInfoStr = localStorage.getItem('mainUserInfo');
             console.log("读取到的用户信息：", userInfoStr);
-            // 如果未登录，重定向到登录页
+            
+            // 未登录：重定向到登录页（排除登录页本身）
             if (!userInfoStr) {
-                
                 if (!window.location.pathname.includes('indexlo.html')) {
                     window.location.href = 'indexlo.html';
                 }
                 return;
             }
+            
             try {
                 const userInfo = JSON.parse(userInfoStr);
-                // 验证关键字段是否存在
+                // 验证用户信息完整性（token和username必传）
                 if (!userInfo.token || !userInfo.username) {
-                  throw new Error("用户信息不完整");
+                    throw new Error("用户信息不完整");
                 }
-                // 已登录，显示用户信息
+                // 校验Token有效性
+                checkTokenValidity(userInfo);
+                // 已登录：更新用户显示 + 加载用户称号
                 updateUserDisplay(userInfo);
+                loadUserTitles(userInfo);
             } catch (err) {
                 console.error("用户信息解析失败：", err);
+                // 解析失败：清除无效数据并跳转登录页
                 localStorage.removeItem('mainUserInfo');
                 if (!window.location.pathname.includes('indexlo.html')) {
-                  window.location.href = 'indexlo.html';
+                    window.location.href = 'indexlo.html';
                 }
             }
         }
+
+        // 校验Token有效性（需后端配合实现）
+        async function checkTokenValidity(userInfo) {
+            try {
+                // 实际项目中需要后端提供验证接口
+                const response = await fetch('/.netlify/functions/verifyToken', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${userInfo.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Token过期或无效');
+                }
+            } catch (error) {
+                console.error('Token验证失败:', error);
+                // Token无效：清除数据并跳转登录页
+                localStorage.removeItem('mainUserInfo');
+                window.location.href = 'indexlo.html?tokenExpired=true';
+            }
+        }
+
         // 更新用户信息显示
         function updateUserDisplay(userInfo) {
             const userAreaEl = document.getElementById('userArea');
@@ -735,6 +791,7 @@
             // 格式化登录时间
             const loginTime = new Date(userInfo.loginTime);
             const formattedTime = loginTime.toLocaleString();
+            
             // 构建用户信息区域HTML，包含称号展示
             let titleBadge = '';
             if (userInfo.currentTitle) {
@@ -743,8 +800,10 @@
                     ${userInfo.currentTitle.name}
                 </span>`;
             }
+            
             userAreaEl.innerHTML = `
                 <span class="username">${decodeURIComponent(userInfo.username)}</span>
+                ${titleBadge}
                 <img src="${avatarUrl}" alt="用户头像" class="user-avatar" onclick="openProfileModal()">
                 <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> 退出
@@ -755,6 +814,7 @@
             document.getElementById('modalAvatar').src = avatarUrl;
             document.getElementById('usernameDisplay').textContent = decodeURIComponent(userInfo.username);
             document.getElementById('loginTimeDisplay').textContent = formattedTime;
+            
             // 设置模态框中的当前称号
             const titleDisplay = document.getElementById('titleDisplay');
             if (userInfo.currentTitle) {
@@ -768,10 +828,11 @@
         function initCardAnimations() {
             const cards = document.querySelectorAll('.nav-card');
             cards.forEach((card, index) => {
+                // 缩短延迟时间，提升加载体验
                 setTimeout(() => {
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
-                }, 100 * index);
+                }, 50 * index);
             });
         }
 
@@ -783,27 +844,29 @@
             }
         }
 
+        // 封装模态框控制函数
+        function toggleModal(show) {
+            const modal = document.getElementById('profileModal');
+            if (show) {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('active'), 10);
+            } else {
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300);
+            }
+        }
+
         // 打开个人信息模态框
         function openProfileModal() {
-            const modal = document.getElementById('profileModal');
-            modal.style.display = 'flex';
-            // 触发动画
-            setTimeout(() => {
-                modal.classList.add('active');
-            }, 10);
+            toggleModal(true);
         }
 
         // 关闭个人信息模态框
         function closeProfileModal() {
-            const modal = document.getElementById('profileModal');
-            modal.classList.remove('active');
-            // 等待动画完成后隐藏
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
+            toggleModal(false);
         }
 
-        // 处理头像上传
+        // 处理头像上传，修复重复上传问题
         function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (file) {
@@ -824,13 +887,13 @@
                 reader.onload = function(e) {
                     document.getElementById('modalAvatar').src = e.target.result;
                     showNotification('图片已预览，点击保存生效', 'success');
+                    event.target.value = ''; // 清空输入框，支持重复选择相同文件
                 }
                 reader.readAsDataURL(file);
             }
         }
     
         // 保存头像
-        // 替换原saveAvatar函数
         function saveAvatar() {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
             const newAvatar = document.getElementById('modalAvatar').src;
@@ -849,7 +912,7 @@
             closeProfileModal();
         }
 
-        // 新增保存用户信息到服务器的函数
+        // 保存用户信息到服务器
         async function saveUserInfoToServer(userData) {
             try {
                 const response = await fetch('/.netlify/functions/saveUserInfo', {
@@ -870,10 +933,6 @@
                 showNotification('信息同步失败', 'error');
             }
         }
-    
-
-
-
 
         // 点击模态框外部关闭
         window.onclick = function(event) {
@@ -883,15 +942,22 @@
             }
         }
 
-        // 导航到指定页面
-        function navigateTo(url) {
+        // 带权限控制的导航函数
+        function navigateTo(url, requiredRole = 'user') {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            // 管理员权限校验
+            if (url.includes('admin-login.html') && userInfo.role !== 'admin') {
+                showNotification('无管理员权限，无法访问', 'error');
+                return;
+            }
+            
             // 显示加载提示
             showNotification('正在跳转...', 'info');
             
-            // 延迟跳转，让用户看到提示
+            // 缩短延迟时间，提升体验
             setTimeout(() => {
                 window.location.href = url;
-            }, 500);
+            }, 300);
         }
 
         // 显示功能已禁用提示
@@ -922,45 +988,12 @@
                 notification.classList.remove('show');
             }, 3000);
         }
-        // 在checkLoginStatus函数中添加加载称号的逻辑
-        function checkLoginStatus() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            const userInfoStr = localStorage.getItem('mainUserInfo');
-            console.log("读取到的用户信息：", userInfoStr);
-    
-            // 如果未登录，重定向到登录页
-            if (!userInfoStr) {
-                if (!window.location.pathname.includes('indexlo.html')) {
-                    window.location.href = 'indexlo.html';
-                }
-                return;
-            }
-    
-            try {
-                const userInfo = JSON.parse(userInfoStr);
-                // 验证关键字段是否存在
-                if (!userInfo.token || !userInfo.username) {
-                    throw new Error("用户信息不完整");
-                }
-                // 已登录，显示用户信息
-                updateUserDisplay(userInfo);
-        
-                // 加载用户称号
-                loadUserTitles(userInfo); // 添加这行
-            } catch (err) {
-                console.error("用户信息解析失败：", err);
-                localStorage.removeItem('mainUserInfo');
-                if (!window.location.pathname.includes('indexlo.html')) {
-                    window.location.href = 'indexlo.html';
-                }
-            }
-        }
-        // 添加加载用户称号的函数
+
+        // 加载用户称号（用username作为唯一键）
         function loadUserTitles(userInfo) {
-            // 从localStorage获取用户称号
-            const userTitles = JSON.parse(localStorage.getItem(`userTitles_${userInfo.id}`) || '[]');
-    
-            // 如果没有称号数据，尝试从服务器获取
+            const uniqueKey = `userTitles_${userInfo.username}`;
+            const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
+            
             if (userTitles.length === 0) {
                 fetchUserTitlesFromServer(userInfo);
             } else {
@@ -976,7 +1009,7 @@
         // 从服务器获取用户称号
         async function fetchUserTitlesFromServer(userInfo) {
             try {
-                const response = await fetch('/api/titles', {
+                const response = await fetch(`/.netlify/functions/titles?username=${userInfo.username}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${userInfo.token}`,
@@ -987,7 +1020,8 @@
                 if (response.ok) {
                     const titles = await response.json();
                     // 保存到localStorage
-                    localStorage.setItem(`userTitles_${userInfo.id}`, JSON.stringify(titles));
+                    const uniqueKey = `userTitles_${userInfo.username}`;
+                    localStorage.setItem(uniqueKey, JSON.stringify(titles));
             
                     // 如果有称号，设置第一个为当前称号
                     if (titles.length > 0) {

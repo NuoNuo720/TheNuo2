@@ -19,79 +19,102 @@
             display : flex;
             justify-content:center;
             align-items:center;
-            /* 确保body占满整个视口 */
             width: 100%;
             overflow: hidden; /* 防止页面滚动 */
+            /* 新增：轻微背景渐变，提升质感 */
+            background-image: linear-gradient(120deg, #f0f4f8, #e9ecef);
         }
         
         .container {
             width:300px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 15px rgba(0,0,0,0.08); /* 优化阴影，更柔和 */
             background-color:#fff;
-            border-radius:8px;
-            padding : 20px;
-            /* 确保表单在加载动画之上 */
+            border-radius:10px; /* 增大圆角，更现代 */
+            padding : 25px;
             position: relative;
             z-index: 10;
+            transition: transform 0.3s ease; /* 新增：hover时轻微上浮 */
+        }
+        
+        .container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
         
         h2{
             text-align:center;
-            color:#0000004d;
-            margin-bottom:20px;
+            color:#333; /* 加深标题颜色，更醒目 */
+            margin-bottom:25px;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         
         label {
             display:block;
-            margin-bottom:5px;
-            font-weight:bold;
-            color:#666;
+            margin-bottom:6px;
+            font-weight:500; /* 调整字体粗细，更舒适 */
+            color:#555;
+            font-size: 0.95rem;
         }
         
         input[type="text"],
         input[type="password"],
         input[type="email"] {
             width:100%;
-            padding:10px;
+            padding:11px 14px; /* 优化内边距，手感更好 */
             margin-bottom:15px;
-            border:1px solid #ccc;
-            border-radius:4px;
+            border:1px solid #ddd; /* 减淡边框色 */
+            border-radius:6px; /* 增大输入框圆角 */
             box-sizing: border-box;
+            font-size: 0.95rem;
+            transition: all 0.2s ease; /* 新增输入框过渡效果 */
         }
         
         input:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            border-width: 1px; /* 避免focus时边框变粗 */
         }
         
         .input-error {
             border-color: #dc3545 !important;
         }
         
-        .links a:hover {
-            text-decoration:underline;
-        } 
-        
         .checkbox {
-            margin-bottom:15px;
+            margin-bottom:18px;
             color:#666;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center; /* 复选框与文字垂直居中 */
+            gap: 8px;
+        }
+        
+        .checkbox input {
+            width: 16px;
+            height: 16px; /* 统一复选框大小 */
+            cursor: pointer;
         }
         
         button {
             width:100%;
-            padding:10px;
+            padding:12px; /* 优化按钮内边距 */
             background-color:#28a745;
             color:#fff;
             border:none;
-            border-radius:4px;
+            border-radius:6px; /* 增大按钮圆角 */
             cursor:pointer;
             font-size:16px;
-            transition: background-color 0.3s;
+            font-weight:500; /* 按钮文字加粗 */
+            transition: background-color 0.3s, transform 0.1s; /* 新增点击反馈 */
         }
         
         button:hover:not(:disabled) {
             background-color:#218838;
+        }
+        
+        button:active:not(:disabled) {
+            transform: scale(0.98); /* 按钮点击时轻微缩小，反馈更明显 */
         }
         
         button:disabled {
@@ -101,47 +124,57 @@
         
         .links{
             text-align:center;
-            margin-top:15px;
+            margin-top:20px; /* 增加链接区域间距 */
+            font-size: 0.9rem;
         }
         
         .links a {
             color:#007bff;
             text-decoration:none;
             margin:0 5px;
+            transition: color 0.2s; /* 链接颜色过渡 */
+        }
+        
+        .links a:hover {
+            text-decoration:underline;
+            color:#0056b3; /* 加深hover颜色 */
         }
         
         .error-message {
             color: #dc3545;
             text-align: center;
-            margin: 10px 0;
-            padding: 8px;
+            margin: 0 0 15px 0; /* 调整间距，与表单更协调 */
+            padding: 9px;
             border: 1px solid #f5c6cb;
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: #f8d7da;
             display: none;
+            font-size: 0.9rem;
         }
         
         .success-message {
             color: #155724;
             text-align: center;
-            margin: 10px 0;
-            padding: 8px;
+            margin: 0 0 15px 0; /* 调整间距 */
+            padding: 9px;
             border: 1px solid #c3e6cb;
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: #d4edda;
             display: none;
+            font-size: 0.9rem;
         }
         
         .tip {
-            font-size: 12px;
-            color: #666;
-            margin: -12px 0 15px 0;
+            font-size: 0.85rem; /* 缩小提示文字 */
+            color: #777;
+            margin: -12px 0 18px 0; /* 调整间距 */
+            line-height: 1.4;
         }
         
         .password-strength {
-            height: 5px;
-            background-color: #eee;
-            margin: -10px 0 15px 0;
+            height: 6px; /* 加粗强度条 */
+            background-color: #f1f1f1;
+            margin: -10px 0 18px 0; /* 调整间距 */
             border-radius: 3px;
             overflow: hidden;
             display: none;
@@ -150,7 +183,7 @@
         .strength-bar {
             height: 100%;
             width: 0%;
-            transition: width 0.3s;
+            transition: width 0.3s, background-color 0.3s; /* 新增颜色过渡 */
         }
         
         .strength-weak {
@@ -186,17 +219,17 @@
 
         /* 加载动画样式 - 修复关键部分 */
         #loader-wrapper {
-          position: fixed; /* 固定定位，相对于视口 */
+          position: fixed;
           top: 0;
           left: 0;
-          width: 100vw; /* 占满整个视口宽度 */
-          height: 100vh; /* 占满整个视口高度 */
+          width: 100vw;
+          height: 100vh;
           background: #fff;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
-          z-index: 9999; /* 确保在最上层 */
+          z-index: 9999;
           transition: opacity 0.5s ease-out;
         }
 
@@ -229,6 +262,17 @@
           pointer-events: none;
           transition: opacity 0.5s ease-out;
         }
+
+        /* 新增：适配超小屏幕（如320px手机） */
+        @media (max-width: 340px) {
+            .container {
+                width: 90%;
+                padding: 20px 15px;
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -243,35 +287,35 @@
         <div class="success-message" id="successMsg"></div>
         
         <form id="registerForm">
-            <!-- 保持原有表单结构不变 -->
-            <h2>注册</h2>
+            <h2>账号注册</h2>
             <label for="username">用户名</label>
-            <input type="text" name="username" placeholder="请输入昵称" id="username" required>
-            <div class="tip">用户名长度为3-20位字符</div>
+            <input type="text" name="username" placeholder="请输入3-20位昵称" id="username" required>
+            <div class="tip">支持字母、数字、下划线，长度3-20位</div>
             
             <label for="email">邮箱</label>
-            <input type="email" name="email" placeholder="请输入邮箱" id="email" required>
+            <input type="email" name="email" placeholder="请输入常用邮箱" id="email" required>
+            <div class="tip">用于登录验证和密码找回</div> <!-- 新增邮箱提示 -->
             
-            <label for="password">密码</label>
-            <input type="password" name="password" placeholder="至少6位字符" id="password" required>
+            <label for="password">设置密码</label>
+            <input type="password" name="password" placeholder="至少6位，建议包含字母和数字" id="password" required>
             <div class="password-strength">
                 <div class="strength-bar" id="strengthBar"></div>
             </div>
-            <div class="tip">密码长度至少6位，包含字母和数字更安全</div>
+            <div class="tip">强度：弱（6位纯字符）→ 中（8位字母+数字）→ 强（10位含特殊符号）</div>
             
             <label for="confirmPassword">确认密码</label>
-            <input type="password" name="confirmPassword" placeholder="再次输入密码" id="confirmPassword" required>
+            <input type="password" name="confirmPassword" placeholder="请再次输入密码" id="confirmPassword" required>
             
             <div class="checkbox">
-                <input type="checkbox" name="rememberMe" id="rememberMe">
-                <label for="rememberMe">记住用户名</label>
+                <input type="checkbox" name="rememberMe" id="rememberMe" checked> <!-- 默认勾选记住用户名 -->
+                <label for="rememberMe">记住用户名（下次无需重复输入）</label>
             </div>
             
-            <button type="submit" id="submitBtn">注册</button>
+            <button type="submit" id="submitBtn">注册账号</button>
         </form>
         
         <div class="links">
-            <a href="indexlo.html" id="loginLink">已有账号？去登录</a >
+            <a href="indexlo.html" id="loginLink">已有账号？立即登录</a >
         </div>
     </div>
 
@@ -286,12 +330,16 @@
         // 页面初始化
         window.addEventListener('DOMContentLoaded', function() {
             const savedUsername = localStorage.getItem('rememberedUsername');
+            const usernameInput = document.getElementById('username');
+            const rememberMeCheckbox = document.getElementById('rememberMe');
+
+            // 记住用户名逻辑
             if (savedUsername) {
-                document.getElementById('username').value = savedUsername;
-                document.getElementById('rememberMe').checked = true;
+                usernameInput.value = savedUsername;
+                rememberMeCheckbox.checked = true;
             }
 
-            // 密码强度检测
+            // 密码强度检测（优化逻辑：更精准的强度判断）
             const passwordInput = document.getElementById('password');
             const strengthBar = document.getElementById('strengthBar');
             const strengthContainer = document.querySelector('.password-strength');
@@ -301,26 +349,39 @@
                 
                 if (password.length > 0) {
                     strengthContainer.style.display = 'block';
+                    const hasLetter = /[a-zA-Z]/.test(password);
+                    const hasNumber = /\d/.test(password);
+                    const hasSpecial = /[^a-zA-Z0-9]/.test(password); // 特殊符号
                     
+                    // 优化强度判断逻辑
                     if (password.length < 6) {
-                        strengthBar.className = 'strength-bar';
-                    } else if (password.length < 8 || !/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
-                        strengthBar.className = 'strength-bar strength-weak';
-                    } else if (password.length < 10 || !/[^a-zA-Z0-9]/.test(password)) {
-                        strengthBar.className = 'strength-bar strength-medium';
+                        strengthBar.className = 'strength-bar'; // 无颜色（过短）
+                    } else if (password.length < 8 || !(hasLetter && hasNumber)) {
+                        strengthBar.className = 'strength-bar strength-weak'; // 弱（缺字母/数字）
+                    } else if (password.length < 10 || !hasSpecial) {
+                        strengthBar.className = 'strength-bar strength-medium'; // 中（缺特殊符号）
                     } else {
-                        strengthBar.className = 'strength-bar strength-strong';
+                        strengthBar.className = 'strength-bar strength-strong'; // 强（全满足）
                     }
                 } else {
                     strengthContainer.style.display = 'none';
                 }
             });
 
-            // 实时验证
+            // 实时验证（优化：失去焦点时验证，避免频繁提示）
             const formInputs = registerForm.querySelectorAll('input[required]');
             formInputs.forEach(input => {
                 input.addEventListener('blur', function() {
-                    validateField(this);
+                    // 仅当输入框有内容时才验证（空值在提交时统一提示）
+                    if (this.value.trim().length > 0) {
+                        validateField(this);
+                    }
+                });
+
+                // 输入时清除错误状态
+                input.addEventListener('input', function() {
+                    this.classList.remove('input-error');
+                    hideMessages();
                 });
             });
         });
@@ -335,9 +396,10 @@
             errorMsg.textContent = message;
             errorMsg.style.display = 'block';
             successMsg.style.display = 'none';
+            // 错误提示3秒后自动隐藏（原5秒太长，优化体验）
             setTimeout(() => {
                 errorMsg.style.display = 'none';
-            }, 5000);
+            }, 3000);
         }
 
         function showSuccess(message) {
@@ -360,16 +422,22 @@
 
             switch(field.id) {
                 case 'username':
+                    // 新增用户名特殊字符限制（仅允许字母、数字、下划线）
+                    const usernameRegex = /^[a-zA-Z0-9_]+$/;
                     if (value.length < 3 || value.length > 20) {
                         isValid = false;
                         errorMessage = '用户名长度应为3-20位';
+                    } else if (!usernameRegex.test(value)) {
+                        isValid = false;
+                        errorMessage = '用户名仅支持字母、数字、下划线';
                     }
                     break;
                 case 'email':
-                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|cn|net|org|edu|gov)$/;
+                    // 优化邮箱正则（支持更多域名后缀）
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                     if (!emailRegex.test(value)) {
                         isValid = false;
-                        errorMessage = '请输入有效的邮箱地址';
+                        errorMessage = '请输入有效的邮箱（如：xxx@xxx.com）';
                     }
                     break;
                 case 'password':
@@ -382,7 +450,7 @@
                     const password = document.getElementById('password').value;
                     if (value !== password) {
                         isValid = false;
-                        errorMessage = '两次输入的密码不一致';
+                        errorMessage = '两次输入的密码不一致，请重新确认';
                     }
                     break;
             }
@@ -402,110 +470,185 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
 
             let isFormValid = true;
+            hideMessages(); // 先隐藏所有提示，避免重复显示
             
+            // 用户名验证
             if (!username) {
                 showError('请输入用户名');
+                document.getElementById('username').classList.add('input-error');
                 isFormValid = false;
             } else if (!validateField(document.getElementById('username'))) {
                 isFormValid = false;
             }
             
+            // 邮箱验证
             if (!email) {
-                showError('请输入邮箱');
+                showError('请输入邮箱地址');
+                document.getElementById('email').classList.add('input-error');
                 isFormValid = false;
             } else if (!validateField(document.getElementById('email'))) {
                 isFormValid = false;
             }
             
+            // 密码验证
             if (!password) {
-                showError('请输入密码');
+                showError('请设置密码');
+                document.getElementById('password').classList.add('input-error');
                 isFormValid = false;
             } else if (!validateField(document.getElementById('password'))) {
                 isFormValid = false;
             }
             
+            // 确认密码验证
             if (!confirmPassword) {
                 showError('请确认密码');
+                document.getElementById('confirmPassword').classList.add('input-error');
                 isFormValid = false;
             } else if (!validateField(document.getElementById('confirmPassword'))) {
                 isFormValid = false;
             }
 
+            // 若表单无效，自动聚焦到第一个错误字段
+            if (!isFormValid) {
+                const firstErrorField = registerForm.querySelector('.input-error') || registerForm.querySelector('input[required]:empty');
+                if (firstErrorField) firstErrorField.focus();
+            }
+
             return isFormValid;
         }
 
-        // 表单提交处理 - 主要修改部分
+        // 表单提交处理 - 完善异常处理和用户体验
         registerForm.addEventListener('submit', async function(event) {
             event.preventDefault();
-            hideMessages();
 
             if (!validateForm()) {
                 return;
             }
             
+            // 获取表单数据
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const rememberMe = document.getElementById('rememberMe').checked;
 
+            // 提交状态处理（防止重复点击）
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner"></span> 注册中...';
 
             try {
-                const response = await fetch('/.netlify/functions/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username,
-                        email,
-                        password
-                    })
-                });
+                // 发送注册请求（支持本地测试时的Mock逻辑）
+                let response;
+                // 本地开发时可替换为Mock接口，避免依赖后端
+                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (isLocalDev) {
+                    // 本地Mock：模拟注册成功（实际项目需删除）
+                    response = {
+                        ok: true,
+                        json: () => Promise.resolve({
+                            username: username,
+                            token: 'mock_token_' + Date.now(),
+                            message: '注册成功'
+                        })
+                    };
+                } else {
+                    // 线上环境：调用真实后端接口
+                    response = await fetch('/.netlify/functions/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username,
+                            email,
+                            password
+                        }),
+                        // 增加请求超时控制（10秒）
+                        signal: AbortSignal.timeout(10000)
+                    });
+                }
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    // 注册成功后按登录逻辑存储用户信息
+                    // 注册成功：存储用户信息
                     if (rememberMe) {
                         localStorage.setItem('rememberedUsername', username);
                     } else {
                         localStorage.removeItem('rememberedUsername');
                     }
 
-                    // 存储用户基础信息
+                    // 存储用户凭证（与登录页保持一致的格式，便于统一管理）
                     const currentUser = {
                         username: result.username,
+                        email: email,
                         token: result.token,
-                        loginTime: new Date().getTime()
+                        loginTime: new Date().getTime(),
+                        isAdmin: false // 初始默认非管理员，后端可覆盖
                     };
                     localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
 
-                    showSuccess('注册成功！即将跳转到登录页面');
+                    // 提示并跳转（优化跳转逻辑：携带用户名参数）
+                    showSuccess('注册成功！3秒后跳转到登录页...');
                     setTimeout(() => {
-                        window.location.href = `indexlo.html?token=${result.token}&username=${encodeURIComponent(result.username)}`;
-                    }, 1500);
+                        window.location.href = `indexlo.html?username=${encodeURIComponent(username)}&from=register`;
+                    }, 3000);
                 } else {
-                    if (response.status === 500) {
-                        showError('服务器内部错误，请稍后再试或联系管理员');
+                    // 后端返回错误（细分错误类型）
+                    const errorMsg = result.error || '注册失败，请稍后重试';
+                    if (response.status === 409) {
+                        // 409冲突：用户名/邮箱已存在
+                        showError(`该${result.duplicateField === 'username' ? '用户名' : '邮箱'}已被注册，请更换`);
+                    } else if (response.status === 400) {
+                        // 400参数错误：后端验证不通过
+                        showError(`参数错误：${errorMsg}`);
+                    } else if (response.status === 500) {
+                        // 500服务器错误：友好提示
+                        showError('服务器暂时无法处理，请10分钟后再试');
                     } else {
-                        showError(result.error || '注册失败，请重试');
+                        showError(errorMsg);
                     }
                 }
             } catch (error) {
-                showError('网络连接错误，请检查网络后重试');
-                console.error('注册请求错误：', error);
+                // 捕获网络错误/超时错误
+                if (error.name === 'TimeoutError') {
+                    showError('请求超时，请检查网络后重试');
+                } else if (error.name === 'TypeError') {
+                    showError('网络连接错误，请确保网络正常');
+                } else {
+                    showError('注册过程出错：' + error.message);
+                }
+                console.error('注册请求异常：', error);
             } finally {
+                // 恢复按钮状态（无论成功/失败）
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '注册';
+                submitBtn.innerHTML = '注册账号';
             }
         });
 
-        // 登录链接跳转
-        document.getElementById('loginLink').addEventListener('click',function(event) {
+        // 登录链接跳转（增加来源标识，便于登录页优化体验）
+        document.getElementById('loginLink').addEventListener('click', function(event) {
             event.preventDefault();
-            window.location.href = "indexlo.html";
+            const username = document.getElementById('username').value.trim();
+            // 若已输入用户名，跳转时携带用户名参数（免重复输入）
+            const targetUrl = username 
+                ? `indexlo.html?username=${encodeURIComponent(username)}&from=register` 
+                : 'indexlo.html';
+            window.location.href = targetUrl;
+        });
+
+        // 新增：回车键提交表单（优化键盘操作体验）
+        registerForm.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.target.closest('button')) {
+                event.preventDefault();
+                // 聚焦到下一个必填字段，最后一个字段则提交
+                const inputs = Array.from(registerForm.querySelectorAll('input[required]'));
+                const currentIndex = inputs.findIndex(input => input === document.activeElement);
+                if (currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                } else {
+                    submitBtn.click();
+                }
+            }
         });
     </script>
 </body>

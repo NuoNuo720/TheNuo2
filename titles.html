@@ -6,7 +6,7 @@
     <title>称号管理 - 多功能导航中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保留之前的样式，新增密钥相关样式 */
+        /* 密钥相关样式 */
         .security-hint {
             font-size: 0.85rem;
             color: #7f8c8d;
@@ -34,8 +34,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-    </style>
-    <style>
+
         /* 基础样式 */
         * {
             margin: 0;
@@ -52,6 +51,7 @@
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
                 radial-gradient(circle at 90% 80%, rgba(155, 89, 182, 0.05) 0%, transparent 20%);
+            padding-bottom: 80px; /* 底部留空，避免遮挡返回按钮 */
         }
 
         /* 导航栏样式 */
@@ -581,13 +581,44 @@
                 padding: 15px;
             }
         }
+
+        /* 底部返回按钮样式 */
+        .back-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 90;
+        }
+
+        .back-to-home {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            font-weight: 500;
+            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-to-home:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(52, 152, 219, 0.3);
+        }
     </style>
 </head>
 <body>
     <!-- 导航栏 -->
     <div class="navbar">
         <div class="navbar-title">
-            <a href="indexdaohang.html" class="back-btn">
+            <a href="index.html" class="back-btn">
                 <i class="fas fa-arrow-left"></i> 返回
             </a>
             <i class="fas fa-trophy"></i>
@@ -732,8 +763,15 @@
         <span id="notificationText"></span>
     </div>
 
+    <!-- 底部返回按钮 -->
+    <div class="back-container">
+        <button class="back-to-home" onclick="window.location.href='index.html'">
+            <i class="fas fa-home"></i> 返回导航页
+        </button>
+    </div>
+
     <script>
-        // 全局配置 - 替换为你的Netlify地址
+        // 全局配置
         const API_BASE_URL = 'https://thenuo2.netlify.app';
         
         // 当前用户信息
@@ -755,20 +793,19 @@
             return key;
         }
 
-        // 初始化：从数据库获取用户真实ID（ObjectID）
+        // 初始化：从数据库获取用户真实ID
         async function initUser() {
             try {
-                // 1. 检查本地登录凭证（不再强制跳转）
+                // 1. 检查本地登录凭证
                 const authToken = localStorage.getItem('authToken');
                 if (!authToken) {
-                    // 未登录状态：显示提示，但不跳转
+                    // 未登录状态：使用游客模式
                     currentUser = {
                         userId: 'guest_' + Math.random().toString(36).substring(2, 10),
                         username: '游客',
                         avatar: 'https://picsum.photos/200',
                         isAdmin: false
                     };
-                    // 显示未登录提示
                     showNotification('未检测到登录状态，部分功能受限', 'info');
                 } else {
                     // 2. 已登录：从后端获取用户信息
@@ -777,7 +814,7 @@
                     });
 
                     if (!response.ok) {
-                        // 令牌无效但不跳转，改用游客模式
+                        // 令牌无效，改用游客模式
                         currentUser = {
                             userId: 'guest_' + Math.random().toString(36).substring(2, 10),
                             username: '游客',
@@ -797,13 +834,13 @@
                     }
                 }
 
-                // 3. 初始化密钥（无论是否登录都显示）
+                // 3. 初始化密钥
                 if (!userSecurityKeys[currentUser.userId]) {
                     userSecurityKeys[currentUser.userId] = generateSecurityKey();
                     localStorage.setItem('userSecurityKeys', JSON.stringify(userSecurityKeys));
                 }
 
-                // 4. 更新UI显示（关键：无论是否登录都显示页面）
+                // 4. 更新UI显示
                 document.getElementById('currentUserId').textContent = currentUser.userId;
                 document.getElementById('userSecretKey').textContent = userSecurityKeys[currentUser.userId];
                 document.getElementById('navbarUsername').textContent = currentUser.username;
@@ -812,12 +849,12 @@
                 // 5. 管理员区域控制
                 document.getElementById('adminSection').style.display = currentUser.isAdmin ? 'block' : 'none';
 
-                // 6. 加载称号（游客也能加载公开称号）
+                // 6. 加载称号
                 loadUserTitles();
 
             } catch (err) {
                 console.error('初始化失败:', err);
-                // 出错时仍显示页面，避免白屏
+                // 出错时仍显示页面
                 currentUser = {
                     userId: 'error_user',
                     username: '用户',
@@ -841,25 +878,26 @@
             
             // 显示当前佩戴的称号
             const titleBadgeEl = document.getElementById('navbarTitleBadge');
-            titleBadgeEl.innerHTML = `
-                <span class="title-badge">
-                    <i class="fas fa-${currentUser.currentTitle.icon}"></i>
-                    ${currentUser.currentTitle.name}
-                </span>
-            `;
+            if (currentUser.currentTitle) {
+                titleBadgeEl.innerHTML = `
+                    <span class="title-badge">
+                        <i class="fas fa-${currentUser.currentTitle.icon}"></i>
+                        ${currentUser.currentTitle.name}
+                    </span>
+                `;
+            } else {
+                titleBadgeEl.innerHTML = '';
+            }
         }
 
-        // 加载当前用户的专属称号（修复版）
+        // 加载当前用户的专属称号
         async function loadUserTitles() {
-            if (!currentUser) return; // 确保用户信息已加载
+            if (!currentUser) return;
             try {
-                // 仅保留这一段请求逻辑（使用数据库ObjectID）
+                // 请求后端接口获取称号
                 const response = await fetch(
                     `https://thenuo2.netlify.app/.netlify/functions/titles?userId=${currentUser.userId}`
                 );
-                console.log('接口请求地址:'
- `https://thenuo2.netlify.app/.netlify/functions/titles?userId=${currentUser.userId}`);
-                console.log('接口返回状态:', response.status);
 
                 if (!response.ok) {
                     throw new Error(`接口错误: ${response.status}`);
@@ -868,8 +906,8 @@
                 const titles = await response.json();
                 console.log('从后端获取的称号:', titles);
 
-                // 渲染称号（调用正确的渲染函数）
-                renderTitleGrid(titles); // 注意：原函数名是renderTitleGrid，不是renderTitles
+                // 渲染称号
+                renderTitleGrid(titles);
                 document.getElementById('titleCount').textContent = `${titles.length} 个称号`;
 
             } catch (err) {
@@ -934,7 +972,7 @@
                             ${new Date(title.createdAt).toLocaleDateString()}
                         </span>
                         <button class="equip-btn ${isEquipped ? 'unequip' : ''}" 
-                                onclick="equipTitle('${title.id}')">
+                                onclick="equipTitle('${title.id}', '${title.titleName}', '${title.icon}', '${title.description}')">
                             <i class="fas ${isEquipped ? 'fa-exchange-alt' : 'fa-check'}"></i>
                             ${isEquipped ? '更换' : '佩戴'}
                         </button>
@@ -946,42 +984,25 @@
         }
 
         // 佩戴称号
-       function equipTitle(titleId) {
-            // 从已加载的称号中查找（而非本地存储）
-            const titleContainer = document.getElementById('ownedTitlesGrid');
-            const allTitles = Array.from(titleContainer.getElementsByClassName('title-card'))
-                .map(card => {
-                    // 从DOM中提取称号信息
-                    return {
-                        id: titleId, // 传入的当前称号ID
-                        titleName: card.querySelector('.title-name').textContent,
-                        icon: card.querySelector('.title-icon').classList[1].split('fa-')[1], // 提取图标名称
-                        description: card.querySelector('.title-desc').textContent
-                    };
-                });
-
-            const title = allTitles.find(t => t.id === titleId);
-            if (!title) return;
-    
+        function equipTitle(titleId, titleName, icon, description) {
             // 保存当前佩戴的称号到本地
-            currentUser.currentTitle = title;
+            currentUser.currentTitle = {
+                id: titleId,
+                name: titleName,
+                icon: icon,
+                description: description
+            };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    
+            
             // 更新导航栏显示
-            const titleBadgeEl = document.getElementById('navbarTitleBadge');
-            titleBadgeEl.innerHTML = `
-                <span class="title-badge">
-                    <i class="fas fa-${title.icon}"></i>
-                    ${title.titleName}
-                </span>
-            `;
-    
+            updateNavbarUserInfo();
+            
             // 刷新称号卡片状态
-            renderTitleGrid(allTitles);
-            showNotification(`已成功佩戴称号：${title.titleName}`, 'success');
+            loadUserTitles(); // 重新加载称号列表以更新状态
+            showNotification(`已成功佩戴称号：${titleName}`, 'success');
         }
 
-        // 管理员授予专属称号（修复版）
+        // 管理员授予专属称号
         function grantExclusiveTitle(event) {
             event.preventDefault();
             
@@ -1001,7 +1022,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action:'grant',
+                    action: 'grant',
                     adminToken,
                     targetUserId,
                     titleName,
@@ -1123,10 +1144,11 @@
                 window.location.reload();
             }
         }
+
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
-            initUser(); // 仅执行数据库初始化，不再调用其他初始化函数
+            initUser();
         });
-        
     </script>
 </body>
 </html>
