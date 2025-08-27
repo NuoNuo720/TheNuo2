@@ -745,11 +745,14 @@
                 if (!userInfo.token || !userInfo.username) {
                     throw new Error("用户信息不完整");
                 }
-                // 校验Token有效性
-                checkTokenValidity(userInfo);
-                // 已登录：更新用户显示 + 加载用户称号
+                
+                // 先更新用户显示，再进行token验证（优化用户体验）
                 updateUserDisplay(userInfo);
                 loadUserTitles(userInfo);
+                
+                // 进行token验证，但验证失败不立即跳转，而是提示用户
+                checkTokenValidity(userInfo);
+                
             } catch (err) {
                 console.error("用户信息解析失败：", err);
                 // 解析失败：清除无效数据并跳转登录页
@@ -760,8 +763,17 @@
             }
         }
 
-        // 校验Token有效性（需后端配合实现）
+        // 校验Token有效性（修改为不强制跳转）
         async function checkTokenValidity(userInfo) {
+            // 判断是否为本地开发环境
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            // 本地开发环境不验证token，直接返回成功
+            if (isLocalDev) {
+                console.log('本地开发模式，跳过token验证');
+                return;
+            }
+            
             try {
                 // 实际项目中需要后端提供验证接口
                 const response = await fetch('/.netlify/functions/verifyToken', {
@@ -769,7 +781,9 @@
                     headers: {
                         'Authorization': `Bearer ${userInfo.token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    // 增加超时设置
+                    signal: AbortSignal.timeout(5000)
                 });
                 
                 if (!response.ok) {
@@ -777,9 +791,15 @@
                 }
             } catch (error) {
                 console.error('Token验证失败:', error);
-                // Token无效：清除数据并跳转登录页
-                localStorage.removeItem('mainUserInfo');
-                window.location.href = 'indexlo.html?tokenExpired=true';
+                // 只显示错误提示，不强制跳转，让用户可以继续使用
+                showNotification('登录状态验证失败，请重新登录以确保功能正常', 'error');
+                // 5秒后提供重新登录选项
+                setTimeout(() => {
+                    if (confirm('登录已过期，是否重新登录？')) {
+                        localStorage.removeItem('mainUserInfo');
+                        window.location.href = 'indexlo.html?tokenExpired=true';
+                    }
+                }, 5000);
             }
         }
 
@@ -914,6 +934,13 @@
 
         // 保存用户信息到服务器
         async function saveUserInfoToServer(userData) {
+            // 本地开发环境不发送请求
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalDev) {
+                console.log('本地开发模式，跳过服务器保存');
+                return;
+            }
+            
             try {
                 const response = await fetch('/.netlify/functions/saveUserInfo', {
                     method: 'POST',
@@ -1008,6 +1035,26 @@
 
         // 从服务器获取用户称号
         async function fetchUserTitlesFromServer(userInfo) {
+            // 本地开发环境不发送请求
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalDev) {
+                console.log('本地开发模式，使用默认称号数据');
+                // 提供默认称号数据
+                const defaultTitles = [
+                    { name: '探索者', icon: 'compass' }
+                ];
+                const uniqueKey = `userTitles_${userInfo.username}`;
+                localStorage.setItem(uniqueKey, JSON.stringify(defaultTitles));
+                
+                if (defaultTitles.length > 0) {
+                    const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
+                    userData.currentTitle = defaultTitles[0];
+                    localStorage.setItem('mainUserInfo', JSON.stringify(userData));
+                    updateUserDisplay(userData);
+                }
+                return;
+            }
+            
             try {
                 const response = await fetch(`/.netlify/functions/titles?username=${userInfo.username}`, {
                     method: 'GET',
