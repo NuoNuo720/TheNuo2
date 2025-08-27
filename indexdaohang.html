@@ -645,7 +645,7 @@
                     <i class="fas fa-cogs"></i>
                 </div>
                 <h2 class="card-title">我是管理员?</h2>
-                <p class="card-desc">管理员特殊功能登录页面...(可通过浏览器返回键退出)</p>
+                <p class="card-desc">管理员特殊功能登录页面...</p>
             </div>
         </div>
     </div>
@@ -733,38 +733,55 @@
             
             // 未登录：重定向到登录页（排除登录页本身）
             if (!userInfoStr) {
-                if (!window.location.pathname.includes('indexlo.html')) {
-                    window.location.href = 'indexlo.html';
-                }
+                handleUnauthorizedAccess();
                 return;
             }
             
             try {
-                const userInfo = JSON.parse(userInfoStr);
-                // 验证用户信息完整性（token和username必传）
-                if (!userInfo.token || !userInfo.username) {
-                    throw new Error("用户信息不完整");
+                // 验证JSON格式有效性
+                let userInfo;
+                try {
+                    userInfo = JSON.parse(userInfoStr);
+                } catch (parseError) {
+                    console.error("用户信息解析失败：", parseError);
+                    throw new Error("用户信息格式错误");
                 }
-                
-                // 先更新用户显示，再进行token验证（优化用户体验）
+        
+                // 验证用户信息完整性 - 以user ID为核心检测条件
+                const requiredFields = ['userId', 'loginTime']; // 核心字段改为userId
+                const missingFields = requiredFields.filter(field => !userInfo[field]);
+        
+                if (missingFields.length > 0) {
+                    throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}`);
+                }
+        
+                // 验证登录时间有效性（7天内）
+                const loginTime = new Date(userInfo.loginTime);
+                if (isNaN(loginTime.getTime())) {
+                    throw new Error("登录时间格式无效");
+                }
+        
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                if (loginTime < sevenDaysAgo) {
+                    throw new Error("登录已超过7天，请重新登录");
+                }
+        
+                // 验证通过，更新显示
                 updateUserDisplay(userInfo);
                 loadUserTitles(userInfo);
-                
-                // 进行token验证，但验证失败不立即跳转，而是提示用户
-                checkTokenValidity(userInfo);
+                checkUserIdValidity(userInfo); // 改为验证userId有效性
                 
             } catch (err) {
                 console.error("用户信息解析失败：", err);
                 // 解析失败：清除无效数据并跳转登录页
                 localStorage.removeItem('mainUserInfo');
-                if (!window.location.pathname.includes('indexlo.html')) {
-                    window.location.href = 'indexlo.html';
-                }
+                handleUnauthorizedAccess(err.message);
             }
         }
 
         // 校验Token有效性（修改为不强制跳转）
-        async function checkTokenValidity(userInfo) {
+        async function checkUserIdValidity(userInfo) {
             // 判断是否为本地开发环境
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
@@ -775,31 +792,46 @@
             }
             
             try {
-                // 实际项目中需要后端提供验证接口
-                const response = await fetch('/.netlify/functions/verifyToken', {
+                const controller = new AbortController();
+                // 10秒超时设置
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+                // 后端接口改为验证userId
+                const response = await fetch('/.netlify/functions/verifyUserId', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${userInfo.token}`,
+                        'X-User-Id': userInfo.userId, // 使用userId作为验证标识
                         'Content-Type': 'application/json'
                     },
-                    // 增加超时设置
-                    signal: AbortSignal.timeout(5000)
+                    signal: controller.signal
                 });
-                
+        
+                clearTimeout(timeoutId);
+        
                 if (!response.ok) {
-                    throw new Error('Token过期或无效');
+                    if (response.status === 401) {
+                        throw new Error('用户身份已失效，请重新登录');
+                    }
+                    throw new Error(`验证失败: ${response.statusText}`);
+                }
+        
+                // 验证成功，更新登录时间（延长有效期）
+                const result = await response.json();
+                if (result.valid) {
+                    userInfo.loginTime = new Date().toISOString();
+                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
                 }
             } catch (error) {
-                console.error('Token验证失败:', error);
-                // 只显示错误提示，不强制跳转，让用户可以继续使用
-                showNotification('登录状态验证失败，请重新登录以确保功能正常', 'error');
-                // 5秒后提供重新登录选项
-                setTimeout(() => {
-                    if (confirm('登录已过期，是否重新登录？')) {
-                        localStorage.removeItem('mainUserInfo');
-                        window.location.href = 'indexlo.html?tokenExpired=true';
-                    }
-                }, 5000);
+                console.error('Id验证失败:', error);
+                if (error.name !== 'AbortError') {
+                    showNotification(error.message, 'error');
+                    setTimeout(() => {
+                        if (confirm('登录状态已失效，是否重新登录？')) {
+                            localStorage.removeItem('mainUserInfo');
+                            window.location.href = 'indexlo.html?sessionExpired=true';
+                        }
+                    }, 3000);
+                }
             }
         }
 
@@ -972,6 +1004,14 @@
         // 带权限控制的导航函数
         function navigateTo(url, requiredRole = 'user') {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            // 先检查userId是否存在
+            if (!userInfo.userId) {
+                showNotification('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 1000);
+                return;
+            }
             // 管理员权限校验
             if (url.includes('admin-login.html') && userInfo.role !== 'admin') {
                 showNotification('无管理员权限，无法访问', 'error');
@@ -1082,6 +1122,22 @@
                 console.error('获取称号失败:', error);
                 // 可以忽略错误，使用本地数据
             }
+        }
+        function handleUnauthorizedAccess(errorMessage = "请先登录") {
+            // 避免在登录页重复跳转
+            if (window.location.pathname.includes('indexlo.html')) {
+                showNotification(errorMessage, 'error');
+                return;
+            }
+    
+            // 记录当前URL，登录后可跳转回来
+            localStorage.setItem('redirectUrl', window.location.href);
+    
+            // 显示提示并跳转
+            showNotification(errorMessage + '，即将跳转到登录页', 'error');
+            setTimeout(() => {
+                window.location.href = 'indexlo.html?needLogin=true';
+            }, 2000);
         }
     </script>
 </body>

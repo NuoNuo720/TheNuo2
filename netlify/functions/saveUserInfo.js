@@ -20,7 +20,7 @@ exports.handler = async (event) => {
     
     // 保存或更新用户信息
     await db.collection('users').updateOne(
-      { username: userData.username },
+      { userId: userData.userId },
       { $set: userData },
       { upsert: true }
     );

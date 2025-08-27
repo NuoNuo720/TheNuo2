@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // 新增JWT依赖
-
+const { v4: uuidv4 } = require('uuid'); // 新增：引入UUID
 exports.handler = async (event) => {
     // 设置响应头
     const headers = {
@@ -114,20 +114,21 @@ exports.handler = async (event) => {
                 body: JSON.stringify({ error: '邮箱已被注册' })
             };
         }
-
+        const userId = uuidv4(); // 生成UUID作为用户唯一标识
         // 加密密码
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         // 使用JWT生成令牌（与登录逻辑一致）
         const token = jwt.sign(
-            { username: username },
+            { username: username , userId: userId},
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
         // 准备用户数据
         const newUser = {
+            userId: userId, // 新增：用户唯一ID
             username,
             email,
             password: hashedPassword,
@@ -147,11 +148,12 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 message: '注册成功',
                 username: newUser.username,
+                userId: userId, // 返回用户ID
                 id: result.insertedId.toString(), // 返回用户ID
                 token: newUser.token
             })
         };
-
+        
     } catch (error) {
         console.error('注册过程错误:', error);
         return {
