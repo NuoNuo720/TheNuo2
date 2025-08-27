@@ -4,6 +4,9 @@ const jwt = require('jsonwebtoken'); // 新增JWT依赖
 const { v4: uuidv4 } = require('uuid'); // 新增：引入UUID
 exports.handler = async (event) => {
     // 设置响应头
+    const allowedOrigins = ['https://thenuo2.netlify.app']; // 替换为你的Netlify域名
+    const origin = event.headers.origin || '';
+    const allowOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
     const headers = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': allowOrigin,  // 用前面计算的allowOrigin
@@ -11,9 +14,7 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type, User-Agent',
         'Access-Control-Allow-Credentials': 'true'  // 统一添加这个头
     };
-    const allowedOrigins = ['https://thenuo2.netlify.app']; // 替换为你的Netlify域名
-    const origin = event.headers.origin || '';
-    const allowOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+    
     // 处理预检请求
     if (event.httpMethod === 'OPTIONS') {
         return {
