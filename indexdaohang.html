@@ -706,6 +706,16 @@
     </footer>
 
     <script>
+        // 生成临时用户ID（仅用于应急，实际应从登录接口获取）
+        function generateTempUserId() {
+            // 生成UUID v4格式的临时ID
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
         // 页面加载时验证登录状态并初始化
         window.onload = function() {
             // 检查是否已登录
@@ -744,21 +754,40 @@
                     userInfo = JSON.parse(userInfoStr);
                 } catch (parseError) {
                     console.error("用户信息解析失败：", parseError);
-                    throw new Error("用户信息格式错误");
+                    throw new Error("用户信息格式错误，请重新登录");
                 }
         
                 // 验证用户信息完整性 - 以user ID为核心检测条件
-                const requiredFields = ['userId', 'loginTime']; // 核心字段改为userId
+                const requiredFields = ['userId', 'loginTime'];
                 const missingFields = requiredFields.filter(field => !userInfo[field]);
         
                 if (missingFields.length > 0) {
-                    throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}`);
+                    // 特别处理userId缺失的情况
+                    if (missingFields.includes('userId')) {
+                        // 尝试修复：如果有其他用户标识，尝试生成临时ID
+                        if (userInfo.username || userInfo.email) {
+                            console.warn("检测到userId缺失，尝试生成临时ID");
+                            userInfo.userId = generateTempUserId();
+                            userInfo.loginTime = new Date().toISOString();
+                            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                            showNotification("用户信息已修复，请重新登录以获取正式身份", 'warning');
+                            // 短暂延迟后刷新页面应用更改
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                            return;
+                        } else {
+                            throw new Error("用户身份信息不完整，缺少用户ID，请重新登录");
+                        }
+                    } else {
+                        throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}，请重新登录`);
+                    }
                 }
         
                 // 验证登录时间有效性（7天内）
                 const loginTime = new Date(userInfo.loginTime);
                 if (isNaN(loginTime.getTime())) {
-                    throw new Error("登录时间格式无效");
+                    throw new Error("登录时间格式无效，请重新登录");
                 }
         
                 const sevenDaysAgo = new Date();
@@ -770,7 +799,7 @@
                 // 验证通过，更新显示
                 updateUserDisplay(userInfo);
                 loadUserTitles(userInfo);
-                checkUserIdValidity(userInfo); // 改为验证userId有效性
+                checkUserIdValidity(userInfo);
                 
             } catch (err) {
                 console.error("用户信息解析失败：", err);
@@ -780,14 +809,14 @@
             }
         }
 
-        // 校验Token有效性（修改为不强制跳转）
+        // 校验UserId有效性
         async function checkUserIdValidity(userInfo) {
             // 判断是否为本地开发环境
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
-            // 本地开发环境不验证token，直接返回成功
+            // 本地开发环境不验证userId，直接返回成功
             if (isLocalDev) {
-                console.log('本地开发模式，跳过token验证');
+                console.log('本地开发模式，跳过userId验证');
                 return;
             }
             
@@ -796,7 +825,7 @@
                 // 10秒超时设置
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-                // 后端接口改为验证userId
+                // 后端接口验证userId
                 const response = await fetch('/.netlify/functions/verifyUserId', {
                     method: 'POST',
                     headers: {
@@ -822,7 +851,7 @@
                     localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
                 }
             } catch (error) {
-                console.error('Id验证失败:', error);
+                console.error('UserId验证失败:', error);
                 if (error.name !== 'AbortError') {
                     showNotification(error.message, 'error');
                     setTimeout(() => {
@@ -948,6 +977,12 @@
         // 保存头像
         function saveAvatar() {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            // 确保userId存在
+            if (!userInfo.userId) {
+                showNotification('用户信息不完整，请重新登录', 'error');
+                return;
+            }
+            
             const newAvatar = document.getElementById('modalAvatar').src;
     
             // 更新本地存储
@@ -966,6 +1001,12 @@
 
         // 保存用户信息到服务器
         async function saveUserInfoToServer(userData) {
+            // 确保userId存在
+            if (!userData.userId) {
+                console.error('保存失败：缺少userId');
+                return;
+            }
+            
             // 本地开发环境不发送请求
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (isLocalDev) {
@@ -1056,9 +1097,10 @@
             }, 3000);
         }
 
-        // 加载用户称号（用username作为唯一键）
+        // 加载用户称号（用userId作为唯一键，更可靠）
         function loadUserTitles(userInfo) {
-            const uniqueKey = `userTitles_${userInfo.username}`;
+            // 使用userId作为键更可靠，因为它是唯一标识符
+            const uniqueKey = `userTitles_${userInfo.userId}`;
             const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
             
             if (userTitles.length === 0) {
@@ -1075,6 +1117,12 @@
 
         // 从服务器获取用户称号
         async function fetchUserTitlesFromServer(userInfo) {
+            // 确保userId存在
+            if (!userInfo.userId) {
+                console.error('获取称号失败：缺少userId');
+                return;
+            }
+            
             // 本地开发环境不发送请求
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (isLocalDev) {
@@ -1083,7 +1131,7 @@
                 const defaultTitles = [
                     { name: '探索者', icon: 'compass' }
                 ];
-                const uniqueKey = `userTitles_${userInfo.username}`;
+                const uniqueKey = `userTitles_${userInfo.userId}`;
                 localStorage.setItem(uniqueKey, JSON.stringify(defaultTitles));
                 
                 if (defaultTitles.length > 0) {
@@ -1096,10 +1144,10 @@
             }
             
             try {
-                const response = await fetch(`/.netlify/functions/titles?username=${userInfo.username}`, {
+                const response = await fetch(`/.netlify/functions/titles?userId=${userInfo.userId}`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${userInfo.token}`,
+                        'X-User-Id': userInfo.userId,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -1107,7 +1155,7 @@
                 if (response.ok) {
                     const titles = await response.json();
                     // 保存到localStorage
-                    const uniqueKey = `userTitles_${userInfo.username}`;
+                    const uniqueKey = `userTitles_${userInfo.userId}`;
                     localStorage.setItem(uniqueKey, JSON.stringify(titles));
             
                     // 如果有称号，设置第一个为当前称号
@@ -1123,6 +1171,8 @@
                 // 可以忽略错误，使用本地数据
             }
         }
+
+        // 统一处理未授权访问
         function handleUnauthorizedAccess(errorMessage = "请先登录") {
             // 避免在登录页重复跳转
             if (window.location.pathname.includes('indexlo.html')) {
