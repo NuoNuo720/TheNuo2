@@ -3,9 +3,11 @@
     <head>
         <title>登录界面</title>
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <!-- 优化移动端视图设置 -->
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+        <meta name="format-detection" content="telephone=no" />
         <style>
-            /* 统一基础样式，避免分散定义 */
+            /* 保持原有样式不变 */
             * {
                 margin: 0;
                 padding: 0;
@@ -16,17 +18,14 @@
                 background-color:#f4f4f4;
                 font-family:Arial,sans-serif;
                 height:100vh;
-                /* 移除原粉色文字色（全局粉色不合理），改为中性色 */
                 color:#333;
                 display : flex;
                 justify-content:center;
                 align-items:center;
-                /* 新增背景渐变，提升质感 */
                 background-image: linear-gradient(120deg, #f0f4f8, #e9ecef);
-                overflow: hidden; /* 防止页面滚动 */
+                overflow: hidden;
             }
 
-            /* 加载动画样式（整合到头部，避免样式分散） */
             #loader-wrapper {
                 position: fixed;
                 top: 0;
@@ -75,14 +74,12 @@
                 pointer-events: none;
             }
 
-            /* 登录容器样式优化 */
             .container {
                 width:300px;
-                box-shadow: 0 0 15px rgba(0,0,0,0.08); /* 柔和阴影 */
+                box-shadow: 0 0 15px rgba(0,0,0,0.08);
                 background-color:#fff;
-                border-radius:10px; /* 增大圆角，更现代 */
+                border-radius:10px;
                 padding : 25px;
-                /* 新增hover效果，提升交互感 */
                 transition: transform 0.3s ease, box-shadow 0.3s ease;
                 position: relative;
                 z-index: 10;
@@ -95,7 +92,7 @@
 
             h2{
                 text-align:center;
-                color:#333; /* 加深标题色，更醒目 */
+                color:#333;
                 margin-bottom:25px;
                 font-size: 1.5rem;
                 font-weight: 600;
@@ -104,35 +101,33 @@
             label {
                 display:block;
                 margin-bottom:6px;
-                font-weight:500; /* 调整字体粗细，更舒适 */
+                font-weight:500;
                 color:#555;
                 font-size: 0.95rem;
             }
 
-            /* 输入框样式优化 */
             .input-group {
-                position: relative; /* 用于密码可见按钮定位 */
+                position: relative;
                 margin-bottom:15px;
             }
 
             input[type="text"],
             input[type="password"] {
                 width:100%;
-                padding:11px 14px; /* 优化内边距，手感更好 */
-                border:1px solid #ddd; /* 减淡边框色 */
-                border-radius:6px; /* 增大圆角 */
+                padding:11px 14px;
+                border:1px solid #ddd;
+                border-radius:6px;
                 font-size: 0.95rem;
-                transition: all 0.2s ease; /* 新增过渡效果 */
+                transition: all 0.2s ease;
             }
 
             input:focus {
                 outline: none;
                 border-color: #007bff;
                 box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-                border-width: 1px; /* 避免focus时边框变粗 */
+                border-width: 1px;
             }
 
-            /* 密码可见切换按钮 */
             .toggle-password {
                 position: absolute;
                 right: 12px;
@@ -142,22 +137,21 @@
                 border: none;
                 color: #777;
                 cursor: pointer;
-                width: auto; /* 覆盖按钮默认宽度 */
-                padding: 0; /* 清除内边距 */
+                width: auto;
+                padding: 0;
                 font-size: 1rem;
                 transition: color 0.2s;
             }
 
             .toggle-password:hover {
                 color: #007bff;
-                background: transparent; /* 清除hover背景 */
+                background: transparent;
             }
 
             .checkbox {
                 margin-bottom:18px;
                 color:#666;
                 font-size: 0.9rem;
-                /* 复选框与文字垂直居中 */
                 display: flex;
                 align-items: center;
                 gap: 8px;
@@ -165,22 +159,21 @@
 
             .checkbox input {
                 width: 16px;
-                height: 16px; /* 统一复选框大小 */
+                height: 16px;
                 cursor: pointer;
             }
 
-            /* 按钮样式优化 */
             button {
                 width:100%;
-                padding:12px; /* 优化内边距 */
+                padding:12px;
                 background-color:#28a745;
                 color:#fff;
                 border:none;
-                border-radius:6px; /* 增大圆角 */
+                border-radius:6px;
                 cursor:pointer;
                 font-size:16px;
-                font-weight:500; /* 按钮文字加粗 */
-                transition: background-color 0.3s, transform 0.1s; /* 新增点击反馈 */
+                font-weight:500;
+                transition: background-color 0.3s, transform 0.1s;
             }
 
             button:hover:not(:disabled) {
@@ -188,7 +181,7 @@
             }
 
             button:active:not(:disabled) {
-                transform: scale(0.98); /* 点击时轻微缩小，反馈更明显 */
+                transform: scale(0.98);
             }
 
             button:disabled {
@@ -196,7 +189,6 @@
                 cursor:not-allowed;
             }
 
-            /* 链接区域样式优化 */
             .links{
                 text-align:center;
                 margin-top:20px;
@@ -206,21 +198,20 @@
             .links a {
                 color:#007bff;
                 text-decoration:none;
-                display: block; /* 垂直排列链接，更清晰 */
+                display: block;
                 margin: 12px 0;
                 transition: color 0.2s, text-decoration 0.2s;
             }
 
             .links a:hover {
                 text-decoration:underline;
-                color:#0056b3; /* 加深hover颜色 */
+                color:#0056b3;
             }
 
-            /* 提示消息样式优化 */
             .error-message,
             .success-message {
                 text-align: center;
-                margin: 0 0 15px 0; /* 调整间距，与表单更协调 */
+                margin: 0 0 15px 0;
                 padding: 9px;
                 border-radius: 6px;
                 font-size: 0.9rem;
@@ -239,7 +230,6 @@
                 background-color: #d4edda;
             }
 
-            /* 加载 spinner 样式 */
             .spinner {
                 width: 16px;
                 height: 16px;
@@ -252,7 +242,6 @@
                 margin-right: 8px;
             }
 
-            /* 适配超小屏幕（320px以下） */
             @media (max-width: 340px) {
                 .container {
                     width: 90%;
@@ -265,7 +254,6 @@
         </style>
     </head>
     <body>
-        <!-- 加载动画 -->
         <div id="loader-wrapper">
           <div id="loader"></div>
           <p id="loading-text">加载中...</p >
@@ -277,13 +265,11 @@
             
             <form id="loginForm">
                 <h2>账号登录</h2>
-                <!-- 用户名输入框 -->
                 <label for="username">用户名</label>
                 <div class="input-group">
                     <input type="text" name="username" placeholder="请输入用户名/昵称" id="username" required>
                 </div>
                 
-                <!-- 密码输入框（新增可见切换功能） -->
                 <label for="password">密码</label>
                 <div class="input-group">
                     <input type="password" name="password" placeholder="请输入密码" id="password" required>
@@ -293,7 +279,7 @@
                 </div>
                 
                 <div class="checkbox">
-                    <input type="checkbox" name="rememberMe" id="rememberMe" checked> <!-- 默认勾选"记住我" -->
+                    <input type="checkbox" name="rememberMe" id="rememberMe" checked>
                     <label for="rememberMe">记住我（7天内免登录）</label>
                 </div>
                 
@@ -306,7 +292,6 @@
             </div>
         </div>
 
-        <!-- 引入Font Awesome图标库（用于密码可见切换按钮） -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
         <script>
@@ -322,35 +307,30 @@
             const passwordInput = document.getElementById('password');
             
             togglePasswordBtn.addEventListener('click', function() {
-                // 切换密码输入框类型
                 const isPassword = passwordInput.type === 'password';
                 passwordInput.type = isPassword ? 'text' : 'password';
-                // 切换图标
                 const icon = togglePasswordBtn.querySelector('i');
                 icon.className = isPassword ? 'fas fa-eye' : 'fas fa-eye-slash';
             });
 
-            // 3. 页面初始化：填充记住的用户名 + 处理注册页跳转参数
+            // 3. 页面初始化
             window.addEventListener('DOMContentLoaded', function() {
                 const usernameInput = document.getElementById('username');
                 const rememberMeCheckbox = document.getElementById('rememberMe');
                 
-                // 3.1 填充本地存储的用户名
                 const rememberedUsername = localStorage.getItem('rememberedUsername');
                 if (rememberedUsername) {
                     usernameInput.value = rememberedUsername;
                     rememberMeCheckbox.checked = true;
                 }
 
-                // 3.2 处理注册页跳转携带的用户名（免重复输入）
                 const urlParams = new URLSearchParams(window.location.search);
                 const fromRegister = urlParams.get('from') === 'register';
                 const prefillUsername = urlParams.get('username');
                 
                 if (fromRegister && prefillUsername) {
                     usernameInput.value = prefillUsername;
-                    passwordInput.focus(); // 自动聚焦到密码框，提升体验
-                    // 显示注册成功提示
+                    passwordInput.focus();
                     const successMsg = document.getElementById('successMsg');
                     successMsg.textContent = '注册成功！请输入密码登录';
                     successMsg.style.display = 'block';
@@ -358,7 +338,6 @@
             });
 
             // 4. 链接跳转逻辑
-            // 4.1 注册链接（携带当前用户名，便于注册页回显）
             document.getElementById('registerLink').addEventListener('click', function(event) {
                 event.preventDefault();
                 const username = document.getElementById('username').value.trim();
@@ -368,14 +347,12 @@
                 window.location.href = targetUrl;
             });
             
-            // 4.2 忘记密码链接（模拟跳转提示）
             document.getElementById('forgotPasswordLink').addEventListener('click', function(event) {
                 event.preventDefault();
-                // 可替换为真实找回密码页面链接
                 alert('找回密码功能开发中，暂不支持～\n请联系管理员重置密码');
             });
 
-            // 5. 登录表单提交逻辑（完善异常处理和体验）
+            // 5. 登录表单提交逻辑 - 移动端适配版
             document.getElementById('loginForm').addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const username = document.getElementById('username').value.trim();
@@ -385,11 +362,9 @@
                 const successMsg = document.getElementById('successMsg');
                 const loginBtn = document.getElementById('loginBtn');
                 
-                // 隐藏所有提示
                 errorMsg.style.display = 'none';
                 successMsg.style.display = 'none';
                 
-                // 前端基础验证
                 if (!username) {
                     showError(errorMsg, '请输入用户名');
                     document.getElementById('username').focus();
@@ -402,84 +377,75 @@
                 }
 
                 try {
-                    // 显示加载状态
                     loginBtn.disabled = true;
                     loginBtn.innerHTML = '<span class="spinner"></span> 登录中...';
                     
-                    // 发送登录请求（支持本地测试Mock）
-                    let response;
-                    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || /^192\.168\./.test(window.location.hostname);
+                    // 关键修改：使用完整URL而非相对路径，解决移动端路径解析问题
+                    const baseUrl = window.location.origin; // 获取当前域名
+                    const loginUrl = `${baseUrl}/.netlify/functions/login`;
                     
-                    if (isLocalDev) {
-                        // 本地Mock：模拟登录成功（实际项目需删除）
-                        response = {
-                            ok: true,
-                            json: () => Promise.resolve({
-                                id: 'user_' + Date.now(),
-                                username: username,
-                                token: 'login_token_' + Date.now(),
-                                avatar: 'https://picsum.photos/200/200?random=' + Date.now(),
-                                message: '登录成功'
-                            })
-                        };
-                    } else {
-                        // 线上环境：调用真实后端接口（增加10秒超时控制）
-                        response = await fetch('/.netlify/functions/login', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'User-Agent': navigator.userAgent
-                            },
-                            body: JSON.stringify({ username, password }),
-                            credentials: 'include',
-                            signal: AbortSignal.timeout(10000)
-                        });
+                    // 增加重试机制，适应移动网络不稳定
+                    const maxRetries = 2;
+                    let response;
+                    
+                    for (let i = 0; i <= maxRetries; i++) {
+                        try {
+                            response = await fetch(loginUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ username, password }),
+                                credentials: 'include',
+                                mode: 'cors', // 明确指定跨域模式
+                                signal: AbortSignal.timeout(15000) // 延长超时到15秒
+                            });
+                            break; // 成功获取响应则跳出重试循环
+                        } catch (error) {
+                            if (i === maxRetries) throw error; // 最后一次失败则抛出错误
+                            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // 重试前等待
+                        }
                     }
 
                     const result = await response.json();
 
-                    // 恢复按钮状态
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '登录';
 
-                    // 处理服务器响应
                     if (response.ok) {
-                        // 登录成功：存储用户信息
                         if (rememberMe) {
                             localStorage.setItem('rememberedUsername', username);
-                            // 记住我时，延长token有效期（需后端配合）
-                            result.tokenExpire = new Date().getTime() + 7 * 24 * 60 * 60 * 1000; // 7天
+                            result.tokenExpire = new Date().getTime() + 7 * 24 * 60 * 60 * 1000;
                         } else {
                             localStorage.removeItem('rememberedUsername');
                         }
                         loginSuccess(result);
                     } else {
-                        // 登录失败：细分错误类型
                         const errorText = result.message || '登录失败，请重试';
                         if (response.status === 401) {
-                            // 401未授权：用户名/密码错误
                             showError(errorMsg, '用户名或密码不正确，请检查');
-                            passwordInput.value = ''; // 清空密码，重新输入
+                            passwordInput.value = '';
                             passwordInput.focus();
                         } else if (response.status === 403) {
-                            // 403禁止访问：账号被封禁
                             showError(errorMsg, '账号已被限制登录，请联系管理员');
                         } else if (response.status === 500) {
-                            // 500服务器错误：友好提示
                             showError(errorMsg, '服务器暂时繁忙，请稍后再试');
                         } else {
                             showError(errorMsg, errorText);
                         }
                     }
                 } catch (error) {
-                    // 网络错误处理
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '登录';
                     
+                    // 更详细的移动端错误提示
                     if (error.name === 'TimeoutError') {
-                        showError(errorMsg, '登录请求超时，请检查网络');
-                    } else if (error.name === 'TypeError') {
-                        showError(errorMsg, '网络连接失败，请确认网络正常');
+                        showError(errorMsg, '网络较慢，请求超时，请稍后再试');
+                    } else if (error.message.includes('Failed to fetch')) {
+                        showError(errorMsg, '无法连接到服务器，请检查网络是否正常');
+                    } else if (error.message.includes('CORS')) {
+                        showError(errorMsg, '网络连接异常，请使用HTTPS访问');
                     } else {
                         showError(errorMsg, '登录出错：' + error.message);
                     }
@@ -489,44 +455,39 @@
 
             // 6. 登录成功处理函数
             function loginSuccess(userData) {
-                // 保存用户完整信息到本地存储
                 const currentUser = {
                     id: userData.id,
                     username: userData.username,
                     token: userData.token,
-                    avatar: userData.avatar || 'https://picsum.photos/200/200', // 默认头像
+                    avatar: userData.avatar || 'https://picsum.photos/200/200',
                     loginTime: new Date().getTime(),
-                    isAdmin: userData.isAdmin || false, // 管理员标识
-                    expireTime: userData.tokenExpire // 过期时间（可选）
+                    isAdmin: userData.isAdmin || false,
+                    expireTime: userData.tokenExpire
                 };
                 localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
     
-                // 显示成功消息并跳转
                 const successMsg = document.getElementById('successMsg');
                 successMsg.textContent = '登录成功，正在进入主页...';
                 successMsg.style.display = 'block';
                 
-                // 跳转前清除可能的旧参数
                 setTimeout(() => {
                     window.location.href = 'indexdaohang.html';
                 }, 1500);
             }
 
-            // 7. 错误提示显示函数（优化显示时长）
+            // 7. 错误提示显示函数
             function showError(element, message) {
                 element.textContent = message;
                 element.style.display = 'block';
-                // 错误提示3秒后自动隐藏（原5秒太长）
                 setTimeout(() => {
                     element.style.display = 'none';
                 }, 3000);
             }
 
-            // 8. 键盘操作优化：回车提交表单
+            // 8. 键盘操作优化
             document.getElementById('loginForm').addEventListener('keydown', function(event) {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    // 聚焦到下一个空字段，否则提交
                     const username = document.getElementById('username').value.trim();
                     const password = document.getElementById('password').value;
                     

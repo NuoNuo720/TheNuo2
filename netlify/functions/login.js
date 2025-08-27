@@ -3,24 +3,27 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 exports.handler = async (event) => {
-  // 设置CORS headers，解决跨域问题           
-  const allowedOrigins = ['https://thenuo2.netlify.app']; // 你的Netlify域名
-  const origin = event.headers.origin || '';
-  const allowOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  // 改进CORS配置，支持移动端跨域
+  const allowedOrigins = ['https://thenuo2.netlify.app', 'https://www.thenuo2.netlify.app'];
+  const origin = event.headers.origin || event.headers.Origin || ''; // 兼容不同浏览器的Origin头写法
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : '*'; // 允许所有来源作为 fallback
+  
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, User-Agent',
-    'Access-Control-Allow-Credentials': 'true' // 修复：移除多余空格并正确闭合
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400',
+    'Cache-Control': 'no-store, no-cache' // 防止移动端缓存导致的问题
   };             
   
   // 处理预检请求（OPTIONS）
   if (event.httpMethod === 'OPTIONS') {
     return {
-      statusCode: 200,
+      statusCode: 204, // 使用204 No Content更符合规范
       headers,
-      body: JSON.stringify({ message: 'Preflight OK' })
+      body: '' // 预检请求不需要返回内容
     };
   }
 
@@ -51,7 +54,7 @@ exports.handler = async (event) => {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: '无效的JSON格式', details: parseError.message })
+        body: JSON.stringify({ error: '无效的JSON格式，请检查输入' })
       };
     }
 
@@ -68,24 +71,35 @@ exports.handler = async (event) => {
 
     // 验证环境变量
     if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI环境变量未配置');
+      throw new Error('数据库配置错误');
     }
     
     if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET环境变量未配置');
+      throw new Error('认证配置错误');
     }
 
-    // 连接数据库（增加超时控制）
-    const connectWithTimeout = async (uri) => {
-      const client = new MongoClient(uri);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('数据库连接超时')), 5000)
-      );
-      await Promise.race([client.connect(), timeoutPromise]);
-      return client;
+    // 改进数据库连接 - 增加重试机制和更长超时
+    const connectWithRetry = async (uri, retries = 2) => {
+      let lastError;
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const client = new MongoClient(uri, {
+            serverSelectionTimeoutMS: 8000, // 服务器选择超时
+            connectTimeoutMS: 8000 // 连接超时
+          });
+          await client.connect();
+          return client;
+        } catch (err) {
+          lastError = err;
+          if (i < retries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // 指数退避
+          }
+        }
+      }
+      throw lastError || new Error('数据库连接失败');
     };
     
-    client = await connectWithTimeout(process.env.MONGODB_URI);
+    client = await connectWithRetry(process.env.MONGODB_URI);
     
     const db = client.db('userDB');
     const usersCollection = db.collection('users');
@@ -96,13 +110,13 @@ exports.handler = async (event) => {
       return { 
         statusCode: 401, 
         headers,
-        body: JSON.stringify({ error: '用户名不存在' }) 
+        body: JSON.stringify({ error: '用户名或密码不正确' }) // 模糊错误信息，提高安全性
       };
     }
 
     // 验证密码
     if (!user.password) {
-      throw new Error('用户记录中缺少密码字段');
+      throw new Error('用户数据不完整');
     }
     
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -110,15 +124,18 @@ exports.handler = async (event) => {
       return { 
         statusCode: 401, 
         headers,
-        body: JSON.stringify({ error: '密码错误' }) 
+        body: JSON.stringify({ error: '用户名或密码不正确' }) // 模糊错误信息
       };
     }
 
-    // 生成JWT令牌
+    // 生成JWT令牌 - 增加算法指定
     const token = jwt.sign(
       { userId: user._id.toString(), username: user.username },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { 
+        expiresIn: '24h',
+        algorithm: 'HS256' // 明确指定算法
+      }
     );
 
     // 更新数据库中的token
@@ -140,13 +157,21 @@ exports.handler = async (event) => {
     };
 
   } catch (err) {
-    console.error('登录处理错误:', err); // 记录详细错误到日志
+    console.error('登录处理错误:', err);
+    // 为移动端提供更友好的错误信息
+    const errorMessages = {
+      '数据库连接超时': '网络连接缓慢，请稍后再试',
+      '数据库连接失败': '无法连接到服务器，请检查网络',
+      '认证配置错误': '系统暂时无法处理登录请求'
+    };
+    
+    const userMessage = errorMessages[err.message] || '登录失败，请稍后重试';
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
-        error: '服务器内部错误', 
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+        error: userMessage
       })
     };
   } finally {
