@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="游戏平台帮助中心 - 解决账号登录、游戏玩法、社交功能等问题">
+    <meta name="keywords" content="游戏平台,帮助中心,账号注册,游戏指南,社交功能">
+    <meta name="author" content="游戏平台团队">
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" as="style">
+    <title>帮助中心 - 游戏平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1E293B',
+                        light: '#F8FAFC',
+                        // 增加辅助色，提升可访问性
+                        error: '#EF4444',
+                        warning: '#F59E0B',
+                        success: '#10B981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif', 'Arial'],
+                    },
+                    // 增加响应式断点
+                    screens: {
+                        'xs': '360px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            .section-fade {
+                opacity: 0;
+                transform: translateY(20px);
+                transition: opacity 0.6s ease, transform 0.6s ease;
+            }
+            .section-visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .search-results {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, opacity 0.3s ease;
+                opacity: 0;
+            }
+            .search-results.active {
+                max-height: 400px;
+                opacity: 1;
+            }
+            .loading-spinner {
+                border-top-color: theme('colors.primary');
+                animation: spinner 0.6s linear infinite;
+            }
+            @keyframes spinner {
+                to { transform: rotate(360deg); }
+            }
+            /* 增加焦点样式，提升键盘导航体验 */
+            .focus-visible {
+                outline: 3px solid rgba(59, 130, 246, 0.5);
+                outline-offset: 2px;
+            }
+            /* 平滑滚动 */
+            html {
+                scroll-behavior: smooth;
+                scroll-padding-top: 80px; /* 适配导航栏高度 */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen font-sans">
+    <!-- 导航栏 - 优化稳定性和加载体验 -->
+    <div id="navbar" class="min-h-[60px] flex items-center justify-center bg-white shadow-sm">
+        <!-- 导航栏加载状态 - 优化视觉反馈 -->
+        <div id="navbarLoading" class="flex items-center p-4">
+            <div class="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full loading-spinner"></div>
+            <span class="ml-2 text-gray-500">加载导航中...</span>
+        </div>
+        <!-- 导航栏错误状态 - 优化错误处理 -->
+        <div id="navbarError" class="hidden text-error text-center p-4">
+            <p class="mb-2 flex items-center justify-center"><i class="fa fa-exclamation-circle mr-2"></i>导航加载失败</p>
+            <button id="retryNavbar" class="text-primary text-sm mt-1 hover:underline focus:outline-none focus:focus-visible">重试</button>
+        </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-10 sm:py-16 max-w-6xl">
+        <div class="text-center mb-8 sm:mb-12">
+            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-primary mb-3 sm:mb-4 text-shadow">帮助中心</h1>
+            <p class="text-gray-600 max-w-3xl mx-auto text-base sm:text-lg">
+                在这里可以找到关于平台功能、游戏玩法和社交互动的详细说明，快速解决您的问题
+            </p>
+        </div>
+
+        <!-- 搜索框与结果 - 优化交互体验 -->
+        <div class="mb-8 sm:mb-10 max-w-2xl mx-auto relative">
+            <div class="relative">
+                <label for="searchHelp" class="sr-only">搜索帮助内容</label>
+                <input 
+                    type="text" 
+                    id="searchHelp" 
+                    placeholder="搜索帮助内容，例如'账号注册'..." 
+                    class="w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none focus:focus-visible transition-all"
+                    aria-label="搜索帮助内容"
+                    autocomplete="off"
+                >
+                <button id="searchButton" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="搜索">
+                    <i class="fa fa-search text-xl"></i>
+                </button>
+                <!-- 清除按钮 - 新增功能 -->
+                <button id="clearSearch" class="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:focus-visible hidden" aria-label="清除搜索内容">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- 搜索结果容器 - 优化视觉层级 -->
+            <div id="searchResults" class="search-results absolute left-0 right-0 mt-2 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-y-auto">
+                <div id="searchLoading" class="hidden p-6 flex justify-center items-center">
+                    <div class="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full loading-spinner mr-2"></div>
+                    <span class="text-gray-500">正在搜索...</span>
+                </div>
+                <div id="searchNoResults" class="hidden p-6 text-center text-gray-500">
+                    <i class="fa fa-search-minus text-2xl mb-2"></i>
+                    <p>未找到相关结果</p>
+                    <p class="text-sm mt-1">建议尝试其他关键词或查看分类帮助</p>
+                </div>
+                <ul id="resultsList" class="p-2">
+                    <!-- 搜索结果将动态插入这里 -->
+                </ul>
+            </div>
+            <!-- 搜索提示 - 新增功能 -->
+            <div id="searchSuggestions" class="mt-2 text-xs text-gray-500 hidden">
+                <p>热门搜索: <a href="#register" class="text-primary hover:underline">账号注册</a>、<a href="#login" class="text-primary hover:underline">登录问题</a>、<a href="#games" class="text-primary hover:underline">游戏指南</a></p>
+            </div>
+        </div>
+
+        <!-- 帮助分类 - 优化响应式布局 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <!-- 账号与登录 -->
+            <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg card-hover focus-within:shadow-lg transition-all">
+                <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                    <i class="fa fa-user-circle text-2xl text-primary"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-3">账号与登录</h2>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                        <a href="#register" class="hover:text-primary transition-colors focus:outline-none focus:focus-visible">账号丢失问题</a>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                        <a href="#login" class="hover:text-primary transition-colors focus:outline-none focus:focus-visible">登录遇到问题</a>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                        <a href="#profile" class="hover:text-primary transition-colors focus:outline-none focus:focus-visible">修改个人资料(待开发)</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 游戏相关 -->
+            <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg card-hover focus-within:shadow-lg transition-all">
+                <div class="w-14 h-14 bg-secondary/10 rounded-full flex items-center justify-center mb-5">
+                    <i class="fa fa-gamepad text-2xl text-secondary"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-3">游戏相关</h2>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-secondary mt-1 mr-2"></i>
+                        <a href="#game-start" class="hover:text-secondary transition-colors focus:outline-none focus:focus-visible">开始游戏指南</a>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-secondary mt-1 mr-2"></i>
+                        <a href="#game-save" class="hover:text-secondary transition-colors focus:outline-none focus:focus-visible">游戏进度保存</a>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-secondary mt-1 mr-2"></i>
+                        <a href="#game-rules" class="hover:text-secondary transition-colors focus:outline-none focus:focus-visible">各游戏规则说明</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 社交功能 -->
+            <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg card-hover focus-within:shadow-lg transition-all">
+                <div class="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center mb-5">
+                    <i class="fa fa-users text-2xl text-accent"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-3">社交功能</h2>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-accent mt-1 mr-2"></i>
+                        <a href="#friends" class="hover:text-accent transition-colors focus:outline-none focus:focus-visible">添加和管理好友</a>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-accent mt-1 mr-2"></i>
+                        <a href="#chat" class="hover:text-accent transition-colors focus:outline-none focus:focus-visible">使用聊天功能</a>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-angle-right text-accent mt-1 mr-2"></i>
+                        <a href="#teamplay" class="hover:text-accent transition-colors focus:outline-none focus:focus-visible">组队玩游戏</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 详细帮助内容 - 优化内容结构和可读性 -->
+        <div class="mt-12 sm:mt-16 space-y-10 sm:space-y-12">
+            <!-- 账号与登录 -->
+            <section id="register" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-user-plus text-primary mr-3"></i>
+                        账号丢失问题
+                    </h2>
+                    <!-- 回到顶部按钮 - 新增功能 -->
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <p class="mb-4">账号疑似丢失?</p>
+                    
+                    <ol class="list-decimal pl-5 space-y-3 mt-4 mb-6">
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 mt-1 mr-2">1.</span>
+                            <span>注意更新公告，版本大更新有概率会删除原有数据</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 mt-1 mr-2">2.</span>
+                            <span>如若仍有疑问，请联系半猫诺丷</span>
+                        </li>
+                    </ol>
+                    
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-6 border-l-4 border-warning">
+                        <p class="font-medium text-yellow-800 flex items-center">
+                            <i class="fa fa-exclamation-triangle mr-2"></i>注意事项：
+                        </p>
+                        <ul class="list-disc pl-5 text-yellow-700 mt-2 space-y-1">
+                            <li>每个邮箱地址只能注册一个账号，可以重新注册检验是否是后端数据库更新或开发者手动删除异常数据导致的数据丢失问题</li>
+                            <li>请使用您常用的邮箱进行注册，以便接收重要通知</li>
+                            <li>账号注册成功后，请及时完善个人资料以提高账号安全性</li>
+                        </ul>
+                    </div>
+
+                    <!-- 常见问题折叠面板 - 新增功能 -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">常见问题</h3>
+                        <div class="space-y-3">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="faq1-content">
+                                    <span>收不到开发者发送的邮件怎么办？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="faq1-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>如果没有收到邮件，请尝试以下操作：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>检查垃圾邮件/促销邮件文件夹</li>
+                                        <li>确认输入的邮箱地址是否正确</li>
+                                        <li>联系开发者单独重新发送邮件</li>
+                                        <li>如果使用企业邮箱，可能需要联系IT部门解除邮件拦截</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="faq2-content">
+                                    <span>注册时提示"邮箱已被使用"怎么办？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="faq2-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>如果提示邮箱已被使用，说明该邮箱已注册过账号，您可以：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>尝试使用"忘记密码"功能找回该邮箱对应的账号密码</li>
+                                        <li>使用其他邮箱地址重新注册</li>
+                                        <li>联系半猫诺丷核实并处理账号问题</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="login" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-sign-in text-primary mr-3"></i>
+                        登录遇到问题
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <p class="mb-4">如果您在登录过程中遇到问题，可以尝试以下解决方案：</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div class="bg-gray-50 p-5 rounded-lg">
+                            <h3 class="text-xl mt-0 mb-3 flex items-center">
+                                <i class="fa fa-key text-primary mr-2"></i>密码错误
+                            </h3>
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li>检查是否开启了 Caps Lock（密码区分大小写）</li>
+                                <li>点击登录页面的"忘记密码"，通过邮箱重置密码</li>
+                                <li>确保输入的是完整的邮箱地址</li>
+                                <li>尝试清除浏览器缓存后重新登录</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-5 rounded-lg">
+                            <h3 class="text-xl mt-0 mb-3 flex items-center">
+                                <i class="fa fa-lock text-warning mr-2"></i>账号被锁定
+                            </h3>
+                            <p class="mb-2">如果连续多次输入错误密码，账号会暂时锁定30分钟以保护安全。您可以：</p>
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li>等待30分钟后再尝试登录</li>
+                                <li>通过"忘记密码"功能重置密码，立即解锁账号</li>
+                                <li>锁定期间不会影响账号内的数据安全</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl mt-6 mb-3 flex items-center">
+                        <i class="fa fa-exclamation-circle text-error mr-2"></i>其他登录问题
+                    </h3>
+                    <p>如果您遇到其他登录问题，如验证码无法显示、页面无响应等：</p>
+                    <ul class="list-disc pl-5 space-y-2 mb-6">
+                        <li>清除浏览器缓存和Cookie后重试（<kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Ctrl+Shift+Delete</kbd>）</li>
+                        <li>尝试使用其他浏览器登录（推荐Chrome、Firefox、Edge最新版本）</li>
+                        <li>检查网络连接是否正常，尝试访问其他网站验证</li>
+                        <li>确认您的浏览器是否支持JavaScript并已启用</li>
+                        <li>如果问题持续，请联系半猫诺丷</li>
+                    </ul>
+
+                    <!-- 快速解决按钮 - 新增功能 -->
+                    <div class="flex flex-wrap gap-4 mt-8">
+                        <a href="#" class="inline-flex items-center px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">
+                            <i class="fa fa-envelope-o mr-2"></i>发送登录问题至半猫诺丷(待开发)
+                        </a>
+                        <a href="#" class="inline-flex items-center px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">
+                            <i class="fa fa-question-circle mr-2"></i>查看完整登录帮助(待开发)
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 称号系统 -->
+            <section id="titles" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-trophy text-yellow-500 mr-3"></i>
+                        称号系统说明
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <p class="mb-4">称号是展示您在平台上成就的荣誉标识，可以通过完成各种任务和挑战获得。每个称号都有独特的图标和展示效果。</p>
+                    
+                    <h3 class="text-xl mt-4 mb-3">如何获取称号？</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa fa-gamepad text-primary"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium">游戏成就</p>
+                                <p class="text-sm text-gray-600">在游戏中达到特定成就（如"自由电子冒险"通关）</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa fa-calendar-check-o text-primary"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium">累计登录</p>
+                                <p class="text-sm text-gray-600">累计登录达到一定天数，连续登录可获得稀有称号</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa fa-gift text-primary"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium">平台活动</p>
+                                <p class="text-sm text-gray-600">参与平台限时活动和节日活动</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa fa-user-plus text-primary"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium">管理员添加</p>
+                                <p class="text-sm text-gray-600">半猫诺丷为您设计的专属称号</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl mt-4 mb-3">称号展示</h3>
+                    <p class="mb-3">获得的称号会显示在您的个人主页，部分特殊称号还会在聊天和排行榜中展示。</p>
+                    
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-5 rounded-lg mt-4 border border-blue-100">
+                        <p class="font-medium flex items-center">
+                            <i class="fa fa-lightbulb-o text-yellow-500 mr-2"></i>小贴士：
+                        </p>
+                        <p class="mt-2">点击个人主页的称号可以查看该称号的获取条件和稀有度！</p>
+                    </div>
+
+                    <!-- 称号预览 - 新增功能 -->
+                    <div class="mt-8">
+                        <h4 class="font-semibold mb-3">热门称号预览</h4>
+                        <div class="flex overflow-x-auto pb-4 gap-4">
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-star text-2xl text-yellow-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">初心者</p>
+                                <p class="text-xs text-gray-500">稀有度：初始</p>
+                            </div>
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-blue-200 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-calendar text-2xl text-blue-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">热爱者</p>
+                                <p class="text-xs text-gray-500">稀有度：普通</p>
+                            </div>
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-trophy text-2xl text-purple-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">冠军玩家</p>
+                                <p class="text-xs text-gray-500">稀有度：特定</p>
+                            </div>
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-red-200 to-red-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-diamond text-2xl text-red-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">自由电子</p>
+                                <p class="text-xs text-gray-500">稀有度：专属</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 社交功能 -->
+            <section id="social" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-comments text-accent mr-3"></i>
+                        社交功能详解
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div>
+                            <h3 class="text-xl mt-0 mb-3 flex items-center">
+                                <i class="fa fa-user-plus text-accent mr-2"></i>添加好友
+                            </h3>
+                            <p class="mb-3">您可以通过以下方式添加好友：</p>
+                            <ol class="list-decimal pl-5 space-y-2 mb-4">
+                                <li>在"好友"页面使用搜索功能查找用户名</li>
+                                <li>通过游戏内的玩家列表发送好友请求(待开发)</li>
+                                <li>扫描其他玩家的个人二维码(待开发)</li>
+                                <li>接收并同意其他玩家的好友请求</li>
+                            </ol>
+                            
+                            <div class="bg-accent/5 p-3 rounded-lg">
+                                <p class="text-sm font-medium">好友上限</p>
+                                <p class="text-xs text-gray-600 mt-1">暂无</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl mt-0 mb-3 flex items-center">
+                                <i class="fa fa-comments-o text-accent mr-2"></i>实时聊天
+                            </h3>
+                            <p class="mb-3">与好友建立连接后，您可以：</p>
+                            <ul class="list-disc pl-5 space-y-2 mb-4">
+                                <li>发送文字消息进行实时交流</li>
+                                <li>分享游戏成就和进度截图(待开发)</li>
+                                <li>发送游戏邀请和组队请求(待开发)</li>
+                                <li>创建多人聊天群组(待开发)</li>
+                            </ul>
+                            
+                            <div class="bg-accent/5 p-3 rounded-lg">
+                                <p class="text-sm font-medium">聊天功能提示</p>
+                                <p class="text-xs text-gray-600 mt-1">长按消息可进行复制等操作，支持聊天记录云端同步(举报功能待开发)</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl mt-0 mb-3 flex items-center">
+                                <i class="fa fa-newspaper-o text-accent mr-2"></i>好友动态(待开发)
+                            </h3>
+                            <p class="mb-3">在"好友动态"页面，您可以查看好友的最新活动：</p>
+                            <ul class="list-disc pl-5 space-y-2 mb-4">
+                                <li>好友获得的新称号和成就</li>
+                                <li>好友在游戏中的最佳成绩</li>
+                                <li>好友发布的游戏心得和截图</li>
+                                <li>好友正在玩的游戏</li>
+                            </ul>
+                            
+                            <div class="bg-accent/5 p-3 rounded-lg">
+                                <p class="text-sm font-medium">动态设置</p>
+                                <p class="text-xs text-gray-600 mt-1">您可以在隐私设置中控制自己动态的可见范围，也可以屏蔽特定好友的动态</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 社交功能视频教程 - 新增功能 -->
+                    <div class="mt-8 bg-gray-50 p-5 rounded-lg border border-gray-100">
+                        <h4 class="font-semibold mb-3 flex items-center">
+                            <i class="fa fa-play-circle text-primary mr-2"></i>观看社交功能使用教程
+                        </h4>
+                        <div class="aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <button class="p-4 bg-white/80 hover:bg-white text-primary rounded-full shadow-md transition-all focus:outline-none focus:focus-visible">
+                                <i class="fa fa-play text-xl"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">视频长度：暂无 | 内容：暂无</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 游戏指南 -->
+            <section id="games" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-book text-primary mr-3"></i>
+                        游戏指南
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                        <div class="h-40 bg-gradient-to-r from-blue-50 to-indigo-50 overflow-hidden">
+                            <img 
+                                src="https://picsum.photos/id/160/600/400" 
+                                alt="自由电子冒险游戏截图" 
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                            >
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-2">自由电子冒险</h3>
+                            <p class="text-gray-600 mb-3 text-sm">一款科幻风格的冒险游戏，您需要控制电子穿越各种关卡，避开障碍物并收集能量。</p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center text-sm text-yellow-500">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-half-o"></i>
+                                    <span class="text-gray-500 ml-1">4.5分</span>
+                                </div>
+                                <a href="e(finally).html" class="text-primary hover:underline flex items-center text-sm">
+                                    查看详细玩法 <i class="fa fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                        <div class="h-40 bg-gradient-to-r from-green-50 to-teal-50 overflow-hidden">
+                            <img 
+                                src="https://picsum.photos/id/96/600/400" 
+                                alt="色盲派对游戏截图" 
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                            >
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-2">色盲派对</h3>
+                            <p class="text-gray-600 mb-3 text-sm">考验色彩辨别能力的挑战游戏，在限定时间内找出与其他不同的颜色块，难度逐渐提升。</p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center text-sm text-yellow-500">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <span class="text-gray-500 ml-1">4.0分</span>
+                                </div>
+                                <a href="colors.html" class="text-primary hover:underline flex items-center text-sm">
+                                    查看详细玩法 <i class="fa fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                        <div class="h-40 bg-gradient-to-r from-yellow-50 to-orange-50 overflow-hidden">
+                            <img 
+                                src="https://picsum.photos/id/180/600/400" 
+                                alt="24点游戏截图" 
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                            >
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-2">24点游戏</h3>
+                            <p class="text-gray-600 mb-3 text-sm">经典数学游戏，使用给定的四个数字通过加减乘除运算得到24，锻炼计算能力和反应速度。</p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center text-sm text-yellow-500">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <span class="text-gray-500 ml-1">5.0分</span>
+                                </div>
+                                <a href="24game.html" class="text-primary hover:underline flex items-center text-sm">
+                                    查看详细玩法 <i class="fa fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                        <div class="h-40 bg-gradient-to-r from-purple-50 to-pink-50 overflow-hidden">
+                            <img 
+                                src="https://picsum.photos/id/110/600/400" 
+                                alt="yourscraft游戏截图" 
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                            >
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-2">yourscraft</h3>
+                            <p class="text-gray-600 mb-3 text-sm">创意搭建类游戏，发挥想象力建造属于自己的世界，支持多人联机共同创作。</p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center text-sm text-yellow-500">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-half-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <span class="text-gray-500 ml-1">3.5分</span>
+                                </div>
+                                <a href="yourscraft.html" class="text-primary hover:underline flex items-center text-sm">
+                                    查看详细玩法 <i class="fa fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 游戏筛选器 - 新增功能 -->
+                <div class="mt-8">
+                    <h4 class="font-semibold mb-4">按类型筛选游戏</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-4 py-2 bg-primary text-white rounded-full text-sm hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">全部游戏</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">益智类</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">冒险类</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">竞技类</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">创意类</button>
+                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">多人游戏</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- 反馈建议 - 优化表单体验 -->
+        <section class="mt-12 sm:mt-16 bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <i class="fa fa-lightbulb-o text-yellow-500 mr-3"></i>
+                    反馈与建议
+                </h2>
+                <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                    <i class="fa fa-arrow-up"></i>
+                </a>
+            </div>
+            <p class="mb-6 text-gray-700">如果您有任何问题或建议，欢迎告诉我们，帮助我们做得更好！我们通常会在24小时内回复您的反馈。</p>
+            
+            <form id="feedbackForm" class="max-w-2xl">
+                <div class="mb-5">
+                    <label for="feedbackType" class="block text-gray-700 mb-2 font-medium">反馈类型 <span class="text-error">*</span></label>
+                    <select id="feedbackType" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:focus-visible transition-all" required>
+                        <option value="" disabled selected>请选择反馈类型</option>
+                        <option value="question">我有疑问</option>
+                        <option value="bug">报告bug</option>
+                        <option value="suggestion">功能建议</option>
+                        <option value="praise">表扬与鼓励</option>
+                        <option value="other">其他问题</option>
+                    </select>
+                </div>
+                
+                <div class="mb-5">
+                    <label for="feedbackContent" class="block text-gray-700 mb-2 font-medium">详细内容 <span class="text-error">*</span></label>
+                    <textarea id="feedbackContent" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:focus-visible transition-all resize-none" placeholder="请详细描述您的反馈... 例如：我在登录时遇到了XX问题，具体表现为..." required></textarea>
+                    <div class="flex justify-between items-center mt-1">
+                        <p id="charCount" class="text-sm text-gray-500">0/500</p>
+                        <p id="contentError" class="text-sm text-error hidden">请输入至少10个字符的反馈内容</p>
+                    </div>
+                </div>
+                
+                <!-- 上传截图 - 新增功能 -->
+                <div class="mb-5">
+                    <label class="block text-gray-700 mb-2 font-medium">上传截图（可选）</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                        <i class="fa fa-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600 mb-3">拖放图片到此处，或点击选择文件</p>
+                        <label class="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm transition-colors cursor-pointer focus:outline-none focus:focus-visible">
+                            <i class="fa fa-file-image-o mr-1"></i>选择图片
+                            <input type="file" accept="image/*" multiple class="hidden">
+                        </label>
+                        <p class="text-xs text-gray-500 mt-3">支持JPG、PNG格式，单张不超过5MB，最多上传3张</p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="mr-2 h-4 w-4 text-primary focus:ring-primary/50 rounded" id="receiveReply">
+                        <span class="text-gray-700">愿意接收我们的回复（会发送到您的账号消息中心）</span>
+                    </label>
+                </div>
+                
+                <div class="flex items-center">
+                    <button type="submit" id="submitFeedback" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-colors font-medium flex items-center focus:outline-none focus:focus-visible">
+                        <span>提交反馈</span>
+                        <i class="fa fa-paper-plane ml-2"></i>
+                    </button>
+                    <div id="feedbackLoading" class="hidden ml-4">
+                        <div class="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full loading-spinner"></div>
+                    </div>
+                    <div id="feedbackSuccess" class="hidden ml-4 text-success">
+                        <i class="fa fa-check-circle"></i>
+                        <span class="ml-1">提交成功！</span>
+                    </div>
+                    <div id="feedbackError" class="hidden ml-4 text-error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span class="ml-1">提交失败，请重试</span>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- 页脚 - 优化信息层级和响应式布局 -->
+    <footer class="bg-dark text-white py-10 sm:py-12 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">游戏平台</h3>
+                    <p class="text-gray-400 mb-4">让游戏连接你我，创造快乐时光</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl" aria-label="官方微博">
+                            <i class="fa fa-weibo"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl" aria-label="官方微信">
+                            <i class="fa fa-weixin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl" aria-label="官方QQ">
+                            <i class="fa fa-qq"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">首页</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">游戏库</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">社区论坛</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">关于我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">联系客服</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">客服支持</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa fa-envelope-o text-gray-400 mt-1 mr-2"></i>
+                            <span class="text-gray-400">3668417644@qq.com</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-phone text-gray-400 mt-1 mr-2"></i>
+                            <span class="text-gray-400">暂不公布</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-clock-o text-gray-400 mt-1 mr-2"></i>
+                            <span class="text-gray-400">周一至周日 9:00-22:00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400 text-sm">
+                <p>© 2025 游戏平台 版权所有 | 半猫诺丷</p>
+                <p class="mt-2">健康游戏忠告：适度游戏益脑，沉迷游戏伤身，合理安排时间，享受健康生活</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 返回顶部按钮 - 优化视觉和交互 -->
+    <button id="backToTop" class="fixed bottom-6 right-6 bg-primary text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center opacity-0 invisible transition-all duration-300 hover:bg-primary/90 focus:outline-none focus:focus-visible z-50" aria-label="返回顶部">
+        <i class="fa fa-arrow-up"></i>
+    </button>
+
+    <!-- 页面加载进度条 - 新增功能 -->
+    <div id="pageLoader" class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+        <div id="progressBar" class="h-full bg-primary w-0 transition-all duration-300"></div>
+    </div>
+
+    <script>
+        // 页面加载进度条
+        window.addEventListener('load', () => {
+            document.getElementById('progressBar').style.width = '100%';
+            setTimeout(() => {
+                document.getElementById('pageLoader').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('pageLoader').style.display = 'none';
+                }, 300);
+            }, 300);
+        });
+
+        // 导航栏加载函数 - 优化稳定性和错误处理
+        function loadNavbar() {
+            const navbar = document.getElementById('navbar');
+            const navbarLoading = document.getElementById('navbarLoading');
+            const navbarError = document.getElementById('navbarError');
+            
+            // 显示加载状态
+            navbarLoading.classList.remove('hidden');
+            navbarError.classList.add('hidden');
+            
+            // 模拟导航栏加载（实际项目中替换为真实的AJAX请求）
+            setTimeout(() => {
+                // 随机模拟10%的失败概率
+                const success = Math.random() > 0.1;
+                
+                if (success) {
+                    // 加载成功 - 创建导航栏
+                    const navContent = document.createElement('nav');
+                    navContent.className = 'w-full bg-white shadow-md';
+                    navContent.innerHTML = `
+                        <div class="container mx-auto px-4">
+                            <div class="flex justify-between h-16">
+                                <div class="flex items-center">
+                                    <a href="#" class="text-primary font-bold text-xl flex items-center focus:outline-none focus:focus-visible">
+                                        <i class="fa fa-gamepad mr-2"></i>
+                                        <span>游戏平台</span>
+                                    </a>
+                                </div>
+                                <!-- 桌面导航 -->
+                                <div class="hidden md:flex items-center space-x-6">
+                                    <a href="indexdaohang.html" class="text-gray-600 hover:text-primary transition-colors focus:outline-none focus:focus-visible">导航页面</a>
+                                    <a href="#" class="text-primary font-medium">帮助中心</a>
+                                    <a href="24gameinformation.html" class="text-gray-600 hover:text-primary transition-colors focus:outline-none focus:focus-visible">小游戏合集</a>
+                                    <a href="friends.html" class="text-gray-600 hover:text-primary transition-colors focus:outline-none focus:focus-visible">社交</a>
+                                    <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">赞</button>
+                                </div>
+                                <!-- 移动端菜单按钮 -->
+                                <div class="md:hidden flex items-center">
+                                    <button id="mobileMenuButton" class="text-gray-600 hover:text-primary focus:outline-none focus:focus-visible" aria-label="打开菜单">
+                                        <i class="fa fa-bars text-xl"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- 移动端导航菜单 -->
+                            <div id="mobileMenu" class="md:hidden hidden pb-4">
+                                <div class="flex flex-col space-y-3 px-2">
+                                    <a href="indexdaohang.html" class="text-gray-600 hover:text-primary transition-colors py-2 focus:outline-none focus:focus-visible">导航页面</a>
+                                    <a href="#" class="text-primary font-medium py-2">帮助中心</a>
+                                    <a href="24gameinformation.html" class="text-gray-600 hover:text-primary transition-colors py-2 focus:outline-none focus:focus-visible">小游戏合集</a>
+                                    <a href="friends.html" class="text-gray-600 hover:text-primary transition-colors py-2 focus:outline-none focus:focus-visible">社交</a>
+                                    <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors w-full focus:outline-none focus:focus-visible">赞</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 清空并添加导航内容
+                    navbar.innerHTML = '';
+                    navbar.appendChild(navContent);
+                    
+                    // 绑定移动端菜单事件
+                    const mobileMenuButton = document.getElementById('mobileMenuButton');
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    
+                    mobileMenuButton.addEventListener('click', () => {
+                        const isHidden = mobileMenu.classList.contains('hidden');
+                        mobileMenu.classList.toggle('hidden', !isHidden);
+                        mobileMenuButton.innerHTML = isHidden ? 
+                            '<i class="fa fa-times text-xl"></i>' : 
+                            '<i class="fa fa-bars text-xl"></i>';
+                        mobileMenuButton.setAttribute('aria-label', isHidden ? '关闭菜单' : '打开菜单');
+                    });
+                } else {
+                    // 加载失败
+                    navbarLoading.classList.add('hidden');
+                    navbarError.classList.remove('hidden');
+                }
+            }, 800);
+        }
+        
+        // 初始化加载导航栏
+        loadNavbar();
+        
+        // 重试加载导航栏
+        document.getElementById('retryNavbar').addEventListener('click', loadNavbar);
+        
+        // 帮助内容数据，用于搜索功能
+        const helpContent = [
+            { id: 'register', title: '账号疑似丢失', category: '账号与登录', content: '无法登录账号或账号信息异常等问题' },
+            { id: 'login', title: '登录遇到问题', category: '账号与登录', content: '解决登录失败、密码错误、账号锁定等问题' },
+            { id: 'profile', title: '修改个人资料(待开发)', category: '账号与登录', content: '如何更改个人信息、头像、密码等' },
+            { id: 'game-start', title: '开始游戏指南', category: '游戏相关', content: '如何找到并开始玩喜欢的游戏' },
+            { id: 'game-save', title: '游戏进度保存', category: '游戏相关', content: '游戏进度自动保存和手动保存的方法' },
+            { id: 'game-rules', title: '各游戏规则说明', category: '游戏相关', content: '平台上各类游戏的规则和玩法说明' },
+            { id: 'friends', title: '添加和管理好友', category: '社交功能', content: '如何查找、添加和管理游戏好友' },
+            { id: 'chat', title: '使用聊天功能', content: '如何与好友进行实时聊天和互动', category: '社交功能' },
+            { id: 'teamplay', title: '组队玩游戏', category: '社交功能', content: '如何邀请好友组队参与游戏' },
+            { id: 'titles', title: '称号系统说明', category: '成就系统', content: '如何获取和展示游戏称号和成就' },
+        ];
+        
+        // 搜索功能实现 - 优化匹配精度和用户体验
+        const searchInput = document.getElementById('searchHelp');
+        const searchButton = document.getElementById('searchButton');
+        const clearSearchButton = document.getElementById('clearSearch');
+        const searchResults = document.getElementById('searchResults');
+        const resultsList = document.getElementById('resultsList');
+        const searchLoading = document.getElementById('searchLoading');
+        const searchNoResults = document.getElementById('searchNoResults');
+        const searchSuggestions = document.getElementById('searchSuggestions');
+        
+        // 显示/隐藏清除按钮
+        function toggleClearButton() {
+            if (searchInput.value.length > 0) {
+                clearSearchButton.classList.remove('hidden');
+            } else {
+                clearSearchButton.classList.add('hidden');
+                searchResults.classList.remove('active');
+            }
+        }
+        
+        // 清除搜索内容
+        clearSearchButton.addEventListener('click', () => {
+            searchInput.value = '';
+            toggleClearButton();
+            resultsList.innerHTML = '';
+            searchResults.classList.remove('active');
+            searchSuggestions.classList.remove('hidden');
+            searchInput.focus();
+        });
+        
+        // 执行搜索的函数
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            toggleClearButton();
+            
+            if (searchTerm.length < 2) {
+                searchResults.classList.remove('active');
+                resultsList.innerHTML = '';
+                searchNoResults.classList.add('hidden');
+                
+                // 显示搜索建议
+                if (searchTerm.length === 0) {
+                    searchSuggestions.classList.remove('hidden');
+                }
+                return;
+            }
+            
+            // 隐藏搜索建议
+            searchSuggestions.classList.add('hidden');
+            
+            // 显示加载状态
+            searchLoading.classList.remove('hidden');
+            searchNoResults.classList.add('hidden');
+            resultsList.innerHTML = '';
+            
+            // 模拟搜索延迟
+            setTimeout(() => {
+                // 高级搜索算法：根据匹配位置和数量计算分数
+                const matches = helpContent.map(item => {
+                    let score = 0;
+                    
+                    // 标题匹配得分最高
+                    if (item.title.toLowerCase().includes(searchTerm)) {
+                        score += 3;
+                        // 完全匹配标题得分更高
+                        if (item.title.toLowerCase() === searchTerm) {
+                            score += 5;
+                        }
+                    }
+                    
+                    // 内容匹配次之
+                    if (item.content && item.content.toLowerCase().includes(searchTerm)) {
+                        score += 2;
+                    }
+                    
+                    // 分类匹配得分较低
+                    if (item.category.toLowerCase().includes(searchTerm)) {
+                        score += 1;
+                    }
+                    
+                    return { ...item, score };
+                })
+                .filter(item => item.score > 0) // 只保留有匹配的结果
+                .sort((a, b) => b.score - a.score); // 按得分排序
+                
+                // 隐藏加载状态
+                searchLoading.classList.add('hidden');
+                
+                // 显示结果
+                if (matches.length > 0) {
+                    resultsList.innerHTML = matches.map(item => `
+                        <li class="p-3 hover:bg-gray-50 rounded-md transition-colors">
+                            <a href="#${item.id}" class="flex flex-col">
+                                <span class="font-medium">${highlightMatch(item.title, searchTerm)}</span>
+                                <span class="text-xs text-gray-500 mt-1">${item.category}</span>
+                            </a>
+                        </li>
+                    `).join('');
+                    searchResults.classList.add('active');
+                    searchNoResults.classList.add('hidden');
+                } else {
+                    searchResults.classList.add('active');
+                    resultsList.innerHTML = '';
+                    searchNoResults.classList.remove('hidden');
+                }
+            }, 300); // 模拟网络延迟
+        }
+        
+        // 高亮搜索匹配的文本
+        function highlightMatch(text, term) {
+            if (!term) return text;
+            const regex = new RegExp(`(${term})`, 'gi');
+            return text.replace(regex, '<span class="bg-yellow-200">$1</span>');
+        }
+        
+        // 搜索事件监听
+        searchInput.addEventListener('input', performSearch);
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.trim().length >= 2) {
+                performSearch();
+            } else if (searchInput.value.trim().length === 0) {
+                searchSuggestions.classList.remove('hidden');
+            }
+        });
+        searchInput.addEventListener('blur', () => {
+            // 延迟隐藏，以便点击搜索结果
+            setTimeout(() => {
+                searchSuggestions.classList.add('hidden');
+            }, 200);
+        });
+        
+        // 点击页面其他区域关闭搜索结果
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && 
+                !searchResults.contains(e.target) && 
+                !searchButton.contains(e.target) &&
+                !clearSearchButton.contains(e.target)) {
+                searchResults.classList.remove('active');
+            }
+        });
+        
+        // 常见问题折叠面板功能
+        document.querySelectorAll('.faq-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const content = document.getElementById(toggle.getAttribute('aria-controls'));
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                
+                // 更新状态
+                toggle.setAttribute('aria-expanded', !isExpanded);
+                content.classList.toggle('hidden', isExpanded);
+                
+                // 旋转图标
+                const icon = toggle.querySelector('i');
+                if (isExpanded) {
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+        
+        // 反馈表单字符计数与验证
+        const feedbackContent = document.getElementById('feedbackContent');
+        const charCount = document.getElementById('charCount');
+        const contentError = document.getElementById('contentError');
+        const submitFeedback = document.getElementById('submitFeedback');
+        const feedbackLoading = document.getElementById('feedbackLoading');
+        const feedbackSuccess = document.getElementById('feedbackSuccess');
+        const feedbackError = document.getElementById('feedbackError');
+        
+        feedbackContent.addEventListener('input', function() {
+            const length = this.value.length;
+            charCount.textContent = `${length}/500`;
+            
+            // 超过限制时提示
+            if (length > 500) {
+                charCount.classList.add('text-error');
+                this.value = this.value.substring(0, 500);
+                charCount.textContent = '500/500';
+            } else {
+                charCount.classList.remove('text-error');
+            }
+            
+            // 实时验证内容长度
+            validateFeedbackContent();
+        });
+        
+        // 验证反馈内容
+        function validateFeedbackContent() {
+            const content = feedbackContent.value.trim();
+            if (content.length < 10) {
+                contentError.classList.remove('hidden');
+                return false;
+            } else {
+                contentError.classList.add('hidden');
+                return true;
+            }
+        }
+        
+        // 表单提交处理 - 优化用户反馈
+        document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 验证表单
+            if (!validateFeedbackContent()) {
+                // 滚动到错误位置
+                feedbackContent.focus();
+                return;
+            }
+            
+            // 收集表单数据
+            const feedbackData = {
+                type: document.getElementById('feedbackType').value,
+                content: feedbackContent.value,
+                receiveReply: document.getElementById('receiveReply').checked
+            };
+            
+            // 显示加载状态
+            submitFeedback.disabled = true;
+            feedbackLoading.classList.remove('hidden');
+            feedbackSuccess.classList.add('hidden');
+            feedbackError.classList.add('hidden');
+            
+            // 模拟发送反馈到后端
+            setTimeout(() => {
+                // 模拟API调用
+                const success = Math.random() > 0.1; // 90%成功率
+                
+                if (success) {
+                    // 提交成功
+                    feedbackSuccess.classList.remove('hidden');
+                    feedbackLoading.classList.add('hidden');
+                    
+                    // 重置表单
+                    setTimeout(() => {
+                        document.getElementById('feedbackForm').reset();
+                        charCount.textContent = '0/500';
+                        feedbackSuccess.classList.add('hidden');
+                        submitFeedback.disabled = false;
+                    }, 2000);
+                } else {
+                    // 提交失败
+                    feedbackLoading.classList.add('hidden');
+                    feedbackError.classList.remove('hidden');
+                    submitFeedback.disabled = false;
+                    
+                    // 3秒后隐藏错误提示
+                    setTimeout(() => {
+                        feedbackError.classList.add('hidden');
+                    }, 3000);
+                }
+            }, 1500);
+        });
+        
+        // 滚动显示动画 - 优化触发时机
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px 0px -100px 0px', // 元素底部进入视口100px时触发
+            threshold: 0
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('section-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+        
+        // 观察所有带section-fade类的元素
+        document.querySelectorAll('.section-fade').forEach(section => {
+            observer.observe(section);
+        });
+        
+        // 返回顶部按钮功能
+        const backToTopButton = document.getElementById('backToTop');
+        
+        window.addEventListener('scroll', () => {
+            // 滚动超过500px时显示返回顶部按钮
+            if (window.pageYOffset > 500) {
+                backToTopButton.classList.remove('opacity-0', 'invisible');
+                backToTopButton.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopButton.classList.remove('opacity-100', 'visible');
+                backToTopButton.classList.add('opacity-0', 'invisible');
+            }
+        });
+        
+        backToTopButton.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // 平滑滚动到锚点 - 优化移动端体验
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                
+                // 如果是回到顶部链接，不阻止默认行为
+                if (targetId === '#') return;
+                
+                e.preventDefault();
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    // 关闭搜索结果
+                    searchResults.classList.remove('active');
+                    
+                    // 关闭移动菜单（如果打开）
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    const mobileMenuButton = document.getElementById('mobileMenuButton');
+                    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                        if (mobileMenuButton) {
+                            mobileMenuButton.innerHTML = '<i class="fa fa-bars text-xl"></i>';
+                            mobileMenuButton.setAttribute('aria-label', '打开菜单');
+                        }
+                    }
+                    
+                    // 计算滚动位置，考虑导航栏高度
+                    const navbarHeight = document.querySelector('nav')?.offsetHeight || 60;
+                    const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                    
+                    // 高亮显示目标区域（视觉反馈）
+                    targetElement.classList.add('bg-blue-50');
+                    setTimeout(() => {
+                        targetElement.classList.remove('bg-blue-50');
+                    }, 2000);
+                }
+            });
+        });
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            // 检查URL中是否有锚点，如有则滚动到对应位置
+            if (window.location.hash) {
+                const targetElement = document.querySelector(window.location.hash);
+                if (targetElement) {
+                    setTimeout(() => {
+                        const navbarHeight = document.querySelector('nav')?.offsetHeight || 60;
+                        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                        
+                        // 高亮显示目标区域
+                        targetElement.classList.add('bg-blue-50');
+                        setTimeout(() => {
+                            targetElement.classList.remove('bg-blue-50');
+                        }, 2000);
+                    }, 500); // 等待导航栏加载完成
+                }
+            }
+        });
+    </script>
+</body>
+</html>
