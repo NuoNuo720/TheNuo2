@@ -36,6 +36,9 @@
             .card-hover {
                 @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
             }
+            .btn-nav {
+                @apply bg-neutral text-white py-2 px-4 rounded-lg transition-all duration-300 hover:bg-neutral/90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-neutral/50;
+            }
             .btn-primary {
                 @apply bg-primary text-white py-2 px-4 rounded-lg transition-all duration-300 hover:bg-primary/90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50;
             }
@@ -67,11 +70,14 @@
     <!-- 顶部导航栏 -->
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
+            <button id="nav-back-btn" class="btn-nav flex items-center order-0>
+                <i class="fa fa-arrow-left mr-2"></i>返回导航页
+            </button>
+            <div class="flex items-center space-x-2 order-1">
                 <i class="fa fa-book text-primary text-2xl"></i>
                 <h1 class="text-xl md:text-2xl font-bold text-primary">外研版高二选修一单词默写</h1>
             </div>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-4 order-2">
                 <span id="progress-text" class="hidden md:inline-block text-neutral">进度: 0/0</span>
                 <div class="hidden md:block progress-bar w-40">
                     <div id="progress-bar" class="progress-value" style="width: 0%"></div>
@@ -185,6 +191,9 @@
                 </button>
                 <button id="back-btn" class="btn-secondary flex-1">
                     <i class="fa fa-arrow-left mr-2"></i>选择其他单元
+                </button>
+                <button id="result-nav-back-btn" class="btn-nav flex-1">
+                    <i class="fa fa-home mr-2"></i>返回导航页
                 </button>
             </div>
         </div>
@@ -324,7 +333,8 @@
         function init() {
             // 生成单元选择按钮
             generateUnitButtons();
-            
+            document.getElementById('nav-back-btn').addEventListener('click', () => window.location.href = 'indexdaohang.html');
+            document.getElementById('result-nav-back-btn').addEventListener('click', () => window.location.href = 'indexdaohang.html');
             // 设置事件监听器
             startBtn.addEventListener('click', startQuiz);
             checkBtn.addEventListener('click', checkAnswer);
