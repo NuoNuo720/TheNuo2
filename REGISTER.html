@@ -551,8 +551,8 @@
                         })
                     };
                 } else {
-                    // 线上环境：调用真实后端接口
-                    response = await fetch('/.netlify/functions/register', {
+                    // 线上环境：调用真实后端接口                                                                                                           
+                    response = await fetch('/netlify/functions/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
