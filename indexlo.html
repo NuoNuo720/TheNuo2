@@ -408,7 +408,7 @@
                     
                     // 发送登录请求（支持本地测试Mock）
                     let response;
-                    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || /^192\.168\./.test(window.location.hostname);
                     
                     if (isLocalDev) {
                         // 本地Mock：模拟登录成功（实际项目需删除）
@@ -427,9 +427,11 @@
                         response = await fetch('/.netlify/functions/login', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'User-Agent': navigator.userAgent
                             },
                             body: JSON.stringify({ username, password }),
+                            credentials: 'include',
                             signal: AbortSignal.timeout(10000)
                         });
                     }

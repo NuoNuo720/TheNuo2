@@ -5,11 +5,15 @@ const jwt = require('jsonwebtoken');
 exports.handler = async (event) => {
   // 设置CORS headers，解决跨域问题
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST'
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, User-Agent',
+    'Access-Control-Allow-Credentials': 'true'
   };
-
+  const allowedOrigins = ['https://thenuo2.netlify.app']; // 你的Netlify域名
+  const origin = event.headers.origin || '';
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
   if (event.httpMethod !== 'POST') {
     return { 
       statusCode: 405, 
