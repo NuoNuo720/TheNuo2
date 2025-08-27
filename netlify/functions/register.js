@@ -8,7 +8,7 @@ exports.handler = async (event) => {
     const origin = event.headers.origin || '';
     const allowOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
     const headers = {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json',     
         'Access-Control-Allow-Origin': allowOrigin,  // 用前面计算的allowOrigin
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, User-Agent',
@@ -155,7 +155,7 @@ exports.handler = async (event) => {
                 username: newUser.username,
                 userId: userId, // 返回用户ID
                 id: result.insertedId.toString(), // 返回用户ID
-                token: newUser.token,
+                token: newUser.token
                 
             })
         };

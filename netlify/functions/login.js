@@ -12,9 +12,18 @@ exports.handler = async (event) => {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, User-Agent',
-    'Access-Control-Allow-Credentials': 'true                                                                                                                                                                                                                                                                                                
+    'Access-Control-Allow-Credentials': 'true' // 修复：移除多余空格并正确闭合
   };             
   
+  // 处理预检请求（OPTIONS）
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ message: 'Preflight OK' })
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return { 
       statusCode: 405, 
@@ -66,9 +75,17 @@ exports.handler = async (event) => {
       throw new Error('JWT_SECRET环境变量未配置');
     }
 
-    // 连接数据库
-    client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
+    // 连接数据库（增加超时控制）
+    const connectWithTimeout = async (uri) => {
+      const client = new MongoClient(uri);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('数据库连接超时')), 5000)
+      );
+      await Promise.race([client.connect(), timeoutPromise]);
+      return client;
+    };
+    
+    client = await connectWithTimeout(process.env.MONGODB_URI);
     
     const db = client.db('userDB');
     const usersCollection = db.collection('users');
@@ -129,7 +146,6 @@ exports.handler = async (event) => {
       headers,
       body: JSON.stringify({ 
         error: '服务器内部错误', 
-        // 生产环境可以去掉details，避免泄露敏感信息
         details: process.env.NODE_ENV === 'development' ? err.message : undefined 
       })
     };
