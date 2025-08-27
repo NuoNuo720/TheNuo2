@@ -539,7 +539,7 @@
                 // 发送注册请求（支持本地测试时的Mock逻辑）
                 let response;
                 // 本地开发时可替换为Mock接口，避免依赖后端
-                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || /^192\.168\./.test(window.location.hostname);
                 if (isLocalDev) {
                     // 本地Mock：模拟注册成功（实际项目需删除）
                     response = {
@@ -555,14 +555,12 @@
                     response = await fetch('/.netlify/functions/register', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'User-Agent': navigator.userAgent, // 1. 新增：告诉Netlify这是移动端请求，避免拦截
+                            'Access-Control-Request-Method': 'POST' // 2. 新增：提前声明请求方法，简化预检流程
                         },
-                        body: JSON.stringify({
-                            username,
-                            email,
-                            password
-                        }),
-                        // 增加请求超时控制（10秒）
+                        body: JSON.stringify({ username, email, password }),
+                        credentials: 'include', // 3. 新增：允许跨域携带凭证（Netlify函数需要这个参数才会响应）
                         signal: AbortSignal.timeout(10000)
                     });
                 }

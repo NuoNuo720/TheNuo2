@@ -6,16 +6,20 @@ exports.handler = async (event) => {
     // 设置响应头
     const headers = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': allowOrigin,  // 用前面计算的allowOrigin
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type, User-Agent',
+        'Access-Control-Allow-Credentials': 'true'  // 统一添加这个头
     };
-
+    const allowedOrigins = ['https://thenuo2.netlify.app']; // 替换为你的Netlify域名
+    const origin = event.headers.origin || '';
+    const allowOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
     // 处理预检请求
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 200,
-            headers
+            headers,
+            body: JSON.stringify({ message: 'Preflight OK' })
         };
     }
 
@@ -150,7 +154,8 @@ exports.handler = async (event) => {
                 username: newUser.username,
                 userId: userId, // 返回用户ID
                 id: result.insertedId.toString(), // 返回用户ID
-                token: newUser.token
+                token: newUser.token,
+                
             })
         };
         
