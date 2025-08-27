@@ -48,10 +48,22 @@
             }
             .card-hover {
                 transition: all 0.3s ease;
+                opacity: 1;
+                visibility: visible;
             }
             .card-hover:hover {
                 transform: translateY(-5px);
                 box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            .card-hover.hidden {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transform: scale(0.95);
+            }
+            .game-type-button.selected {
+                background-color: #3B82F6;
+                color: white;
             }
             .section-fade {
                 opacity: 0;
@@ -568,7 +580,8 @@
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                    <!-- 自由电子冒险 - 冒险类游戏 -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group" data-game-type="adventure">
                         <div class="h-40 bg-gradient-to-r from-blue-50 to-indigo-50 overflow-hidden">
                             <img 
                                 src="https://picsum.photos/id/160/600/400" 
@@ -596,7 +609,8 @@
                         </div>
                     </div>
                     
-                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                    <!-- 色盲派对 - 益智类游戏 -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group" data-game-type="puzzle">
                         <div class="h-40 bg-gradient-to-r from-green-50 to-teal-50 overflow-hidden">
                             <img 
                                 src="https://picsum.photos/id/96/600/400" 
@@ -624,7 +638,8 @@
                         </div>
                     </div>
                     
-                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                    <!-- 24点游戏 - 益智类游戏 -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group" data-game-type="puzzle">
                         <div class="h-40 bg-gradient-to-r from-yellow-50 to-orange-50 overflow-hidden">
                             <img 
                                 src="https://picsum.photos/id/180/600/400" 
@@ -652,7 +667,8 @@
                         </div>
                     </div>
                     
-                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group">
+                    <!-- yourscraft - 创意类和多人游戏 -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:border-primary transition-colors card-hover group" data-game-type="creative multiplayer">
                         <div class="h-40 bg-gradient-to-r from-purple-50 to-pink-50 overflow-hidden">
                             <img 
                                 src="https://picsum.photos/id/110/600/400" 
@@ -681,16 +697,16 @@
                     </div>
                 </div>
 
-                <!-- 游戏筛选器 - 新增功能 -->
+                <!-- 游戏筛选器 - 完善功能 -->
                 <div class="mt-8">
                     <h4 class="font-semibold mb-4">按类型筛选游戏</h4>
                     <div class="flex flex-wrap gap-2">
-                        <button class="px-4 py-2 bg-primary text-white rounded-full text-sm hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">全部游戏</button>
-                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">益智类</button>
-                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">冒险类</button>
-                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">竞技类</button>
-                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">创意类</button>
-                        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">多人游戏</button>
+                        <button class="game-type-button px-4 py-2 bg-primary text-white rounded-full text-sm hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible selected" data-type="all">全部游戏</button>
+                        <button class="game-type-button px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible" data-type="puzzle">益智类</button>
+                        <button class="game-type-button px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible" data-type="adventure">冒险类</button>
+                        <button class="game-type-button px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible" data-type="competition">竞技类</button>
+                        <button class="game-type-button px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible" data-type="creative">创意类</button>
+                        <button class="game-type-button px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible" data-type="multiplayer">多人游戏</button>
                     </div>
                 </div>
             </section>
@@ -1289,6 +1305,45 @@
                     setTimeout(() => {
                         targetElement.classList.remove('bg-blue-50');
                     }, 2000);
+                }
+            });
+        });
+        
+        // 游戏类型筛选功能 - 完善实现
+        const gameTypeButtons = document.querySelectorAll('.game-type-button');
+        const gameCards = document.querySelectorAll('[data-game-type]');
+        
+        // 给每个筛选按钮添加点击事件监听器
+        gameTypeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有按钮的选中状态
+                gameTypeButtons.forEach(btn => btn.classList.remove('selected'));
+                // 添加当前按钮的选中状态
+                this.classList.add('selected');
+
+                const selectedType = this.getAttribute('data-type');
+                
+                if (selectedType === 'all') {
+                    // 显示所有游戏卡片，添加淡入动画
+                    gameCards.forEach(card => {
+                        setTimeout(() => {
+                            card.classList.remove('hidden');
+                        }, 50);
+                    });
+                } else {
+                    // 隐藏不符合筛选条件的游戏卡片，显示符合条件的
+                    gameCards.forEach(card => {
+                        const cardTypes = card.getAttribute('data-game-type');
+                        if (cardTypes.includes(selectedType)) {
+                            // 符合条件的显示
+                            setTimeout(() => {
+                                card.classList.remove('hidden');
+                            }, 50);
+                        } else {
+                            // 不符合条件的隐藏
+                            card.classList.add('hidden');
+                        }
+                    });
                 }
             });
         });
