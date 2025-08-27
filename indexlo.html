@@ -295,6 +295,11 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
         <script>
+            function createTimeoutSignal(ms) {
+                const controller = new AbortController();
+                setTimeout(() => controller.abort(new Error('请求超时')), ms);
+                return controller.signal;
+            }
             // 1. 加载动画控制
             window.addEventListener('load', function() {
                 setTimeout(function() {
@@ -399,7 +404,7 @@
                                 body: JSON.stringify({ username, password }),
                                 credentials: 'include',
                                 mode: 'cors', // 明确指定跨域模式
-                                signal: AbortSignal.timeout(15000) // 延长超时到15秒
+                                signal: createTimeoutSignal(15000) // 延长超时到15秒
                             });
                             break; // 成功获取响应则跳出重试循环
                         } catch (error) {
@@ -440,7 +445,7 @@
                     loginBtn.innerHTML = '登录';
                     
                     // 更详细的移动端错误提示
-                    if (error.name === 'TimeoutError') {
+                    if (error.message.includes('请求超时')) {
                         showError(errorMsg, '网络较慢，请求超时，请稍后再试');
                     } else if (error.message.includes('Failed to fetch')) {
                         showError(errorMsg, '无法连接到服务器，请检查网络是否正常');
