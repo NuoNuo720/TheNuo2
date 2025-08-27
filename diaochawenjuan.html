@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
-    <!-- 配置Tailwind自定义主题 -->
     <script>
         tailwind.config = {
             theme: {
@@ -16,27 +15,18 @@
                         primary: '#4F46E5',
                         secondary: '#10B981',
                         accent: '#F59E0B',
+                        danger: '#EF4444', // 新增：醒目错误色
                         dark: '#1E293B',
-                        light: '#F8FAFC',
-                        game: {
-                            50: '#EEF2FF',
-                            100: '#E0E7FF',
-                            200: '#C7D2FE'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        game: ['"Press Start 2P"', 'cursive']
+                        game: { 50: '#EEF2FF', 100: '#E0E7FF' }
                     },
                     animation: {
                         'bounce-slow': 'bounce 3s infinite',
-                        'fade-in': 'fadeIn 0.5s ease-out'
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'shake': 'shake 0.3s ease-in-out' // 新增：错误抖动动画
                     },
                     keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        }
+                        fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        shake: { '0%,100%': { transform: 'translateX(0)' }, '25%': { transform: 'translateX(-5px)' }, '75%': { transform: 'translateX(5px)' } }
                     }
                 }
             }
@@ -45,29 +35,14 @@
     
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto {
-                content-visibility: auto;
-            }
-            .form-focus {
-                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
-            }
-            .card-shadow {
-                @apply shadow-lg hover:shadow-xl transition-all duration-300;
-            }
-            .radio-active {
-                @apply border-primary bg-primary text-white;
-            }
-            .input-error {
-                @apply border-red-500 focus:ring-red-200 focus:border-red-500;
-            }
-            .error-text {
-                @apply text-red-500 text-xs mt-1 hidden animate-fade-in;
-            }
-            /* 修复：用透明且绝对定位替代hidden，确保单选按钮可聚焦但不可见 */
-            .visually-hidden {
-                @apply absolute w-0 h-0 opacity-0 pointer-events-none;
-                overflow: hidden;
-            }
+            .content-auto { content-visibility: auto; }
+            .form-focus { @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none; }
+            .card-shadow { @apply shadow-lg hover:shadow-xl transition-all duration-300; }
+            .radio-active { @apply border-primary bg-primary text-white; }
+            .input-error { @apply border-danger focus:ring-danger/30 focus:border-danger !ring-2; } /* 强化错误样式：红色边框+高亮 */
+            .error-text { @apply text-danger text-sm mt-1 flex items-center animate-fade-in; } /* 放大错误提示文字 */
+            .visually-hidden { @apply absolute w-0 h-0 opacity-0 pointer-events-none overflow-hidden; }
+            .required-tag { @apply inline-block bg-danger/10 text-danger text-xs px-2 py-0.5 rounded ml-1; } /* 醒目必填标签 */
         }
     </style>
     
@@ -83,56 +58,64 @@
             
             <div class="inline-flex items-center justify-center mb-4">
                 <i class="fa fa-gamepad text-primary text-4xl md:text-5xl mr-4 animate-bounce-slow"></i>
-                <h1 class="text-[clamp(1.8rem,5vw,2.8rem)] font-bold text-dark tracking-tight">
-                    玩家意见调查问卷
-                </h1>
+                <h1 class="text-[clamp(1.8rem,5vw,2.8rem)] font-bold text-dark tracking-tight">玩家意见调查问卷</h1>
             </div>
             
-            <p class="text-slate-600 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
-                嘿，探险家！您的每一条反馈都能让游戏变得更好～<br>
-                花3分钟分享想法，助力我们打造更有趣的体验吧！
+            <!-- 新增：简化必填项说明 -->
+            <p class="text-slate-600 max-w-2xl mx-auto text-lg mb-2">
+                仅需填写3项核心内容，1分钟完成反馈～
+            </p>
+            <p class="text-danger font-medium flex items-center justify-center">
+                <i class="fa fa-exclamation-circle mr-2"></i> 带<span class="required-tag">必填</span>标识的项需填写
             </p>
         </header>
         
         <div class="bg-white rounded-2xl card-shadow p-6 md:p-8 mb-10 transform hover:-translate-y-1 transition-transform">
             <form id="surveyForm" class="space-y-8">
-                <!-- 基本信息 -->
+                <!-- 简化基本信息：只保留“昵称”为必填，邮箱改为可选 -->
                 <section class="space-y-5 pb-6 border-b border-slate-200 animate-fade-in">
                     <h2 class="text-xl font-semibold text-dark flex items-center">
-                        <i class="fa fa-user-circle text-primary mr-2"></i>
-                        <span>基本信息</span>
-                        <span class="ml-2 text-xs text-slate-500">(仅用于数据统计，严格保密)</span>
+                        <i class="fa fa-user-circle text-primary mr-2"></i>基本信息
                     </h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 仅保留昵称必填 -->
                         <div class="space-y-1">
                             <label for="name" class="block text-sm font-medium text-slate-700">
-                                游戏昵称 <span class="text-red-500">*</span>
+                                游戏昵称 
+                                <span class="required-tag">必填</span>
                             </label>
                             <input type="text" id="name" name="name" required
                                 class="w-full px-4 py-2.5 border border-slate-300 rounded-lg form-focus transition duration-200"
-                                placeholder="比如：闪电骑士、快乐小法师">
-                            <p id="nameError" class="error-text">请输入您的游戏昵称（2-10个字符）</p>
+                                placeholder="比如：闪电骑士、快乐小法师（2-6字）">
+                            <!-- 错误提示：放大文字+加图标 -->
+                            <p id="nameError" class="error-text hidden">
+                                <i class="fa fa-times-circle mr-1"></i> 昵称需2-6个字符（太复杂记不住哦～）
+                            </p>
                         </div>
                         
+                        <!-- 邮箱改为可选：去掉required -->
                         <div class="space-y-1">
                             <label for="email" class="block text-sm font-medium text-slate-700">
-                                联系邮箱 <span class="text-red-500">*</span>
+                                联系邮箱（可选，仅用于回复您）
                             </label>
-                            <input type="email" id="email" name="email" required
+                            <input type="email" id="email" name="email"
                                 class="w-full px-4 py-2.5 border border-slate-300 rounded-lg form-focus transition duration-200"
-                                placeholder="比如：game@example.com（仅用于必要回复）">
-                            <p id="emailError" class="error-text">请输入有效的邮箱地址</p>
+                                placeholder="比如：game@example.com">
+                            <p id="emailError" class="error-text hidden">
+                                <i class="fa fa-times-circle mr-1"></i> 邮箱格式错误（例：xxx@xx.com）
+                            </p>
                         </div>
                     </div>
                     
+                    <!-- 游戏时长改为可选 -->
                     <div class="space-y-1 relative">
                         <label for="playTime" class="block text-sm font-medium text-slate-700">
-                            <i class="fa fa-clock-o text-slate-500 mr-1"></i> 累计游戏时长
+                            <i class="fa fa-clock-o text-slate-500 mr-1"></i> 累计游戏时长（可选）
                         </label>
                         <select id="playTime" name="playTime"
                             class="w-full px-4 py-2.5 border border-slate-300 rounded-lg form-focus transition duration-200 appearance-none bg-white pr-10">
-                            <option value="" disabled selected>请选择您的游戏时长</option>
+                            <option value="" selected>不选择也可以～</option>
                             <option value="less1">1小时以内（初探游戏）</option>
                             <option value="1-5">1-5小时（入门玩家）</option>
                             <option value="5-10">5-10小时（活跃玩家）</option>
@@ -145,52 +128,55 @@
                     </div>
                 </section>
                 
-                <!-- 游戏体验评价（核心修复：单选按钮隐藏方式） -->
+                <!-- 游戏体验评价：仅满意度必填 -->
                 <section class="space-y-5 pb-6 border-b border-slate-200 animate-fade-in" style="animation-delay: 0.1s">
                     <h2 class="text-xl font-semibold text-dark flex items-center">
                         <i class="fa fa-star text-accent mr-2"></i>游戏体验评价
                     </h2>
                     
-                    <!-- 修复1：用.visually-hidden替代hidden，确保单选按钮可聚焦 -->
+                    <!-- 满意度：强化必填提示+错误反馈 -->
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-slate-700">
-                            总体满意度 <span class="text-red-500">*</span>
-                            <!-- 修复2：增加错误提示元素，用于自定义验证反馈 -->
-                            <p id="satisfactionError" class="error-text mt-0">请选择您的满意度评分</p>
+                            总体满意度 
+                            <span class="required-tag">必填</span>
+                            <!-- 错误提示直接放在标题旁，更醒目 -->
+                            <p id="satisfactionError" class="error-text hidden mt-1">
+                                <i class="fa fa-times-circle mr-1"></i> 请选一个评分（1=不太满意，5=非常满意）
+                            </p>
                         </label>
-                        <div class="flex items-center space-x-2 sm:space-x-4">
+                        <div id="satisfactionGroup" class="flex items-center space-x-2 sm:space-x-4">
                             <label class="inline-flex flex-col items-center cursor-pointer transition-all hover:scale-105">
-                                <!-- 替换hidden为visually-hidden -->
                                 <input type="radio" name="satisfaction" value="1" required class="visually-hidden peer" tabindex="0">
                                 <span class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-slate-300 peer-checked:radio-active transition-all mb-1 focus:ring-2 focus:ring-primary/30 rounded-full"></span>
-                                <span class="text-xs text-slate-500">很不满意</span>
+                                <span class="text-xs text-slate-500">1分</span>
                             </label>
                             <label class="inline-flex flex-col items-center cursor-pointer transition-all hover:scale-105">
                                 <input type="radio" name="satisfaction" value="2" required class="visually-hidden peer" tabindex="0">
                                 <span class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-slate-300 peer-checked:radio-active transition-all mb-1 focus:ring-2 focus:ring-primary/30 rounded-full"></span>
-                                <span class="text-xs text-slate-500">不太满意</span>
+                                <span class="text-xs text-slate-500">2分</span>
                             </label>
                             <label class="inline-flex flex-col items-center cursor-pointer transition-all hover:scale-105">
                                 <input type="radio" name="satisfaction" value="3" required class="visually-hidden peer" tabindex="0">
                                 <span class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-slate-300 peer-checked:radio-active transition-all mb-1 focus:ring-2 focus:ring-primary/30 rounded-full"></span>
-                                <span class="text-xs text-slate-500">一般</span>
+                                <span class="text-xs text-slate-500">3分</span>
                             </label>
                             <label class="inline-flex flex-col items-center cursor-pointer transition-all hover:scale-105">
                                 <input type="radio" name="satisfaction" value="4" required class="visually-hidden peer" tabindex="0">
                                 <span class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-slate-300 peer-checked:radio-active transition-all mb-1 focus:ring-2 focus:ring-primary/30 rounded-full"></span>
-                                <span class="text-xs text-slate-500">比较满意</span>
+                                <span class="text-xs text-slate-500">4分</span>
                             </label>
                             <label class="inline-flex flex-col items-center cursor-pointer transition-all hover:scale-105">
                                 <input type="radio" name="satisfaction" value="5" required class="visually-hidden peer" tabindex="0">
                                 <span class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-slate-300 peer-checked:radio-active transition-all mb-1 focus:ring-2 focus:ring-primary/30 rounded-full"></span>
-                                <span class="text-xs text-slate-500">非常满意</span>
+                                <span class="text-xs text-slate-500">5分</span>
                             </label>
                         </div>
                     </div>
                     
+                    <!-- 喜欢的方面：改为可选（去掉必填） -->
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-slate-700">
-                            您喜欢游戏的哪些方面？（可多选）
+                            您喜欢游戏的哪些方面？（可选，可多选）
                         </label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                             <label class="inline-flex items-center cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
@@ -202,26 +188,14 @@
                                 <span class="ml-2 text-slate-700"><i class="fa fa-gamepad text-slate-400 mr-1"></i> 游戏玩法</span>
                             </label>
                             <label class="inline-flex items-center cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
-                                <input type="checkbox" name="likes[]" value="story" class="w-4 h-4 text-primary form-focus rounded">
-                                <span class="ml-2 text-slate-700"><i class="fa fa-book text-slate-400 mr-1"></i> 故事情节</span>
-                            </label>
-                            <label class="inline-flex items-center cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                                 <input type="checkbox" name="likes[]" value="sound" class="w-4 h-4 text-primary form-focus rounded">
                                 <span class="ml-2 text-slate-700"><i class="fa fa-music text-slate-400 mr-1"></i> 音效音乐</span>
-                            </label>
-                            <label class="inline-flex items-center cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
-                                <input type="checkbox" name="likes[]" value="characters" class="w-4 h-4 text-primary form-focus rounded">
-                                <span class="ml-2 text-slate-700"><i class="fa fa-user text-slate-400 mr-1"></i> 角色设计</span>
-                            </label>
-                            <label class="inline-flex items-center cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
-                                <input type="checkbox" name="likes[]" value="other" class="w-4 h-4 text-primary form-focus rounded">
-                                <span class="ml-2 text-slate-700"><i class="fa fa-ellipsis-h text-slate-400 mr-1"></i> 其他</span>
                             </label>
                         </div>
                     </div>
                 </section>
                 
-                <!-- 建议与意见 -->
+                <!-- 建议与意见：简化字数要求（从10字改为3字）+ 强提示 -->
                 <section class="space-y-5 animate-fade-in" style="animation-delay: 0.2s">
                     <h2 class="text-xl font-semibold text-dark flex items-center">
                         <i class="fa fa-comment text-primary mr-2"></i>建议与意见
@@ -229,20 +203,28 @@
                     
                     <div class="space-y-1">
                         <label for="suggestions" class="block text-sm font-medium text-slate-700">
-                            您的建议 <span class="text-red-500">*</span>
+                            您的建议 
+                            <span class="required-tag">必填</span>
                         </label>
-                        <textarea id="suggestions" name="suggestions" rows="5" required
+                        <textarea id="suggestions" name="suggestions" rows="3" required
                             class="w-full px-4 py-2.5 border border-slate-300 rounded-lg form-focus transition duration-200 resize-none"
-                            placeholder="比如：希望增加XX玩法、觉得XX功能需要优化..."></textarea>
+                            placeholder="比如：希望加XX功能 / 觉得XX地方需要改（至少3个字）"></textarea>
                         <div class="flex justify-between items-center">
-                            <p id="suggestionsError" class="error-text">请至少输入10个字符的建议</p>
-                            <p class="text-xs text-slate-500"><span id="charCount">0</span>/500 字符</p>
+                            <!-- 错误提示：放大+图标 -->
+                            <p id="suggestionsError" class="error-text hidden">
+                                <i class="fa fa-times-circle mr-1"></i> 建议需至少3个字（简单说几句就好～）
+                            </p>
+                            <!-- 实时字数提示：放大文字，错误时标红 -->
+                            <p class="text-sm text-slate-500" id="charCountWrap">
+                                <span id="charCount">0</span>/200 字符
+                            </p>
                         </div>
                     </div>
                     
+                    <!-- 联系意愿：默认选中“否”，无需用户额外操作 -->
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-slate-700">
-                            是否希望我们联系您进一步沟通？
+                            是否希望我们联系您？（默认“否”，不用改也可以）
                         </label>
                         <div class="flex space-x-8">
                             <label class="inline-flex items-center cursor-pointer group">
@@ -251,7 +233,8 @@
                                 <span class="text-slate-700 group-hover:text-primary transition-colors">是</span>
                             </label>
                             <label class="inline-flex items-center cursor-pointer group">
-                                <input type="radio" name="contact" value="no" class="visually-hidden peer" tabindex="0">
+                                <!-- 默认选中“否”，减少用户操作 -->
+                                <input type="radio" name="contact" value="no" class="visually-hidden peer"  tabindex="0" checked>
                                 <span class="w-5 h-5 border-2 border-slate-300 rounded-full mr-2 flex items-center justify-center peer-checked:border-primary group-hover:border-primary/70 transition-all focus:ring-2 focus:ring-primary/30 rounded-full"></span>
                                 <span class="text-slate-700 group-hover:text-primary transition-colors">否</span>
                             </label>
@@ -259,38 +242,44 @@
                     </div>
                 </section>
                 
-                <!-- 提交按钮 -->
+                <!-- 提交按钮：放大尺寸+明确引导文字 -->
                 <div class="pt-4 flex justify-center animate-fade-in" style="animation-delay: 0.3s">
                     <button type="submit" id="submitBtn" 
-                        class="bg-accent hover:bg-accent/90 text-white font-medium px-8 py-3 rounded-lg transition-all duration-300 flex items-center group shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                        <span>提交反馈</span>
-                        <i class="fa fa-paper-plane ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        class="bg-accent hover:bg-accent/90 text-white font-medium px-10 py-3.5 rounded-lg transition-all duration-300 flex items-center group shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-base">
+                        <i class="fa fa-paper-plane mr-2 group-hover:translate-x-1 transition-transform"></i>
+                        <span>点击提交反馈（仅3项必填）</span>
                     </button>
                 </div>
             </form>
         </div>
         
-        <!-- 成功提交提示 -->
+        <!-- 成功提交提示：强化奖励感 -->
         <div id="successMessage" class="hidden bg-green-50 border border-green-200 rounded-xl p-6 md:p-8 text-center animate-fade-in">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-all hover:scale-110">
-                <i class="fa fa-check text-3xl text-green-500"></i>
+            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-all hover:scale-110">
+                <i class="fa fa-check-circle text-4xl text-green-500"></i>
             </div>
-            <h3 class="text-2xl font-semibold text-green-800 mb-3">反馈提交成功！</h3>
-            <p class="text-green-700 mb-6 text-lg max-w-md mx-auto">
-                感谢您的宝贵建议，探险家！<br>
-                我们会认真对待每一条反馈，让游戏变得更有趣～
+            <h3 class="text-2xl font-semibold text-green-800 mb-3">反馈提交成功啦！</h3>
+            <p class="text-green-700 mb-4 text-lg max-w-md mx-auto">
+                超感谢你的建议～ 我们会尽快优化游戏！
             </p>
-            <a href="indexdaohang.html" class="inline-flex items-center bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5">
+            <!-- 新增：简化版奖励提示（若有游戏积分） -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-6 max-w-xs mx-auto">
+                <p class="text-green-800 font-medium flex items-center justify-center">
+                    <i class="fa fa-gift text-green-500 mr-2"></i>
+                    奖励：100游戏积分已到账
+                </p>
+            </div>
+            <a href="indexdaohang.html" class="inline-flex items-center bg-primary hover:bg-primary/90 text-white font-medium px-8 py-3 rounded-lg transition-all duration-300 shadow hover:shadow-md transform hover:-translate-y-0.5">
                 <i class="fa fa-arrow-left mr-2"></i>
                 <span>返回游戏首页</span>
             </a>
         </div>
         
-        <!-- 页脚 -->
+        <!-- 页脚：简化信息 -->
         <footer class="text-center text-slate-500 text-sm py-6 mt-8">
             <p class="flex items-center justify-center">
                 <i class="fa fa-heart text-primary mr-2"></i>
-                © 2025 半猫诺丷 | 感谢每一位玩家的支持与陪伴
+                © 2025 半猫诺丷 | 你的反馈=更好的游戏
             </p>
         </footer>
     </div>
@@ -301,166 +290,163 @@
             const successMessage = document.getElementById('successMessage');
             const submitBtn = document.getElementById('submitBtn');
             
-            // 表单元素获取
+            // 核心表单元素（仅3项必填）
             const nameInput = document.getElementById('name');
-            const emailInput = document.getElementById('email');
             const suggestionsInput = document.getElementById('suggestions');
             const satisfactionRadios = document.querySelectorAll('input[name="satisfaction"]');
-            const contactRadios = document.querySelectorAll('input[name="contact"]');
+            const satisfactionGroup = document.getElementById('satisfactionGroup');
             const charCount = document.getElementById('charCount');
+            const charCountWrap = document.getElementById('charCountWrap');
             
             // 错误提示元素
             const nameError = document.getElementById('nameError');
-            const emailError = document.getElementById('emailError');
             const suggestionsError = document.getElementById('suggestionsError');
             const satisfactionError = document.getElementById('satisfactionError');
             
-            // 1. 实时字数统计（建议输入框）
+            // 1. 建议输入框：实时字数统计+预警（简化为3字必填，200字上限）
             suggestionsInput.addEventListener('input', function() {
                 const length = this.value.trim().length;
                 charCount.textContent = length;
                 
-                if (length > 500) {
-                    this.value = this.value.substring(0, 500);
-                    charCount.textContent = 500;
-                    charCount.classList.add('text-red-500');
+                // 字数预警：快到上限时标红
+                if (length >= 180) {
+                    charCountWrap.classList.add('text-danger', 'font-medium');
                 } else {
-                    charCount.classList.remove('text-red-500');
+                    charCountWrap.classList.remove('text-danger', 'font-medium');
                 }
-                validateSuggestions();
+                
+                // 实时验证：输入时就提示“够不够3字”
+                if (length > 0 && length < 3) {
+                    suggestionsInput.classList.add('input-error');
+                    suggestionsError.classList.remove('hidden');
+                    // 错误抖动：强化感知
+                    suggestionsInput.classList.add('animate-shake');
+                    setTimeout(() => suggestionsInput.classList.remove('animate-shake'), 300);
+                } else if (length >= 3) {
+                    suggestionsInput.classList.remove('input-error');
+                    suggestionsError.classList.add('hidden');
+                }
             });
             
-            // 2. 单选按钮聚焦增强（修复后支持键盘导航）
-            satisfactionRadios.forEach(radio => {
-                // 点击自定义按钮时同步聚焦到单选框
-                const radioLabel = radio.closest('label');
-                radioLabel.addEventListener('click', () => {
-                    radio.focus();
-                });
-                // 聚焦时给自定义按钮加高亮（增强键盘导航体验）
-                radio.addEventListener('focus', () => {
-                    radioLabel.querySelector('span:first-of-type').classList.add('ring-2', 'ring-primary/30');
-                });
-                radio.addEventListener('blur', () => {
-                    radioLabel.querySelector('span:first-of-type').classList.remove('ring-2', 'ring-primary/30');
-                });
-            });
-            
-            // 3. 实时验证函数
-            function validateName() {
-                const value = nameInput.value.trim();
-                if (value.length < 2 || value.length > 10) {
+            // 2. 昵称输入：实时验证（简化为2-6字，更易填写）
+            nameInput.addEventListener('input', function() {
+                const length = this.value.trim().length;
+                if (length > 0 && (length < 2 || length > 6)) {
                     nameInput.classList.add('input-error');
                     nameError.classList.remove('hidden');
+                    // 错误抖动
+                    nameInput.classList.add('animate-shake');
+                    setTimeout(() => nameInput.classList.remove('animate-shake'), 300);
+                } else if (length >= 2 && length <= 6) {
+                    nameInput.classList.remove('input-error');
+                    nameError.classList.add('hidden');
+                }
+            });
+            
+            // 3. 满意度单选框：点击其他区域时提示选择
+            satisfactionGroup.addEventListener('click', function(e) {
+                // 点击单选框容器但未选中任何选项时，提示选择
+                let isSelected = false;
+                satisfactionRadios.forEach(radio => {
+                    if (radio.checked) isSelected = true;
+                });
+                if (!isSelected && e.target !== satisfactionGroup) {
+                    satisfactionError.classList.remove('hidden');
+                    satisfactionGroup.classList.add('animate-shake', 'border', 'border-danger/30', 'p-2', 'rounded-lg');
+                    setTimeout(() => {
+                        satisfactionGroup.classList.remove('animate-shake', 'border', 'border-danger/30', 'p-2', 'rounded-lg');
+                    }, 500);
+                }
+            });
+            
+            // 4. 验证函数（仅验证3项必填）
+            function validateName() {
+                const length = nameInput.value.trim().length;
+                if (length < 2 || length > 6) {
+                    nameInput.classList.add('input-error');
+                    nameError.classList.remove('hidden');
+                    // 滚动到昵称输入框
+                    nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // 抖动提示
+                    nameInput.classList.add('animate-shake');
+                    setTimeout(() => nameInput.classList.remove('animate-shake'), 300);
                     return false;
                 }
-                nameInput.classList.remove('input-error');
-                nameError.classList.add('hidden');
                 return true;
             }
             
-            function validateEmail() {
-                const value = emailInput.value.trim();
-                const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailReg.test(value)) {
-                    emailInput.classList.add('input-error');
-                    emailError.classList.remove('hidden');
+            function validateSatisfaction() {
+                let isSelected = false;
+                satisfactionRadios.forEach(radio => {
+                    if (radio.checked) isSelected = true;
+                });
+                if (!isSelected) {
+                    satisfactionError.classList.remove('hidden');
+                    // 滚动到满意度区域+抖动
+                    satisfactionGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    satisfactionGroup.classList.add('animate-shake', 'border', 'border-danger/30', 'p-2', 'rounded-lg');
+                    setTimeout(() => {
+                        satisfactionGroup.classList.remove('animate-shake', 'border', 'border-danger/30', 'p-2', 'rounded-lg');
+                    }, 500);
                     return false;
                 }
-                emailInput.classList.remove('input-error');
-                emailError.classList.add('hidden');
                 return true;
             }
             
             function validateSuggestions() {
-                const value = suggestionsInput.value.trim();
-                if (value.length < 10) {
+                const length = suggestionsInput.value.trim().length;
+                if (length < 3) {
                     suggestionsInput.classList.add('input-error');
                     suggestionsError.classList.remove('hidden');
+                    // 滚动到建议输入框+抖动
+                    suggestionsInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    suggestionsInput.classList.add('animate-shake');
+                    setTimeout(() => suggestionsInput.classList.remove('animate-shake'), 300);
                     return false;
                 }
-                suggestionsInput.classList.remove('input-error');
-                suggestionsError.classList.add('hidden');
                 return true;
             }
             
-            // 核心修复4：满意度单选框自定义验证（替代浏览器默认验证）
-            function validateSatisfaction() {
-                let isSelected = false;
-                satisfactionRadios.forEach(radio => {
-                    if (radio.checked) {
-                        isSelected = true;
-                    }
-                });
-                if (!isSelected) {
-                    satisfactionError.classList.remove('hidden');
-                    // 验证不通过时自动聚焦到第一个单选框（解决不可聚焦问题）
-                    satisfactionRadios[0].focus();
-                    return false;
-                }
-                satisfactionError.classList.add('hidden');
-                return true;
-            }
-            
-            // 5. 绑定失去焦点验证
-            nameInput.addEventListener('blur', validateName);
-            emailInput.addEventListener('blur', validateEmail);
-            suggestionsInput.addEventListener('blur', validateSuggestions);
-            // 满意度单选框切换时自动隐藏错误提示
-            satisfactionRadios.forEach(radio => {
-                radio.addEventListener('change', validateSatisfaction);
-            });
-            
-            // 6. 表单提交处理
+            // 5. 表单提交：强提示引导+错误兜底
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                // 执行全量验证（包含满意度单选框验证）
+                // 先隐藏所有错误提示（避免重复显示）
+                nameError.classList.add('hidden');
+                satisfactionError.classList.add('hidden');
+                suggestionsError.classList.add('hidden');
+                // 移除错误样式
+                nameInput.classList.remove('input-error');
+                suggestionsInput.classList.remove('input-error');
+                satisfactionGroup.classList.remove('border', 'border-danger/30', 'p-2', 'rounded-lg');
+                
+                // 仅验证3项必填
                 const isNameValid = validateName();
-                const isEmailValid = validateEmail();
-                const isSuggestionsValid = validateSuggestions();
                 const isSatisfactionValid = validateSatisfaction();
+                const isSuggestionsValid = validateSuggestions();
                 
-                // 验证优先级：先处理必填项错误
-                if (!isSatisfactionValid) return;
-                if (!isNameValid) {
-                    nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                if (!isEmailValid) {
-                    emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                if (!isSuggestionsValid) {
-                    suggestionsInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                
-                // 验证通过：加载状态
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>提交中...';
-                submitBtn.classList.add('opacity-90', 'cursor-not-allowed', 'hover:translate-y-0', 'hover:shadow');
-                
-                // 7. 收集表单数据
-                const formData = new FormData(form);
-                const surveyData = {};
-                
-                formData.forEach((value, key) => {
-                    if (key.endsWith('[]')) {
-                        const arrayKey = key.slice(0, -2);
-                        if (!surveyData[arrayKey]) surveyData[arrayKey] = [];
-                        surveyData[arrayKey].push(value);
-                    } else {
-                        surveyData[key] = value.trim();
-                    }
-                });
-                
-                // 8. 模拟API提交（替换为真实接口即可）
-                setTimeout(() => {
-                    const mockSuccess = true;
+                // 所有必填项通过才提交
+                if (isNameValid && isSatisfactionValid && isSuggestionsValid) {
+                    // 加载状态：明确提示“正在提交”
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>提交中...';
+                    submitBtn.classList.add('opacity-90', 'cursor-not-allowed', 'hover:translate-y-0', 'hover:shadow');
                     
-                    if (mockSuccess) {
-                        // 提交成功：隐藏表单+显示成功提示
+                    // 收集表单数据
+                    const formData = new FormData(form);
+                    const surveyData = {};
+                    formData.forEach((value, key) => {
+                        if (key.endsWith('[]')) {
+                            const arrayKey = key.slice(0, -2);
+                            surveyData[arrayKey] = surveyData[arrayKey] ? [...surveyData[arrayKey], value.trim()] : [value.trim()];
+                        } else {
+                            // 可选字段为空时不存储
+                            if (value.trim() !== '') surveyData[key] = value.trim();
+                        }
+                    });
+                    
+                    // 模拟API提交（1秒后显示成功页，更快反馈）
+                    setTimeout(() => {
                         form.parentElement.classList.add('hidden');
                         successMessage.classList.remove('hidden');
                         
@@ -471,14 +457,20 @@
                             submitTime: new Date().toLocaleString()
                         });
                         localStorage.setItem('gameFeedbackRecords', JSON.stringify(feedbackRecords));
-                    } else {
-                        // 提交失败：恢复按钮状态
-                        alert('提交失败，请检查网络后重试～');
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<span>提交反馈</span><i class="fa fa-paper-plane ml-2"></i>';
-                        submitBtn.classList.remove('opacity-90', 'cursor-not-allowed', 'hover:translate-y-0', 'hover:shadow');
-                    }
-                }, 1500);
+                        
+                        // 若有游戏积分系统，这里可添加积分发放逻辑
+                        const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+                        if (userInfo.username) {
+                            const username = decodeURIComponent(userInfo.username);
+                            const gameData = JSON.parse(localStorage.getItem(`userData_${username}`) || '{"score":0}');
+                            gameData.score = (gameData.score || 0) + 100; // 奖励100积分
+                            localStorage.setItem(`userData_${username}`, JSON.stringify(gameData));
+                        }
+                    }, 1000);
+                } else {
+                    // 验证不通过：弹出大字体提示，明确“哪些没填”
+                    alert('请完善以下必填项：\n1. 游戏昵称（2-6字）\n2. 总体满意度（选1-5分）\n3. 建议（至少3字）');
+                }
             });
         });
     </script>
