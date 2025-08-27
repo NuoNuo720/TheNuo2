@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#16213e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>自由电子冒险3 - 1-2：力场迷宫</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -12,6 +15,8 @@
             touch-action: none;
             margin: 0;
             font-family: 'Orbitron', sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
         }
         #game-container {
             position: relative;
@@ -131,8 +136,8 @@
         /* 能量节点 - 重点修复样式 */
         .energy-node {
             position: absolute;
-            width: 35px;
-            height: 35px;
+            width: 40px; /* 增大节点尺寸，便于触控 */
+            height: 40px;
             border-radius: 50%;
             background-color: #4ECDC4;
             box-shadow: 0 0 15px rgba(78, 205, 196, 0.8);
@@ -145,25 +150,28 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 16px; /* 增大字体，便于识别 */
             border: 2px solid rgba(255,255,255,0.3);
+            touch-action: manipulation; /* 优化触摸行为 */
         }
         .energy-node::after {
-            content: "按C激活";
+            content: "点击激活"; /* 移动端显示点击提示 */
             position: absolute;
-            top: -25px;
-            font-size: 11px;
+            top: -28px;
+            font-size: 12px;
             color: white;
             background: rgba(0,0,0,0.7);
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-radius: 3px;
             opacity: 0;
             transition: opacity 0.3s;
+            white-space: nowrap;
         }
-        .energy-node:hover {
+        .energy-node:hover, .energy-node.touched {
             transform: scale(1.1);
             box-shadow: 0 0 20px rgba(78, 205, 196, 1);
         }
-        .energy-node:hover::after {
+        .energy-node:hover::after, .energy-node.touched::after {
             opacity: 1;
         }
         .energy-node.nearby {
@@ -224,37 +232,40 @@
             z-index: 6;
         }
         
-        /* 游戏界面HUD */
+        /* 游戏界面HUD - 移动端优化布局 */
         #hud {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            padding: 15px;
+            padding: 10px;
             display: flex;
+            flex-wrap: wrap; /* 允许换行 */
             justify-content: space-between;
             align-items: center;
             background-color: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(5px);
             z-index: 100;
             box-sizing: border-box;
+            gap: 8px; /* 增加间距，避免拥挤 */
         }
         .hud-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             color: white;
+            font-size: 12px; /* 适配小屏字体 */
         }
         .item-icon {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
         }
         #energy-bar {
-            width: 100px;
+            width: 80px; /* 缩短能量条，节省空间 */
             height: 8px;
             background-color: rgba(255, 255, 255, 0.2);
             border-radius: 4px;
@@ -269,12 +280,17 @@
         #timer {
             color: #FF6584;
             font-weight: bold;
+            font-size: 14px; /* 突出显示时间 */
         }
-        #shard-count {
-            color: #FFD700;
+        #shard-count, #node-count {
+            font-weight: bold;
+        }
+        #pause-btn {
+            padding: 4px 8px; /* 增大按钮尺寸 */
+            font-size: 14px;
         }
         
-        /* 关卡完成弹窗 */
+        /* 关卡完成弹窗 - 移动端适配 */
         #level-completed, #level-failed {
             position: fixed;
             top: 50%;
@@ -282,11 +298,11 @@
             transform: translate(-50%, -50%);
             background-color: rgba(25, 25, 45, 0.95);
             border-radius: 15px;
-            padding: 30px;
+            padding: 25px 20px;
             text-align: center;
             z-index: 200;
             display: none;
-            min-width: 300px;
+            min-width: 280px;
             max-width: 90%;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
         }
@@ -299,19 +315,28 @@
         .stats {
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
             margin: 15px 0;
             text-align: left;
         }
         .stats p {
-            margin: 8px 0;
+            margin: 6px 0;
             display: flex;
             justify-content: space-between;
+            font-size: 14px;
+        }
+        #level-completed h2, #level-failed h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        #level-completed p, #level-failed p {
+            font-size: 14px;
+            margin-bottom: 15px;
         }
         
-        /* 移动设备控制按钮 */
+        /* 移动设备控制按钮 - 核心优化 */
         #mobile-controls {
-            display: none;
+            display: flex;
             position: fixed;
             bottom: 20px;
             left: 0;
@@ -321,87 +346,165 @@
             z-index: 100;
             box-sizing: border-box;
         }
-        .control-pad {
-            width: 120px;
-            height: 120px;
+        
+        /* 虚拟摇杆 - 替代传统方向键 */
+        .joystick-container {
             position: relative;
+            width: 140px; /* 增大摇杆区域 */
+            height: 140px;
         }
-        .control-btn {
+        .joystick-base {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            width: 100%;
+            height: 100%;
             background-color: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
+            border-radius: 50%;
+            box-sizing: border-box;
+        }
+        .joystick-handle {
+            position: absolute;
+            width: 50px; /* 增大摇杆手柄 */
+            height: 50px;
+            background-color: rgba(255, 255            255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            touch-action: manipulation;
+            transition: transform 0.08s ease-out;
+            z-index: 101;
+        }
+        
+        /* 优化激活按钮 - 增大触控区域 */
+        .action-btn {
+            width: 80px; /* 增大按钮尺寸 */
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 101, 132, 0.2);
+            border: 3px solid #FF6584;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            touch-action: manipulation;
+            transition: all 0.2s;
+            box-shadow: 0 0 15px rgba(255, 101, 132, 0.3);
         }
-        .up { top: 0; left: 40px; }
-        .down { bottom: 0; left: 40px; }
-        .left { top: 40px; left: 0; }
-        .right { top: 40px; right: 0; }
-        .action-btn {
-            width: 60px;
-            height: 60px;
+        .action-btn:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 101, 132, 0.4);
+            box-shadow: 0 0 20px rgba(255, 101, 132, 0.5);
+        }
+        
+        /* 控制盘布局切换按钮 */
+        #control-layout-btn {
+            position: fixed;
+            bottom: 170px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background-color: rgba(255, 101, 132, 0.2);
-            border: 2px solid #FF6584;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 102;
+            touch-action: manipulation;
         }
         
-        @media (max-width: 768px) {
-            #mobile-controls {
-                display: flex;
-            }
+        /* 横屏提示 - 移动端强制优化 */
+        #landscape-prompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #16213e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+            display: none; /* 默认隐藏，竖屏时显示 */
+        }
+        #landscape-prompt i {
+            font-size: 60px;
+            color: #4ECDC4;
+            margin-bottom: 20px;
+            animation: rotateDevice 2s infinite ease-in-out;
+        }
+        #landscape-prompt h2 {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        #landscape-prompt p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            text-align: center;
+            max-width: 300px;
+        }
+        @keyframes rotateDevice {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
         }
         
-        /* 粒子收集动画 */
+        /* 粒子收集动画 - 适配移动端视觉 */
         @keyframes collect {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(2); opacity: 0.5; }
+            50% { transform: scale(2.5); opacity: 0.5; } /* 增大动画效果 */
             100% { transform: scale(0); opacity: 0; }
         }
         .collecting {
             animation: collect 0.3s forwards;
         }
         
-        /* 提示信息 */
+        /* 提示信息 - 移动端优化 */
         .tooltip {
             position: fixed;
-            bottom: 150px;
+            bottom: 180px; /* 避开控制区域 */
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 8px 15px;
+            padding: 10px 18px;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 15px; /* 增大字体 */
             z-index: 100;
             display: none;
+            max-width: 80%;
+            text-align: center;
         }
         
-        /* 收集提示 */
+        /* 收集提示 - 适配移动端 */
         .collect-notification {
             position: absolute;
             color: white;
-            font-size: 12px;
+            font-size: 14px; /* 增大字体 */
             z-index: 20;
             pointer-events: none;
             animation: floatUp 1s forwards;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8); /* 增加文字阴影，提升可读性 */
         }
         @keyframes floatUp {
             0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-30px); opacity: 0; }
+            100% { transform: translateY(-40px); opacity: 0; } /* 增大上浮距离 */
         }
         
-        /* 节点激活特效 */
+        /* 节点激活特效 - 增强移动端视觉反馈 */
         .node-effect {
             position: absolute;
-            width: 80px;
-            height: 80px;
+            width: 100px; /* 增大特效范围 */
+            height: 100px;
             border-radius: 50%;
             background-color: rgba(78, 205, 196, 0.3);
             z-index: 4;
@@ -409,28 +512,94 @@
         }
         @keyframes nodeEffect {
             0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(2); opacity: 0; }
+            100% { transform: scale(2.5); opacity: 0; }
         }
         
-        /* 按键提示 */
+        /* 按键提示 - 移动端优化 */
         .key-prompt {
             position: absolute;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             color: white;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 14px; /* 增大字体 */
             z-index: 20;
             animation: bounce 1s infinite;
+            white-space: nowrap;
         }
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        /* 震动反馈样式提示 */
+        .vibration-hint {
+            position: absolute;
+            border: 2px dashed rgba(255,255,255,0.5);
+            border-radius: 50%;
+            animation: expand 0.5s forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes expand {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        /* 移动端适配断点优化 */
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            /* 小屏设备进一步优化HUD */
+            .hud-item {
+                flex: 1 1 45%; /* 每行显示2个HUD项 */
+                justify-content: center;
+            }
+            #energy-bar {
+                width: 70px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .joystick-container {
+                width: 120px;
+                height: 120px;
+            }
+            .joystick-handle {
+                width: 45px;
+                height: 45px;
+            }
+            .action-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 14px;
+            }
+            .hud-item {
+                font-size: 11px;
+            }
+        }
+        
+        /* 竖屏时强制显示横屏提示 */
+        @media (orientation: portrait) and (max-width: 768px) {
+            #landscape-prompt {
+                display: flex;
+            }
+            #game-container, #hud, #mobile-controls {
+                display: none;
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- 横屏提示 -->
+    <div id="landscape-prompt">
+        <i class="fa fa-mobile"></i>
+        <h2>请横屏游玩</h2>
+        <p>为获得最佳游戏体验，请将设备旋转至横屏模式</p>
+    </div>
+
     <div id="game-container">
         <!-- 玩家 -->
         <div id="player"></div>
@@ -451,7 +620,7 @@
             <div class="item-icon" style="background-color: rgba(255, 215, 0, 0.3); color: #FFD700;">
                 <i class="fa fa-bolt"></i>
             </div>
-            <span>能量碎片: <span id="shard-count">0</span>/10</span>
+            <span>碎片: <span id="shard-count">0</span>/10</span>
         </div>
         <div class="hud-item">
             <div class="item-icon" style="background-color: rgba(255, 101, 132, 0.3); color: #FF6584;">
@@ -463,17 +632,17 @@
             <div class="item-icon" style="background-color: rgba(108, 99, 255, 0.3); color: #6C63FF;">
                 <i class="fa fa-diamond"></i>
             </div>
-            <span>能量节点: <span id="node-count">0</span>/3</span>
+            <span>节点: <span id="node-count">0</span>/3</span>
         </div>
         <div class="hud-item">
-            <button id="pause-btn" class="bg-black/50 hover:bg-black/70 p-2 rounded-lg transition-colors">
+            <button id="pause-btn" class="bg-black/50 hover:bg-black/70 p-3 rounded-lg transition-colors">
                 <i class="fa fa-pause"></i>
             </button>
         </div>
     </div>
     
     <!-- 提示信息 -->
-    <div class="tooltip" id="tooltip">使用方向键移动，靠近能量节点按C键激活</div>
+    <div class="tooltip" id="tooltip">使用摇杆移动，点击节点激活</div>
     
     <!-- 关卡完成弹窗 -->
     <div id="level-completed">
@@ -484,7 +653,7 @@
             <p><span>收集的能量碎片：</span> <span id="final-shards">0</span>/10</p>
             <p><span>剩余时间：</span> <span id="final-time">01:45</span></p>
         </div>
-        <button id="next-level" class="bg-[#6C63FF] hover:bg-[#6C63FF]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold mt-4">
+        <button id="next-level" class="bg-[#6C63FF] hover:bg-[#6C63FF]/80 text-white py-3 px-8 rounded-lg transition-colors font-bold mt-4 text-lg">
             进入下一关 <i class="fa fa-arrow-right ml-1"></i>
         </button>
     </div>
@@ -497,24 +666,30 @@
             <p><span>激活的能量节点：</span> <span id="failed-nodes">0</span>/3</p>
             <p><span>收集的能量碎片：</span> <span id="failed-shards">0</span>/10</p>
         </div>
-        <button id="restart-level" class="bg-[#FF6584] hover:bg-[#FF6584]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold mt-4">
+        <button id="restart-level" class="bg-[#FF6584] hover:bg-[#FF6584]/80 text-white py-3 px-8 rounded-lg transition-colors font-bold mt-4 text-lg">
             重新开始
         </button>
     </div>
     
-    <!-- 移动设备控制按钮 -->
+    <!-- 移动设备控制按钮 - 核心优化 -->
     <div id="mobile-controls">
-        <div class="control-pad">
-            <div class="control-btn up" data-key="ArrowUp">↑</div>
-            <div class="control-btn down" data-key="ArrowDown">↓</div>
-            <div class="control-btn left" data-key="ArrowLeft">←</div>
-            <div class="control-btn right" data-key="ArrowRight">→</div>
+        <!-- 虚拟摇杆 -->
+        <div class="joystick-container" id="joystick">
+            <div class="joystick-base"></div>
+            <div class="joystick-handle" id="joystick-handle"></div>
         </div>
-        <button class="action-btn" id="mobile-action">激活</button>
+        
+        <!-- 功能按钮组 -->
+        <div class="mobile-btn-group">
+            <button class="action-btn" id="mobile-action">激活</button>
+            <button id="control-layout-btn" title="切换控制布局">
+                <i class="fa fa-exchange"></i>
+            </button>
+        </div>
     </div>
 
     <script>
-        // 游戏状态
+        // 游戏状态 - 新增移动端相关状态
         const gameState = {
             player: {
                 x: 50,
@@ -556,10 +731,30 @@
             paused: false,
             timeRemaining: 180, // 3分钟
             trapCooldown: {},
-            showTooltip: true
+            showTooltip: true,
+            // 移动端新增状态
+            joystick: {
+                active: false,
+                startX: 0,
+                startY: 0,
+                currentX: 0,
+                currentY: 0,
+                maxDistance: 40, // 摇杆最大活动范围
+                direction: { x: 0, y: 0 }
+            },
+            controlLayout: 'left', // 控制布局：left/right
+            touchId: null, // 追踪当前触摸ID，避免多触摸冲突
+            lastVibration: 0, // 震动反馈节流控制
+            gameProgress: { // 新增进度保存，防止意外退出
+                nodes: 0,
+                shards: 0,
+                time: 180,
+                energy: 100,
+                playerPos: { x: 50, y: 50 }
+            }
         };
 
-        // DOM元素
+        // DOM元素 - 新增移动端相关元素
         const elements = {
             player: document.getElementById('player'),
             portal: document.getElementById('portal'),
@@ -578,18 +773,28 @@
             pauseBtn: document.getElementById('pause-btn'),
             gameContainer: document.getElementById('game-container'),
             tooltip: document.getElementById('tooltip'),
-            mobileAction: document.getElementById('mobile-action')
+            mobileAction: document.getElementById('mobile-action'),
+            // 移动端端相关元素
+            joystick: document.getElementById('joystick'),
+            joystickHandle: document.getElementById('joystick-handle'),
+            controlLayoutBtn: document.getElementById('control-layout-btn'),
+            landscapePrompt: document.getElementById('landscape-prompt'),
+            mobileControls: document.getElementById('mobile-controls')
         };
 
         // 初始化游戏
         function init() {
+            // 尝试从本地存储恢复游戏进度
+            loadGameProgress();
+            
             gameState.gameContainer = elements.gameContainer;
             gameState.containerWidth = gameState.gameContainer.clientWidth;
             gameState.containerHeight = gameState.gameContainer.clientHeight;
             
-            // 设置玩家初始位置
-            gameState.player.x = 50;
-            gameState.player.y = 50;
+            // 调整游戏元素大小以适应屏幕
+            adjustElementSizes();
+            
+            // 设置玩家初始位置（可能从保存的进度恢复）
             updatePlayerPosition();
             
             // 创建迷宫墙壁
@@ -598,7 +803,7 @@
             // 创建重力陷阱
             createGravityTraps();
             
-            // 创建能量节点（修复交互问题的核心部分）
+            // 创建能量节点
             createEnergyNodes();
             
             // 设置传送门位置
@@ -610,27 +815,205 @@
             // 生成收集品
             generateCollectibles();
             
-            // 事件监听 - 增强的交互处理
-            window.addEventListener('keydown', handleKeyDown);
-            window.addEventListener('keyup', handleKeyUp);
-            window.addEventListener('resize', handleResize);
-            elements.nextLevel.addEventListener('click', goToNextLevel);
-            elements.restartLevel.addEventListener('click', restartLevel);
-            elements.pauseBtn.addEventListener('click', togglePause);
-            elements.mobileAction.addEventListener('click', activateNearbyNode);
-            elements.mobileAction.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                activateNearbyNode();
-            });
+            // 事件监听 - 增强移动端交互
+            setupEventListeners();
             
             // 启动计时器
             startTimer();
             
             // 开始游戏循环
             gameLoop();
+            
+            // 定期保存游戏进度
+            setInterval(saveGameProgress, 10000); // 每10秒保存一次
         }
 
-        // 创建能量节点（修复的核心部分）
+        // 调整游戏元素大小以适应屏幕
+        function adjustElementSizes() {
+            // 根据屏幕尺寸调整玩家大小
+            const baseSize = Math.min(gameState.containerWidth, gameState.containerHeight) / 40;
+            gameState.player.width = baseSize;
+            gameState.player.height = baseSize;
+            elements.player.style.width = `${baseSize}px`;
+            elements.player.style.height = `${baseSize}px`;
+            
+            // 调整移动速度，适应不同屏幕尺寸
+            gameState.player.speed = baseSize / 5;
+        }
+
+        // 设置事件监听 - 重点增强移动端支持
+        function setupEventListeners() {
+            // 键盘事件保留，同时支持移动端
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            window.addEventListener('resize', handleResize);
+            
+            // 游戏控制事件
+            elements.nextLevel.addEventListener('click', goToNextLevel);
+            elements.restartLevel.addEventListener('click', restartLevel);
+            elements.pauseBtn.addEventListener('click', togglePause);
+            
+            // 移动端虚拟摇杆事件
+            setupJoystickEvents();
+            
+            // 移动端激活按钮事件（支持触摸和点击）
+            elements.mobileAction.addEventListener('click', activateNearbyNode);
+            elements.mobileAction.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                activateNearbyNode();
+                triggerVibration(50); // 轻震动反馈
+            });
+            
+            // 控制布局切换
+            elements.controlLayoutBtn.addEventListener('click', toggleControlLayout);
+            elements.controlLayoutBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleControlLayout();
+                triggerVibration(100); // 中等震动反馈
+            });
+            
+            // 能量节点触摸支持
+            document.addEventListener('touchstart', (e) => {
+                // 只处理能量节点的触摸
+                const nodeElement = e.target.closest('.energy-node');
+                if (nodeElement && !nodeElement.classList.contains('activated')) {
+                    e.preventDefault();
+                    const nodeId = parseInt(nodeElement.dataset.id);
+                    activateNode(nodeId);
+                    triggerVibration(80); // 节点交互震动
+                }
+            }, { passive: false });
+        }
+
+        // 设置虚拟摇杆事件
+        function setupJoystickEvents() {
+            const joystick = elements.joystick;
+            const handle = elements.joystickHandle;
+            const joystickState = gameState.joystick;
+            
+            // 触摸开始
+            joystick.addEventListener('touchstart', (e) => {
+                if (gameState.touchId !== null || gameState.paused) return;
+                
+                const touch = e.touches[0];
+                const rect = joystick.getBoundingClientRect();
+                
+                joystickState.startX = rect.left + rect.width / 2;
+                joystickState.startY = rect.top + rect.height / 2;
+                joystickState.currentX = touch.clientX;
+                joystickState.currentY = touch.clientY;
+                joystickState.active = true;
+                gameState.touchId = touch.identifier;
+                
+                updateJoystickPosition(touch.clientX, touch.clientY);
+            }, { passive: true });
+            
+            // 触摸移动
+            document.addEventListener('touchmove', (e) => {
+                if (gameState.touchId === null || gameState.paused) return;
+                
+                const touch = Array.from(e.touches).find(t => t.identifier === gameState.touchId);
+                if (touch) {
+                    updateJoystickPosition(touch.clientX, touch.clientY);
+                }
+            }, { passive: true });
+            
+            // 触摸结束
+            document.addEventListener('touchend', (e) => {
+                if (gameState.touchId === null) return;
+                
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === gameState.touchId);
+                if (touch) {
+                    resetJoystick();
+                    gameState.touchId = null;
+                }
+            }, { passive: true });
+            
+            // 鼠标支持（用于调试）
+            joystick.addEventListener('mousedown', (e) => {
+                if (gameState.paused) return;
+                
+                const rect = joystick.getBoundingClientRect();
+                joystickState.startX = rect.left + rect.width / 2;
+                joystickState.startY = rect.top + rect.height / 2;
+                joystickState.active = true;
+                
+                updateJoystickPosition(e.clientX, e.clientY);
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
+            
+            function handleMouseMove(e) {
+                if (!joystickState.active || gameState.paused) return;
+                updateJoystickPosition(e.clientX, e.clientY);
+            }
+            
+            function handleMouseUp() {
+                resetJoystick();
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            }
+        }
+
+        // 更新摇杆位置和方向
+        function updateJoystickPosition(clientX, clientY) {
+            const joystick = gameState.joystick;
+            const dx = clientX - joystick.startX;
+            const dy = clientY - joystick.startY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // 限制最大距离
+            const limitedDistance = Math.min(distance, joystick.maxDistance);
+            
+            // 计算角度和方向
+            const angle = Math.atan2(dy, dx);
+            joystick.direction.x = Math.cos(angle) * (limitedDistance / joystick.maxDistance);
+            joystick.direction.y = Math.sin(angle) * (limitedDistance / joystick.maxDistance);
+            
+            // 更新视觉位置
+            const handleX = joystick.direction.x * joystick.maxDistance;
+            const handleY = joystick.direction.y * joystick.maxDistance;
+            elements.joystickHandle.style.transform = `translate(-50%, -50%) translate(${handleX}px, ${handleY}px)`;
+        }
+
+        // 重置摇杆
+        function resetJoystick() {
+            gameState.joystick.active = false;
+            gameState.joystick.direction.x = 0;
+            gameState.joystick.direction.y = 0;
+            elements.joystickHandle.style.transform = 'translate(-50%, -50%)';
+        }
+
+        // 切换控制布局（左摇杆/右摇杆）
+        function toggleControlLayout() {
+            gameState.controlLayout = gameState.controlLayout === 'left' ? 'right' : 'left';
+            
+            if (gameState.controlLayout === 'right') {
+                elements.mobileControls.style.flexDirection = 'row-reverse';
+                elements.controlLayoutBtn.innerHTML = '<i class="fa fa-exchange"></i>';
+                showNotification(
+                    gameState.containerWidth / 2, 
+                    gameState.containerHeight / 4, 
+                    "控制布局已切换至右侧", 
+                    "#6C63FF"
+                );
+            } else {
+                elements.mobileControls.style.flexDirection = 'row';
+                elements.controlLayoutBtn.innerHTML = '<i class="fa fa-exchange"></i>';
+                showNotification(
+                    gameState.containerWidth / 2, 
+                    gameState.containerHeight / 4, 
+                    "控制布局已切换至左侧", 
+                    "#6C63FF"
+                );
+            }
+            
+            // 保存布局偏好
+            localStorage.setItem('controlLayout', gameState.controlLayout);
+        }
+
+        // 创建能量节点
         function createEnergyNodes() {
             // 三个节点分别位于不同区域，确保玩家容易找到
             const nodes = [
@@ -648,17 +1031,10 @@
                 nodeElement.dataset.id = index;
                 nodeElement.textContent = (index + 1); // 显示节点编号
                 
-                // 修复：添加多种交互方式确保节点能被激活
-                // 1. 点击激活
+                // 点击激活
                 nodeElement.addEventListener('click', () => activateNode(index));
                 
-                // 2. 触摸激活（移动设备）
-                nodeElement.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    activateNode(index);
-                });
-                
-                // 3. 鼠标悬停时显示提示
+                // 鼠标悬停提示
                 nodeElement.addEventListener('mouseenter', () => {
                     showNodePrompt(node.x + 40, node.y, index);
                 });
@@ -667,14 +1043,41 @@
                     removeNodePrompt(index);
                 });
                 
+                // 触摸反馈
+                nodeElement.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    nodeElement.classList.add('touched');
+                });
+                
+                nodeElement.addEventListener('touchend', () => {
+                    nodeElement.classList.remove('touched');
+                });
+                
                 gameState.gameContainer.appendChild(nodeElement);
+                
+                // 从保存的进度中恢复节点状态
+                const isActivated = gameState.gameProgress.nodes & (1 << index);
                 gameState.energyNodes.push({
                     ...node, 
                     id: index, 
-                    activated: false,
-                    element: nodeElement // 保存元素引用，便于后续操作
+                    activated: isActivated,
+                    element: nodeElement
                 });
+                
+                // 如果已激活，更新UI
+                if (isActivated) {
+                    nodeElement.classList.add('activated');
+                    nodeElement.textContent = "✓";
+                    gameState.activatedNodes++;
+                }
             });
+            
+            elements.nodeCount.textContent = gameState.activatedNodes;
+            
+            // 如果所有节点都已激活，激活传送门
+            if (gameState.activatedNodes >= gameState.requiredNodes) {
+                activatePortal();
+            }
         }
         
         // 显示节点操作提示
@@ -686,7 +1089,7 @@
             prompt.className = 'key-prompt';
             prompt.style.left = `${x}px`;
             prompt.style.top = `${y}px`;
-            prompt.textContent = '按C激活';
+            prompt.textContent = '点击激活'; // 移动端显示点击提示
             prompt.dataset.nodeId = nodeId;
             
             gameState.gameContainer.appendChild(prompt);
@@ -700,21 +1103,21 @@
             }
         }
 
-        // 激活能量节点（完全修复的激活逻辑）
+        // 激活能量节点
         function activateNode(index) {
             const node = gameState.energyNodes[index];
             if (node.activated) return;
             
-            // 检查玩家是否在节点附近（扩大检测范围，确保更容易激活）
+            // 检查玩家是否在节点附近
             const distance = getDistance(
                 gameState.player.x + gameState.player.width/2,
                 gameState.player.y + gameState.player.height/2,
-                node.x + 17.5, // 节点中心（节点大小已调整为35px）
-                node.y + 17.5
+                node.x + 20, // 节点中心（节点大小为40px）
+                node.y + 20
             );
             
-            // 修复：扩大激活范围至70px，更容易触发
-            if (distance < 70) {
+            // 扩大激活范围至80px，更容易触发
+            if (distance < 80) {
                 // 激活节点
                 node.activated = true;
                 gameState.activatedNodes++;
@@ -724,30 +1127,35 @@
                 node.element.classList.add('activated');
                 node.element.textContent = "✓";
                 
-                // 添加明显的激活特效
-                createNodeEffect(node.x + 17.5, node.y + 17.5);
+                // 添加激活特效
+                createNodeEffect(node.x + 20, node.y + 20);
+                createActivationRipple(node.x + 20, node.y + 20);
                 
-                // 播放激活音效（视觉替代）
-                createActivationRipple(node.x + 17.5, node.y + 17.5);
-                
-                // 显示明确的激活提示
+                // 显示激活提示
                 showNotification(node.x + 30, node.y, `节点 ${index+1} 已激活!`, "#4ECDC4");
                 
                 // 暂时关闭附近的陷阱
                 deactivateNearbyTraps(node.x, node.y, 150);
                 
-                // 检查是否所有节点都已激活，如果是则激活传送门
+                // 震动反馈
+                triggerVibration(150);
+                
+                // 检查是否所有节点都已激活
                 if (gameState.activatedNodes >= gameState.requiredNodes) {
                     activatePortal();
                 }
+                
+                // 保存游戏进度
+                saveGameProgress();
             } else {
-                // 修复：当玩家太远时显示提示
+                // 显示提示
                 showNotification(
-                    node.x + 17.5, 
+                    node.x + 20, 
                     node.y - 20, 
-                    "靠近后按C激活", 
+                    "靠近后点击激活", 
                     "#FFD700"
                 );
+                triggerVibration(50); // 提示震动
             }
         }
         
@@ -772,27 +1180,13 @@
                 }, (1 + i * 0.3) * 1000);
             }
         }
-        
-        // 添加波纹动画样式
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                0% { transform: scale(0); opacity: 1; }
-                100% { transform: scale(1); opacity: 0; }
-            }
-            @keyframes blink {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.5; }
-            }
-        `;
-        document.head.appendChild(style);
 
         // 创建节点激活特效
         function createNodeEffect(x, y) {
             const effect = document.createElement('div');
             effect.className = 'node-effect';
-            effect.style.left = `${x - 40}px`;
-            effect.style.top = `${y - 40}px`;
+            effect.style.left = `${x - 50}px`;
+            effect.style.top = `${y - 50}px`;
             gameState.gameContainer.appendChild(effect);
             
             // 动画结束后移除元素
@@ -806,7 +1200,7 @@
             gameState.portal.active = true;
             elements.portal.classList.add('active');
             
-            // 显示明确提示
+            // 显示提示
             elements.tooltip.textContent = "所有节点已激活，进入传送门前往下一关!";
             elements.tooltip.style.display = 'block';
             
@@ -869,8 +1263,9 @@
                 {xMin: 0.6, xMax: 0.9, yMin: 0.4, yMax: 0.6}   // 右中
             ];
             
-            // 生成能量碎片
-            for (let i = 0; i < gameState.totalShards; i++) {
+            // 生成能量碎片（扣除已收集的数量）
+            const remainingShards = gameState.totalShards - gameState.collected.energyShards;
+            for (let i = 0; i < remainingShards; i++) {
                 const region = regions[i % regions.length];
                 let x, y;
                 
@@ -893,47 +1288,56 @@
                 });
             }
             
-            // 生成费米子
-            regions.forEach(region => {
-                let x, y;
-                do {
-                    x = gameState.containerWidth * (region.xMin + Math.random() * (region.xMax - region.xMin));
-                    y = gameState.containerHeight * (region.yMin + Math.random() * (region.yMax - region.yMin));
-                } while (isPositionInWall(x, y));
-                
-                const fermion = document.createElement('div');
-                fermion.className = 'fermion';
-                fermion.style.left = `${x}px`;
-                fermion.style.top = `${y}px`;
-                
-                gameState.gameContainer.appendChild(fermion);
-                gameState.collectibles.fermions.push({
-                    element: fermion,
-                    x,
-                    y
-                });
-            });
+            elements.shardCount.textContent = gameState.collected.energyShards;
             
-            // 生成量子晶簇
-            regions.forEach(region => {
-                let x, y;
-                do {
-                    x = gameState.containerWidth * (region.xMin + Math.random() * (region.xMax - region.xMin));
-                    y = gameState.containerHeight * (region.yMin + Math.random() * (region.yMax - region.yMin));
-                } while (isPositionInWall(x, y));
-                
-                const cluster = document.createElement('div');
-                cluster.className = 'quantum-cluster';
-                cluster.style.left = `${x}px`;
-                cluster.style.top = `${y}px`;
-                
-                gameState.gameContainer.appendChild(cluster);
-                gameState.collectibles.quantumClusters.push({
-                    element: cluster,
-                    x,
-                    y
+            // 生成费米子和量子晶簇（如果尚未收集）
+            if (gameState.collected.fermions < regions.length) {
+                regions.forEach((region, i) => {
+                    if (gameState.collected.fermions <= i) {
+                        let x, y;
+                        do {
+                            x = gameState.containerWidth * (region.xMin + Math.random() * (region.xMax - region.xMin));
+                            y = gameState.containerHeight * (region.yMin + Math.random() * (region.yMax - region.yMin));
+                        } while (isPositionInWall(x, y));
+                        
+                        const fermion = document.createElement('div');
+                        fermion.className = 'fermion';
+                        fermion.style.left = `${x}px`;
+                        fermion.style.top = `${y}px`;
+                        
+                        gameState.gameContainer.appendChild(fermion);
+                        gameState.collectibles.fermions.push({
+                            element: fermion,
+                            x,
+                            y
+                        });
+                    }
                 });
-            });
+            }
+            
+            if (gameState.collected.quantumClusters < regions.length) {
+                regions.forEach((region, i) => {
+                    if (gameState.collected.quantumClusters <= i) {
+                        let x, y;
+                        do {
+                            x = gameState.containerWidth * (region.xMin + Math.random() * (region.xMax - region.xMin));
+                            y = gameState.containerHeight * (region.yMin + Math.random() * (region.yMax - region.yMin));
+                        } while (isPositionInWall(x, y));
+                        
+                        const cluster = document.createElement('div');
+                        cluster.className = 'quantum-cluster';
+                        cluster.style.left = `${x}px`;
+                        cluster.style.top = `${y}px`;
+                        
+                        gameState.gameContainer.appendChild(cluster);
+                        gameState.collectibles.quantumClusters.push({
+                            element: cluster,
+                            x,
+                            y
+                        });
+                    }
+                });
+            }
         }
 
         // 检查位置是否在墙壁内
@@ -944,11 +1348,11 @@
             });
         }
 
-        // 处理键盘按下（增强的按键检测）
+        // 处理键盘按下
         function handleKeyDown(e) {
             gameState.keys[e.key] = true;
             
-            // 修复：同时支持小写c和大写C，确保兼容性
+            // 支持小写c和大写C激活节点
             if (e.key.toLowerCase() === 'c') {
                 activateNearbyNode();
             }
@@ -959,28 +1363,25 @@
             gameState.keys[e.key] = false;
         }
 
-        // 激活附近的节点（优化的检测逻辑）
+        // 激活附近的节点
         function activateNearbyNode() {
-            // 修复：遍历所有节点，检查是否有可激活的
             let activated = false;
             gameState.energyNodes.forEach((node, index) => {
                 if (!node.activated) {
                     const distance = getDistance(
                         gameState.player.x + gameState.player.width/2,
                         gameState.player.y + gameState.player.height/2,
-                        node.x + 17.5, // 节点中心
-                        node.y + 17.5
+                        node.x + 20, // 节点中心
+                        node.y + 20
                     );
                     
-                    // 修复：扩大检测范围
-                    if (distance < 70) {
+                    if (distance < 80) {
                         activateNode(index);
                         activated = true;
                     }
                 }
             });
             
-            // 修复：如果没有激活任何节点，显示提示
             if (!activated) {
                 showNotification(
                     gameState.player.x + 25, 
@@ -988,6 +1389,7 @@
                     "附近没有可激活的节点", 
                     "#FF6584"
                 );
+                triggerVibration(50); // 提示震动
             }
         }
 
@@ -996,7 +1398,7 @@
             elements.player.style.left = `${gameState.player.x}px`;
             elements.player.style.top = `${gameState.player.y}px`;
             
-            // 检查玩家是否靠近任何节点，提供视觉反馈
+            // 检查玩家是否靠近任何节点
             checkNearbyNodes();
         }
         
@@ -1007,16 +1409,17 @@
                     const distance = getDistance(
                         gameState.player.x + gameState.player.width/2,
                         gameState.player.y + gameState.player.height/2,
-                        node.x + 17.5,
-                        node.y + 17.5
+                        node.x + 20,
+                        node.y + 20
                     );
                     
                     // 玩家靠近时，节点有特殊动画
-                    if (distance < 100) {
+                    if (distance < 120) {
                         node.element.classList.add('nearby');
+                        
                         // 显示提示
-                        if (distance < 80 && gameState.showTooltip) {
-                            elements.tooltip.textContent = "按C键激活能量节点";
+                        if (distance < 90 && gameState.showTooltip) {
+                            elements.tooltip.textContent = "点击能量节点激活";
                             elements.tooltip.style.display = 'block';
                             
                             setTimeout(() => {
@@ -1027,6 +1430,12 @@
                             setTimeout(() => {
                                 gameState.showTooltip = true;
                             }, 3000);
+                        }
+                        
+                        // 非常接近时震动提示
+                        if (distance < 80 && Date.now() - gameState.lastVibration > 2000) {
+                            triggerVibration(30); // 轻微震动提示
+                            gameState.lastVibration = Date.now();
                         }
                     } else {
                         node.element.classList.remove('nearby');
@@ -1040,7 +1449,7 @@
             let newX = gameState.player.x;
             let newY = gameState.player.y;
             
-            // 计算新位置
+            // 键盘控制
             if (gameState.keys.ArrowUp || gameState.keys.KeyW) {
                 newY = Math.max(0, newY - gameState.player.speed);
             }
@@ -1058,6 +1467,17 @@
                     gameState.containerWidth - gameState.player.width, 
                     newX + gameState.player.speed
                 );
+            }
+            
+            // 虚拟摇杆控制（优先级高于键盘）
+            if (gameState.joystick.active) {
+                // 应用摇杆方向和速度
+                newX += gameState.joystick.direction.x * gameState.player.speed * 1.5;
+                newY += gameState.joystick.direction.y * gameState.player.speed * 1.5;
+                
+                // 边界检查
+                newX = Math.max(0, Math.min(newX, gameState.containerWidth - gameState.player.width));
+                newY = Math.max(0, Math.min(newY, gameState.containerHeight - gameState.player.height));
             }
             
             // 检测与墙壁的碰撞
@@ -1097,6 +1517,12 @@
                     elements.shardCount.textContent = gameState.collected.energyShards;
                     gameState.player.energy = Math.min(100, gameState.player.energy + 5);
                     updateEnergyBar();
+                    
+                    // 收集反馈
+                    triggerVibration(30);
+                    
+                    // 保存进度
+                    saveGameProgress();
                     return false;
                 }
                 return true;
@@ -1118,6 +1544,12 @@
                     gameState.collected.fermions++;
                     gameState.player.energy = Math.min(100, gameState.player.energy + 2);
                     updateEnergyBar();
+                    
+                    // 收集反馈
+                    triggerVibration(30);
+                    
+                    // 保存进度
+                    saveGameProgress();
                     return false;
                 }
                 return true;
@@ -1139,6 +1571,12 @@
                     gameState.collected.quantumClusters++;
                     gameState.player.energy = Math.min(100, gameState.player.energy + 20);
                     updateEnergyBar();
+                    
+                    // 收集反馈（较强震动）
+                    triggerVibration(80);
+                    
+                    // 保存进度
+                    saveGameProgress();
                     return false;
                 }
                 return true;
@@ -1175,6 +1613,12 @@
                         gameState.player.y += (dy / distance) * force;
                         updatePlayerPosition();
                     }
+                    
+                    // 陷阱效果震动提示
+                    if (Date.now() - gameState.lastVibration > 1000) {
+                        triggerVibration(40);
+                        gameState.lastVibration = Date.now();
+                    }
                 }
             });
             
@@ -1205,6 +1649,7 @@
                         trapElement.classList.remove('inactive');
                         
                         showNotification(trap.x + trap.width, trap.y, "陷阱已激活!", "#FF6584");
+                        triggerVibration(100); // 陷阱激活震动提示
                     }
                 }
             });
@@ -1225,6 +1670,7 @@
             if (gameState.player.energy < 30) {
                 elements.energyFill.style.backgroundColor = '#FF6584';
                 
+                // 低能量提示
                 if (gameState.player.energy < 20 && gameState.showTooltip) {
                     elements.tooltip.textContent = "能量过低！收集量子晶簇和能量碎片补充";
                     elements.tooltip.style.display = 'block';
@@ -1237,6 +1683,9 @@
                     setTimeout(() => {
                         gameState.showTooltip = true;
                     }, 5000);
+                    
+                    // 低能量震动提示
+                    triggerVibration(60);
                 }
             } else {
                 elements.energyFill.style.backgroundColor = '#4ECDC4';
@@ -1273,7 +1722,15 @@
                             setTimeout(() => {
                                 elements.tooltip.style.display = 'none';
                             }, 3000);
+                            
+                            // 时间紧迫震动提示
+                            triggerVibration(200);
                         }
+                    }
+                    
+                    // 定期保存进度
+                    if (gameState.timeRemaining % 15 === 0) {
+                        saveGameProgress();
                     }
                 }
             }, 1000);
@@ -1285,6 +1742,12 @@
             elements.finalTime.textContent = elements.timer.textContent;
             elements.finalShards.textContent = gameState.collected.energyShards;
             elements.levelCompleted.style.display = 'block';
+            
+            // 成功震动反馈
+            triggerVibration(300);
+            
+            // 清除保存的进度
+            localStorage.removeItem('gameProgress');
         }
 
         // 关卡失败
@@ -1293,16 +1756,23 @@
             elements.failedNodes.textContent = gameState.activatedNodes;
             elements.failedShards.textContent = gameState.collected.energyShards;
             elements.levelFailed.style.display = 'block';
+            
+            // 失败震动反馈
+            triggerVibration(500);
         }
 
         // 前往下一关
         function goToNextLevel() {
+            triggerVibration(100);
             alert('即将进入下一关：量子隧道！');
             window.location.href = 'level-1-3.html';
         }
 
         // 重新开始关卡
         function restartLevel() {
+            triggerVibration(100);
+            // 清除保存的进度
+            localStorage.removeItem('gameProgress');
             window.location.reload();
         }
 
@@ -1312,6 +1782,9 @@
             elements.pauseBtn.innerHTML = gameState.paused ? 
                 '<i class="fa fa-play"></i>' : 
                 '<i class="fa fa-pause"></i>';
+                
+            // 震动反馈
+            triggerVibration(50);
                 
             if (gameState.paused) {
                 const pauseMenu = document.createElement('div');
@@ -1328,24 +1801,40 @@
                 pauseMenu.style.minWidth = '200px';
                 pauseMenu.innerHTML = `
                     <h3 class="text-xl font-bold text-white mb-4">游戏暂停</h3>
-                    <button id="resume-btn" class="bg-[#6C63FF] hover:bg-[#6C63FF]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold mb-2">
+                    <button id="resume-btn" class="bg-[#6C63FF] hover:bg-[#6C63FF]/80 text-white py-3 px-6 rounded-lg transition-colors font-bold mb-3">
                         继续游戏
                     </button>
-                    <button id="restart-btn" class="bg-[#FF6584] hover:bg-[#FF6584]/80 text-white py-2 px-6 rounded-lg transition-colors font-bold">
+                    <button id="restart-btn" class="bg-[#FF6584] hover:bg-[#FF6584]/80 text-white py-3 px-6 rounded-lg transition-colors font-bold">
                         重新开始
                     </button>
                 `;
                 document.body.appendChild(pauseMenu);
                 
-                document.getElementById('resume-btn').addEventListener('click', () => {
+                // 适配移动端触摸
+                const resumeBtn = document.getElementById('resume-btn');
+                resumeBtn.addEventListener('click', resumeGame);
+                resumeBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    resumeGame();
+                });
+                
+                const restartBtn = document.getElementById('restart-btn');
+                restartBtn.addEventListener('click', () => {
+                    localStorage.removeItem('gameProgress');
+                    window.location.reload();
+                });
+                restartBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('gameProgress');
+                    window.location.reload();
+                });
+                
+                function resumeGame() {
                     gameState.paused = false;
                     elements.pauseBtn.innerHTML = '<i class="fa fa-pause"></i>';
                     pauseMenu.remove();
-                });
-                
-                document.getElementById('restart-btn').addEventListener('click', () => {
-                    window.location.reload();
-                });
+                    triggerVibration(50);
+                }
             }
         }
 
@@ -1354,9 +1843,19 @@
             gameState.containerWidth = gameState.gameContainer.clientWidth;
             gameState.containerHeight = gameState.gameContainer.clientHeight;
             
+            // 调整元素大小
+            adjustElementSizes();
+            
+            // 确保玩家在边界内
             gameState.player.x = Math.min(gameState.player.x, gameState.containerWidth - gameState.player.width);
             gameState.player.y = Math.min(gameState.player.y, gameState.containerHeight - gameState.player.height);
             updatePlayerPosition();
+            
+            // 更新传送门位置
+            gameState.portal.x = gameState.containerWidth - 100;
+            gameState.portal.y = gameState.containerHeight - 100;
+            elements.portal.style.left = `${gameState.portal.x}px`;
+            elements.portal.style.top = `${gameState.portal.y}px`;
         }
 
         // 创建迷宫墙壁
@@ -1432,6 +1931,135 @@
                 gameState.trapCooldown[index] = 0;
             });
         }
+
+        // 触发震动反馈（适配移动端）
+        function triggerVibration(duration) {
+            // 检查设备是否支持震动API
+            if (navigator.vibrate) {
+                // 限制震动频率，避免过度震动
+                if (Date.now() - gameState.lastVibration > 100) {
+                    navigator.vibrate(duration);
+                    gameState.lastVibration = Date.now();
+                    
+                    // 添加视觉震动反馈（对不支持震动的设备）
+                    createVibrationHint();
+                }
+            } else {
+                // 不支持震动API时，只显示视觉反馈
+                createVibrationHint();
+            }
+        }
+
+        // 创建视觉震动反馈
+        function createVibrationHint() {
+            const hint = document.createElement('div');
+            hint.className = 'vibration-hint';
+            hint.style.width = `${gameState.player.width * 2}px`;
+            hint.style.height = `${gameState.player.height * 2}px`;
+            hint.style.left = `${gameState.player.x - gameState.player.width / 2}px`;
+            hint.style.top = `${gameState.player.y - gameState.player.height / 2}px`;
+            
+            gameState.gameContainer.appendChild(hint);
+            
+            setTimeout(() => {
+                hint.remove();
+            }, 500);
+        }
+
+        // 保存游戏进度到本地存储
+        function saveGameProgress() {
+            if (gameState.isCompleted || gameState.isFailed) return;
+            
+            // 记录已激活的节点（使用位运算）
+            let activatedNodes = 0;
+            gameState.energyNodes.forEach((node, index) => {
+                if (node.activated) {
+                    activatedNodes |= (1 << index);
+                }
+            });
+            
+            gameState.gameProgress = {
+                nodes: activatedNodes,
+                shards: gameState.collected.energyShards,
+                time: gameState.timeRemaining,
+                energy: gameState.player.energy,
+                playerPos: { 
+                    x: gameState.player.x, 
+                    y: gameState.player.y 
+                }
+            };
+            
+            localStorage.setItem('gameProgress', JSON.stringify(gameState.gameProgress));
+        }
+
+        // 从本地存储加载游戏进度
+        function loadGameProgress() {
+            const savedProgress = localStorage.getItem('gameProgress');
+            if (savedProgress) {
+                try {
+                    const progress = JSON.parse(savedProgress);
+                    gameState.gameProgress = progress;
+                    
+                    // 恢复玩家状态
+                    gameState.player.x = progress.playerPos.x;
+                    gameState.player.y = progress.playerPos.y;
+                    gameState.player.energy = progress.energy;
+                    gameState.timeRemaining = progress.time;
+                    gameState.collected.energyShards = progress.shards;
+                    
+                    // 显示恢复提示
+                    setTimeout(() => {
+                        showNotification(
+                            gameState.containerWidth / 2, 
+                            gameState.containerHeight / 4, 
+                            "已恢复上次游戏进度", 
+                            "#6C63FF"
+                        );
+                        triggerVibration(100);
+                    }, 1000);
+                } catch (e) {
+                    console.error("Failed to load game progress:", e);
+                    // 加载失败时使用默认值
+                    resetGameProgress();
+                }
+            } else {
+                resetGameProgress();
+            }
+            
+            // 加载控制布局偏好
+            const savedLayout = localStorage.getItem('controlLayout');
+            if (savedLayout) {
+                gameState.controlLayout = savedLayout;
+                if (gameState.controlLayout === 'right') {
+                    elements.mobileControls.style.flexDirection = 'row-reverse';
+                }
+            }
+        }
+
+        // 重置游戏进度
+        function resetGameProgress() {
+            gameState.gameProgress = {
+                nodes: 0,
+                shards: 0,
+                time: 180,
+                energy: 100,
+                playerPos: { x: 50, y: 50 }
+            };
+        }
+
+        // 添加波纹和闪烁动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                0% { transform: scale(0); opacity: 1; }
+                100% { transform: scale(1); opacity: 0; }
+            }
+            @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
 
         // 游戏主循环
         let lastTime = 0;
