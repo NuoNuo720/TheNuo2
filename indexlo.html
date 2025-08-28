@@ -461,7 +461,7 @@
             // 6. 登录成功处理函数
             function loginSuccess(userData) {
                 const currentUser = {
-                    id: userData.id,
+                    id: userData._id,
                     username: userData.username,
                     token: userData.token,
                     avatar: userData.avatar || 'https://picsum.photos/200/200',
