@@ -6,13 +6,13 @@
     <title>多功能导航中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        /* 称号徽章样式 */
         .title-badge {
             background: linear-gradient(135deg, #3498db, #9b59b6);
             color: white;
@@ -26,7 +26,6 @@
             gap: 5px;
         }
 
-        /* 称号列表样式 */
         .title-list {
             display: flex;
             flex-wrap: wrap;
@@ -460,7 +459,6 @@
             background-color: #e74c3c;
         }
 
-        /* 响应式设计 */
         @media (max-width: 768px) {
             .card-grid {
                 grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -483,7 +481,6 @@
                 gap: 10px;
             }
             
-            /* 移动端隐藏称号徽章，避免布局错乱 */
             .title-badge {
                 display: none;
             }
@@ -672,7 +669,6 @@
                 </button>
                 <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarUpload(event)">
             </div>
-            <!-- 修改个人信息模态框，添加称号展示区域 -->
             <div class="profile-section">
                 <label class="profile-label">当前称号</label>
                 <div id="titleDisplay" class="profile-value">暂无称号</div>
@@ -717,17 +713,11 @@
     <script>
         // 页面加载时验证登录状态并初始化
         window.onload = function() {
-            // 检查是否已登录
             checkLoginStatus();
-            
-            // 初始化卡片动画
             initCardAnimations();
-            
-            // 检查是否有登录成功的参数，显示欢迎信息
             checkLoginParams();
         };
 
-        // 检查URL参数，显示登录成功信息
         function checkLoginParams() {
             const params = new URLSearchParams(window.location.search);
             if (params.has('loginSuccess')) {
@@ -735,19 +725,17 @@
             }
         }
 
-        // 合并后的checkLoginStatus函数，包含登录状态判断和称号加载
+        // 修正：使用userId替代_id进行用户身份验证
         function checkLoginStatus() {
             const userInfoStr = localStorage.getItem('mainUserInfo');
             console.log("读取到的用户信息：", userInfoStr);
             
-            // 未登录：重定向到登录页（排除登录页本身）
             if (!userInfoStr) {
                 handleUnauthorizedAccess();
                 return;
             }
             
             try {
-                // 验证JSON格式有效性
                 let userInfo;
                 try {
                     userInfo = JSON.parse(userInfoStr);
@@ -756,12 +744,12 @@
                     throw new Error("用户信息格式错误，请重新登录");
                 }
         
-                // 验证用户信息完整性 - 以MongoDB的[ ]为核心检测条件
+                // 核心修改：将_id改为userId
                 const requiredFields = ['userId', 'loginTime'];
                 const missingFields = requiredFields.filter(field => !userInfo[field]);
         
                 if (missingFields.length > 0) {
-                    // 特别处理_id缺失的情况
+                    // 核心修改：检查userId而不是_id
                     if (missingFields.includes('userId')) {
                         throw new Error("用户身份信息不完整，缺少用户ID，请重新登录");
                     } else {
@@ -769,7 +757,6 @@
                     }
                 }
         
-                // 验证登录时间有效性（7天内）
                 const loginTime = new Date(userInfo.loginTime);
                 if (isNaN(loginTime.getTime())) {
                     throw new Error("登录时间格式无效，请重新登录");
@@ -781,39 +768,35 @@
                     throw new Error("登录已超过7天，请重新登录");
                 }
         
-                // 验证通过，更新显示
                 updateUserDisplay(userInfo);
                 loadUserTitles(userInfo);
-                checkUserIdValidity(userInfo);  // 函数名保留                
+                checkUserIdValidity(userInfo);
+                
             } catch (err) {
                 console.error("用户信息解析失败：", err);
-                // 解析失败：清除无效数据并跳转登录页
                 localStorage.removeItem('mainUserInfo');
                 handleUnauthorizedAccess(err.message);
             }
         }
 
-        // 校验MongoDB的_id有效性
+        // 修正：使用userId验证
         async function checkUserIdValidity(userInfo) {
-            // 判断是否为本地开发环境
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
-            // 本地开发环境不验证id，直接返回成功
             if (isLocalDev) {
-                console.log('本地开发模式，跳过id验证');
+                console.log('本地开发模式，跳过userId验证');
                 return;
             }
             
             try {
                 const controller = new AbortController();
-                // 10秒超时设置
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-                // 后端接口验证id
+                // 核心修改：使用userId
                 const response = await fetch('/.netlify/functions/verifyUserId', {
                     method: 'POST',
                     headers: {
-                        'X-User-Id': userInfo.userId,  // 使用id作为验证标识
+                        'X-User-Id': userInfo.userId,
                         'Content-Type': 'application/json'
                     },
                     signal: controller.signal
@@ -828,7 +811,6 @@
                     throw new Error(`验证失败: ${response.statusText}`);
                 }
         
-                // 验证成功，更新登录时间（延长有效期）
                 const result = await response.json();
                 if (result.valid) {
                     userInfo.loginTime = new Date().toISOString();
@@ -848,16 +830,13 @@
             }
         }
 
-        // 更新用户信息显示
         function updateUserDisplay(userInfo) {
             const userAreaEl = document.getElementById('userArea');
             const avatarUrl = userInfo.avatar || 'https://picsum.photos/200';
             
-            // 格式化登录时间
             const loginTime = new Date(userInfo.loginTime);
             const formattedTime = loginTime.toLocaleString();
             
-            // 构建用户信息区域HTML，包含称号展示
             let titleBadge = '';
             if (userInfo.currentTitle) {
                 titleBadge = `<span class="title-badge">
@@ -875,12 +854,10 @@
                 </button>
             `;
             
-            // 初始化个人信息模态框
             document.getElementById('modalAvatar').src = avatarUrl;
             document.getElementById('usernameDisplay').textContent = decodeURIComponent(userInfo.username);
             document.getElementById('loginTimeDisplay').textContent = formattedTime;
             
-            // 设置模态框中的当前称号
             const titleDisplay = document.getElementById('titleDisplay');
             if (userInfo.currentTitle) {
                 titleDisplay.innerHTML = `<i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i> ${userInfo.currentTitle.name}`;
@@ -889,11 +866,9 @@
             }
         }
 
-        // 初始化卡片动画
         function initCardAnimations() {
             const cards = document.querySelectorAll('.nav-card');
             cards.forEach((card, index) => {
-                // 缩短延迟时间，提升加载体验
                 setTimeout(() => {
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
@@ -901,7 +876,6 @@
             });
         }
 
-        // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
                 localStorage.removeItem('mainUserInfo');
@@ -909,7 +883,6 @@
             }
         }
 
-        // 封装模态框控制函数
         function toggleModal(show) {
             const modal = document.getElementById('profileModal');
             if (show) {
@@ -921,27 +894,22 @@
             }
         }
 
-        // 打开个人信息模态框
         function openProfileModal() {
             toggleModal(true);
         }
 
-        // 关闭个人信息模态框
         function closeProfileModal() {
             toggleModal(false);
         }
 
-        // 处理头像上传，修复重复上传问题
         function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                // 检查文件大小
                 if (file.size > 5 * 1024 * 1024) {
                     showNotification('图片大小不能超过5MB', 'error');
                     return;
                 }
                 
-                // 检查文件类型
                 const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
                 if (!allowedTypes.includes(file.type)) {
                     showNotification('只支持JPG、PNG和GIF格式的图片', 'error');
@@ -952,46 +920,42 @@
                 reader.onload = function(e) {
                     document.getElementById('modalAvatar').src = e.target.result;
                     showNotification('图片已预览，点击保存生效', 'success');
-                    event.target.value = ''; // 清空输入框，支持重复选择相同文件
+                    event.target.value = '';
                 }
                 reader.readAsDataURL(file);
             }
         }
     
-        // 保存头像
+        // 修正：检查userId存在性
         function saveAvatar() {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            // 确保id存在
-            if (!userInfo.userId) {  // 改为检查id
-                showNotification('用户信息不完整，请重新登录!!!', 'error');
+            // 核心修改：检查userId而不是_id
+            if (!userInfo.userId) {
+                showNotification('用户信息不完整，请重新登录', 'error');
                 return;
             }
             
             const newAvatar = document.getElementById('modalAvatar').src;
     
-            // 更新本地存储
             userInfo.avatar = newAvatar;
             localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
     
-            // 更新导航栏头像
             document.querySelector('.user-avatar').src = newAvatar;
     
-            // 保存到服务器
             saveUserInfoToServer(userInfo);
     
             showNotification('头像已更新成功！', 'success');
             closeProfileModal();
         }
 
-        // 保存用户信息到服务器
+        // 修正：使用userId
         async function saveUserInfoToServer(userData) {
-            // 确保_id存在
-            if (!userData.userId) {  // 改为检查_id
+            // 核心修改：检查userId而不是_id
+            if (!userData.userId) {
                 console.error('保存失败：缺少用户ID');
                 return;
             }
             
-            // 本地开发环境不发送请求
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (isLocalDev) {
                 console.log('本地开发模式，跳过服务器保存');
@@ -1018,7 +982,6 @@
             }
         }
 
-        // 点击模态框外部关闭
         window.onclick = function(event) {
             const modal = document.getElementById('profileModal');
             if (event.target === modal) {
@@ -1026,71 +989,62 @@
             }
         }
 
-        // 带权限控制的导航函数
+        // 修正：使用userId进行权限检查
         function navigateTo(url, requiredRole = 'user') {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            // 先检查_id是否存在
-            if (!userInfo.userId) {  // 改为检查_id
+            // 核心修改：检查userId而不是_id
+            if (!userInfo.userId) {
                 showNotification('请先登录', 'error');
                 setTimeout(() => {
                     window.location.href = 'indexlo.html';
                 }, 1000);
                 return;
             }
-            // 管理员权限校验
-            if (url.includes('admin-login.html') && userInfo.role !== 'admin') {
+            
+            if (url.includes('admin-login.html') && !(userInfo.isAdmin || userInfo.role === 'admin')) {
                 showNotification('无管理员权限，无法访问', 'error');
                 return;
             }
             
-            // 显示加载提示
             showNotification('正在跳转...', 'info');
             
-            // 缩短延迟时间，提升体验
             setTimeout(() => {
                 window.location.href = url;
             }, 300);
         }
 
-        // 显示功能已禁用提示
         function showDisabledNotice(featureName) {
             showNotification(`${featureName}模式即将上线，敬请期待`, 'info');
         }
 
-        // 显示即将上线提示
         function showComingSoonNotice() {
             showNotification('更多精彩功能正在开发中，敬请期待！', 'info');
         }
 
-        // 显示通知
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
             const notificationText = document.getElementById('notificationText');
             
-            // 设置通知内容和类型
             notificationText.textContent = message;
-            notification.className = 'notification'; // 重置类名
+            notification.className = 'notification';
             notification.classList.add(type);
             
-            // 显示通知
             notification.classList.add('show');
             
-            // 3秒后自动隐藏
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
         }
 
-        // 加载用户称号（用_id作为唯一键，更可靠）
+        // 修正：使用userId作为唯一键
         function loadUserTitles(userInfo) {
-            // 使用_id作为键更可靠，因为它是MongoDB的唯一标识符
-            const uniqueKey = `userTitles_${userInfo.userId}`;  // 改为_id
+            // 核心修改：使用userId作为键
+            const uniqueKey = `userTitles_${userInfo.userId}`;
             const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
             
             if (userTitles.length === 0) {
                 fetchUserTitlesFromServer(userInfo);
             } else {
-                // 更新用户信息中的当前称号
                 if (userTitles.length > 0 && !userInfo.currentTitle) {
                     userInfo.currentTitle = userTitles[0];
                     localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
@@ -1099,23 +1053,22 @@
             }
         }
 
-        // 从服务器获取用户称号
+        // 修正：使用userId获取称号
         async function fetchUserTitlesFromServer(userInfo) {
-            // 确保_id存在
-            if (!userInfo.userId) {  // 改为检查_id
+            // 核心修改：检查userId而不是_id
+            if (!userInfo.userId) {
                 console.error('获取称号失败：缺少用户ID');
                 return;
             }
             
-            // 本地开发环境不发送请求
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             if (isLocalDev) {
                 console.log('本地开发模式，使用默认称号数据');
-                // 提供默认称号数据
                 const defaultTitles = [
                     { name: '探索者', icon: 'compass' }
                 ];
-                const uniqueKey = `userTitles_${userInfo._id}`;  // 改为_id
+                // 核心修改：使用userId作为键
+                const uniqueKey = `userTitles_${userInfo.userId}`;
                 localStorage.setItem(uniqueKey, JSON.stringify(defaultTitles));
                 
                 if (defaultTitles.length > 0) {
@@ -1128,21 +1081,21 @@
             }
             
             try {
-                const response = await fetch(`/.netlify/functions/titles?userId=${userInfo.userId}`, {  // 改为_id
+                // 核心修改：使用userId
+                const response = await fetch(`/.netlify/functions/titles?userId=${userInfo.userId}`, {
                     method: 'GET',
                     headers: {
-                        'X-User-Id': userInfo.userId,  // 改为_id
+                        'X-User-Id': userInfo.userId,
                         'Content-Type': 'application/json'
                     }
                 });
         
                 if (response.ok) {
                     const titles = await response.json();
-                    // 保存到localStorage
-                    const uniqueKey = `userTitles_${userInfo.userId}`;  // 改为_id
+                    // 核心修改：使用userId作为键
+                    const uniqueKey = `userTitles_${userInfo.userId}`;
                     localStorage.setItem(uniqueKey, JSON.stringify(titles));
             
-                    // 如果有称号，设置第一个为当前称号
                     if (titles.length > 0) {
                         const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
                         userData.currentTitle = titles[0];
@@ -1152,22 +1105,17 @@
                 }
             } catch (error) {
                 console.error('获取称号失败:', error);
-                // 可以忽略错误，使用本地数据
             }
         }
 
-        // 统一处理未授权访问
         function handleUnauthorizedAccess(errorMessage = "请先登录") {
-            // 避免在登录页重复跳转
             if (window.location.pathname.includes('indexlo.html')) {
                 showNotification(errorMessage, 'error');
                 return;
             }
     
-            // 记录当前URL，登录后可跳转回来
             localStorage.setItem('redirectUrl', window.location.href);
     
-            // 显示提示并跳转
             showNotification(errorMessage + '，即将跳转到登录页', 'error');
             setTimeout(() => {
                 window.location.href = 'indexlo.html?needLogin=true';
