@@ -756,13 +756,13 @@
                     throw new Error("用户信息格式错误，请重新登录");
                 }
         
-                // 验证用户信息完整性 - 以MongoDB的_id为核心检测条件
-                const requiredFields = ['_id', 'loginTime'];  // 改为_id
+                // 验证用户信息完整性 - 以MongoDB的[ ]为核心检测条件
+                const requiredFields = ['userId', 'loginTime'];
                 const missingFields = requiredFields.filter(field => !userInfo[field]);
         
                 if (missingFields.length > 0) {
                     // 特别处理_id缺失的情况
-                    if (missingFields.includes('_id')) {  // 改为_id
+                    if (missingFields.includes('userId')) {
                         throw new Error("用户身份信息不完整，缺少用户ID，请重新登录");
                     } else {
                         throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}，请重新登录`);
@@ -784,8 +784,7 @@
                 // 验证通过，更新显示
                 updateUserDisplay(userInfo);
                 loadUserTitles(userInfo);
-                checkUserIdValidity(userInfo);  // 函数名保留但实际验证的是_id
-                
+                checkUserIdValidity(userInfo);  // 函数名保留                
             } catch (err) {
                 console.error("用户信息解析失败：", err);
                 // 解析失败：清除无效数据并跳转登录页
@@ -799,9 +798,9 @@
             // 判断是否为本地开发环境
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
-            // 本地开发环境不验证_id，直接返回成功
+            // 本地开发环境不验证id，直接返回成功
             if (isLocalDev) {
-                console.log('本地开发模式，跳过_id验证');
+                console.log('本地开发模式，跳过id验证');
                 return;
             }
             
@@ -810,11 +809,11 @@
                 // 10秒超时设置
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-                // 后端接口验证_id
+                // 后端接口验证id
                 const response = await fetch('/.netlify/functions/verifyUserId', {
                     method: 'POST',
                     headers: {
-                        'X-User-Id': userInfo._id,  // 使用_id作为验证标识
+                        'X-User-Id': userInfo.userId,  // 使用id作为验证标识
                         'Content-Type': 'application/json'
                     },
                     signal: controller.signal
@@ -962,9 +961,9 @@
         // 保存头像
         function saveAvatar() {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            // 确保_id存在
-            if (!userInfo._id) {  // 改为检查_id
-                showNotification('用户信息不完整，请重新登录', 'error');
+            // 确保id存在
+            if (!userInfo.userId) {  // 改为检查id
+                showNotification('用户信息不完整，请重新登录!!!', 'error');
                 return;
             }
             
@@ -987,7 +986,7 @@
         // 保存用户信息到服务器
         async function saveUserInfoToServer(userData) {
             // 确保_id存在
-            if (!userData._id) {  // 改为检查_id
+            if (!userData.userId) {  // 改为检查_id
                 console.error('保存失败：缺少用户ID');
                 return;
             }
@@ -1031,7 +1030,7 @@
         function navigateTo(url, requiredRole = 'user') {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
             // 先检查_id是否存在
-            if (!userInfo._id) {  // 改为检查_id
+            if (!userInfo.userId) {  // 改为检查_id
                 showNotification('请先登录', 'error');
                 setTimeout(() => {
                     window.location.href = 'indexlo.html';
@@ -1085,7 +1084,7 @@
         // 加载用户称号（用_id作为唯一键，更可靠）
         function loadUserTitles(userInfo) {
             // 使用_id作为键更可靠，因为它是MongoDB的唯一标识符
-            const uniqueKey = `userTitles_${userInfo._id}`;  // 改为_id
+            const uniqueKey = `userTitles_${userInfo.userId}`;  // 改为_id
             const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
             
             if (userTitles.length === 0) {
@@ -1103,7 +1102,7 @@
         // 从服务器获取用户称号
         async function fetchUserTitlesFromServer(userInfo) {
             // 确保_id存在
-            if (!userInfo._id) {  // 改为检查_id
+            if (!userInfo.userId) {  // 改为检查_id
                 console.error('获取称号失败：缺少用户ID');
                 return;
             }
@@ -1129,10 +1128,10 @@
             }
             
             try {
-                const response = await fetch(`/.netlify/functions/titles?userId=${userInfo._id}`, {  // 改为_id
+                const response = await fetch(`/.netlify/functions/titles?userId=${userInfo.userId}`, {  // 改为_id
                     method: 'GET',
                     headers: {
-                        'X-User-Id': userInfo._id,  // 改为_id
+                        'X-User-Id': userInfo.userId,  // 改为_id
                         'Content-Type': 'application/json'
                     }
                 });
@@ -1140,7 +1139,7 @@
                 if (response.ok) {
                     const titles = await response.json();
                     // 保存到localStorage
-                    const uniqueKey = `userTitles_${userInfo._id}`;  // 改为_id
+                    const uniqueKey = `userTitles_${userInfo.userId}`;  // 改为_id
                     localStorage.setItem(uniqueKey, JSON.stringify(titles));
             
                     // 如果有称号，设置第一个为当前称号
