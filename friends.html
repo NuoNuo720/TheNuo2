@@ -973,43 +973,43 @@
         const MAX_RECONNECT_ATTEMPTS = 10;
         // 初始化WebSocket连接
         function initWebSocket() {
-            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                console.error('已达到最大重连次数，将在1分钟后再次尝试');
-                showNotification('聊天服务暂时不可用，请稍后再试', 'error');
-                setTimeout(() => {
-                    reconnectAttempts = 0;
-                    initWebSocket();
-                }, 60000); // 1分钟后重试
-                return;
-            }
             if (!currentUser || !currentUser.username) return;
-            
+    
             // 关闭已有的连接
             if (webSocket) {
                 webSocket.close();
             }
-            
-            // 连接WebSocket服务器
+    
+            // 连接WebSocket服务器 - 修复：移除URL中的token参数，避免URL过长
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.host; // 改用当前域名而非硬编码
-            const wsUri = `${protocol}//${host}/.netlify/functions/chat?username=${encodeURIComponent(currentUser.username)}&token=${encodeURIComponent(currentUser.token)}`;
-            
+            const wsUri = `${protocol}//${window.location.host}/.netlify/functions/chat?username=${encodeURIComponent(currentUser.username)}`;
+    
             webSocket = new WebSocket(wsUri);
+    
+            // 添加连接超时处理
             const connectionTimeout = setTimeout(() => {
-                if (webSocket.readyState !== WebSocket.OPEN) {
-                    console.error('WebSocket连接超时');
-                    showNotification('聊天连接超时', 'error');
+                console.error('WebSocket连接超时');
+                if (webSocket.readyState === WebSocket.CONNECTING) {
                     webSocket.close();
-                    // 延长重连间隔，避免频繁尝试
-                    setTimeout(initWebSocket, 10000);
+                    showNotification('聊天连接超时', 'error');
+                    // 立即重试一次
+                    setTimeout(initWebSocket, 2000);
                 }
             }, 10000); // 10秒超时
+    
             webSocket.onopen = function() {
+                clearTimeout(connectionTimeout); // 清除超时计时器
                 console.log('WebSocket连接已建立');
                 updateConnectionStatus(true);
                 showNotification('聊天功能已就绪', 'success');
+        
+                // 连接成功后发送认证信息
+                webSocket.send(JSON.stringify({
+                    type: 'auth',
+                    token: currentUser.token
+                }));
             };
-            
+    
             webSocket.onmessage = function(event) {
                 try {
                     const data = JSON.parse(event.data);
@@ -1018,23 +1018,35 @@
                     console.error('解析WebSocket消息失败:', error);
                 }
             };
-            
+    
             webSocket.onerror = function(error) {
+                clearTimeout(connectionTimeout);
                 console.error('WebSocket错误:', error);
                 showNotification('聊天连接出现错误', 'error');
                 updateConnectionStatus(false);
             };
-            
-            webSocket.onclose = function() {
+    
+            webSocket.onclose = function(event) {
+                clearTimeout(connectionTimeout);
                 console.log(`WebSocket连接已关闭，代码: ${event.code}, 原因: ${event.reason}`);
-                showNotification('聊天连接已断开，将尝试重连', 'warning');
-                updateConnectionStatus(false);
         
-                // 指数退避重连策略
-                reconnectAttempts++;
-                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000); // 最大30秒
-                console.log(`将在${delay}ms后尝试第${reconnectAttempts}次重连`);
-                setTimeout(initWebSocket, delay);
+                // 仅在非主动关闭的情况下尝试重连
+                if (event.code !== 1000) {
+                    showNotification('聊天连接已断开，将尝试重连', 'warning');
+                    updateConnectionStatus(false);
+            
+                    // 指数退避重连策略
+                    let retryDelay = 2000; // 初始2秒
+                    if (window.wsRetryCount) {
+                        window.wsRetryCount++;
+                        retryDelay = Math.min(30000, 2000 * Math.pow(2, window.wsRetryCount));
+                    } else {
+                        window.wsRetryCount = 1;
+                    }
+            
+                    console.log(`将在${retryDelay}ms后尝试第${window.wsRetryCount}次重连`);
+                    setTimeout(initWebSocket, retryDelay);
+                }
             };
         }
         
@@ -1346,7 +1358,7 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        recipientUsername: recipientUsername,
+                        username: currentUser.username
                         timestamp: new Date().getTime()
                     })
                 });
@@ -1809,7 +1821,7 @@
 
                 const result = await response.json();
                 console.log('请求状态:', response.status, '请求结果:', result);
-
+                const isSuccess = response.ok || (result.requestId && result.error?.includes('已存在待处理的好友请求'));
                 if (response.ok) {
                     showNotification('好友请求已发送', 'success');
                     // 构造请求数据
