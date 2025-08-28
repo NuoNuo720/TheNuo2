@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="游戏平台帮助中心 - 解决账号登录、游戏玩法、社交功能等问题">
-    <meta name="keywords" content="游戏平台,帮助中心,账号注册,游戏指南,社交功能,称号系统">
+    <meta name="keywords" content="游戏平台,帮助中心,账号注册,游戏指南,社交功能">
     <meta name="author" content="游戏平台团队">
     <!-- 预加载关键资源 -->
     <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
@@ -46,10 +46,22 @@
             }
             .card-hover {
                 transition: all 0.3s ease;
+                opacity: 1;
+                visibility: visible;
             }
             .card-hover:hover {
                 transform: translateY(-5px);
                 box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            .card-hover.hidden {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transform: scale(0.95);
+            }
+            .game-type-button.selected {
+                background-color: #3B82F6;
+                color: white;
             }
             .section-fade {
                 opacity: 0;
@@ -71,80 +83,78 @@
                 opacity: 1;
             }
             .loading-spinner {
-                animation: spin 1s linear infinite;
+                border-top-color: theme('colors.primary');
+                animation: spinner 0.6s linear infinite;
             }
-            @keyframes spin {
+            @keyframes spinner {
                 to { transform: rotate(360deg); }
+            }
+            .focus-visible {
+                outline: 3px solid rgba(59, 130, 246, 0.5);
+                outline-offset: 2px;
+            }
+            html {
+                scroll-behavior: smooth;
+                scroll-padding-top: 80px;
+            }
+            .upcoming-badge {
+                position: relative;
+            }
+            .upcoming-tooltip {
+                visibility: hidden;
+                opacity: 0;
+                transition: visibility 0s, opacity 0.3s ease;
+                z-index: 50;
+            }
+            .upcoming-badge:hover .upcoming-tooltip {
+                visibility: visible;
+                opacity: 1;
             }
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-gray-50 text-gray-800 min-h-screen font-sans">
     <!-- 导航栏 -->
-    <header class="bg-white shadow-sm sticky top-0 z-40">
-        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center">
-                <a href="#" class="text-2xl font-bold text-primary flex items-center">
-                    <i class="fa fa-gamepad mr-2"></i>游戏平台
-                </a>
-            </div>
-            <!-- 桌面导航 -->
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="indexdaohang.html" class="text-gray-600 hover:text-primary transition-colors focus:outline-none focus:focus-visible">导航页面</a>
-                <a href="#" class="text-primary font-medium">帮助中心</a>
-                <a href="24gameinformation.html" class="text-gray-600 hover:text-primary transition-colors focus:outline-none focus:focus-visible">小游戏合集</a>
-                <a href="friends.html" class="text-gray-600 hover:text-primary transition-colors focus:outline-none focus:focus-visible">社交</a>
-                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">赞</button>
-            </div>
-            <!-- 移动端菜单按钮 -->
-            <div class="md:hidden flex items-center">
-                <button id="mobileMenuButton" class="text-gray-600 hover:text-primary focus:outline-none focus:focus-visible" aria-label="打开菜单">
-                    <i class="fa fa-bars text-xl"></i>
-                </button>
-            </div>
+    <div id="navbar" class="min-h-[60px] flex items-center justify-center bg-white shadow-sm">
+        <div id="navbarLoading" class="flex items-center p-4">
+            <div class="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full loading-spinner"></div>
+            <span class="ml-2 text-gray-500">加载导航中...</span>
         </div>
-        <!-- 移动端菜单 -->
-        <div id="mobileMenu" class="md:hidden hidden bg-white border-t border-gray-200 shadow-lg">
-            <div class="container mx-auto px-4 py-3 space-y-3">
-                <a href="indexdaohang.html" class="block py-2 text-gray-600 hover:text-primary transition-colors">导航页面</a>
-                <a href="#" class="block py-2 text-primary font-medium">帮助中心</a>
-                <a href="24gameinformation.html" class="block py-2 text-gray-600 hover:text-primary transition-colors">小游戏合集</a>
-                <a href="friends.html" class="block py-2 text-gray-600 hover:text-primary transition-colors">社交</a>
-                <button class="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">赞</button>
-            </div>
+        <div id="navbarError" class="hidden text-error text-center p-4">
+            <p class="mb-2 flex items-center justify-center"><i class="fa fa-exclamation-circle mr-2"></i>导航加载失败</p>
+            <button id="retryNavbar" class="text-primary text-sm mt-1 hover:underline focus:outline-none focus:focus-visible">重试</button>
         </div>
-    </header>
-
-    <!-- 页面加载进度条 -->
-    <div id="pageLoader" class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
-        <div id="progressBar" class="h-full bg-primary w-0 transition-all duration-300"></div>
     </div>
 
-    <main class="container mx-auto px-4 py-8 sm:py-12">
-        <!-- 页面标题 -->
-        <div class="text-center mb-10 sm:mb-16">
-            <h1 class="text-3xl sm:text-4xl font-bold mb-4">帮助中心</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">我们整理了常见问题和使用指南，帮助您更好地了解和使用平台功能</p>
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-10 sm:py-16 max-w-6xl">
+        <div class="text-center mb-8 sm:mb-12">
+            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-primary mb-3 sm:mb-4 text-shadow">帮助中心</h1>
+            <p class="text-gray-600 max-w-3xl mx-auto text-base sm:text-lg">
+                在这里可以找到关于平台功能、游戏玩法和社交互动的详细说明，快速解决您的问题
+            </p>
         </div>
 
-        <!-- 搜索框 -->
-        <div class="max-w-2xl mx-auto mb-10 relative">
-            <input 
-                type="text" 
-                id="searchHelp" 
-                placeholder="搜索帮助内容..." 
-                class="w-full px-5 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
-                aria-label="搜索帮助内容"
-            >
-            <button id="searchButton" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="搜索">
-                <i class="fa fa-search text-xl"></i>
-            </button>
-            <!-- 清除按钮 -->
-            <button id="clearSearch" class="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:focus-visible hidden" aria-label="清除搜索内容">
-                <i class="fa fa-times"></i>
-            </button>
+        <!-- 搜索框与结果 -->
+        <div class="mb-8 sm:mb-10 max-w-2xl mx-auto relative">
+            <div class="relative">
+                <label for="searchHelp" class="sr-only">搜索帮助内容</label>
+                <input 
+                    type="text" 
+                    id="searchHelp" 
+                    placeholder="搜索帮助内容，例如'登录遇到问题'..." 
+                    class="w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none focus:focus-visible transition-all"
+                    aria-label="搜索帮助内容"
+                    autocomplete="off"
+                >
+                <button id="searchButton" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="搜索">
+                    <i class="fa fa-search text-xl"></i>
+                </button>
+                <button id="clearSearch" class="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:focus-visible hidden" aria-label="清除搜索内容">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
             
-            <!-- 搜索结果容器 -->
             <div id="searchResults" class="search-results absolute left-0 right-0 mt-2 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-y-auto">
                 <div id="searchLoading" class="hidden p-6 flex justify-center items-center">
                     <div class="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full loading-spinner mr-2"></div>
@@ -159,14 +169,13 @@
                     <!-- 搜索结果将动态插入这里 -->
                 </ul>
             </div>
-            <!-- 搜索提示 -->
             <div id="searchSuggestions" class="mt-2 text-xs text-gray-500 hidden">
-                <p>热门搜索: <a href="#register" class="text-primary hover:underline">账号注册</a>、<a href="#login" class="text-primary hover:underline">登录问题</a>、<a href="#titles" class="text-primary hover:underline">称号系统</a>、<a href="#games" class="text-primary hover:underline">游戏指南</a></p>
+                <p>热门搜索: <a href="#friends" class="text-primary hover:underline">社交功能详解</a>、<a href="#login" class="text-primary hover:underline">登录遇到问题</a>、<a href="#game-start" class="text-primary hover:underline">游戏指南</a></p>
             </div>
         </div>
 
         <!-- 帮助分类 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <!-- 账号与登录 -->
             <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg card-hover focus-within:shadow-lg transition-all">
                 <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-5">
@@ -182,9 +191,16 @@
                         <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
                         <a href="#login" class="hover:text-primary transition-colors focus:outline-none focus:focus-visible">登录遇到问题</a>
                     </li>
-                    <li class="flex items-start">
-                        <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
-                        <a href="#profile" class="hover:text-primary transition-colors focus:outline-none focus:focus-visible">修改个人资料(待开发)</a>
+                    <li class="flex items-start upcoming-badge">
+                        <i class="fa fa-angle-right text-gray-400 mt-1 mr-2"></i>
+                        <span class="text-gray-500">修改个人资料</span>
+                        <span class="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full border border-gray-200">
+                            即将上线
+                        </span>
+                        <div class="upcoming-tooltip absolute top-full left-0 mt-1 w-64 bg-white p-3 rounded-lg shadow-md border border-gray-200 text-xs">
+                            <p class="font-medium text-gray-800 mb-1">功能开发中</p>
+                            <p class="text-gray-600">预计2025年第四季度上线，将支持修改昵称、密码等个人信息</p>
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -198,7 +214,7 @@
                 <ul class="space-y-3 text-gray-600">
                     <li class="flex items-start">
                         <i class="fa fa-angle-right text-secondary mt-1 mr-2"></i>
-                        <a href="#game-start" class="hover:text-secondary transition-colors focus:outline-none focus:focus-visible">开始游戏指南</a>
+                        <a href="#game-start" class="hover:text-secondary transition-colors focus:outline-none focus:focus-visible">游戏指南</a>
                     </li>
                     <li class="flex items-start">
                         <i class="fa fa-angle-right text-secondary mt-1 mr-2"></i>
@@ -207,6 +223,17 @@
                     <li class="flex items-start">
                         <i class="fa fa-angle-right text-secondary mt-1 mr-2"></i>
                         <a href="#game-rules" class="hover:text-secondary transition-colors focus:outline-none focus:focus-visible">各游戏规则说明</a>
+                    </li>
+                    <li class="flex items-start upcoming-badge">
+                        <i class="fa fa-angle-right text-gray-400 mt-1 mr-2"></i>
+                        <span class="text-gray-500">游戏内道具使用</span>
+                        <span class="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full border border-gray-200">
+                            即将上线
+                        </span>
+                        <div class="upcoming-tooltip absolute top-full left-0 mt-1 w-64 bg-white p-3 rounded-lg shadow-md border border-gray-200 text-xs">
+                            <p class="font-medium text-gray-800 mb-1">功能开发中</p>
+                            <p class="text-gray-600">预计2025年10月上线，包含道具获取、使用及效果说明</p>
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -230,6 +257,17 @@
                         <i class="fa fa-angle-right text-accent mt-1 mr-2"></i>
                         <a href="#teamplay" class="hover:text-accent transition-colors focus:outline-none focus:focus-visible">组队玩游戏</a>
                     </li>
+                    <li class="flex items-start upcoming-badge">
+                        <i class="fa fa-angle-right text-gray-400 mt-1 mr-2"></i>
+                        <span class="text-gray-500">好友动态广场</span>
+                        <span class="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full border border-gray-200">
+                            即将上线
+                        </span>
+                        <div class="upcoming-tooltip absolute top-full left-0 mt-1 w-64 bg-white p-3 rounded-lg shadow-md border border-gray-200 text-xs">
+                            <p class="font-medium text-gray-800 mb-1">功能开发中</p>
+                            <p class="text-gray-600">预计2025年12月上线，可查看好友游戏动态及成就分享</p>
+                        </div>
+                    </li>
                 </ul>
             </div>
 
@@ -242,23 +280,37 @@
                 <ul class="space-y-3 text-gray-600">
                     <li class="flex items-start">
                         <i class="fa fa-angle-right text-warning mt-1 mr-2"></i>
-                        <a href="#titles-overview" class="hover:text-warning transition-colors focus:outline-none focus:focus-visible">称号系统介绍</a>
+                        <a href="#titles-overview" class="hover:text-warning transition-colors focus:outline-none focus:focus-visible">称号系统说明</a>
                     </li>
-                    <li class="flex items-start">
-                        <i class="fa fa-angle-right text-warning mt-1 mr-2"></i>
-                        <a href="#titles-manage" class="hover:text-warning transition-colors focus:outline-none focus:focus-visible">称号管理与佩戴</a>
+                    <li class="flex items-start upcoming-badge">
+                        <i class="fa fa-angle-right text-gray-400 mt-1 mr-2"></i>
+                        <span class="text-gray-500">称号管理与佩戴</span>
+                        <span class="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full border border-gray-200">
+                            即将上线
+                        </span>
+                        <div class="upcoming-tooltip absolute top-full left-0 mt-1 w-64 bg-white p-3 rounded-lg shadow-md border border-gray-200 text-xs">
+                            <p class="font-medium text-gray-800 mb-1">功能开发中</p>
+                            <p class="text-gray-600">预计2025年8月末上线，支持从已获得的称号中选择展示称号</p>
+                        </div>
                     </li>
-                    <li class="flex items-start">
-                        <i class="fa fa-angle-right text-warning mt-1 mr-2"></i>
-                        <a href="#titles-sync" class="hover:text-warning transition-colors focus:outline-none focus:focus-visible">称号数据同步</a>
+                    <li class="flex items-start upcoming-badge">
+                        <i class="fa fa-angle-right text-gray-400 mt-1 mr-2"></i>
+                        <span class="text-gray-500">称号数据同步</span>
+                        <span class="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full border border-gray-200">
+                            即将上线
+                        </span>
+                        <div class="upcoming-tooltip absolute top-full left-0 mt-1 w-64 bg-white p-3 rounded-lg shadow-md border border-gray-200 text-xs">
+                            <p class="font-medium text-gray-800 mb-1">功能开发中</p>
+                            <p class="text-gray-600">将实现多设备间称号数据同步，无论在哪登录都能看到您的全部称号</p>
+                        </div>
                     </li>
                 </ul>
             </div>
         </div>
-
+        
         <!-- 详细帮助内容 -->
         <div class="mt-12 sm:mt-16 space-y-10 sm:space-y-12">
-            <!-- 账号丢失问题 -->
+            <!-- 账号与登录 -->
             <section id="register" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold flex items-center">
@@ -270,22 +322,68 @@
                     </a>
                 </div>
                 <div class="prose max-w-none text-gray-700">
-                    <p class="mb-4">如果您无法登录账号或怀疑账号信息异常，请尝试以下解决方案：</p>
-                    <ul class="list-disc pl-5 space-y-2 mb-6">
-                        <li>使用注册邮箱尝试"忘记密码"功能重置登录密码</li>
-                        <li>检查是否使用了正确的账号类型（邮箱/第三方账号）登录</li>
-                        <li>清除浏览器缓存或尝试使用隐私模式登录</li>
-                        <li>确认账号没有因违反平台规定而被封禁</li>
-                    </ul>
+                    <p class="mb-4">账号疑似丢失?</p>
                     
-                    <div class="bg-primary/5 p-4 rounded-lg border-l-4 border-primary">
-                        <p class="font-medium">账号找回提示</p>
-                        <p class="mt-1 text-sm">如果以上方法无法解决问题，请联系客服并提供注册邮箱、注册时间和常用登录设备等信息，以便我们协助您找回账号。</p>
+                    <ol class="list-decimal pl-5 space-y-3 mt-4 mb-6">
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 mt-1 mr-2">1.</span>
+                            <span>注意更新公告，版本大更新有概率会删除原有数据</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="flex-shrink-0 mt-1 mr-2">2.</span>
+                            <span>如若仍有疑问，请联系半猫诺丷</span>
+                        </li>
+                    </ol>
+                    
+                    <div class="bg-yellow-50 p-4 rounded-lg mt-6 border-l-4 border-warning">
+                        <p class="font-medium text-yellow-800 flex items-center">
+                            <i class="fa fa-exclamation-triangle mr-2"></i>注意事项：
+                        </p>
+                        <ul class="list-disc pl-5 text-yellow-700 mt-2 space-y-1">
+                            <li>每个邮箱地址只能注册一个账号，可以重新注册检验是否是后端数据库更新或开发者手动删除异常数据导致的数据丢失问题</li>
+                            <li>请使用您常用的邮箱进行注册，以便接收重要通知</li>
+                            <li>账号注册成功后，请及时完善个人资料以提高账号安全性</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">常见问题</h3>
+                        <div class="space-y-3">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="faq1-content">
+                                    <span>收不到开发者发送的邮件怎么办？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="faq1-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>如果没有收到邮件，请尝试以下操作：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>检查垃圾邮件/促销邮件文件夹</li>
+                                        <li>确认输入的邮箱地址是否正确</li>
+                                        <li>联系半猫诺丷单独重新发送邮件</li>
+                                        <li>如果使用企业邮箱，可能需要联系IT部门解除邮件拦截</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="faq2-content">
+                                    <span>注册时提示"邮箱已被使用"怎么办？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="faq2-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>如果提示邮箱已被使用，说明该邮箱已注册过账号，您可以：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>尝试使用"忘记密码"功能找回该邮箱对应的账号密码</li>
+                                        <li>使用其他邮箱地址重新注册</li>
+                                        <li>联系半猫诺丷核实并处理账号问题</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 登录遇到问题 -->
             <section id="login" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold flex items-center">
@@ -319,127 +417,1003 @@
                             <p class="mb-2">如果连续多次输入错误密码，账号会暂时锁定30分钟以保护安全。您可以：</p>
                             <ul class="list-disc pl-5 space-y-2">
                                 <li>等待30分钟后再尝试登录</li>
-                                <li>通过"忘记密码"功能重置密码以立即解锁</li>
-                                <li>联系客服协助解锁账号</li>
+                                <li>通过"忘记密码"功能重置密码，立即解锁账号</li>
+                                <li>锁定期间不会影响账号内的数据安全</li>
                             </ul>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl mt-6 mb-3 flex items-center">
+                        <i class="fa fa-exclamation-circle text-error mr-2"></i>其他登录问题
+                    </h3>
+                    <p>如果您遇到其他登录问题，如验证码无法显示、页面无响应等：</p>
+                    <ul class="list-disc pl-5 space-y-2 mb-6">
+                        <li>清除浏览器缓存和Cookie后重试（<kbd class="px-2 py-1 bg-gray-100 rounded text-sm">Ctrl+Shift+Delete</kbd>）</li>
+                        <li>尝试使用其他浏览器登录（推荐Chrome、Firefox、Edge最新版本）</li>
+                        <li>检查网络连接是否正常，尝试访问其他网站验证</li>
+                        <li>确认您的浏览器是否支持JavaScript并已启用</li>
+                        <li>如果问题持续，请联系半猫诺丷</li>
+                    </ul>
+
+                    <div class="flex flex-wrap gap-4 mt-8">
+                        <a href="#" target="_blank" class="inline-flex items-center px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">
+                            <i class="fa fa-qq mr-2"></i>向半猫诺丷提交反馈
+                        </a>
+                        <div class="upcoming-badge inline-flex items-center px-5 py-2 bg-gray-200 text-gray-800 rounded-lg cursor-not-allowed">
+                            <i class="fa fa-question-circle mr-2"></i>
+                            <span>查看完整登录帮助</span>
+                            <span class="ml-2 px-1.5 py-0.5 bg-gray-300 text-gray-600 text-xs rounded-full">
+                                即将上线
+                            </span>
+                            <div class="upcoming-tooltip absolute top-full left-0 mt-1 w-64 bg-white p-3 rounded-lg shadow-md border border-gray-200 text-xs">
+                                <p class="font-medium text-gray-800 mb-1">内容开发中</p>
+                                <p class="text-gray-600">将提供更详细的登录问题排查指南和常见问题解答</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 开始游戏指南 -->
+            <!-- 游戏相关 -->
             <section id="game-start" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold flex items-center">
                         <i class="fa fa-play-circle text-secondary mr-3"></i>
-                        开始游戏指南
+                        游戏指南
                     </h2>
                     <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
                         <i class="fa fa-arrow-up"></i>
                     </a>
                 </div>
                 <div class="prose max-w-none text-gray-700">
-                    <p class="mb-6">在平台上找到并开始玩喜欢的游戏非常简单，只需按照以下步骤操作：</p>
+                    <p class="mb-6">本平台提供多种类型的游戏，以下是开始游戏的详细步骤：</p>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-secondary/5 p-5 rounded-lg text-center">
-                            <div class="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="font-bold text-secondary">1</span>
-                            </div>
-                            <h3 class="font-medium mb-2">浏览游戏库</h3>
-                            <p class="text-sm">登录后，点击顶部导航栏的"游戏"进入游戏库</p>
+                    <div class="bg-gray-50 p-6 rounded-lg mb-8 border border-gray-100">
+                        <h3 class="text-xl font-semibold mb-4">开始游戏的步骤</h3>
+                        <ol class="list-decimal pl-5 space-y-4">
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 mt-1 mr-2">1.</span>
+                                <div>
+                                    <p class="font-medium">登录您的账号</p>
+                                    <p class="text-gray-600 mt-1">确保您已成功登录游戏平台账号，未登录状态下部分游戏功能可能受限</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 mt-1 mr-2">2.</span>
+                                <div>
+                                    <p class="font-medium">浏览游戏库</p>
+                                    <p class="text-gray-600 mt-1">在导航页面点击"小游戏合集"，浏览所有可用游戏，可按类型筛选</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 mt-1 mr-2">3.</span>
+                                <div>
+                                    <p class="font-medium">选择游戏</p>
+                                    <p class="text-gray-600 mt-1">点击游戏卡片进入游戏详情页，查看游戏介绍、规则和玩家评价</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="flex-shrink-0 mt-1 mr-2">4.</span>
+                                <div>
+                                    <p class="font-medium">开始游戏</p>
+                                    <p class="text-gray-600 mt-1">点击"开始游戏"按钮进入游戏界面，部分游戏会先显示简短教程</p>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-3 flex items-center">
+                                <i class="fa fa-sliders text-secondary mr-2"></i>游戏控制方式
+                            </h3>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <div>
+                                        <p class="font-medium">键盘控制</p>
+                                        <p class="text-sm text-gray-600">大部分游戏支持方向键(↑↓←→)和空格键操作</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <div>
+                                        <p class="font-medium">鼠标操作</p>
+                                        <p class="text-sm text-gray-600">点击、拖拽等交互，悬停在按钮上通常会显示提示</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <div>
+                                        <p class="font-medium">触摸屏支持</p>
+                                        <p class="text-sm text-gray-600">移动设备上可直接点击屏幕操作，体验与鼠标类似</p>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
                         
-                        <div class="bg-secondary/5 p-5 rounded-lg text-center">
-                            <div class="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="font-bold text-secondary">2</span>
-                            </div>
-                            <h3 class="font-medium mb-2">选择游戏类型</h3>
-                            <p class="text-sm">使用分类筛选器找到您感兴趣的游戏类型</p>
-                        </div>
-                        
-                        <div class="bg-secondary/5 p-5 rounded-lg text-center">
-                            <div class="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="font-bold text-secondary">3</span>
-                            </div>
-                            <h3 class="font-medium mb-2">开始游戏</h3>
-                            <p class="text-sm">点击游戏卡片上的"开始游戏"按钮即可立即游玩</p>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-3 flex items-center">
+                                <i class="fa fa-question-circle text-secondary mr-2"></i>游戏帮助入口
+                            </h3>
+                            <p class="mb-3">游戏过程中遇到问题？您可以：</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <div>
+                                        <p class="font-medium">游戏内帮助</p>
+                                        <p class="text-sm text-gray-600">点击游戏界面中的"?"按钮查看该游戏的详细帮助</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <div>
+                                        <p class="font-medium">暂停菜单</p>
+                                        <p class="text-sm text-gray-600">按ESC键或点击暂停按钮，查看操作说明和游戏设置</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <div>
+                                        <p class="font-medium">联系客服</p>
+                                        <p class="text-sm text-gray-600">复杂问题可通过帮助中心的反馈功能联系我们</p>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                     
-                    <!-- 游戏筛选器 -->
+                    <div class="bg-gradient-to-r from-green-50 to-teal-50 p-5 rounded-lg border border-green-100">
+                        <p class="font-medium flex items-center text-green-800">
+                            <i class="fa fa-lightbulb-o mr-2"></i>游戏小贴士：
+                        </p>
+                        <ul class="list-disc pl-5 text-green-700 mt-3 space-y-2">
+                            <li>首次游玩新游戏时，建议先阅读简短教程，了解基本操作和目标</li>
+                            <li>部分游戏有时间限制或步数限制，合理规划可提高成功率</li>
+                            <li>遇到困难关卡可尝试休息一下再挑战，有时换个思路就能解决</li>
+                            <li>完成游戏特定目标可获得称号，点击个人主页查看已获得的成就</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="game-save" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-save text-secondary mr-3"></i>
+                        游戏进度保存
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <p class="mb-6">本平台提供多种游戏进度保存方式，确保您的游戏成果不会丢失：</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="bg-gray-50 p-4 border-b border-gray-200">
+                                <h3 class="font-semibold text-lg flex items-center">
+                                    <i class="fa fa-clock-o text-secondary mr-2"></i>自动保存
+                                </h3>
+                            </div>
+                            <div class="p-4">
+                                <p class="mb-3">大部分游戏支持自动保存功能，特点包括：</p>
+                                <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                                    <li>关卡完成后自动保存进度</li>
+                                    <li>每隔30秒自动保存一次当前状态</li>
+                                    <li>退出游戏时自动保存最终状态</li>
+                                    <li>自动保存会覆盖上一次的自动保存记录</li>
+                                </ul>
+                                <div class="mt-4 text-sm bg-gray-50 p-3 rounded">
+                                    <p class="font-medium">提示：</p>
+                                    <p class="text-gray-600 mt-1">自动保存图标会在屏幕角落闪烁，表示正在保存</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="bg-gray-50 p-4 border-b border-gray-200">
+                                <h3 class="font-semibold text-lg flex items-center">
+                                    <i class="fa fa-floppy-o text-secondary mr-2"></i>手动保存
+                                </h3>
+                            </div>
+                            <div class="p-4">
+                                <p class="mb-3">支持手动保存的游戏，操作方式如下：</p>
+                                <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                                    <li>在游戏菜单中找到"保存游戏"选项</li>
+                                    <li>部分游戏支持多个存档位，可创建不同进度</li>
+                                    <li>手动保存不会被自动保存覆盖</li>
+                                    <li>快捷键：部分游戏支持按F5快速保存</li>
+                                </ul>
+                                <div class="mt-4 text-sm bg-gray-50 p-3 rounded">
+                                    <p class="font-medium">建议：</p>
+                                    <p class="text-gray-600 mt-1">重要关卡前手动保存，以便挑战失败时快速重试</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl font-semibold mb-4">进度同步与恢复</h3>
+                    <div class="bg-gray-50 p-5 rounded-lg mb-6">
+                        <p class="mb-3">登录账号后，您的游戏进度会自动同步到云端，特点包括：</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-white p-3 rounded border border-gray-100">
+                                <div class="flex items-center mb-2">
+                                    <i class="fa fa-laptop text-secondary mr-2"></i>
+                                    <p class="font-medium">多设备同步</p>
+                                </div>
+                                <p class="text-xs text-gray-600">在手机、电脑等不同设备登录同一账号，可继续之前的游戏进度</p>
+                            </div>
+                            <div class="bg-white p-3 rounded border border-gray-100">
+                                <div class="flex items-center mb-2">
+                                    <i class="fa fa-refresh text-secondary mr-2"></i>
+                                    <p class="font-medium">进度恢复</p>
+                                </div>
+                                <p class="text-xs text-gray-600">误删游戏或重装系统后，登录账号即可恢复之前的游戏进度</p>
+                            </div>
+                            <div class="bg-white p-3 rounded border border-gray-100">
+                                <div class="flex items-center mb-2">
+                                    <i class="fa fa-history text-secondary mr-2"></i>
+                                    <p class="font-medium">版本回溯</p>
+                                </div>
+                                <p class="text-xs text-gray-600">部分游戏支持恢复到过去7天内的任意保存点</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="mt-8">
-                        <h4 class="font-semibold mb-4">按类型筛选游戏</h4>
-                        <div class="flex flex-wrap gap-2">
-                            <button class="px-4 py-2 bg-primary text-white rounded-full text-sm hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">全部游戏</button>
-                            <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">益智类</button>
-                            <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">冒险类</button>
-                            <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">竞技类</button>
-                            <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">创意类</button>
-                            <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300 transition-colors focus:outline-none focus:focus-visible">多人游戏</button>
+                        <h3 class="text-lg font-semibold mb-4">常见问题</h3>
+                        <div class="space-y-3">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="save1-content">
+                                    <span>游戏进度丢失了怎么办？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="save1-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>如果遇到游戏进度丢失，请尝试以下方法：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>确认您登录的是正确的账号（不同账号进度不互通）</li>
+                                        <li>点击游戏内的"同步进度"按钮，手动触发云端同步</li>
+                                        <li>检查是否有手动保存的存档可以恢复</li>
+                                        <li>联系客服提供您的账号信息，我们将协助查询备份</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="save2-content">
+                                    <span>可以在多台设备上同时玩同一个存档吗？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="save2-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>不建议在多台设备上同时使用同一个存档，可能会导致：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>进度冲突，后同步的设备会覆盖先同步的进度</li>
+                                        <li>数据同步异常，可能导致部分进度丢失</li>
+                                    </ul>
+                                    <p class="mt-3 text-gray-700">建议：一台设备游玩结束并确认保存后，再在另一台设备上继续</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 社交功能详解 -->
-            <section id="social" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+            <section id="game-rules" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-book text-secondary mr-3"></i>
+                        各游戏规则说明
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <p class="mb-6">本平台提供多种类型的游戏，每种游戏都有其独特的规则和玩法。以下是主要游戏的规则说明：</p>
+                    
+                    <div class="space-y-8">
+                        <!-- 自由电子冒险 -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 border-b border-gray-200">
+                                <h3 class="text-xl font-bold flex items-center">
+                                    <i class="fa fa-rocket text-blue-500 mr-3"></i>
+                                    自由电子冒险
+                                </h3>
+                            </div>
+                            <div class="p-5">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="md:col-span-2">
+                                        <h4 class="font-semibold mb-3">游戏目标</h4>
+                                        <p class="mb-4">控制电子粒子穿越各种关卡</p>
+                                        
+                                        <h4 class="font-semibold mb-3">基本规则</h4>
+                                        <ul class="list-disc pl-5 space-y-2 mb-4">
+                                            <li>使用方向键或WASD控制电子移动</li>
+                                        </ul>
+                                        
+                                        <h4 class="font-semibold mb-3">特殊机制</h4>
+                                        <ul class="list-disc pl-5 space-y-2">
+                                            <li>Boss关卡：每5关会遇到一个Boss，需要找到其弱点才能击败</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-3">难度级别</h4>
+                                        <div class="space-y-3 mb-6">
+                                            <div class="flex items-center">
+                                                <div class="w-24 text-gray-600">简单</div>
+                                                <div class="flex-1 bg-gray-200 rounded-full h-2.5">
+                                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 30%"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="w-24 text-gray-600">中等</div>
+                                                <div class="flex-1 bg-gray-200 rounded-full h-2.5">
+                                                    <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 60%"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="w-24 text-gray-600">困难</div>
+                                                <div class="flex-1 bg-gray-200 rounded-full h-2.5">
+                                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 90%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <h4 class="font-semibold mb-3">成就称号</h4>
+                                        <ul class="space-y-2 text-sm">
+                                            <li class="flex items-center">
+                                                <i class="fa fa-trophy text-yellow-500 mr-2"></i>
+                                                <span>暂无</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 色盲派对 -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="bg-gradient-to-r from-green-50 to-teal-50 p-5 border-b border-gray-200">
+                                <h3 class="text-xl font-bold flex items-center">
+                                    <i class="fa fa-paint-brush text-green-500 mr-3"></i>
+                                    色盲派对
+                                </h3>
+                            </div>
+                            <div class="p-5">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="md:col-span-2">
+                                        <h4 class="font-semibold mb-3">游戏目标</h4>
+                                        <p class="mb-4">在限定时间内，从颜色矩阵中找出与其他颜色不同的色块，考验色彩辨别能力。</p>
+                                        
+                                        <h4 class="font-semibold mb-3">基本规则</h4>
+                                        <ul class="list-disc pl-5 space-y-2 mb-4">
+                                            <li>每关会显示多个色块，其中有一个颜色不同</li>
+                                            <li>用鼠标点击或触摸该不同色块即可完成本关</li>
+                                            <li>每关有时间限制，难度越高时间越短</li>
+                                            <li>正确找出差异色块得分，错误点击将结束游戏</li>
+                                            <li>色块总数量会不断增加</li>
+                                        </ul>
+                                        
+                                        <h4 class="font-semibold mb-3">游戏模式</h4>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">经典模式</p>
+                                                <p class="text-sm text-gray-600 mt-1">无限关卡，难度逐渐提升</p>
+                                            </div>
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">计时模式(即将上线)</p>
+                                                <p class="text-sm text-gray-600 mt-1">60秒内尽可能完成更多关卡，难度固定</p>
+                                            </div>
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">挑战模式(即将上线)</p>
+                                                <p class="text-sm text-gray-600 mt-1">特定主题的色彩挑战，如渐变色、相似色等</p>
+                                            </div>
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">双人对战(即将上线)</p>
+                                                <p class="text-sm text-gray-600 mt-1">与好友比拼，看谁能更快找出差异色块</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-3">难度特点</h4>
+                                        <div class="space-y-4 mb-6">
+                                            <div>
+                                                <p class="font-medium text-sm">初级 (1-10关)</p>
+                                                <p class="text-xs text-gray-600">颜色差异明显，时间充足</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-sm">中级 (11-30关)</p>
+                                                <p class="text-xs text-gray-600">颜色差异减小，色块数量增加，时间缩短</p>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-sm">高级 (31关以上)</p>
+                                                <p class="text-xs text-gray-600">颜色非常相似，可能包含渐变色，时间紧张</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <h4 class="font-semibold mb-3">成就称号</h4>
+                                        <ul class="space-y-2 text-sm">
+                                            <li class="flex items-center">
+                                                <i class="fa fa-trophy text-yellow-500 mr-2"></i>
+                                                <span>暂无</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 24点游戏 -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-5 border-b border-gray-200">
+                                <h3 class="text-xl font-bold flex items-center">
+                                    <i class="fa fa-calculator text-yellow-600 mr-3"></i>
+                                    24点游戏
+                                </h3>
+                            </div>
+                            <div class="p-5">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="md:col-span-2">
+                                        <h4 class="font-semibold mb-3">游戏目标</h4>
+                                        <p class="mb-4">使用给定的四个数字，通过加减乘除四则运算，使结果等于24，锻炼计算能力和反应速度。</p>
+                                        
+                                        <h4 class="font-semibold mb-3">基本规则</h4>
+                                        <ul class="list-disc pl-5 space-y-2 mb-4">
+                                            <li>每局会随机生成4个1-13之间的数字</li>
+                                            <li>必须使用所有四个数字，每个数字只能使用一次</li>
+                                            <li>可以使用加(+)、减(-)、乘(*)、除(÷)四种运算</li>
+                                            <li>可以使用括号改变运算顺序</li>
+                                            <li>在规定时间内得出正确算式即可过关</li>
+                                        </ul>
+                                        
+                                        <h4 class="font-semibold mb-3">游戏模式</h4>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">标准模式</p>
+                                                <p class="text-sm text-gray-600 mt-1">无限时间，无限关卡</p>
+                                            </div>
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">竞速模式(即将上线)</p>
+                                                <p class="text-sm text-gray-600 mt-1">不限关卡，计时挑战，越快完成得分越高</p>
+                                            </div>
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">挑战模式(即将上线)</p>
+                                                <p class="text-sm text-gray-600 mt-1">固定时间内完成尽可能多的题目，难度递增</p>
+                                            </div>
+                                            <div class="bg-gray-50 p-3 rounded">
+                                                <p class="font-medium">对战模式(即将上线)</p>
+                                                <p class="text-sm text-gray-600 mt-1">与好友比拼，相同题目谁先算出答案</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-3">示例解法</h4>
+                                        <div class="space-y-3 mb-6 bg-gray-50 p-3 rounded">
+                                            <div>
+                                                <p class="text-sm font-medium">数字：3, 3, 5, 5</p>
+                                                <p class="text-xs text-gray-600">解法：(5 * 5) - (3 ÷ 3) = 24</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium">数字：1, 5, 5, 5</p>
+                                                <p class="text-xs text-gray-600">解法：(5 - 1 ÷ 5) * 5 = 24</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium">数字：2, 3, 10, 10</p>
+                                                <p class="text-xs text-gray-600">解法：(10 - 3) * 2 + 10 = 24</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <h4 class="font-semibold mb-3">成就称号</h4>
+                                        <ul class="space-y-2 text-sm">
+                                            <li class="flex items-center">
+                                                <i class="fa fa-trophy text-yellow-500 mr-2"></i>
+                                                <span>暂无</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 社交功能 -->
+            <section id="friends" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-user-plus text-accent mr-3"></i>
+                        添加和管理好友
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <p class="mb-6">在游戏平台添加好友，可以一起玩游戏、聊天互动，共同体验游戏乐趣。以下是添加和管理好友的详细指南：</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">添加好友的方法</h3>
+                            
+                            <div class="space-y-6">
+                                <div class="bg-accent/5 p-4 rounded-lg">
+                                    <h4 class="font-medium flex items-center mb-2">
+                                        <span class="w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+                                        通过用户名搜索
+                                    </h4>
+                                    <ol class="list-decimal pl-5 text-gray-600 ml-8 space-y-2">
+                                        <li>点击导航栏的"社交"进入社交页面</li>
+                                        <li>在"好友"标签页点击"添加好友"按钮</li>
+                                        <li>在搜索框中输入对方的用户名（精确匹配）</li>
+                                        <li>在搜索结果中找到对应的用户，点击"添加好友"</li>
+                                        <li>输入验证消息（可选），点击"发送请求"</li>
+                                    </ol>
+                                </div>
+                                
+                                <div class="bg-accent/5 p-4 rounded-lg">
+                                    <h4 class="font-medium flex items-center mb-2">
+                                        <span class="w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+                                        通过游戏房间添加
+                                    </h4>
+                                    <ol class="list-decimal pl-5 text-gray-600 ml-8 space-y-2">
+                                        <li>在 multiplayer 游戏的房间中，点击玩家头像或名称</li>
+                                        <li>在弹出的菜单中选择"添加好友"选项</li>
+                                        <li>系统会自动发送好友请求，无需输入验证消息</li>
+                                    </ol>
+                                </div>
+                                
+                                <div class="bg-accent/5 p-4 rounded-lg">
+                                    <h4 class="font-medium flex items-center mb-2">
+                                        <span class="w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+                                        通过二维码添加
+                                    </h4>
+                                    <ol class="list-decimal pl-5 text-gray-600 ml-8 space-y-2">
+                                        <li>让对方打开个人主页，点击"我的二维码"</li>
+                                        <li>您在社交页面点击"扫一扫"功能</li>
+                                        <li>扫描对方的二维码，自动发送好友请求</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">好友管理功能</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-medium mb-2">好友列表分类</h4>
+                                    <ul class="list-disc pl-5 text-gray-600 space-y-1">
+                                        <li><span class="font-medium">在线好友</span>：当前正在平台上活跃的好友</li>
+                                        <li><span class="font-medium">离线好友</span>：最近未登录的好友</li>
+                                        <li><span class="font-medium">游戏中</span>：正在进行游戏的好友</li>
+                                        <li><span class="font-medium">黑名单</span>：已屏蔽的用户</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <h4 class="font-medium mb-2">好友操作</h4>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="flex items-start">
+                                            <i class="fa fa-comment text-accent mt-1 mr-2"></i>
+                                            <span class="text-sm">发起聊天</span>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <i class="fa fa-gamepad text-accent mt-1 mr-2"></i>
+                                            <span class="text-sm">邀请游戏</span>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <i class="fa fa-star-o text-accent mt-1 mr-2"></i>
+                                            <span class="text-sm">设为星标好友</span>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <i class="fa fa-user-o text-accent mt-1 mr-2"></i>
+                                            <span class="text-sm">查看资料</span>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <i class="fa fa-ban text-accent mt-1 mr-2"></i>
+                                            <span class="text-sm">加入黑名单</span>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <i class="fa fa-trash-o text-accent mt-1 mr-2"></i>
+                                            <span class="text-sm">删除好友</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-warning">
+                                    <p class="font-medium text-yellow-800 flex items-center">
+                                        <i class="fa fa-exclamation-triangle mr-2"></i>好友请求管理
+                                    </p>
+                                    <ul class="list-disc pl-5 text-yellow-700 mt-2 space-y-1">
+                                        <li>收到的好友请求会在社交页面顶部显示</li>
+                                        <li>您可以选择"接受"或"拒绝"请求</li>
+                                        <li>拒绝请求时可以选择是否发送拒绝原因</li>
+                                        <li>超过7天未处理的请求会自动过期</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">常见问题</h3>
+                        <div class="space-y-3">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="friends1-content">
+                                    <span>为什么搜索不到想要添加的好友？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="friends1-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>如果搜索不到好友，可能的原因有：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>用户名输入错误（区分大小写）</li>
+                                        <li>对方设置了"不允许通过用户名搜索"的隐私设置</li>
+                                        <li>对方账号已被封禁或注销</li>
+                                        <li>您已被对方加入黑名单</li>
+                                    </ul>
+                                    <p class="mt-3">建议：尝试通过其他方式添加，或确认用户名是否正确</p>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="friends2-content">
+                                    <span>删除好友后，对方会知道吗？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="friends2-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>删除好友后，系统不会主动通知对方，但对方可能通过以下方式发现：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>在好友列表中找不到您的账号</li>
+                                        <li>尝试向您发送消息时失败</li>
+                                        <li>无法邀请您参与游戏</li>
+                                    </ul>
+                                    <p class="mt-3">如果您想彻底阻止对方联系，可以将其加入黑名单</p>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="friends3-content">
+                                    <span>好友上限是多少？可以增加吗？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="friends3-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>当前好友上限规则：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>账号初始默认好友上限为200人</li>
+                                        <li>通过完成任务提升好友上限</li>
+                                        <li>特殊活动期间可能会临时提升上限</li>
+                                    </ul>
+                                    <p class="mt-3">目前不支持通过付费等方式单独提升好友上限</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chat" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold flex items-center">
                         <i class="fa fa-comments text-accent mr-3"></i>
-                        社交功能详解
+                        使用聊天功能
                     </h2>
                     <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
                         <i class="fa fa-arrow-up"></i>
                     </a>
                 </div>
                 <div class="prose max-w-none text-gray-700">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <p class="mb-6">聊天功能让您可以与好友实时交流，分享游戏心得，协调游戏策略。以下是聊天功能的详细使用指南：</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                         <div>
-                            <h3 class="text-xl mt-0 mb-3 flex items-center">
-                                <i class="fa fa-user-plus text-accent mr-2"></i>添加好友
+                            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                <i class="fa fa-comments-o text-accent mr-2"></i>单人聊天
                             </h3>
-                            <p class="mb-3">您可以通过以下方式添加好友：</p>
-                            <ol class="list-decimal pl-5 space-y-2 mb-4">
-                                <li>在"好友"页面使用搜索功能查找用户名</li>
-                                <li>通过游戏内的玩家列表发送好友请求(待开发)</li>
-                                <li>扫描其他玩家的个人二维码(待开发)</li>
-                                <li>接收并同意其他玩家的好友请求</li>
-                            </ol>
+                            <p class="mb-3">与单个好友进行私密聊天：</p>
+                            <ul class="list-disc pl-5 space-y-2 mb-4">
+                                <li>在好友列表中点击好友头像或名称</li>
+                                <li>在打开的聊天窗口中输入文字消息</li>
+                                <li>按Enter键或点击发送按钮发送消息</li>
+                                <li>消息发送成功后会显示"已发送"状态</li>
+                                <li>对方已读消息会显示"已读"状态</li>
+                            </ul>
                             
                             <div class="bg-accent/5 p-3 rounded-lg">
-                                <p class="text-sm font-medium">好友上限</p>
-                                <p class="text-xs text-gray-600 mt-1">暂无</p>
+                                <h4 class="font-medium text-sm mb-2">单人聊天功能</h4>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div class="flex items-center">
+                                        <i class="fa fa-smile-o text-accent mr-1"></i>
+                                        <span>表情发送</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-image text-accent mr-1"></i>
+                                        <span>图片分享</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-gamepad text-accent mr-1"></i>
+                                        <span>游戏邀请</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-file-o text-accent mr-1"></i>
+                                        <span>文件传输</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-search text-accent mr-1"></i>
+                                        <span>消息搜索</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-star-o text-accent mr-1"></i>
+                                        <span>消息收藏</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
                         <div>
-                            <h3 class="text-xl mt-0 mb-3 flex items-center">
-                                <i class="fa fa-comments-o text-accent mr-2"></i>实时聊天
+                            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                <i class="fa fa-users text-accent mr-2"></i>群组聊天
                             </h3>
-                            <p class="mb-3">与好友建立连接后，您可以：</p>
+                            <p class="mb-3">创建群组与多个好友同时聊天：</p>
                             <ul class="list-disc pl-5 space-y-2 mb-4">
-                                <li>发送文字消息进行实时交流</li>
-                                <li>分享游戏成就和进度截图(待开发)</li>
-                                <li>发送游戏邀请和组队请求(待开发)</li>
-                                <li>创建多人聊天群组(待开发)</li>
+                                <li>在社交页面点击"创建群组"按钮</li>
+                                <li>输入群组名称和简介（可选）</li>
+                                <li>从好友列表中选择群组成员</li>
+                                <li>点击"创建"完成群组建立</li>
+                                <li>群组创建者默认为群主，可管理群成员</li>
                             </ul>
                             
                             <div class="bg-accent/5 p-3 rounded-lg">
-                                <p class="text-sm font-medium">聊天功能提示</p>
-                                <p class="text-xs text-gray-600 mt-1">长按消息可进行复制等操作，支持聊天记录云端同步(举报功能待开发)</p>
+                                <h4 class="font-medium text-sm mb-2">群主管理功能</h4>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div class="flex items-center">
+                                        <i class="fa fa-user-plus text-accent mr-1"></i>
+                                        <span>添加成员</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-user-times text-accent mr-1"></i>
+                                        <span>移除成员</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-key text-accent mr-1"></i>
+                                        <span>转让群主</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-shield text-accent mr-1"></i>
+                                        <span>设置管理员</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-ban text-accent mr-1"></i>
+                                        <span>禁言成员</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fa fa-trash-o text-accent mr-1"></i>
+                                        <span>解散群组</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                <i class="fa fa-cog text-accent mr-2"></i>聊天设置
+                            </h3>
+                            <p class="mb-3">自定义您的聊天体验：</p>
+                            <ul class="list-disc pl-5 space-y-2 mb-4">
+                                <li>点击聊天窗口右上角的设置图标</li>
+                                <li>可设置消息提示方式（声音/震动）</li>
+                                <li>可设置是否接收对方的已读状态</li>
+                                <li>可设置聊天记录的保存期限</li>
+                                <li>可设置是否自动下载图片</li>
+                            </ul>
+                            
+                            <div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-warning mt-6">
+                                <h4 class="font-medium text-sm mb-2 flex items-center">
+                                    <i class="fa fa-exclamation-circle text-warning mr-1"></i>聊天礼仪与规范
+                                </h4>
+                                <ul class="text-xs text-yellow-700 space-y-1 pl-5 list-disc">
+                                    <li>禁止发送违法违规内容</li>
+                                    <li>尊重他人，文明交流</li>
+                                    <li>请勿频繁发送重复消息刷屏</li>
+                                    <li>涉及个人隐私信息请注意保护</li>
+                                    <li>遇到不当言论可举报或屏蔽</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">聊天记录管理</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium mb-3">聊天记录同步</h4>
+                                <p class="text-sm text-gray-600 mb-3">登录账号后，聊天记录会自动同步到云端，特点包括：</p>
+                                <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
+                                    <li>在不同设备登录可查看完整聊天记录</li>
+                                    <li>默认保存最近30天的聊天记录</li>
+                                    <li>重要聊天可手动设置为永久保存</li>
+                                    <li>可选择性删除单条或全部记录</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium mb-3">消息备份与恢复</h4>
+                                <p class="text-sm text-gray-600 mb-3">为防止重要消息丢失，您可以：</p>
+                                <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
+                                    <li>在聊天设置中开启"自动备份"功能</li>
+                                    <li>手动导出聊天记录为文本或PDF文件</li>
+                                    <li>账号异常时可通过备份恢复聊天记录</li>
+                                    <li>删除的重要消息可在7天内从回收站恢复</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 称号系统介绍 -->
+            <section id="teamplay" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fa fa-users text-accent mr-3"></i>
+                        组队玩游戏
+                    </h2>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
+                        <i class="fa fa-arrow-up"></i>
+                    </a>
+                </div>
+                <div class="prose max-w-none text-gray-700">
+                    <p class="mb-6">组队功能让您可以与好友一起玩多人游戏，共同挑战关卡，协作完成任务。以下是组队玩游戏的详细指南：</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">创建游戏队伍</h3>
+                            
+                            <div class="bg-accent/5 p-5 rounded-lg mb-6">
+                                <h4 class="font-medium mb-3">创建队伍的步骤</h4>
+                                <ol class="list-decimal pl-5 space-y-3">
+                                    <li>
+                                        <p>在游戏大厅或社交页面点击"创建队伍"按钮</p>
+                                    </li>
+                                    <li>
+                                        <p>选择要进行的游戏</p>
+                                        <p class="text-sm text-gray-600 mt-1">并非所有游戏都支持组队，支持组队的游戏会显示多人图标</p>
+                                    </li>
+                                    <li>
+                                        <p>设置队伍参数</p>
+                                        <ul class="list-disc pl-5 text-sm text-gray-600 mt-1">
+                                            <li>队伍名称（默认为您的用户名+的队伍）</li>
+                                            <li>队伍人数上限（根据游戏支持的最大人数）</li>
+                                            <li>是否需要密码（设置后只有知道密码的人才能加入）</li>
+                                            <li>队伍类型（公开/仅好友可见/私密）</li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <p>点击"创建"按钮完成队伍创建</p>
+                                    </li>
+                                </ol>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <h4 class="font-medium mb-3">队长权限</h4>
+                                <p class="text-sm text-gray-600 mb-3">作为队伍创建者，您拥有以下权限：</p>
+                                <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
+                                    <li>邀请其他玩家加入队伍</li>
+                                    <li>批准或拒绝申请加入队伍的请求</li>
+                                    <li>将队员移出队伍</li>
+                                    <li>设置队伍密码或更改队伍类型</li>
+                                    <li>转让队长权限给其他队员</li>
+                                    <li>解散队伍</li>
+                                    <li>开始游戏（需要所有队员准备就绪）</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">加入和管理队伍</h3>
+                            
+                            <div class="bg-accent/5 p-5 rounded-lg mb-6">
+                                <h4 class="font-medium mb-3">加入队伍的方式</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <p class="font-medium text-sm">1. 通过好友邀请</p>
+                                        <p class="text-sm text-gray-600 mt-1">收到好友的组队邀请后，点击通知中的"接受"即可加入</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-sm">2. 浏览公开队伍</p>
+                                        <p class="text-sm text-gray-600 mt-1">在游戏大厅的"组队"标签页浏览公开队伍，点击"申请加入"</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-sm">3. 通过队伍ID加入</p>
+                                        <p class="text-sm text-gray-600 mt-1">知道队伍ID的情况下，在"加入队伍"页面输入ID和密码（如果有）</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-sm">4. 通过分享链接加入</p>
+                                        <p class="text-sm text-gray-600 mt-1">点击好友分享的队伍链接，直接加入队伍（如果队伍设置允许）</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <h4 class="font-medium mb-3">队伍互动功能</h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="flex items-start">
+                                        <i class="fa fa-check-circle text-accent mt-1 mr-2"></i>
+                                        <span class="text-sm">准备/取消准备</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <i class="fa fa-comment text-accent mt-1 mr-2"></i>
+                                        <span class="text-sm">队伍聊天</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <i class="fa fa-user-plus text-accent mt-1 mr-2"></i>
+                                        <span class="text-sm">邀请好友加入</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <i class="fa fa-sign-out text-accent mt-1 mr-2"></i>
+                                        <span class="text-sm">离开队伍</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <i class="fa fa-exclamation text-accent mt-1 mr-2"></i>
+                                        <span class="text-sm">举报不良行为</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <i class="fa fa-bell text-accent mt-1 mr-2"></i>
+                                        <span class="text-sm">设置队伍通知</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">常见问题</h3>
+                        <div class="space-y-3">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="team1-content">
+                                    <span>为什么无法邀请好友加入队伍？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="team1-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>无法邀请好友加入队伍可能的原因：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>对方正在其他队伍中或正在进行游戏</li>
+                                        <li>对方设置了"不接收组队邀请"的隐私选项</li>
+                                        <li>您的队伍人数已达到上限</li>
+                                        <li>对方未安装该游戏或游戏版本不兼容</li>
+                                        <li>网络连接问题导致邀请发送失败</li>
+                                    </ul>
+                                    <p class="mt-3">建议：尝试通过聊天功能告知好友，让其主动申请加入</p>
+                                </div>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <button class="faq-toggle w-full flex justify-between items-center p-4 text-left bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:focus-visible" aria-expanded="false" aria-controls="team2-content">
+                                    <span>组队游戏时，队友中途退出会有什么影响？</span>
+                                    <i class="fa fa-chevron-down text-gray-500 transition-transform"></i>
+                                </button>
+                                <div id="team2-content" class="hidden p-4 pt-0 border-t border-gray-100">
+                                    <p>队友中途退出的影响取决于游戏类型：</p>
+                                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">
+                                        <li>合作闯关类游戏：可能导致关卡难度增加或任务失败</li>
+                                        <li>竞技对抗类游戏：系统可能会匹配新玩家加入，或按现有人数继续</li>
+                                        <li>回合制游戏：通常会等待一段时间，若未回归则按弃权处理</li>
+                                    </ul>
+                                    <p class="mt-3">中途退出的玩家可能会受到惩罚，如短时间内无法加入新队伍</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 称号系统 -->
             <section id="titles-overview" class="bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold flex items-center">
-                        <i class="fa fa-trophy text-warning mr-3"></i>
-                        称号系统介绍
+                        <i class="fa fa-trophy text-yellow-500 mr-3"></i>
+                        称号系统说明
                     </h2>
                     <a href="#" class="text-gray-400 hover:text-primary transition-colors focus:outline-none focus:focus-visible" aria-label="回到顶部">
                         <i class="fa fa-arrow-up"></i>
@@ -462,11 +1436,31 @@
                         
                         <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
                             <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fa fa-users text-primary"></i>
+                                <i class="fa fa-calendar-check-o text-primary"></i>
                             </div>
                             <div class="ml-3">
-                                <p class="font-medium">邀请好友</p>
-                                <p class="text-sm text-gray-600">邀请指定数量的新用户加入平台</p>
+                                <p class="font-medium">累计登录</p>
+                                <p class="text-sm text-gray-600">累计登录达到一定天数，连续登录可获得稀有称号</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa fa-gift text-primary"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium">平台活动</p>
+                                <p class="text-sm text-gray-600">参与平台限时活动和节日活动</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa fa-user-plus text-primary"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium">管理员添加</p>
+                                <p class="text-sm text-gray-600">半猫诺丷为您设计的专属称号</p>
                             </div>
                         </div>
                     </div>
@@ -478,12 +1472,78 @@
                         <p class="font-medium flex items-center">
                             <i class="fa fa-lightbulb-o text-yellow-500 mr-2"></i>小贴士：
                         </p>
-                        <p class="mt-2">点击个人主页的称号可以查看该称号的获取条件和稀有度！部分称号有等级区分，等级越高展示效果越华丽。</p>
+                        <p class="mt-2">点击个人主页的称号可以查看该称号的获取条件和稀有度！</p>
+                    </div>
+
+                    <div class="mt-8">
+                        <h4 class="font-semibold mb-3">热门称号预览</h4>
+                        <div class="flex overflow-x-auto pb-4 gap-4">
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-star text-2xl text-yellow-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">初心者</p>
+                                <p class="text-xs text-gray-500">稀有度：初始</p>
+                            </div>
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-blue-200 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-calendar text-2xl text-blue-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">热爱者</p>
+                                <p class="text-xs text-gray-500">稀有度：普通</p>
+                            </div>
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-trophy text-2xl text-purple-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">冠军玩家</p>
+                                <p class="text-xs text-gray-500">稀有度：特定</p>
+                            </div>
+                            <div class="flex-shrink-0 w-32 text-center">
+                                <div class="w-16 h-16 bg-gradient-to-br from-red-200 to-red-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <i class="fa fa-diamond text-2xl text-red-700"></i>
+                                </div>
+                                <p class="font-medium text-sm">自由电子</p>
+                                <p class="text-xs text-gray-500">稀有度：专属</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-10 bg-gray-50 p-5 rounded-lg border border-gray-200">
+                        <h4 class="font-semibold mb-3 flex items-center text-gray-700">
+                            <i class="fa fa-clock-o text-gray-500 mr-2"></i>即将推出的称号功能
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+                                <div>
+                                    <p class="font-medium">称号佩戴系统</p>
+                                    <p class="text-sm text-gray-600">从已获得的称号中选择一个展示在个人主页，彰显您的游戏成就</p>
+                                    <p class="text-xs text-gray-500 mt-1">预计上线时间：2024年12月</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+                                <div>
+                                    <p class="font-medium">称号分享功能</p>
+                                    <p class="text-sm text-gray-600">将您获得的稀有称号分享到社交平台，向好友展示您的游戏实力</p>
+                                    <p class="text-xs text-gray-500 mt-1">预计上线时间：2025年1月</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+                                <div>
+                                    <p class="font-medium">称号合成系统</p>
+                                    <p class="text-sm text-gray-600">收集多个普通称号，合成更稀有的高级称号，解锁特殊权益</p>
+                                    <p class="text-xs text-gray-500 mt-1">预计上线时间：2025年2月</p>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </section>
 
-            <!-- 反馈与建议 -->
+            <!-- 反馈建议 -->
             <section class="mt-12 sm:mt-16 bg-white rounded-xl shadow-md p-6 sm:p-8 section-fade">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold flex items-center">
@@ -498,30 +1558,64 @@
                 
                 <form id="feedbackForm" class="max-w-2xl">
                     <div class="mb-5">
-                        <label for="feedbackType" class="block text-sm font-medium text-gray-700 mb-1">反馈类型</label>
-                        <select id="feedbackType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all">
-                            <option value="problem">功能问题</option>
+                        <label for="feedbackType" class="block text-gray-700 mb-2 font-medium">反馈类型 <span class="text-error">*</span></label>
+                        <select id="feedbackType" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:focus-visible transition-all" required>
+                            <option value="" disabled selected>请选择反馈类型</option>
+                            <option value="question">我有疑问</option>
+                            <option value="bug">报告bug</option>
                             <option value="suggestion">功能建议</option>
-                            <option value="bug">bug反馈</option>
+                            <option value="praise">表扬与鼓励</option>
                             <option value="other">其他问题</option>
                         </select>
                     </div>
                     
                     <div class="mb-5">
-                        <label for="feedbackContent" class="block text-sm font-medium text-gray-700 mb-1">反馈内容</label>
-                        <textarea id="feedbackContent" rows="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all" placeholder="请详细描述您遇到的问题或建议..."></textarea>
-                        <div class="flex justify-between mt-1">
-                            <span id="charCount" class="text-xs text-gray-500">0/500</span>
-                            <span id="contentError" class="text-xs text-error hidden">请输入反馈内容（至少10个字符）</span>
+                        <label for="feedbackContent" class="block text-gray-700 mb-2 font-medium">详细内容 <span class="text-error">*</span></label>
+                        <textarea id="feedbackContent" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:focus-visible transition-all resize-none" placeholder="请详细描述您的反馈... 例如：我在登录时遇到了XX问题，具体表现为..." required></textarea>
+                        <div class="flex justify-between items-center mt-1">
+                            <p id="charCount" class="text-sm text-gray-500">0/500</p>
+                            <p id="contentError" class="text-sm text-error hidden">请输入至少10个字符的反馈内容</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 上传截图 -->
+                    <div class="mb-5">
+                        <label class="block text-gray-700 mb-2 font-medium">上传截图（可选）</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                            <i class="fa fa-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600 mb-3">拖放图片到此处，或点击选择文件</p>
+                            <label class="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm transition-colors cursor-pointer focus:outline-none focus:focus-visible">
+                                <i class="fa fa-file-image-o mr-1"></i>选择图片
+                                <input type="file" accept="image/*" multiple class="hidden">
+                            </label>
+                            <p class="text-xs text-gray-500 mt-3">支持JPG、PNG格式，单张不超过5MB，最多上传3张</p>
                         </div>
                     </div>
                     
                     <div class="mb-6">
-                        <label for="feedbackContact" class="block text-sm font-medium text-gray-700 mb-1">联系方式（选填）</label>
-                        <input type="text" id="feedbackContact" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all" placeholder="请输入邮箱或手机号，方便我们联系您">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2 h-4 w-4 text-primary focus:ring-primary/50 rounded" id="receiveReply">
+                            <span class="text-gray-700">愿意接收我们的回复（会发送到您的账号消息中心）</span>
+                        </label>
                     </div>
                     
-                    <button type="submit" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:focus-visible">提交反馈</button>
+                    <div class="flex items-center">
+                        <button type="submit" id="submitFeedback" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-colors font-medium flex items-center focus:outline-none focus:focus-visible">
+                            <span>提交反馈</span>
+                            <i class="fa fa-paper-plane ml-2"></i>
+                        </button>
+                        <div id="feedbackLoading" class="hidden ml-4">
+                            <div class="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full loading-spinner"></div>
+                        </div>
+                        <div id="feedbackSuccess" class="hidden ml-4 text-success">
+                            <i class="fa fa-check-circle"></i>
+                            <span class="ml-1">提交成功！</span>
+                        </div>
+                        <div id="feedbackError" class="hidden ml-4 text-error">
+                            <i class="fa fa-exclamation-circle"></i>
+                            <span class="ml-1">提交失败，请重试</span>
+                        </div>
+                    </div>
                 </form>
             </section>
         </div>
@@ -532,332 +1626,321 @@
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
-                    <h3 class="text-lg font-bold mb-4 flex items-center">
-                        <i class="fa fa-gamepad mr-2"></i>游戏平台
-                    </h3>
-                    <p class="text-gray-400 text-sm">提供丰富的在线游戏和社交体验，让您在游戏中结交朋友，共同探索游戏世界。</p>
-                </div>
-                
-                <div>
-                    <h3 class="text-lg font-bold mb-4">快速链接</h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="#" class="hover:text-white transition-colors">关于我们</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">用户协议</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">隐私政策</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">联系我们</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h3 class="text-lg font-bold mb-4">关注我们</h3>
+                    <h3 class="text-xl font-bold mb-4">游戏平台</h3>
+                    <p class="text-gray-400 mb-4">让游戏连接你我，创造快乐时光</p>
                     <div class="flex space-x-4">
-                        <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary transition-colors" aria-label="微信">
-                            <i class="fa fa-weixin"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary transition-colors" aria-label="微博">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl" aria-label="官方微博">
                             <i class="fa fa-weibo"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-primary transition-colors" aria-label="QQ">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl hover-lift" aria-label="官方微信">
+                            <i class="fa fa-weixin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl hover-lift" aria-label="官方QQ">
                             <i class="fa fa-qq"></i>
                         </a>
                     </div>
                 </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">快速链接</h3>
+                    <ul class="space-y-2">
+                        <li><a href="indexdaohang.html" class="text-gray-400 hover:text-white transition-colors hover-lift">导航页面</a></li>
+                        <li><a href="24gameinformation.html" class="text-gray-400 hover:text-white transition-colors hover-lift">小游戏合集</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors hover-lift">最新活动</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors hover-lift">关于我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors hover-lift">用户协议</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors hover-lift">隐私政策</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">联系我们</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fa fa-envelope text-gray-400 mt-1 mr-3"></i>
+                            <span class="text-gray-400">3668417644@qq.com</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-user text-gray-400 mt-1 mr-3"></i>
+                            <span class="text-gray-400">在线客服：一般于每日 9:00-22:00</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-comment text-gray-400 mt-1 mr-3"></i>
+                            <span class="text-gray-400">反馈建议：3668417644@qq.com</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
             
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400 text-sm">
-                <p>© 2025 游戏平台 版权所有 | 半猫诺丷</p>
-                <p class="mt-2">健康游戏忠告：适度游戏益脑，沉迷游戏伤身，合理安排时间，享受健康生活</p>
+            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500 text-sm mb-4 md:mb-0">© 2025 游戏平台 版权所有</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-300 text-sm transition-colors hover-lift">用户协议</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-300 text-sm transition-colors hover-lift">隐私政策</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-300 text-sm transition-colors hover-lift">未成年人保护</a>
+                </div>
             </div>
         </div>
     </footer>
 
-    <!-- 返回顶部按钮 -->
-    <button id="backToTop" class="fixed bottom-6 right-6 bg-primary text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center opacity-0 invisible transition-all duration-300 hover:bg-primary/90 focus:outline-none focus:focus-visible z-50" aria-label="返回顶部">
-        <i class="fa fa-arrow-up"></i>
-    </button>
-
+    <!-- JavaScript -->
     <script>
-        // 页面加载进度条
-        window.addEventListener('load', () => {
-            document.getElementById('progressBar').style.width = '100%';
+        // 导航栏加载模拟
+        document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
-                document.getElementById('pageLoader').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('pageLoader').style.display = 'none';
-                }, 300);
-            }, 300);
-            
-            // 显示动画元素
-            setTimeout(() => {
-                document.querySelectorAll('.section-fade').forEach((section, index) => {
-                    setTimeout(() => {
-                        section.classList.add('section-visible');
-                    }, index * 100);
+                const navbarLoading = document.getElementById('navbarLoading');
+                const navbarContainer = document.createElement('div');
+                navbarContainer.className = 'container mx-auto px-4 flex justify-between items-center w-full';
+                
+                navbarContainer.innerHTML = `
+                    <a href="#" class="text-xl font-bold text-primary flex items-center">
+                        <i class="fa fa-gamepad mr-2"></i>
+                        <span>TheNuo</span>
+                    </a>
+                    
+                    <nav class="hidden md:flex space-x-8">
+                        <a href="indexdaohang.html" class="text-gray-600 hover:text-primary transition-colors">导航页面</a>
+                        <a href="24gameinformation.html" class="text-gray-600 hover:text-primary transition-colors">小游戏合集</a>
+                        <a href="friends.html" class="text-gray-600 hover:text-primary transition-colors">社交</a>
+                        <a href="#" class="text-primary font-medium">帮助中心</a>
+                    </nav>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button class="hidden md:block text-gray-600 hover:text-primary transition-colors" aria-label="通知">
+                            <i class="fa fa-bell text-lg"></i>
+                        </button>
+                        <div class="relative">
+                            <img src="https://picsum.photos/id/64/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover border-2 border-gray-200">
+                        </div>
+                        <button class="md:hidden text-gray-600" aria-label="菜单">
+                            <i class="fa fa-bars text-xl"></i>
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('navbar').replaceChild(navbarContainer, navbarLoading);
+                
+                // 滚动时导航栏效果
+                const navbar = document.getElementById('navbar');
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 50) {
+                        navbar.classList.add('shadow-md');
+                        navbar.classList.remove('shadow-sm');
+                    } else {
+                        navbar.classList.remove('shadow-md');
+                        navbar.classList.add('shadow-sm');
+                    }
                 });
-            }, 100);
+            }, 1000);
         });
 
-        // 移动端菜单事件
-        const mobileMenuButton = document.getElementById('mobileMenuButton');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        mobileMenuButton.addEventListener('click', () => {
-            const isHidden = mobileMenu.classList.contains('hidden');
-            mobileMenu.classList.toggle('hidden', !isHidden);
-            mobileMenuButton.innerHTML = isHidden ? 
-                '<i class="fa fa-times text-xl"></i>' : 
-                '<i class="fa fa-bars text-xl"></i>';
-            mobileMenuButton.setAttribute('aria-label', isHidden ? '关闭菜单' : '打开菜单');
-        });
-
-        // 帮助内容数据，用于搜索功能
-        const helpContent = [
-            { id: 'register', title: '账号疑似丢失', category: '账号与登录', content: '无法登录账号或账号信息异常等问题' },
-            { id: 'login', title: '登录遇到问题', category: '账号与登录', content: '解决登录失败、密码错误、账号锁定等问题' },
-            { id: 'profile', title: '修改个人资料(待开发)', category: '账号与登录', content: '如何更改个人信息、头像、密码等' },
-            { id: 'game-start', title: '开始游戏指南', category: '游戏相关', content: '如何找到并开始玩喜欢的游戏' },
-            { id: 'game-save', title: '游戏进度保存', category: '游戏相关', content: '游戏进度自动保存和手动保存的方法' },
-            { id: 'game-rules', title: '各游戏规则说明', category: '游戏相关', content: '平台上各类游戏的规则和玩法说明' },
-            { id: 'friends', title: '添加和管理好友', category: '社交功能', content: '如何查找、添加和管理游戏好友' },
-            { id: 'chat', title: '使用聊天功能', content: '如何与好友进行实时聊天和互动', category: '社交功能' },
-            { id: 'teamplay', title: '组队玩游戏', category: '社交功能', content: '如何邀请好友组队参与游戏' },
-            { id: 'titles', title: '称号系统说明', category: '成就系统', content: '如何获取和展示游戏称号和成就' },
-        ];
-
-        // 搜索功能实现
+        // 搜索功能
         const searchInput = document.getElementById('searchHelp');
         const searchButton = document.getElementById('searchButton');
-        const clearSearchButton = document.getElementById('clearSearch');
+        const clearSearch = document.getElementById('clearSearch');
         const searchResults = document.getElementById('searchResults');
-        const resultsList = document.getElementById('resultsList');
         const searchLoading = document.getElementById('searchLoading');
         const searchNoResults = document.getElementById('searchNoResults');
+        const resultsList = document.getElementById('resultsList');
         const searchSuggestions = document.getElementById('searchSuggestions');
-        
-        // 显示/隐藏清除按钮
-        function toggleClearButton() {
-            if (searchInput.value.length > 0) {
-                clearSearchButton.classList.remove('hidden');
-            } else {
-                clearSearchButton.classList.add('hidden');
-                searchResults.classList.remove('active');
-            }
-        }
-        
-        // 清除搜索内容
-        clearSearchButton.addEventListener('click', () => {
-            searchInput.value = '';
-            toggleClearButton();
-            resultsList.innerHTML = '';
-            searchResults.classList.remove('active');
-            searchSuggestions.classList.remove('hidden');
-            searchInput.focus();
-        });
-        
-        // 执行搜索的函数
-        function performSearch() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            toggleClearButton();
-            
-            if (searchTerm.length < 2) {
-                searchResults.classList.remove('active');
-                resultsList.innerHTML = '';
-                searchNoResults.classList.add('hidden');
-                
-                // 显示搜索建议
-                if (searchTerm.length === 0) {
-                    searchSuggestions.classList.remove('hidden');
-                }
-                return;
-            }
-            
-            // 隐藏搜索建议
-            searchSuggestions.classList.add('hidden');
-            
-            // 显示加载状态
-            searchLoading.classList.remove('hidden');
-            searchNoResults.classList.add('hidden');
-            resultsList.innerHTML = '';
-            
-            // 模拟搜索延迟
-            setTimeout(() => {
-                // 高级搜索算法：根据匹配位置和数量计算分数
-                const matches = helpContent.map(item => {
-                    let score = 0;
-                    
-                    // 标题匹配得分最高
-                    if (item.title.toLowerCase().includes(searchTerm)) {
-                        score += 3;
-                        // 完全匹配标题得分更高
-                        if (item.title.toLowerCase() === searchTerm) {
-                            score += 5;
-                        }
-                    }
-                    
-                    // 内容匹配得分次之
-                    if (item.content.toLowerCase().includes(searchTerm)) {
-                        score += 2;
-                    }
-                    
-                    // 分类匹配得分最低
-                    if (item.category.toLowerCase().includes(searchTerm)) {
-                        score += 1;
-                    }
-                    
-                    return { ...item, score };
-                }).filter(item => item.score > 0)
-                  .sort((a, b) => b.score - a.score);
-                
-                // 隐藏加载状态
-                searchLoading.classList.add('hidden');
-                
-                if (matches.length > 0) {
-                    // 显示搜索结果
-                    searchResults.classList.add('active');
-                    searchNoResults.classList.add('hidden');
-                    
-                    // 生成搜索结果HTML
-                    matches.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = 'p-3 hover:bg-gray-50 rounded-md transition-colors';
-                        li.innerHTML = `
-                            <a href="#${item.id}" class="block">
-                                <div class="font-medium text-gray-900">${highlightMatch(item.title, searchTerm)}</div>
-                                <div class="text-sm text-gray-500 mt-1">${highlightMatch(item.content, searchTerm)}</div>
-                                <div class="text-xs text-gray-400 mt-1">${item.category}</div>
-                            </a>
-                        `;
-                        resultsList.appendChild(li);
-                    });
-                } else {
-                    // 没有找到结果
-                    searchResults.classList.add('active');
-                    searchNoResults.classList.remove('hidden');
-                }
-            }, 300); // 模拟网络延迟
-        }
-        
-        // 高亮搜索匹配的文本
-        function highlightMatch(text, term) {
-            if (!term) return text;
-            const regex = new RegExp(`(${term})`, 'gi');
-            return text.replace(regex, '<span class="bg-yellow-200">$1</span>');
-        }
-        
-        // 搜索事件监听
-        searchInput.addEventListener('input', performSearch);
-        searchButton.addEventListener('click', performSearch);
+
+        // 搜索建议显示
         searchInput.addEventListener('focus', () => {
-            if (searchInput.value.trim().length >= 2) {
-                performSearch();
-            } else if (searchInput.value.trim().length === 0) {
+            if (searchInput.value.trim() === '') {
                 searchSuggestions.classList.remove('hidden');
             }
         });
-        searchInput.addEventListener('blur', () => {
-            // 延迟隐藏，以便点击搜索结果
-            setTimeout(() => {
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
                 searchSuggestions.classList.add('hidden');
-            }, 200);
+            }
         });
-        
-        // 点击页面其他区域关闭搜索结果
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && 
-                !searchResults.contains(e.target) && 
-                !searchButton.contains(e.target) &&
-                !clearSearchButton.contains(e.target)) {
+
+        // 清除搜索
+        clearSearch.addEventListener('click', () => {
+            searchInput.value = '';
+            clearSearch.classList.add('hidden');
+            searchResults.classList.remove('active');
+        });
+
+        searchInput.addEventListener('input', () => {
+            if (searchInput.value.trim() !== '') {
+                clearSearch.classList.remove('hidden');
+            } else {
+                clearSearch.classList.add('hidden');
                 searchResults.classList.remove('active');
             }
         });
 
-        // 返回顶部按钮功能
-        const backToTopButton = document.getElementById('backToTop');
-        
-        window.addEventListener('scroll', () => {
-            // 滚动超过500px时显示返回顶部按钮
-            if (window.pageYOffset > 500) {
-                backToTopButton.classList.remove('opacity-0', 'invisible');
-                backToTopButton.classList.add('opacity-100', 'visible');
-            } else {
-                backToTopButton.classList.remove('opacity-100', 'visible');
-                backToTopButton.classList.add('opacity-0', 'invisible');
+        // 执行搜索
+        function performSearch() {
+            const query = searchInput.value.trim().toLowerCase();
+            if (query === '') return;
+
+            searchResults.classList.add('active');
+            searchLoading.classList.remove('hidden');
+            searchNoResults.classList.add('hidden');
+            resultsList.innerHTML = '';
+
+            // 模拟搜索延迟
+            setTimeout(() => {
+                searchLoading.classList.add('hidden');
+                
+                // 搜索数据
+                const helpTopics = [
+                    { id: 'register', title: '账号丢失问题', category: '账号与登录' },
+                    { id: 'login', title: '登录遇到问题', category: '账号与登录' },
+                    { id: 'game-start', title: '游戏指南', category: '游戏相关' },
+                    { id: 'game-save', title: '游戏进度保存', category: '游戏相关' },
+                    { id: 'game-rules', title: '各游戏规则说明', category: '游戏相关' },
+                    { id: 'friends', title: '添加和管理好友', category: '社交功能' },
+                    { id: 'chat', title: '使用聊天功能', category: '社交功能' },
+                    { id: 'teamplay', title: '组队玩游戏', category: '社交功能' },
+                    { id: 'titles-overview', title: '称号系统说明', category: '称号系统' }
+                ];
+
+                // 过滤结果
+                const filteredResults = helpTopics.filter(topic => 
+                    topic.title.toLowerCase().includes(query) || 
+                    topic.category.toLowerCase().includes(query)
+                );
+
+                if (filteredResults.length > 0) {
+                    filteredResults.forEach(topic => {
+                        const li = document.createElement('li');
+                        li.className = 'p-3 hover:bg-gray-50 rounded cursor-pointer transition-colors';
+                        li.innerHTML = `
+                            <a href="#${topic.id}" class="block">
+                                <p class="font-medium">${topic.title}</p>
+                                <p class="text-xs text-gray-500 mt-1">${topic.category}</p>
+                            </a>
+                        `;
+                        resultsList.appendChild(li);
+                        
+                        // 点击结果后关闭搜索面板
+                        li.addEventListener('click', () => {
+                            searchResults.classList.remove('active');
+                        });
+                    });
+                } else {
+                    searchNoResults.classList.remove('hidden');
+                }
+            }, 800);
+        }
+
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
             }
         });
-        
-        backToTopButton.addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-        
-        // 平滑滚动到锚点
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                const targetId = this.getAttribute('href');
+
+        // FAQ 折叠功能
+        const faqToggles = document.querySelectorAll('.faq-toggle');
+        faqToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const content = document.getElementById(toggle.getAttribute('aria-controls'));
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
                 
-                // 如果是回到顶部链接，不阻止默认行为
-                if (targetId === '#') return;
+                toggle.setAttribute('aria-expanded', !isExpanded);
+                toggle.querySelector('i').style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
                 
-                e.preventDefault();
-                const targetElement = document.querySelector(targetId);
-                
-                if (targetElement) {
-                    // 关闭搜索结果
-                    searchResults.classList.remove('active');
-                    
-                    // 平滑滚动到目标位置
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 80, // 考虑固定导航栏高度
-                        behavior: 'smooth'
-                    });
-                    
-                    // 在移动设备上点击导航后关闭菜单
-                    if (window.innerWidth < 768 && !mobileMenu.classList.contains('hidden')) {
-                        mobileMenu.classList.add('hidden');
-                        mobileMenuButton.innerHTML = '<i class="fa fa-bars text-xl"></i>';
-                        mobileMenuButton.setAttribute('aria-label', '打开菜单');
-                    }
+                if (isExpanded) {
+                    content.classList.add('hidden');
+                } else {
+                    content.classList.remove('hidden');
                 }
             });
         });
 
-        // 反馈表单字符计数与验证
+        // 字符计数
         const feedbackContent = document.getElementById('feedbackContent');
         const charCount = document.getElementById('charCount');
         const contentError = document.getElementById('contentError');
-        
-        if (feedbackContent) {
-            feedbackContent.addEventListener('input', () => {
-                const length = feedbackContent.value.length;
-                charCount.textContent = `${length}/500`;
-                
-                // 字符数限制
-                if (length > 500) {
-                    feedbackContent.value = feedbackContent.value.substring(0, 500);
-                    charCount.textContent = '500/500';
-                }
-            });
+
+        feedbackContent.addEventListener('input', () => {
+            const length = feedbackContent.value.length;
+            charCount.textContent = `${length}/500`;
             
-            // 表单提交验证
-            document.getElementById('feedbackForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                if (feedbackContent.value.length < 10) {
-                    contentError.classList.remove('hidden');
-                    feedbackContent.focus();
-                    return;
-                }
-                
+            // 检查内容长度
+            if (length > 0 && length < 10) {
+                contentError.classList.remove('hidden');
+            } else {
                 contentError.classList.add('hidden');
+            }
+            
+            // 限制最大长度
+            if (length > 500) {
+                feedbackContent.value = feedbackContent.value.substring(0, 500);
+                charCount.textContent = '500/500';
+            }
+        });
+
+        // 表单提交
+        const feedbackForm = document.getElementById('feedbackForm');
+        const submitFeedback = document.getElementById('submitFeedback');
+        const feedbackLoading = document.getElementById('feedbackLoading');
+        const feedbackSuccess = document.getElementById('feedbackSuccess');
+        const feedbackError = document.getElementById('feedbackError');
+
+        feedbackForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const content = feedbackContent.value.trim();
+            if (content.length < 10) {
+                contentError.classList.remove('hidden');
+                return;
+            }
+            
+            // 显示加载状态
+            submitFeedback.disabled = true;
+            feedbackLoading.classList.remove('hidden');
+            feedbackSuccess.classList.add('hidden');
+            feedbackError.classList.add('hidden');
+            
+            // 模拟提交
+            setTimeout(() => {
+                const success = Math.random() > 0.2; // 80% 成功率
                 
-                // 模拟表单提交
-                alert('感谢您的反馈！我们会尽快处理您的建议。');
-                document.getElementById('feedbackForm').reset();
-                charCount.textContent = '0/500';
+                feedbackLoading.classList.add('hidden');
+                
+                if (success) {
+                    feedbackSuccess.classList.remove('hidden');
+                    feedbackForm.reset();
+                    charCount.textContent = '0/500';
+                    
+                    // 3秒后隐藏成功提示
+                    setTimeout(() => {
+                        feedbackSuccess.classList.add('hidden');
+                        submitFeedback.disabled = false;
+                    }, 3000);
+                } else {
+                    feedbackError.classList.remove('hidden');
+                    submitFeedback.disabled = false;
+                }
+            }, 1500);
+        });
+
+        // 滚动动画
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('section-visible');
+                    observer.unobserve(entry.target);
+                }
             });
-        }
+        }, observerOptions);
+
+        document.querySelectorAll('.section-fade').forEach(section => {
+            observer.observe(section);
+        });
     </script>
 </body>
 </html>
