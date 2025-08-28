@@ -778,8 +778,10 @@
                 const userInfo = JSON.parse(userInfoStr);
                 
                 // 严格检查必要信息
-                if (!userInfo.id || !userInfo.token) {
+                if (!userInfo.username || !userInfo.token) {
                     throw new Error('用户信息不完整');
+                    if (!userInfo.username) throw new Error('用户信息不完整: 缺少username');
+                    if (!userInfo.token) throw new Error('用户信息不完整: 缺少token');
                 }
                 
                 // 已登录，初始化
