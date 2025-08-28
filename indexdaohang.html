@@ -725,7 +725,7 @@
             }
         }
 
-        // 修正：使用userId替代_id进行用户身份验证
+        // 修改为使用username作为用户标识
         function checkLoginStatus() {
             const userInfoStr = localStorage.getItem('mainUserInfo');
             console.log("读取到的用户信息：", userInfoStr);
@@ -744,14 +744,14 @@
                     throw new Error("用户信息格式错误，请重新登录");
                 }
         
-                // 核心修改：将_id改为userId
-                const requiredFields = ['userId', 'loginTime'];
+                // 核心修改：使用username作为必填字段
+                const requiredFields = ['username', 'loginTime'];
                 const missingFields = requiredFields.filter(field => !userInfo[field]);
         
                 if (missingFields.length > 0) {
-                    // 核心修改：检查userId而不是_id
-                    if (missingFields.includes('userId')) {
-                        throw new Error("用户身份信息不完整，缺少用户ID，请重新登录");
+                    // 核心修改：检查username是否存在
+                    if (missingFields.includes('username')) {
+                        throw new Error("用户身份信息不完整，缺少用户名，请重新登录");
                     } else {
                         throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}，请重新登录`);
                     }
@@ -770,7 +770,7 @@
         
                 updateUserDisplay(userInfo);
                 loadUserTitles(userInfo);
-                checkUserIdValidity(userInfo);
+                checkUserValidity(userInfo);
                 
             } catch (err) {
                 console.error("用户信息解析失败：", err);
@@ -779,12 +779,12 @@
             }
         }
 
-        // 修正：使用userId验证
-        async function checkUserIdValidity(userInfo) {
+        // 修改为使用username验证用户有效性
+        async function checkUserValidity(userInfo) {
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
             if (isLocalDev) {
-                console.log('本地开发模式，跳过userId验证');
+                console.log('本地开发模式，跳过用户验证');
                 return;
             }
             
@@ -792,11 +792,11 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-                // 核心修改：使用userId
-                const response = await fetch('/.netlify/functions/verifyUserId', {
+                // 核心修改：使用username作为验证标识
+                const response = await fetch('/.netlify/functions/verifyUser', {
                     method: 'POST',
                     headers: {
-                        'X-User-Id': userInfo.userId,
+                        'X-Username': userInfo.username,
                         'Content-Type': 'application/json'
                     },
                     signal: controller.signal
@@ -817,7 +817,7 @@
                     localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
                 }
             } catch (error) {
-                console.error('用户ID验证失败:', error);
+                console.error('用户验证失败:', error);
                 if (error.name !== 'AbortError') {
                     showNotification(error.message, 'error');
                     setTimeout(() => {
@@ -926,11 +926,11 @@
             }
         }
     
-        // 修正：检查userId存在性
+        // 修改为使用username检查用户信息完整性
         function saveAvatar() {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            // 核心修改：检查userId而不是_id
-            if (!userInfo.userId) {
+            // 核心修改：检查username是否存在
+            if (!userInfo.username) {
                 showNotification('用户信息不完整，请重新登录', 'error');
                 return;
             }
@@ -948,11 +948,11 @@
             closeProfileModal();
         }
 
-        // 修正：使用userId
+        // 修改为使用username保存用户信息
         async function saveUserInfoToServer(userData) {
-            // 核心修改：检查userId而不是_id
-            if (!userData.userId) {
-                console.error('保存失败：缺少用户ID');
+            // 核心修改：检查username是否存在
+            if (!userData.username) {
+                console.error('保存失败：缺少用户名');
                 return;
             }
             
@@ -989,11 +989,11 @@
             }
         }
 
-        // 修正：使用userId进行权限检查
+        // 修改为使用username进行权限检查
         function navigateTo(url, requiredRole = 'user') {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            // 核心修改：检查userId而不是_id
-            if (!userInfo.userId) {
+            // 核心修改：检查username是否存在
+            if (!userInfo.username) {
                 showNotification('请先登录', 'error');
                 setTimeout(() => {
                     window.location.href = 'indexlo.html';
@@ -1036,10 +1036,10 @@
             }, 3000);
         }
 
-        // 修正：使用userId作为唯一键
+        // 修改为使用username作为唯一键
         function loadUserTitles(userInfo) {
-            // 核心修改：使用userId作为键
-            const uniqueKey = `userTitles_${userInfo.userId}`;
+            // 核心修改：使用username作为键
+            const uniqueKey = `userTitles_${userInfo.username}`;
             const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
             
             if (userTitles.length === 0) {
@@ -1053,11 +1053,11 @@
             }
         }
 
-        // 修正：使用userId获取称号
+        // 修改为使用username获取用户称号
         async function fetchUserTitlesFromServer(userInfo) {
-            // 核心修改：检查userId而不是_id
-            if (!userInfo.userId) {
-                console.error('获取称号失败：缺少用户ID');
+            // 核心修改：检查username是否存在
+            if (!userInfo.username) {
+                console.error('获取称号失败：缺少用户名');
                 return;
             }
             
@@ -1067,8 +1067,8 @@
                 const defaultTitles = [
                     { name: '探索者', icon: 'compass' }
                 ];
-                // 核心修改：使用userId作为键
-                const uniqueKey = `userTitles_${userInfo.userId}`;
+                // 核心修改：使用username作为键
+                const uniqueKey = `userTitles_${userInfo.username}`;
                 localStorage.setItem(uniqueKey, JSON.stringify(defaultTitles));
                 
                 if (defaultTitles.length > 0) {
@@ -1081,19 +1081,19 @@
             }
             
             try {
-                // 核心修改：使用userId
-                const response = await fetch(`/.netlify/functions/titles?userId=${userInfo.userId}`, {
+                // 核心修改：使用username
+                const response = await fetch(`/.netlify/functions/titles?username=${encodeURIComponent(userInfo.username)}`, {
                     method: 'GET',
                     headers: {
-                        'X-User-Id': userInfo.userId,
+                        'X-Username': userInfo.username,
                         'Content-Type': 'application/json'
                     }
                 });
         
                 if (response.ok) {
                     const titles = await response.json();
-                    // 核心修改：使用userId作为键
-                    const uniqueKey = `userTitles_${userInfo.userId}`;
+                    // 核心修改：使用username作为键
+                    const uniqueKey = `userTitles_${userInfo.username}`;
                     localStorage.setItem(uniqueKey, JSON.stringify(titles));
             
                     if (titles.length > 0) {
