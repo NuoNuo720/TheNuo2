@@ -1,118 +1,69 @@
-// 修复：补充缺失的模块导入
-const crypto = require('crypto');
-const { WebSocketServer, WebSocket } = require('ws');
-const jwt = require('jsonwebtoken');
+const { MongoClient, ObjectId } = require('mongodb');
 
-// 存储连接的客户端
-const clients = new Map();
-
-exports.handler = async (event, context) => {
-  // 检查是否是WebSocket请求
-  if (!event.headers['sec-websocket-key']) {
-    return { statusCode: 400, body: '不是WebSocket请求' };
-  }
-
-  // 从查询参数获取用户ID和token（处理空值）
-  const queryParams = new URLSearchParams(event.rawQuery);
-  const userId = queryParams.get('userId') || ''; // 避免undefined
-  const token = queryParams.get('token') || '';
-
-  // 验证用户身份
-  try {
-    // 验证JWT令牌（兼容login.js生成的格式）
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // 额外验证：确保token中的用户ID与请求参数一致
-    if (decoded.userId !== userId) {
-      throw new Error('用户ID与令牌不匹配');
-    }
-    
-    // 处理WebSocket连接
-    const wss = new WebSocketServer({ noServer: true });
-    
-    wss.on('connection', (ws) => {
-      console.log(`用户 ${userId} 已连接`);
-      clients.set(userId, ws);
-      
-      // 发送连接成功消息
-      ws.send(JSON.stringify({
-        type: 'connection_established',
-        message: '已成功连接到实时服务器'
-      }));
-      
-      // 处理收到的消息
-      ws.on('message', (data) => {
-        try {
-          const message = JSON.parse(data);
-          console.log(`收到用户 ${userId} 的消息:`, message);
-          
-          switch (message.type) {
-            case 'friend_request':
-              sendToUser(message.recipientId, {
-                type: 'friend_request',
-                sender: { id: userId, username: message.senderUsername },
-                message: message.message
-              });
-              break;
-            case 'request_accepted':
-            case 'request_rejected':
-              sendToUser(message.recipientId, {
-                type: message.type,
-                friend: { id: userId, username: message.senderUsername }
-              });
-              break;
-            default:
-              console.log('未知消息类型:', message.type);
-              // 新增：通知客户端未知消息类型
-              ws.send(JSON.stringify({ type: 'error', message: '未知消息类型' }));
-          }
-        } catch (error) {
-          console.error('处理消息错误:', error);
-          // 新增：通知客户端解析失败
-          ws.send(JSON.stringify({ type: 'error', message: '消息格式错误' }));
-        }
-      });
-      
-      ws.on('close', () => {
-        console.log(`用户 ${userId} 已断开连接`);
-        clients.delete(userId);
-      });
-      
-      ws.on('error', (error) => {
-        console.error(`用户 ${userId} 的WebSocket错误:`, error);
-      });
-    });
-    
-    // 完成握手
-    context.callbackWaitsForEmptyEventLoop = false;
-    const server = context.websocket;
-    server.on('upgrade', (request, socket, head) => {
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-      });
-    });
-    
-    return { 
-      statusCode: 101, 
-      headers: {
-        'Upgrade': 'websocket',
-        'Connection': 'Upgrade',
-        'Sec-WebSocket-Accept': crypto.createHash('sha1')
-          .update(event.headers['sec-websocket-key'] + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
-          .digest('base64')
-      }
+exports.handler = async (event) => {
+    // 跨域配置
+    const headers = {
+        'Access-Control-Allow-Origin': process.env.CLIENT_ORIGIN || '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS'
     };
-  } catch (error) {
-    console.error('身份验证失败:', error);
-    return { statusCode: 401, body: '身份验证失败' };
-  }
-};
 
-// 修复：参数名和WebSocket引用
-function sendToUser(targetUserId, message) {
-  const client = clients.get(targetUserId);
-  if (client && client.readyState === WebSocket.OPEN) {
-    client.send(JSON.stringify(message));
-    return true;
-  }
-  return false;
-}
+    // 处理预检请求
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers, body: '' };
+    }
+
+    if (event.httpMethod !== 'GET') {
+        return { statusCode: 405, headers, body: JSON.stringify({ error: '仅支持 GET 请求' }) };
+    }
+
+    try {
+        // 从查询参数获取用户名和 token（统一使用 username）
+        const queryParams = new URLSearchParams(event.rawQuery);
+        const username = queryParams.get('username') || '';
+        const token = queryParams.get('token') || '';
+        const lastCheckTime = queryParams.get('lastCheckTime') || ''; // 上次检查时间，用于获取增量消息
+
+        // 验证身份
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.username !== username) {
+            return { statusCode: 403, headers, body: JSON.stringify({ error: '身份验证失败' }) };
+        }
+
+        // 连接数据库，查询未读通知
+        const client = await MongoClient.connect(process.env.MONGODB_URI);
+        const db = client.db('userDB');
+        const notificationsCollection = db.collection('notifications');
+
+        // 查询条件：接收者是当前用户，且创建时间晚于上次检查时间
+        const query = {
+            recipientUsername: username,
+            createdAt: lastCheckTime ? { $gt: new Date(lastCheckTime) } : {}
+        };
+
+        // 获取最新通知
+        const newNotifications = await notificationsCollection.find(query)
+            .sort({ createdAt: -1 })
+            .toArray();
+
+        await client.close();
+
+        // 返回通知和当前时间（供下次轮询使用）
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                notifications: newNotifications,
+                currentTime: new Date().toISOString()
+            })
+        };
+
+    } catch (error) {
+        console.error('获取通知失败:', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: '服务器处理失败' })
+        };
+    }
+};

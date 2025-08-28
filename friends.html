@@ -500,6 +500,129 @@
             100% { opacity: 1; }
         }
 
+        /* 聊天相关样式 */
+        .chat-modal {
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+
+        .chat-name-status {
+            flex: 1;
+        }
+
+        .chat-status {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            min-height: 300px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+        }
+
+        .message.received {
+            margin-right: auto;
+        }
+
+        .message.sent {
+            margin-left: auto;
+        }
+
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+        }
+
+        .received .message-content {
+            background-color: #e9e9eb;
+            border-top-left-radius: 4px;
+        }
+
+        .sent .message-content {
+            background-color: #3498db;
+            color: white;
+            border-top-right-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 1rem;
+            resize: none;
+            height: 50px;
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .send-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .typing-indicator {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .list-header {
                 display: none;
@@ -508,6 +631,15 @@
             .friend-item, .pending-request-item, .friend-request-item {
                 grid-template-columns: 60px 1fr auto;
                 gap: 15px;
+            }
+
+            .chat-modal {
+                width: 95%;
+                max-height: 85vh;
+            }
+
+            .message {
+                max-width: 85%;
             }
         }
     </style>
@@ -630,6 +762,34 @@
         </div>
     </div>
 
+    <!-- 聊天模态框 -->
+    <div class="modal" id="chatModal">
+        <div class="modal-content chat-modal">
+            <span class="close-modal" onclick="closeChatModal()">&times;</span>
+            
+            <div class="chat-header">
+                <img src="" alt="聊天对象头像" class="chat-avatar" id="chatAvatar">
+                <div class="chat-name-status">
+                    <h3 id="chatTargetUsername"></h3>
+                    <div class="chat-status" id="chatTargetStatus"></div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <i class="fas fa-circle-notch fa-spin"></i> 正在输入...
+            </div>
+            
+            <div class="chat-messages" id="messageList"></div>
+            
+            <div class="chat-input-area">
+                <textarea class="chat-input" id="messageInput" placeholder="输入消息..." onkeydown="handleKeyDown(event)"></textarea>
+                <button class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 连接状态指示器 -->
     <div class="connection-status">
         <div class="status-indicator status-connected" id="statusIndicator"></div>
@@ -645,16 +805,22 @@
     <script>
         // 全局变量
         let currentUser = null;
-        let selectedUserUsername = null; // 改为使用用户名作为选中标识
+        let selectedUserUsername = null;
         let currentFriends = [];
-        let allUsersCache = new Map(); // 缓存所有用户信息，key为username
-        let pollInterval; // 轮询定时器
-        const POLL_INTERVAL_MS = 30000; // 轮询间隔30秒
-        let lastCheckTime = null; // 上次检查时间
-        const pendingRequestsMap = new Map(); // key为接收者username
-        let searchTimeout; // 搜索防抖定时器
+        let allUsersCache = new Map();
+        let pollInterval;
+        const POLL_INTERVAL_MS = 30000;
+        let lastCheckTime = null;
+        const pendingRequestsMap = new Map();
+        let searchTimeout;
         const userCache = new Map();
-        let requestInProgress = new Map(); // 用于跟踪正在进行的请求
+        let requestInProgress = new Map();
+        
+        // 聊天相关变量
+        let currentChatTarget = null;
+        let webSocket = null;
+        let typingTimeout = null;
+        let isTyping = false;
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -715,12 +881,12 @@
             });
         });
         
-        // 获取当前用户用户名（辅助函数，从ID改为用户名）
+        // 获取当前用户用户名
         function getCurrentUserUsername() {
             return currentUser?.username || 'unknown_user';
         }
         
-        // 保存待处理请求到本地存储（按用户名隔离）
+        // 保存待处理请求到本地存储
         function savePendingRequests() {
             try {
                 const requestsArray = Array.from(pendingRequestsMap.values());
@@ -737,7 +903,7 @@
             }
         }
         
-        // 缓存用户信息（key改为username）
+        // 缓存用户信息
         function cacheUserInfo(user) {
             if (user && user.username) {
                 allUsersCache.set(user.username, user);
@@ -745,7 +911,7 @@
             }
         }
         
-        // 获取用户信息（从缓存或API，使用username）
+        // 获取用户信息
         async function getUserInfo(username) {
             // 先检查缓存
             if (allUsersCache.has(username)) {
@@ -755,7 +921,7 @@
             // 模拟API请求，实际项目中应替换为真实API调用
             return {
                 username: username,
-                avatar: `https://picsum.photos/seed/${username}/200` // 用用户名生成默认头像
+                avatar: `https://picsum.photos/seed/${username}/200`
             };
         }
         
@@ -792,7 +958,8 @@
                 cacheUserInfo(currentUser);
                 updateUserDisplay();
                 loadFriendsData();
-                startPolling(); // 启动轮询
+                startPolling();
+                initWebSocket(); // 初始化WebSocket连接用于聊天
             } catch (error) {
                 console.error('解析用户信息失败:', error);
                 showNotification('用户信息无效，请重新登录', 'error');
@@ -800,6 +967,128 @@
                 setTimeout(() => {
                     window.location.href = 'indexlo.html';
                 }, 2000);
+            }
+        }
+        
+        // 初始化WebSocket连接
+        function initWebSocket() {
+            if (!currentUser || !currentUser.username) return;
+            
+            // 关闭已有的连接
+            if (webSocket) {
+                webSocket.close();
+            }
+            
+            // 连接WebSocket服务器
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUri = `${protocol}//${window.location.host}/.netlify/functions/chat?username=${currentUser.username}`;
+            
+            webSocket = new WebSocket(wsUri);
+            
+            webSocket.onopen = function() {
+                console.log('WebSocket连接已建立');
+                updateConnectionStatus(true);
+                showNotification('聊天功能已就绪', 'success');
+            };
+            
+            webSocket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                } catch (error) {
+                    console.error('解析WebSocket消息失败:', error);
+                }
+            };
+            
+            webSocket.onerror = function(error) {
+                console.error('WebSocket错误:', error);
+                showNotification('聊天连接出现错误', 'error');
+                updateConnectionStatus(false);
+            };
+            
+            webSocket.onclose = function() {
+                console.log('WebSocket连接已关闭');
+                showNotification('聊天连接已断开，将尝试重连', 'warning');
+                updateConnectionStatus(false);
+                
+                // 自动重连
+                setTimeout(initWebSocket, 5000);
+            };
+        }
+        
+        // 处理WebSocket消息
+        function handleWebSocketMessage(message) {
+            switch (message.type) {
+                case 'message':
+                    handleIncomingMessage(message);
+                    break;
+                case 'typing':
+                    handleTypingNotification(message);
+                    break;
+                case 'stopTyping':
+                    handleStopTypingNotification(message);
+                    break;
+                case 'userStatus':
+                    updateUserStatus(message.username, message.status);
+                    break;
+                default:
+                    console.log('收到未知类型的消息:', message);
+            }
+        }
+        
+        // 处理收到的消息
+        function handleIncomingMessage(message) {
+            // 如果当前正在与该用户聊天，则直接显示消息
+            if (currentChatTarget === message.sender) {
+                addMessageToChat(message.sender, message.content, new Date(message.timestamp), false);
+                scrollChatToBottom();
+            } else {
+                // 否则显示通知
+                showRealTimeNotification(`${message.sender} 发送了一条消息`);
+                // 可以在这里更新未读消息计数
+            }
+            
+            // 保存消息到本地存储
+            saveMessageToLocalStorage(message.sender, message.content, message.timestamp, false);
+        }
+        
+        // 处理正在输入通知
+        function handleTypingNotification(message) {
+            if (currentChatTarget === message.sender) {
+                document.getElementById('typingIndicator').classList.add('active');
+            }
+        }
+        
+        // 处理停止输入通知
+        function handleStopTypingNotification(message) {
+            if (currentChatTarget === message.sender) {
+                document.getElementById('typingIndicator').classList.remove('active');
+            }
+        }
+        
+        // 更新用户状态
+        function updateUserStatus(username, status) {
+            // 更新缓存中的用户状态
+            if (allUsersCache.has(username)) {
+                const user = allUsersCache.get(username);
+                user.isOnline = status === 'online';
+                allUsersCache.set(username, user);
+            }
+            
+            // 更新UI中的用户状态
+            const friendItem = document.querySelector(`.friend-item[data-username="${username}"]`);
+            if (friendItem) {
+                const statusEl = friendItem.querySelector('.friend-status');
+                if (statusEl) {
+                    statusEl.textContent = status === 'online' ? '在线' : '离线';
+                    statusEl.className = `friend-status ${status === 'online' ? 'status-online' : 'status-offline'}`;
+                }
+            }
+            
+            // 如果正在与该用户聊天，更新聊天窗口中的状态
+            if (currentChatTarget === username) {
+                document.getElementById('chatTargetStatus').textContent = 
+                    status === 'online' ? '在线' : '离线';
             }
         }
         
@@ -838,7 +1127,7 @@
             updateConnectionStatus(true);
         }
         
-        // 检查更新（使用username作为用户标识）
+        // 检查更新
         async function checkForUpdates() {
             try {
                 console.log(`[${new Date().toLocaleTimeString()}] 开始轮询检查更新`);
@@ -850,7 +1139,7 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({ 
-                        username: currentUser.username, // 使用username代替userId
+                        username: currentUser.username,
                         lastCheckTime: lastCheckTime || new Date().toISOString()
                     })
                 });
@@ -918,7 +1207,7 @@
             
             if (isConnected) {
                 indicator.className = 'status-indicator status-connected';
-                connectionText.textContent = `轮询中 (${POLL_INTERVAL_MS/1000}秒间隔)`;
+                connectionText.textContent = `已连接 (${POLL_INTERVAL_MS/1000}秒轮询)`;
             } else {
                 indicator.className = 'status-indicator status-reconnecting';
                 connectionText.textContent = '连接中...';
@@ -937,7 +1226,7 @@
             loadPendingRequests();
         }
         
-        // 加载好友列表（使用username）
+        // 加载好友列表
         async function loadFriendsList() {
             try {
                 const response = await fetch('/.netlify/functions/getFriends', {
@@ -946,7 +1235,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ username: currentUser.username }) // 使用username代替userId
+                    body: JSON.stringify({ username: currentUser.username })
                 });
                 
                 if (!response.ok) {
@@ -988,7 +1277,7 @@
         function createFriendItem(friend) {
             const div = document.createElement('div');
             div.className = 'friend-item';
-            div.dataset.username = friend.username; // 使用username作为标识
+            div.dataset.username = friend.username;
             
             const statusClass = friend.isOnline ? 'status-online' : 'status-offline';
             const statusText = friend.isOnline ? '在线' : '离线';
@@ -1006,7 +1295,7 @@
                 </div>
                 <div class="friend-joined">${formattedDate}</div>
                 <div class="friend-actions">
-                    <button class="action-btn message-btn" title="发送消息">
+                    <button class="action-btn message-btn" onclick="openChatModal('${friend.username}')" title="发送消息">
                         <i class="fas fa-comment"></i>
                     </button>
                     <button class="action-btn delete-btn" onclick="deleteFriend('${friend.username}')" title="删除好友">
@@ -1018,7 +1307,7 @@
             return div;
         }
         
-        // 加载好友请求（使用username）
+        // 加载好友请求
         async function loadFriendRequests() {
             if (!currentUser || !currentUser.username) {
                 console.error("用户未登录，无法加载好友请求");
@@ -1034,7 +1323,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
-                    body: JSON.stringify({ recipientUsername: recipientUsername }) // 使用username代替userId
+                    body: JSON.stringify({ recipientUsername: recipientUsername })
                 });
                 
                 console.log('好友请求响应状态: ' + response.status);
@@ -1101,7 +1390,7 @@
             return div;
         }
         
-        // 加载待处理请求列表（使用username）
+        // 加载待处理请求列表
         async function loadPendingRequests() {
             if (!currentUser || !currentUser.username) {
                 console.error('未获取到当前用户信息');
@@ -1117,7 +1406,7 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({ 
-                        senderUsername: currentUser.username, // 使用username代替userId
+                        senderUsername: currentUser.username,
                         startTime: new Date(0).toISOString()
                     })
                 });
@@ -1298,7 +1587,7 @@
             });
         }
         
-        // 搜索用户（使用username）
+        // 搜索用户
         function searchUsers(e) {
             const query = e.target.value.trim();
             const resultsEl = document.getElementById('searchResults');
@@ -1320,7 +1609,7 @@
                         },
                         body: JSON.stringify({ 
                             query,
-                            excludeUsername: currentUser.username // 排除自己，使用username
+                            excludeUsername: currentUser.username
                         })
                     });
             
@@ -1357,7 +1646,10 @@
                         const isFriend = currentFriends.some(f => f.username === user.username);
 
                         if (isFriend) {
-                            actionButton = '<span class="status-online">已是好友</span>';
+                            actionButton = `<button class="btn btn-primary chat-btn" 
+                                            onclick="selectUser('${user.username}'); openChatModal('${user.username}')">
+                                            聊天
+                                        </button>`;
                         } else if (hasPendingRequest) {
                             actionButton = '<span class="status-pending">请求已发送</span>';
                         } else {
@@ -1385,7 +1677,7 @@
             
                     resultsEl.innerHTML = resultsHtml;
                     resultsEl.style.display = 'block';
-                    resultsEl.querySelectorAll('.add-btn').forEach(button => {
+                    resultsEl.querySelectorAll('.add-btn, .chat-btn').forEach(button => {
                         button.addEventListener('click', (e) => {
                             e.stopPropagation(); // 防止事件冒泡到父元素
                         });
@@ -1409,7 +1701,7 @@
             }, 300);
         }
         
-        // 选择用户（使用username）
+        // 选择用户
         function selectUser(username) {
             // 简单的用户名验证（只允许字母、数字、下划线和连字符）
             const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
@@ -1429,7 +1721,7 @@
             console.log(`已选择用户：${username}`);
         }
         
-        // 发送好友请求（使用username）
+        // 发送好友请求
         async function sendFriendRequest() {
             // 增强验证
             if (!selectedUserUsername) {
@@ -1483,7 +1775,7 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        senderUsername: currentUser.username, // 使用username代替userId
+                        senderUsername: currentUser.username,
                         recipientUsername: selectedUserUsername,
                         message: message
                     })
@@ -1551,7 +1843,7 @@
             }
         }
         
-        // 取消请求（使用username）
+        // 取消请求
         async function cancelRequest(requestId, recipientUsername) {
             const decodedRequestId = decodeURIComponent(requestId);
             const decodedRecipientUsername = decodeURIComponent(recipientUsername);
@@ -1574,7 +1866,7 @@
                     },
                     body: JSON.stringify({
                         requestId: decodedRequestId,
-                        senderUsername: currentUser.username, // 使用username代替userId
+                        senderUsername: currentUser.username,
                         recipientUsername: decodedRecipientUsername || 'unknown'
                     })
                 });
@@ -1638,7 +1930,7 @@
                 const requestData = {
                     requestId: requestId,
                     action: action,
-                    username: currentUser.username // 使用username代替userId
+                    username: currentUser.username
                 };
         
                 let serverSuccess = false;
@@ -1665,7 +1957,7 @@
                         addToSyncQueue({ 
                             requestId: requestId,
                             action: action, 
-                            username: currentUser.username, // 使用username代替userId
+                            username: currentUser.username,
                             timestamp: Date.now()
                         });
                     }
@@ -1701,7 +1993,7 @@
                 addToSyncQueue({ 
                     requestId: requestId,
                     action: action, 
-                    username: currentUser.username, // 使用username代替userId
+                    username: currentUser.username,
                     timestamp: Date.now()
                 });
             } catch (error) {
@@ -1718,7 +2010,7 @@
             }
         }
         
-        // 删除好友（使用username）
+        // 删除好友
         async function deleteFriend(friendUsername) {
             if (!confirm('确定要删除这个好友吗？')) {
                 return;
@@ -1732,7 +2024,7 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        username: currentUser.username, // 使用username代替userId
+                        username: currentUser.username,
                         friendUsername: friendUsername
                     })
                 });
@@ -1740,6 +2032,11 @@
                 if (response.ok) {
                     showNotification('好友已删除', 'success');
                     loadFriendsList();
+                    
+                    // 如果正在与此好友聊天，关闭聊天窗口
+                    if (currentChatTarget === friendUsername) {
+                        closeChatModal();
+                    }
                 } else {
                     showNotification('删除好友失败，请重试', 'error');
                 }
@@ -1749,7 +2046,7 @@
             }
         }
         
-        // 过滤好友（按用户名）
+        // 过滤好友
         function filterFriends(e) {
             const searchTerm = e.target.value.toLowerCase().trim();
             const friendItems = document.querySelectorAll('#friends-container .friend-item');
@@ -1802,6 +2099,11 @@
         function logout() {
             // 保留待处理请求的本地缓存
             savePendingRequests();
+            
+            // 关闭WebSocket连接
+            if (webSocket) {
+                webSocket.close();
+            }
             
             localStorage.removeItem('mainUserInfo');
             // 停止轮询
@@ -1861,7 +2163,7 @@
             }
         }
         
-        // 优化同步队列保存逻辑（使用username）
+        // 优化同步队列保存逻辑
         function saveToLocalSyncQueue(requestId, action) {
             if (!requestId || !currentUser?.username) {
                 console.error('保存同步操作失败：缺少 requestId 或用户信息');
@@ -1879,7 +2181,7 @@
             queue.push({
                 requestId: requestId,
                 action: action,
-                username: currentUser.username, // 使用username代替userId
+                username: currentUser.username,
                 timestamp: new Date().getTime()
             });
             
@@ -1892,7 +2194,7 @@
             console.log(`已保存同步操作：requestId=${requestId}, action=${action}`);
         }
         
-        // 优化同步逻辑（使用username）
+        // 优化同步逻辑
         async function syncPendingActions() {
             const queue = JSON.parse(localStorage.getItem('friendSyncQueue') || '[]');
             // 1. 强制过滤无效操作（无requestId或格式错误）
@@ -1945,7 +2247,7 @@
                         },
                         body: JSON.stringify({
                             ...item,
-                            username: currentUser.username, // 使用username代替userId
+                            username: currentUser.username,
                             userId: undefined // 移除userId参数
                         })
                     });
@@ -2019,7 +2321,7 @@
             const newAction = {
                 requestId: actionData.requestId,
                 action: actionData.action,
-                username: actionData.username || currentUser.username, // 使用username代替userId
+                username: actionData.username || currentUser.username,
                 timestamp: actionData.timestamp || Date.now(),
                 retried: false // 重试标记
             };
@@ -2034,6 +2336,275 @@
             // 保存到本地存储
             localStorage.setItem('friendSyncQueue', JSON.stringify(syncQueue));
             console.log('已添加到同步队列:', newAction);
+        }
+
+        // 聊天相关函数
+        function openChatModal(friendUsername) {
+            if (!friendUsername || !currentUser) return;
+            
+            currentChatTarget = friendUsername;
+            
+            // 获取好友信息
+            const friend = allUsersCache.get(friendUsername) || {
+                username: friendUsername,
+                avatar: `https://picsum.photos/seed/${friendUsername}/200`,
+                isOnline: false
+            };
+            
+            // 更新聊天窗口信息
+            document.getElementById('chatTargetUsername').textContent = friend.username;
+            document.getElementById('chatAvatar').src = friend.avatar;
+            document.getElementById('chatTargetStatus').textContent = friend.isOnline ? '在线' : '离线';
+            
+            // 清空消息输入框
+            document.getElementById('messageInput').value = '';
+            
+            // 加载历史消息
+            loadMessageHistory(friendUsername);
+            
+            // 显示聊天窗口
+            document.getElementById('chatModal').classList.add('active');
+        }
+        
+        function closeChatModal() {
+            document.getElementById('chatModal').classList.remove('active');
+            currentChatTarget = null;
+            // 停止发送正在输入状态
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+                typingTimeout = null;
+            }
+            if (isTyping) {
+                sendStopTyping();
+                isTyping = false;
+            }
+        }
+        
+        async function loadMessageHistory(friendUsername) {
+            try {
+                // 先尝试从本地存储加载
+                const localMessages = loadMessagesFromLocalStorage(friendUsername);
+                if (localMessages.length > 0) {
+                    renderMessages(localMessages);
+                }
+                
+                // 再从服务器加载
+                const response = await fetch('/.netlify/functions/getMessageHistory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        targetUsername: friendUsername
+                    })
+                });
+                
+                if (response.ok) {
+                    const messages = await response.json();
+                    // 保存到本地存储
+                    saveMessagesToLocalStorage(messages, friendUsername);
+                    // 重新渲染
+                    renderMessages(messages);
+                } else {
+                    console.warn('加载消息历史失败，使用本地缓存');
+                }
+            } catch (error) {
+                console.error('加载消息历史失败:', error);
+                showNotification('加载聊天记录失败', 'error');
+            }
+        }
+        
+        function renderMessages(messages) {
+            const messageList = document.getElementById('messageList');
+            messageList.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const isSent = msg.sender === currentUser.username;
+                addMessageToChat(msg.sender, msg.content, new Date(msg.timestamp), isSent, false);
+            });
+            
+            scrollChatToBottom();
+        }
+        
+        function addMessageToChat(sender, content, timestamp, isSent, saveToLocal = true) {
+            const messageList = document.getElementById('messageList');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            const formattedTime = timestamp.toLocaleTimeString();
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">${escapeHtml(content)}</div>
+                <div class="message-time">${formattedTime}</div>
+            `;
+            
+            messageList.appendChild(messageDiv);
+            
+            // 保存到本地存储
+            if (saveToLocal) {
+                saveMessageToLocalStorage(sender, content, timestamp, isSent);
+            }
+        }
+        
+        async function sendMessage() {
+            if (!currentChatTarget || !webSocket || webSocket.readyState !== WebSocket.OPEN) {
+                showNotification('无法发送消息，请检查连接', 'error');
+                return;
+            }
+            
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if (!content) return;
+            
+            const timestamp = new Date();
+            
+            // 先在本地显示消息
+            addMessageToChat(currentUser.username, content, timestamp, true);
+            
+            // 清空输入框
+            input.value = '';
+            
+            // 滚动到底部
+            scrollChatToBottom();
+            
+            // 停止"正在输入"状态
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+                typingTimeout = null;
+            }
+            if (isTyping) {
+                sendStopTyping();
+                isTyping = false;
+            }
+            
+            // 通过WebSocket发送消息
+            try {
+                webSocket.send(JSON.stringify({
+                    type: 'message',
+                    recipient: currentChatTarget,
+                    content: content,
+                    timestamp: timestamp.toISOString()
+                }));
+            } catch (error) {
+                console.error('发送消息失败:', error);
+                showNotification('发送消息失败，请重试', 'error');
+                // 可以在这里将消息加入待发送队列
+            }
+        }
+        
+        function handleKeyDown(event) {
+            // 按Enter发送消息，Shift+Enter换行
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+                return;
+            }
+            
+            // 发送"正在输入"状态
+            sendTyping();
+        }
+        
+        function sendTyping() {
+            if (!currentChatTarget || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
+            
+            // 如果已经在输入状态，重置计时器即可
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            } else {
+                // 发送正在输入状态
+                try {
+                    webSocket.send(JSON.stringify({
+                        type: 'typing',
+                        recipient: currentChatTarget
+                    }));
+                    isTyping = true;
+                } catch (error) {
+                    console.error('发送正在输入状态失败:', error);
+                }
+            }
+            
+            // 5秒后发送停止输入状态
+            typingTimeout = setTimeout(() => {
+                sendStopTyping();
+                isTyping = false;
+                typingTimeout = null;
+            }, 5000);
+        }
+        
+        function sendStopTyping() {
+            if (!currentChatTarget || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
+            
+            try {
+                webSocket.send(JSON.stringify({
+                    type: 'stopTyping',
+                    recipient: currentChatTarget
+                }));
+            } catch (error) {
+                console.error('发送停止输入状态失败:', error);
+            }
+        }
+        
+        function scrollChatToBottom() {
+            const messageList = document.getElementById('messageList');
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+        
+        // 本地存储消息相关函数
+        function getMessageStorageKey(username1, username2) {
+            // 确保键的一致性，按字母顺序排序用户名
+            const sortedUsernames = [username1, username2].sort();
+            return `messages_${sortedUsernames[0]}_${sortedUsernames[1]}`;
+        }
+        
+        function saveMessageToLocalStorage(sender, content, timestamp, isSent) {
+            if (!currentUser || !currentChatTarget) return;
+            
+            const storageKey = getMessageStorageKey(currentUser.username, currentChatTarget);
+            let messages = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            messages.push({
+                sender: sender,
+                content: content,
+                timestamp: timestamp instanceof Date ? timestamp.toISOString() : timestamp,
+                isSent: isSent
+            });
+            
+            // 限制本地存储的消息数量
+            if (messages.length > 100) {
+                messages = messages.slice(-100); // 只保留最近的100条消息
+            }
+            
+            localStorage.setItem(storageKey, JSON.stringify(messages));
+        }
+        
+        function saveMessagesToLocalStorage(messages, targetUsername) {
+            if (!currentUser || !targetUsername) return;
+            
+            const storageKey = getMessageStorageKey(currentUser.username, targetUsername);
+            localStorage.setItem(storageKey, JSON.stringify(messages));
+        }
+        
+        function loadMessagesFromLocalStorage(targetUsername) {
+            if (!currentUser || !targetUsername) return [];
+            
+            const storageKey = getMessageStorageKey(currentUser.username, targetUsername);
+            const messages = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            return messages;
+        }
+        
+        // 工具函数：转义HTML以防止XSS攻击
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
     </script>
 </body>
