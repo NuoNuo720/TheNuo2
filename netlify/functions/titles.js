@@ -9,7 +9,7 @@ exports.handler = async (event) => {
 
   try {
     // 1. 获取用户ID（必须传）
-    const userId = event.queryStringParameters?.userId;
+    const userId = event.queryStringParameters?.username;
     if (!userId) {
       return { 
         statusCode: 400, 
@@ -24,7 +24,7 @@ exports.handler = async (event) => {
 
     // 3. 查询该用户的称号
     const titles = await db.collection('titles')
-      .find({ targetUserId: userId }) // 确保授予时存的是 targetUserId 字段
+      .find({ targetUserId: username }) // 确保授予时存的是 targetUserId 字段
       .toArray();
 
     await client.close(); // 关闭连接
