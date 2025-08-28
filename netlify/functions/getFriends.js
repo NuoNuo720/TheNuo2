@@ -9,9 +9,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { userId } = JSON.parse(event.body);
+    const { username } = JSON.parse(event.body);
     
-    if (!userId) {
+    if (!username) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: '缺少用户ID' })
@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
     }
     
     // 获取好友列表
-    const friends = dataStore.getFriends(userId);
+    const friends = dataStore.getFriends(username);
     
     return {
       statusCode: 200,

@@ -60,12 +60,12 @@ exports.handler = async (event) => {
             };
         }
 
-        const userId = requestData.userId;
-        if (!userId) {
+        const { username } = requestData;
+        if (!username) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: '用户ID不能为空' })
+                body: JSON.stringify({ error: '用户名为空' })
             };
         }
 
@@ -93,7 +93,7 @@ exports.handler = async (event) => {
         // 检查新的好友请求（自上次检查以来）
         const newRequests = await db.collection('friendRequests')
             .find({ 
-                recipientId: userId,       // 接收者是当前用户
+                recipientUsername: username,       // 接收者是当前用户
                 status: 'pending',         // 状态为待处理
                 sentAt: { $gt: lastCheckTime } // 只查询上次检查后新增的
             })
@@ -102,7 +102,7 @@ exports.handler = async (event) => {
         // 检查新接受的请求（对方接受了当前用户的请求）
         const newAcceptedRequests = await db.collection('friendRequests')
             .find({ 
-                senderId: userId,          // 发送者是当前用户
+                senderUsername: username,          // 发送者是当前用户
                 status: 'accepted',        // 状态为已接受
                 updatedAt: { $gt: lastCheckTime } // 只查询上次检查后更新的
             })

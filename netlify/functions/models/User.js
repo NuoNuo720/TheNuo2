@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const Schema = mongoose.Schema;
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
+  username: { type: String, unique: true, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   avatar: { type: String, default: 'https://picsum.photos/200' },
@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false }, // 管理员标识，默认false
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  friends: [{ type: String, ref: 'User', refPath: 'username' }],
   friendRequests: [{
     from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' }

@@ -39,24 +39,23 @@ module.exports = {
   },
 
   // 从缓存获取用户（优先），不存在则返回基础信息
-  getUserById: (id) => {
-    const user = users.find(u => u.id === id);
+  getUserByUsername: (username) => {
+    const user = users.find(u => u.username === username);
     if (user) return user;
     
     // 缓存未命中时的兜底（避免前端报错）
-    console.warn(`缓存未找到用户：${id}，返回基础信息`);
+    console.warn(`缓存未找到用户：${username}，返回基础信息`);
     return {
-      id,
-      username: '未知用户',
-      avatar: `https://picsum.photos/seed/${id}/200`,
+      username,
+      avatar: `https://picsum.photos/seed/${username}/200`,
       isOnline: false
     };
   },
 
   // 从缓存搜索用户（用于前端搜索功能）
-  searchUsers: (query, excludeUserId) => {
+  searchUsers: (query, excludeUsername) => {
     return users
-      .filter(user => user.id !== excludeUserId)
+      .filter(user => user.username !== excludeUsername)
       .filter(user => user.username.toLowerCase().includes(query.toLowerCase()));
   },
 

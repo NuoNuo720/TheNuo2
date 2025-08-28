@@ -29,10 +29,10 @@ exports.handler = async (event) => {
     jwt.verify(token, process.env.JWT_SECRET);
 
     // 解析请求参数
-    const { requestId, action, userId } = JSON.parse(event.body);
+    const { requestId, action, username } = JSON.parse(event.body);
     
     // 验证必要参数
-    if (!requestId || !action || !userId) {
+    if (!requestId || !action || !username) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: '参数不完整' }) };
     }
 
@@ -43,7 +43,7 @@ exports.handler = async (event) => {
     // 验证请求是否存在且属于当前用户
     const friendRequest = await db.collection('friendRequests').findOne({
       _id: new ObjectId(requestId), // 注意：若requestId是字符串，需转为ObjectId
-      recipientId: userId // 确保当前用户是请求的接收者
+      recipientId: username // 确保当前用户是请求的接收者
     });
 
     if (!friendRequest) {
@@ -60,12 +60,12 @@ exports.handler = async (event) => {
     if (action === 'accept') {
       // 例如：在用户的好友列表中互相添加
       await db.collection('users').updateOne(
-        { id: userId },
-        { $addToSet: { friends: friendRequest.senderId } }
+        { username },
+        { $addToSet: { friends: friendRequest.senderUsername } }
       );
       await db.collection('users').updateOne(
-        { id: friendRequest.senderId },
-        { $addToSet: { friends: userId } }
+        { username: friendRequest.senderUsername },
+        { $addToSet: { friends: username } }
       );
     }
 

@@ -32,9 +32,9 @@ exports.handler = async (event) => {
 
         // 解析请求参数
         const requestData = JSON.parse(event.body);
-        const { query = '', excludeUserId } = requestData;
+        const { query = '', excludeUsername } = requestData;
 
-        if (!excludeUserId) {
+        if (!excludeUsername) {
             return {
                 statusCode: 400,
                 headers,
@@ -57,7 +57,7 @@ exports.handler = async (event) => {
             .find({
                 ...queryCondition,
                 // 排除当前用户（使用`_id`而非`id`）
-                _id: { $ne: excludeUserId } 
+                username: { $ne: excludeUsername } 
             })
             // 投影需要的字段（`_id`是MongoDB默认主键）
             .project({ _id: 1, username: 1, avatar: 1, isOnline: 1 })

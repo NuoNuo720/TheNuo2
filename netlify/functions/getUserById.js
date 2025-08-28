@@ -17,8 +17,8 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { userId } = JSON.parse(event.body);
-        if (!userId) {
+        const { username } = JSON.parse(event.body);
+        if (!username) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: '缺少userId参数' }) };
         }
 
@@ -30,7 +30,7 @@ exports.handler = async (event) => {
 
         // 查询用户信息（只返回公开信息，不含密码）
         const user = await usersCollection.findOne(
-            { _id: userId },
+            { username },
             { projection: { username: 1, avatar: 1, _id: 1 } }
         );
 
