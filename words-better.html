@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,11 +13,10 @@
             background-color: #f0f8ff;
             color: #333;
             padding: 20px;
-            min-height: 100vh;
             margin: 0;
+            min-height: 100vh;
             box-sizing: border-box;
         }
-        
         .game-container {
             text-align: center;
             margin-top: 20px;
@@ -29,69 +28,62 @@
             width: 100%;
             box-sizing: border-box;
         }
-        
         .letters {
-            font-size: clamp(2rem, 5vw, 2.5rem);
+            font-size: 40px;
             letter-spacing: 15px;
             margin: 30px 0;
-            min-height: 60px;
+            min-height: 50px;
             text-align: center;
             transition: all 0.3s ease;
         }
-        
         .input-area {
             margin: 20px 0;
             display: flex;
             gap: 10px;
             justify-content: center;
+            align-items: center;
             flex-wrap: wrap;
         }
-        
         input {
-            font-size: 1.2rem;
+            font-size: 20px;
             padding: 10px;
-            width: clamp(200px, 50vw, 250px);
+            width: 250px;
             text-align: center;
             border: 2px solid #4CAF50;
             border-radius: 5px;
             transition: border-color 0.3s ease;
         }
-        
         input:focus {
             outline: none;
-            border-color: #45a049;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
         }
-        
         .stats {
             display: flex;
-            gap: clamp(15px, 5vw, 30px);
+            gap: 30px;
             margin: 20px 0;
             font-size: 18px;
             justify-content: center;
             flex-wrap: wrap;
         }
-        
         .correct {
             color: #4CAF50;
             animation: flash 0.5s;
         }
-        
         @keyframes flash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
         }
-        
         .wrong {
             color: #f44336;
             animation: shake 0.35s;
         }
-        
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            75% { transform: translateX(5px);}
         }
-        
+
         button {
             padding: 10px 20px;
             font-size: 16px;
@@ -100,110 +92,123 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            margin-top: 10px;
+            transition: all 0.3s ease;
         }
-        
         button:hover {
             background-color: #45a049;
+            transform: translateY(-2px);
         }
-        
+        button:active {
+            transform: translateY(0);
+        }
         .skip-btn {
             background-color: #ff9800;
         }
-        
         .skip-btn:hover {
             background-color: #e68a00;
         }
-        
         .summary {
             margin-top: 20px;
             padding: 20px;
             background-color: #f9f9f9;
             border-radius: 10px;
             display: none;
-            text-align: left;
+            animation: fadeIn 0.5s ease;
         }
-        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .summary h3 {
             color: #2e7d32;
             margin-top: 0;
-            font-size: 1.2rem;
         }
-        
         .word-list {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin-top: 10px;
         }
-        
         .word-item {
             background-color: #e8f5e9;
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 16px;
+            transition: all 0.2s ease;
         }
-        
+        .word-item:hover {
+            transform: scale(1.05);
+        }
         .unanswered-item {
             background-color: #fff3e0;
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 16px;
+            transition: all 0.2s ease;
         }
-        
+        .unanswered-item:hover {
+            transform: scale(1.05);
+        }
         .summary-section {
             margin-bottom: 15px;
         }
-        
         .back-container {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
         }
-        
-        .back-to-home {
+        .difficulty-selection {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .difficulty-btn {
             background-color: #2196F3;
         }
-        
-        .back-to-home:hover {
-            background-color: #0b7dda;
+        .difficulty-btn.active {
+            background-color: #1976D2;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
         }
-        
-        .timer-warning {
-            color: #ff9800;
-        }
-        
-        .timer-danger {
+        .time-warning {
             color: #f44336;
-            animation: pulse 1s infinite;
+            animation: pulse 1s infinite alternate;
         }
-        
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            from { opacity: 1; }
+            to { opacity: 0.7; }
         }
-        
+        .hint {
+            font-size: 14px;
+            color: #666;
+            margin: 10px 0;
+            min-height: 18px;
+        }
+        .level-indicator {
+            font-weight: bold;
+            color: #2196F3;
+        }
+
         @media (max-width: 480px) {
             .game-container {
                 padding: 15px;
-                margin-top: 10px;
             }
-            
             .letters {
+                font-size: 30px;
                 letter-spacing: 10px;
-                margin: 20px 0;
             }
-            
             .stats {
-                flex-direction: column;
-                gap: 5px;
-                align-items: center;
+                gap: 15px;
+                font-size: 16px;
             }
-            
-            .back-container {
-                bottom: 15px;
+            input {
+                width: 100%;
+                max-width: 250px;
+            }
+            .difficulty-selection {
+                flex-wrap: wrap;
             }
         }
     </style>
@@ -213,11 +218,19 @@
         <h1>单词消消乐</h1>
         <p>拼出下方打乱的单词（输入后按回车）</p>
         
+        <div class="difficulty-selection">
+            <button class="difficulty-btn active" data-time="60" data-points="10">简单 (60秒)</button>
+            <button class="difficulty-btn" data-time="45" data-points="15">中等 (45秒)</button>
+            <button class="difficulty-btn" data-time="30" data-points="20">困难 (30秒)</button>
+        </div>
+        
+        <div class="level-indicator">等级: 1</div>
         <div class="letters" id="letters"></div>
+        <div class="hint" id="hint">提示: 单词长度为 <span id="wordLength">0</span> 个字母</div>
         
         <div class="input-area">
             <input type="text" id="userInput" placeholder="输入单词..." autocomplete="off">
-            <button class="skip-btn" onclick="game.skipWord()">跳过</button>
+            <button class="skip-btn" onclick="skipWord()">跳过</button>
         </div>
         
         <div class="stats">
@@ -237,277 +250,330 @@
             </div>
         </div>
         
-        <button id="startBtn" onclick="game.startGame()">开始游戏</button>
+        <button id="startBtn" onclick="startGame()">开始游戏</button>
     </div>
 
     <script>
-        // 使用对象封装游戏逻辑，避免全局变量污染
-        const game = {
-            wordList: [
-                "apple", "banana", "orange", "grape", "melon","exist","resist","piano","later","than","then","since","come","house",
-                "water", "sun", "moon", "star", "tree","butterfly","assume","table","understand","majesty","congratulation","nice",
-                "book", "pen", "paper", "school","friend","achieve","active","adventure","affect","draw","aim","alive","amount",
-                "shout","ancient","approach","argue","lemon","sister","son","daughter","clearly","flower","world","dream",
-                "arrange","arrive","aspect","address","attach","attend","attitude","hang","body","face","shoot","own","username",
-                "happy", "smile", "laugh", "music", "dance","structure","load","decoration","beauty","consume","password"
-            ],
-            elements: {
-                letters: document.getElementById('letters'),
-                userInput: document.getElementById('userInput'),
-                score: document.getElementById('score'),
-                time: document.getElementById('time'),
-                correctCount: document.getElementById('correctCount'),
-                summary: document.getElementById('summary'),
-                correctWordList: document.getElementById('correctWordList'),
-                unansweredWordList: document.getElementById('unansweredWordList'),
-                startBtn: document.getElementById('startBtn')
-            },
-            state: {
-                currentWord: "",
-                score: 0,
-                timeLeft: 60,
-                correctCount: 0,
-                timer: null,
-                isPlaying: false,
-                correctWords: [],
-                shownWords: [],
-                unansweredWords: []
-            },
+        const wordList = [
+            // 短单词 (3-5字母)
+            "apple", "grape", "melon", "sun", "moon", "star", "tree", "book", "pen", 
+            "paper", "school", "happy", "smile", "laugh", "music", "dance", "draw", 
+            "aim", "hang", "body", "face", "own", "nice", "come", "water", "lemon",
+            "son", "shoot", "than", "then", "since",
             
-            // 初始化游戏
-            init() {
-                // 绑定事件处理
-                this.elements.userInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        this.checkInput();
-                    }
-                });
+            // 中等长度单词 (6-8字母)
+            "banana", "orange", "exist", "resist", "piano", "later", "friend", "achieve",
+            "active", "amount", "shout", "ancient", "arrange", "arrive", "aspect", "attach",
+            "attend", "sister", "flower", "world", "dream", "load", "beauty", "house",
+            
+            // 长单词 (9+字母)
+            "butterfly", "assume", "understand", "majesty", "congratulation", "adventure",
+            "affect", "alive", "address", "attitude", "daughter", "clearly", "structure",
+            "decoration", "consume", "username", "password"
+        ];
+        
+        let currentWord = "";
+        let score = 0;
+        let timeLeft = 60;
+        let baseTime = 60; // 基础时间，根据难度调整
+        let pointsPerWord = 10; // 每个单词的基础分数
+        let correctCount = 0;
+        let timer;
+        let isPlaying = false;
+        let correctWords = [];
+        let shownWords = [];
+        let unansweredWords = [];
+        let level = 1;
+        let consecutiveCorrect = 0; // 连续答对计数
+
+        const lettersEl = document.getElementById('letters');
+        const userInput = document.getElementById('userInput');
+        const scoreEl = document.getElementById('score');
+        const timeEl = document.getElementById('time');
+        const correctCountEl = document.getElementById('correctCount');
+        const summaryEl = document.getElementById('summary');
+        const correctWordListEl = document.getElementById('correctWordList');
+        const unansweredWordListEl = document.getElementById('unansweredWordList');
+        const wordLengthEl = document.getElementById('wordLength');
+        const levelIndicator = document.querySelector('.level-indicator');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+
+        // 初始化难度选择
+        difficultyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isPlaying) return; // 游戏进行中不能更改难度
                 
-                // 打乱单词列表，增加游戏变化性
-                this.wordList = this.shuffleArray([...this.wordList]);
-            },
+                difficultyBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                baseTime = parseInt(btn.dataset.time);
+                pointsPerWord = parseInt(btn.dataset.points);
+                timeEl.textContent = baseTime;
+            });
+        });
+
+        function shuffleWord(word) {
+            // 改进的洗牌算法，减少原单词出现的概率
+            let shuffled;
+            do {
+                shuffled = word.split('').sort(() => Math.random() - 0.5).join('');
+            } while (shuffled === word && word.length > 1);
+            return shuffled;
+        }
+
+        function getWordByLevel() {
+            // 根据当前等级返回适合难度的单词
+            let availableWords = wordList.filter(word => !correctWords.includes(word));
             
-            // 打乱数组顺序
-            shuffleArray(array) {
-                return [...array].sort(() => Math.random() - 0.5);
-            },
+            // 过滤单词长度，等级越高，倾向于选择更长的单词
+            if (level <= 3) {
+                // 初级：主要短单词，少量中等单词
+                availableWords = availableWords.filter(word => 
+                    word.length <= 5 || (word.length <= 8 && Math.random() < 0.3)
+                );
+            } else if (level <= 6) {
+                // 中级：中等单词为主
+                availableWords = availableWords.filter(word => 
+                    (word.length >= 5 && word.length <= 8) || 
+                    (word.length <= 4 && Math.random() < 0.2) ||
+                    (word.length >= 9 && Math.random() < 0.2)
+                );
+            } else {
+                // 高级：更多长单词
+                availableWords = availableWords.filter(word => 
+                    word.length >= 6 || (word.length <= 5 && Math.random() < 0.2)
+                );
+            }
             
-            // 打乱单词字母顺序
-            shuffleWord(word) {
-                return word.split('').sort(() => Math.random() - 0.5).join('');
-            },
+            // 如果没有符合条件的单词，使用所有可用单词
+            if (availableWords.length === 0) {
+                availableWords = wordList.filter(word => !correctWords.includes(word));
+            }
             
-            // 生成新单词
-            generateNewWord() {
-                // 过滤已答对的单词
-                const availableWords = this.wordList.filter(word => !this.state.correctWords.includes(word));
-                const targetWord = availableWords.length > 0 
-                    ? availableWords[Math.floor(Math.random() * availableWords.length)]
-                    : this.wordList[Math.floor(Math.random() * this.wordList.length)];
+            // 如果所有单词都答对过了，重置正确单词列表
+            if (availableWords.length === 0) {
+                correctWords = [];
+                availableWords = wordList;
+            }
+            
+            return availableWords[Math.floor(Math.random() * availableWords.length)];
+        }
+
+        function generateNewWord() {
+            const targetWord = getWordByLevel();
+            currentWord = targetWord;
+            
+            // 记录已出现的单词（去重）
+            if (!shownWords.includes(currentWord)) {
+                shownWords.push(currentWord);
+            }
+            
+            const shuffled = shuffleWord(currentWord);
+            lettersEl.textContent = shuffled;
+            lettersEl.classList.remove('correct', 'wrong');
+            userInput.value = '';
+            userInput.focus();
+            
+            // 更新单词长度提示
+            wordLengthEl.textContent = currentWord.length;
+            
+            // 确保输入框获得焦点
+            setTimeout(() => userInput.focus(), 100);
+        }
+
+        function checkInput() {
+            if (!isPlaying) return;
+            
+            const input = userInput.value.trim().toLowerCase();
+            if (input === currentWord && !correctWords.includes(currentWord)) {
+                // 计算得分，连续答对有额外奖励
+                consecutiveCorrect++;
+                const bonus = Math.min(5, Math.floor(consecutiveCorrect / 3)); // 每连续答对3题加1分奖励，最多5分
+                const points = pointsPerWord + bonus;
                 
-                this.state.currentWord = targetWord;
+                score += points;
+                correctCount++;
+                correctWords.push(currentWord);
                 
-                // 记录已出现的单词（去重）
-                if (!this.state.shownWords.includes(currentWord)) {
-                    this.state.shownWords.push(this.state.currentWord);
+                // 更新等级（每答对5题升一级）
+                if (correctCount % 5 === 0) {
+                    level++;
+                    levelIndicator.textContent = `等级: ${level}`;
+                    // 升级奖励时间
+                    timeLeft = Math.min(timeLeft + 5, baseTime);
+                    timeEl.textContent = timeLeft;
                 }
                 
-                // 显示打乱后的单词
-                this.elements.letters.textContent = this.shuffleWord(this.state.currentWord);
-                this.elements.letters.classList.remove('correct', 'wrong');
-                this.elements.userInput.value = '';
-                this.elements.userInput.focus();
-            },
+                scoreEl.textContent = score;
+                correctCountEl.textContent = correctCount;
+                lettersEl.classList.remove('wrong');
+                lettersEl.classList.add('correct');
+                
+                // 显示得分提示
+                showTemporaryMessage(`+${points} 分`);
+                
+                setTimeout(generateNewWord, 500);
+            } else if (input) {
+                // 错误答案处理
+                consecutiveCorrect = 0; // 重置连续答对计数
+                lettersEl.classList.add('wrong');
+                setTimeout(() => {
+                    lettersEl.classList.remove('wrong');
+                    userInput.value = '';
+                }, 350);
+            }
+        }
+
+        function skipWord() {
+            if (!isPlaying) return;
             
-            // 检查用户输入
-            checkInput() {
-                if (!this.state.isPlaying) return;
-                
-                const input = this.elements.userInput.value.trim().toLowerCase();
-                
-                if (input === this.state.currentWord && !this.state.correctWords.includes(this.state.currentWord)) {
-                    // 答对了
-                    this.state.score += 10;
-                    this.state.correctCount++;
-                    this.state.correctWords.push(this.state.currentWord);
-                    
-                    // 更新UI
-                    this.elements.score.textContent = this.state.score;
-                    this.elements.correctCount.textContent = this.state.correctCount;
-                    this.elements.letters.classList.remove('wrong');
-                    this.elements.letters.classList.add('correct');
-                    
-                    // 延迟生成新单词，让用户看到反馈
-                    setTimeout(() => this.generateNewWord(), 500);
-                } else if (input) {
-                    // 答错了
-                    this.elements.letters.classList.add('wrong');
-                    setTimeout(() => {
-                        this.elements.letters.classList.remove('wrong');
-                        this.elements.userInput.value = '';
-                    }, 350);
-                }
-            },
+            // 跳过扣分
+            score = Math.max(0, score - 5);
+            scoreEl.textContent = score;
             
-            // 跳过当前单词
-            skipWord() {
-                if (!this.state.isPlaying) return;
-                
-                // 记录未答出的单词（去重）
-                if (!this.state.unansweredWords.includes(this.state.currentWord) && 
-                    !this.state.correctWords.includes(this.state.currentWord)) {
-                    this.state.unansweredWords.push(this.state.currentWord);
-                }
-                
-                this.generateNewWord();
-            },
+            consecutiveCorrect = 0; // 重置连续答对计数
             
-            // 开始游戏
-            startGame() {
-                // 重置游戏状态
-                this.elements.startBtn.style.display = 'none';
-                this.state.score = 0;
-                this.state.timeLeft = 60;
-                this.state.correctCount = 0;
-                this.state.correctWords = [];
-                this.state.shownWords = [];
-                this.state.unansweredWords = [];
-                
-                // 更新UI
-                this.elements.summary.style.display = 'none';
-                this.elements.correctWordList.innerHTML = '';
-                this.elements.unansweredWordList.innerHTML = '';
-                this.elements.score.textContent = this.state.score;
-                this.elements.time.textContent = this.state.timeLeft;
-                this.elements.correctCount.textContent = this.state.correctCount;
-                this.elements.time.classList.remove('timer-warning', 'timer-danger');
-                
-                this.state.isPlaying = true;
-                
-                // 清除之前的计时器
-                clearInterval(this.state.timer);
-                
-                // 启动计时器
-                this.state.timer = setInterval(() => {
-                    this.state.timeLeft--;
-                    this.elements.time.textContent = this.state.timeLeft;
-                    
-                    // 时间警告效果
-                    if (this.state.timeLeft <= 10) {
-                        this.elements.time.classList.add('timer-warning');
-                    }
-                    if (this.state.timeLeft <= 5) {
-                        this.elements.time.classList.remove('timer-warning');
-                        this.elements.time.classList.add('timer-danger');
-                    }
-                    
-                    if (this.state.timeLeft <= 0) {
-                        this.endGame();
-                    }
-                }, 1000);
-                
-                this.generateNewWord();
-            },
+            // 记录未答出的单词（去重）
+            if (!unansweredWords.includes(currentWord) && !correctWords.includes(currentWord)) {
+                unansweredWords.push(currentWord);
+            }
             
-            // 结束游戏
-            endGame() {
-                this.elements.startBtn.style.display = 'inline-block';
-                clearInterval(this.state.timer);
-                this.state.isPlaying = false;
-                this.elements.letters.textContent = `游戏结束！得分: ${this.state.score}`;
-                this.elements.time.classList.remove('timer-warning', 'timer-danger');
+            showTemporaryMessage("-5 分");
+            generateNewWord();
+        }
+
+        function showTemporaryMessage(text) {
+            // 创建临时消息元素
+            const msg = document.createElement('div');
+            msg.textContent = text;
+            msg.style.position = 'absolute';
+            msg.style.top = '40%';
+            msg.style.left = '50%';
+            msg.style.transform = 'translate(-50%, -50%)';
+            msg.style.fontSize = '24px';
+            msg.style.fontWeight = 'bold';
+            msg.style.color = text.startsWith('+') ? '#4CAF50' : '#f44336';
+            msg.style.opacity = '0';
+            msg.style.transition = 'all 0.5s ease';
+            msg.style.pointerEvents = 'none';
+            
+            document.body.appendChild(msg);
+            
+            // 显示动画
+            setTimeout(() => {
+                msg.style.opacity = '1';
+                msg.style.transform = 'translate(-50%, -100%)';
+            }, 10);
+            
+            // 移除元素
+            setTimeout(() => {
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 500);
+            }, 1000);
+        }
+
+        function startGame() {
+            // 重置游戏状态
+            document.getElementById('startBtn').style.display = 'none';
+            score = 0;
+            timeLeft = baseTime;
+            correctCount = 0;
+            correctWords = [];
+            shownWords = [];
+            unansweredWords = [];
+            level = 1;
+            consecutiveCorrect = 0;
+            
+            levelIndicator.textContent = `等级: ${level}`;
+            scoreEl.textContent = score;
+            timeEl.textContent = timeLeft;
+            correctCountEl.textContent = correctCount;
+            summaryEl.style.display = 'none';
+            correctWordListEl.innerHTML = '';
+            unansweredWordListEl.innerHTML = '';
+            isPlaying = true;
+            
+            // 禁用难度选择
+            difficultyBtns.forEach(btn => btn.disabled = true);
+            
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                timeEl.textContent = timeLeft;
                 
-                // 计算所有未答出的单词
-                this.state.unansweredWords = [...new Set(
-                    this.state.shownWords.filter(word => !this.state.correctWords.includes(word))
-                )];
-                
-                // 显示总结
-                this.elements.summary.style.display = 'block';
-                
-                // 显示答对的单词
-                if (this.state.correctWords.length === 0) {
-                    this.elements.correctWordList.textContent = '本次没有答对单词，再接再厉！';
+                // 时间不足10秒时添加警告效果
+                if (timeLeft <= 10) {
+                    timeEl.classList.add('time-warning');
                 } else {
-                    this.elements.correctWordList.innerHTML = '';
-                    this.state.correctWords.forEach(word => {
-                        const wordEl = document.createElement('span');
-                        wordEl.className = 'word-item';
-                        wordEl.textContent = word;
-                        this.elements.correctWordList.appendChild(wordEl);
-                    });
+                    timeEl.classList.remove('time-warning');
                 }
                 
-                // 显示未答出的单词
-                if (this.state.unansweredWords.length === 0) {
-                    this.elements.unansweredWordList.textContent = '太棒了！所有出现的单词都答对了！';
-                } else {
-                    this.elements.unansweredWordList.innerHTML = '';
-                    this.state.unansweredWords.forEach(word => {
-                        const wordEl = document.createElement('span');
-                        wordEl.className = 'unanswered-item';
-                        wordEl.textContent = word;
-                        this.elements.unansweredWordList.appendChild(wordEl);
-                    });
+                if (timeLeft <= 0) {
+                    endGame();
                 }
-                
-                // 使用自定义提示框替代alert，避免阻塞浏览器
-                this.showEndMessage();
-            },
+            }, 1000);
             
-            // 显示游戏结束信息
-            showEndMessage() {
-                // 创建自定义提示框
-                const messageBox = document.createElement('div');
-                messageBox.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: white;
-                    padding: 20px;
-                    border-radius: 10px;
-                    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-                    text-align: center;
-                    z-index: 1000;
-                `;
-                
-                messageBox.innerHTML = `
-                    <h3>时间到！</h3>
-                    <p>你共答对了${this.state.correctCount}个单词</p>
-                    <p>得分：${this.state.score}分</p>
-                    <button style="margin-top: 15px;">确定</button>
-                `;
-                
-                // 添加遮罩层
-                const overlay = document.createElement('div');
-                overlay.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: rgba(0,0,0,0.5);
-                    z-index: 999;
-                `;
-                
-                document.body.appendChild(overlay);
-                document.body.appendChild(messageBox);
-                
-                // 点击确定按钮关闭提示
-                messageBox.querySelector('button').addEventListener('click', () => {
-                    document.body.removeChild(messageBox);
-                    document.body.removeChild(overlay);
+            generateNewWord();
+        }
+
+        function endGame() {
+            document.getElementById('startBtn').style.display = 'inline-block';
+            clearInterval(timer);
+            isPlaying = true; // 短暂保持为true，防止快速点击
+            lettersEl.textContent = `游戏结束！得分: ${score}`;
+            
+            // 启用难度选择
+            difficultyBtns.forEach(btn => btn.disabled = false);
+            
+            // 计算所有未答出的单词（已出现但未答对的）
+            unansweredWords = [...new Set(shownWords.filter(word => !correctWords.includes(word)))];
+            
+            // 显示总结
+            summaryEl.style.display = 'block';
+            
+            // 显示答对的单词
+            if (correctWords.length === 0) {
+                correctWordListEl.textContent = '本次没有答对单词，再接再厉！';
+            } else {
+                correctWords.forEach(word => {
+                    const wordEl = document.createElement('span');
+                    wordEl.className = 'word-item';
+                    wordEl.textContent = word;
+                    correctWordListEl.appendChild(wordEl);
                 });
             }
-        };
-        
-        // 初始化游戏
-        document.addEventListener('DOMContentLoaded', () => {
-            game.init();
+            
+            // 显示未答出的单词
+            if (unansweredWords.length === 0) {
+                unansweredWordListEl.textContent = '太棒了！所有出现的单词都答对了！';
+            } else {
+                unansweredWords.forEach(word => {
+                    const wordEl = document.createElement('span');
+                    wordEl.className = 'unanswered-item';
+                    wordEl.textContent = word;
+                    unansweredWordListEl.appendChild(wordEl);
+                });
+            }
+            
+            // 延迟设置为false，防止alert期间的交互问题
+            setTimeout(() => {
+                isPlaying = false;
+                alert(`时间到！你共答对了${correctCount}个单词，得分${score}分！`);
+            }, 100);
+        }
+
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkInput();
+            }
+        });
+
+        // 点击空白处保持输入框焦点
+        document.querySelector('.game-container').addEventListener('click', () => {
+            if (isPlaying) {
+                userInput.focus();
+            }
         });
     </script>
-    
     <div class="back-container">
         <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
     </div>
