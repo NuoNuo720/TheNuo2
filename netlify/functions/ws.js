@@ -32,7 +32,7 @@ exports.handler = async (event, context) => {
       statusCode: 200,
       headers: {
         // 允许的前端域名（生产环境必须指定具体域名，如https://your-frontend.com，不要用*）
-        'Access-Control-Allow-Origin': 'https://your-frontend-domain.com', 
+        'Access-Control-Allow-Origin': 'https://thenuo2.netlify.app', 
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, WEBSOCKET', // 明确包含WEBSOCKET
         'Access-Control-Allow-Headers': 'Content-Type, Authorization', // 匹配前端请求头
         'Access-Control-Max-Age': '86400' // 预检请求缓存时间（24小时）
