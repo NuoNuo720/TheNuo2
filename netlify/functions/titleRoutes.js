@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const titleService = require('../services/titleService');
-const authMiddleware = require('../middleware/auth');
+const authMiddleware = require('./auth');
 
 // 获取当前用户的所有称号
 router.get('/', authMiddleware.authenticate, async (req, res) => {
