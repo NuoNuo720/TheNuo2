@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const titleService = require('../services/titleService');
+const titleService = require('./titleService');
 const authMiddleware = require('./auth');
 
 // 获取当前用户的所有称号
