@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('./models/User');
 
 // 验证用户是否登录
 exports.authenticate = async (req, res, next) => {
