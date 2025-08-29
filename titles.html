@@ -691,18 +691,16 @@
                 </div>
                 <div class="form-group">
                     <label for="exclusiveTitleDesc">称号描述</label>
-                    <input type="text" id="exclusiveTitleDesc" placeholder="描述这个专属称号" required>
+                    <input type="text" id="exclusiveTitleDesc" placeholder="输入称号描述" required>
                 </div>
                 <div class="form-group">
                     <label for="exclusiveTitleIcon">称号图标</label>
                     <select id="exclusiveTitleIcon" required>
-                        <option value="crown">皇冠 (crown)</option>
-                        <option value="diamond">钻石 (diamond)</option>
-                        <option value="medal">勋章 (medal)</option>
-                        <option value="star">星星 (star)</option>
-                        <option value="heart">爱心 (heart)</option>
-                        <option value="trophy">奖杯 (trophy)</option>
-                        <option value="award">奖励 (award)</option>
+                        <option value="trophy">🏆 奖杯</option>
+                        <option value="star">⭐ 星星</option>
+                        <option value="crown">👑 皇冠</option>
+                        <option value="medal">🥇 奖牌</option>
+                        <option value="users">👥 社交</option>
                     </select>
                 </div>
                 <button type="submit" class="grant-btn">
@@ -711,480 +709,267 @@
             </form>
         </div>
 
-        <!-- 已获得的称号 -->
+        <!-- 我的称号区域 -->
         <div class="title-section">
             <div class="section-header">
                 <h2 class="section-title">
-                    <i class="fas fa-award"></i> 我的专属称号
+                    <i class="fas fa-award"></i> 我的称号
                 </h2>
-                <span id="titleCount">0 个称号</span>
             </div>
-
-            <div class="title-grid" id="ownedTitlesGrid">
-                <!-- 称号卡片会通过JavaScript动态生成 -->
-                <div class="empty-state">
+            <div class="title-grid" id="titleGrid">
+                <!-- 称号卡片会通过JS动态生成 -->
+                <div class="empty-state" id="emptyState">
                     <i class="fas fa-trophy"></i>
-                    <p>你还没有获得专属称号</p>
-                    <p>请等待管理员授予或完成特殊任务</p>
+                    <p>你还没有获得任何称号</p>
+                    <p>完成特定任务或由管理员授予可获得专属称号</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 同步对话框（使用username） -->
-    <div id="syncDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px;">
-            <h3 style="margin-bottom: 15px; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-sync-alt"></i> 同步用户数据
-            </h3>
-            <p style="margin-bottom: 15px; font-size: 0.95rem; color: #555;">
-                输入其他用户的用户名和访问密钥，同步该用户的称号数据
-            </p>
-            <input type="text" id="syncUsername" placeholder="输入要同步的用户名" 
-                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
-            <input type="text" id="syncUserKey" placeholder="输入该用户的访问密钥" 
-                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="document.getElementById('syncDialog').style.display='none'" 
-                        style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;">
-                    取消
-                </button>
-                <button onclick="syncUserData()" 
-                        style="padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    确认同步
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 通知组件 -->
-    <div class="notification" id="notification">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificationText"></span>
-    </div>
-
-    <!-- 底部返回按钮 -->
     <div class="back-container">
         <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">
-            <i class="fas fa-home"></i> 返回导航页
+            <i class="fas fa-home"></i> 返回首页
         </button>
     </div>
 
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span id="notificationText">通知内容</span>
+    </div>
+
     <script>
-        // 全局配置
-        const API_BASE_URL = 'https://thenuo2.netlify.app';
-        
-        // 当前用户信息 - 重点使用username作为唯一标识
-        let currentUser = null;
-        // 所有用户的专属称号存储，使用username作为键
-        let allUsersTitles = JSON.parse(localStorage.getItem('allUsersTitles')) || {};
-        // 存储用户的访问密钥（用于验证身份），使用username作为键
-        let userSecurityKeys = JSON.parse(localStorage.getItem('userSecurityKeys')) || {};
+        // 页面加载完成后执行初始化操作
+        window.onload = async function() {
+            await initUserInfo();
+            await loadUserTitles();
+            await checkAdminPermission(); // 检查管理员权限并显示对应区域
+        };
 
-        
-        // 生成随机安全密钥
-        function generateSecurityKey() {
-            // 生成32位随机字符串作为密钥
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let key = '';
-            for (let i = 0; i < 32; i++) {
-                key += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return key;
-        }
-
-        // 初始化：从本地存储获取用户信息，重点使用username
-        async function initUser() {
+        // 1. 初始化用户信息
+        async function initUserInfo() {
             try {
-                // 1. 从本地存储获取用户信息（与导航页保持一致）
-                const userInfoStr = localStorage.getItem('mainUserInfo');
-                if (!userInfoStr) {
-                    // 未登录状态：使用游客模式并生成临时username
-                    const tempUsername = 'guest_' + Math.random().toString(36).substring(2, 10);
-                    currentUser = {
-                        username: tempUsername,
-                        avatar: 'https://picsum.photos/200',
-                        isAdmin: false
-                    };
-                    showNotification('未检测到登录状态，部分功能受限', 'info');
-                } else {
-                    // 2. 已登录：使用mainUserInfo中的username
-                    const userData = JSON.parse(userInfoStr);
-                    
-                    // 确保username存在，否则生成一个
-                    if (!userData.username) {
-                        userData.username = 'user_' + Math.random().toString(36).substring(2, 10);
-                        localStorage.setItem('mainUserInfo', JSON.stringify(userData));
-                    }
-                    
-                    currentUser = {
-                        username: userData.username,
-                        avatar: userData.avatar || 'https://picsum.photos/200',
-                        isAdmin: userData.isAdmin || false,
-                        currentTitle: userData.currentTitle || null
-                    };
+                const username = localStorage.getItem('username') || '未知用户';
+                const avatar = localStorage.getItem('avatar') || 'default-avatar.png';
+                const secretKey = localStorage.getItem('secretKey') || '未设置';
+
+                document.getElementById('navbarUsername').textContent = username;
+                document.getElementById('currentUsername').textContent = username;
+                document.getElementById('navbarAvatar').src = avatar;
+                document.getElementById('userSecretKey').textContent = secretKey;
+
+                // 加载当前佩戴的称号
+                const currentTitle = await getCurrentTitle();
+                if (currentTitle) {
+                    document.getElementById('navbarTitleBadge').innerHTML = `
+                        <span class="title-badge">
+                            <i class="fas fa-${currentTitle.icon}"></i> ${currentTitle.name}
+                        </span>
+                    `;
                 }
-
-                // 3. 初始化密钥 - 使用username作为键
-                if (!userSecurityKeys[currentUser.username]) {
-                    userSecurityKeys[currentUser.username] = generateSecurityKey();
-                    localStorage.setItem('userSecurityKeys', JSON.stringify(userSecurityKeys));
-                }
-
-                // 4. 更新UI显示 - 突出显示username
-                document.getElementById('currentUsername').textContent = currentUser.username;
-                document.getElementById('userSecretKey').textContent = userSecurityKeys[currentUser.username];
-                document.getElementById('navbarUsername').textContent = currentUser.username;
-                document.getElementById('navbarAvatar').src = currentUser.avatar;
-
-                // 5. 管理员区域控制
-                document.getElementById('adminSection').style.display = currentUser.isAdmin ? 'block' : 'none';
-
-                // 6. 加载称号 - 使用username作为查询条件
-                loadUserTitles();
-
             } catch (err) {
-                console.error('初始化失败:', err);
-                // 出错时仍显示页面，确保username存在
-                const fallbackUsername = 'error_' + Math.random().toString(36).substring(2, 10);
-                currentUser = {
-                    username: fallbackUsername,
-                    avatar: 'https://picsum.photos/200',
-                    isAdmin: false
-                };
-                loadUserTitles();
-                showNotification('加载用户信息失败，但可以继续使用', 'error');
+                console.error('初始化用户信息失败:', err);
+                showNotification('加载用户信息失败', 'error');
             }
         }
 
-        // 保存所有用户的称号数据 - 使用username作为键
-        function saveAllUsersTitles() {
-            localStorage.setItem('allUsersTitles', JSON.stringify(allUsersTitles));
-        }
-
-        // 更新导航栏用户信息
-        function updateNavbarUserInfo() {
-            document.getElementById('navbarUsername').textContent = currentUser.username;
-            document.getElementById('navbarAvatar').src = currentUser.avatar || 'https://picsum.photos/200';
-            
-            // 显示当前佩戴的称号
-            const titleBadgeEl = document.getElementById('navbarTitleBadge');
-            if (currentUser.currentTitle) {
-                titleBadgeEl.innerHTML = `
-                    <span class="title-badge">
-                        <i class="fas fa-${currentUser.currentTitle.icon}"></i>
-                        ${currentUser.currentTitle.name}
-                    </span>
-                `;
-            } else {
-                titleBadgeEl.innerHTML = '';
-            }
-            
-            // 保存当前称号到mainUserInfo
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            userInfo.currentTitle = currentUser.currentTitle;
-            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-        }
-
-        // 加载当前用户的专属称号 - 使用username作为唯一标识
-        async function loadUserTitles() {
-            if (!currentUser || !currentUser.username) return;
-            
+        // 2. 检查管理员权限并显示管理区域
+        async function checkAdminPermission() {
             try {
-                // 请求后端接口获取称号 - 使用username作为查询参数
-                const response = await fetch(
-                    `https://thenuo2.netlify.app/.netlify/functions/titles`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ username: currentUser.username })
-                    }
-                );
-
-                if (!response.ok) {
-                    // 尝试从本地存储加载作为备选
-                    const errorText = await response.text();
-                    console.error('后端返回错误:', response.status, errorText);
-                    // 继续使用本地存储作为备选
-                    const localTitles = allUsersTitles[currentUser.username] || [];
-                    renderTitleGrid(localTitles);
-                    document.getElementById('titleCount').textContent = `${localTitles.length} 个称号`;
+                // 从本地存储获取用户令牌
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    console.log('未登录，无法验证管理员权限');
                     return;
                 }
 
-                const titles = await response.json();
-                console.log('从后端获取的称号:', titles);
-                
-                // 保存到本地存储，使用username作为键
-                allUsersTitles[currentUser.username] = titles;
-                saveAllUsersTitles();
+                // 调用后端接口验证是否为管理员
+                const response = await fetch('/api/check-admin', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-                // 渲染称号
-                renderTitleGrid(titles);
-                document.getElementById('titleCount').textContent = `${titles.length} 个称号`;
-
-            } catch (err) {
-                console.error('加载称号失败:', err);
-                // 出错时尝试从本地加载
-                const localTitles = allUsersTitles[currentUser.username] || [];
-                if (localTitles.length > 0) {
-                    renderTitleGrid(localTitles);
-                    document.getElementById('titleCount').textContent = `${localTitles.length} 个称号`;
-                    showNotification('使用本地缓存的称号数据', 'info');
+                const result = await response.json();
+                if (result.isAdmin) {
+                    // 显示管理员区域
+                    document.getElementById('adminSection').style.display = 'block';
+                    console.log('管理员界面已显示');
                 } else {
-                    document.getElementById('ownedTitlesGrid').innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <p>加载称号失败</p>
-                            <p>请检查网络或联系管理员</p>
-                        </div>
-                    `;
+                    console.log('当前用户不是管理员，隐藏界面');
                 }
+            } catch (err) {
+                console.error('验证管理员权限失败:', err);
+                showNotification('权限验证失败', 'error');
             }
         }
 
-        // 渲染称号列表
-        function renderTitleGrid(titles) {
-            const gridEl = document.getElementById('ownedTitlesGrid');
-            const countEl = document.getElementById('titleCount');
-            
-            countEl.textContent = `${titles.length} 个称号`;
-            gridEl.innerHTML = '';
-            
-            if (titles.length === 0) {
-                gridEl.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-trophy"></i>
-                        <p>你还没有获得专属称号</p>
-                        <p>请等待管理员授予或完成特殊任务</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            // 按时间排序，最新的称号显示在前面
-            titles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            
-            titles.forEach(title => {
-                const isEquipped = currentUser.currentTitle && currentUser.currentTitle.id === title.id;
-                const exclusiveBadge = title.isExclusive ? `
-                    <div class="exclusive-badge">
-                        <i class="fas fa-star"></i> 专属
-                    </div>
-                ` : '';
-                
-                const cardEl = document.createElement('div');
-                cardEl.className = `title-card ${isEquipped ? 'equipped' : ''}`;
-                cardEl.innerHTML = `
-                    <div class="title-header">
-                        ${exclusiveBadge}
-                        <i class="fas fa-${title.icon} title-icon"></i>
+        // 3. 加载用户称号列表
+        async function loadUserTitles() {
+            try {
+                const username = localStorage.getItem('username');
+                if (!username) {
+                    showNotification('未获取到用户名', 'error');
+                    return;
+                }
+
+                const response = await fetch(`/api/titles?username=${encodeURIComponent(username)}`);
+                const titles = await response.json();
+
+                const titleGrid = document.getElementById('titleGrid');
+                const emptyState = document.getElementById('emptyState');
+
+                if (titles.length === 0) {
+                    emptyState.style.display = 'block';
+                    titleGrid.innerHTML = '';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                titleGrid.innerHTML = '';
+
+                // 获取当前佩戴的称号ID
+                const currentTitle = await getCurrentTitle();
+                const currentTitleId = currentTitle?._id || null;
+
+                // 生成称号卡片
+                titles.forEach(title => {
+                    const isEquipped = title._id === currentTitleId;
+                    const card = document.createElement('div');
+                    card.className = `title-card ${isEquipped ? 'equipped' : ''}`;
+                    card.innerHTML = `
                         ${isEquipped ? `
                             <div class="equipped-badge">
                                 <i class="fas fa-check"></i> 已佩戴
                             </div>
                         ` : ''}
-                    </div>
-                    <h3 class="title-name">${title.titleName}</h3>
-                    <p class="title-desc">${title.description}</p>
-                    <div class="title-meta">
-                        <span>
-                            <i class="fas fa-calendar"></i> 
-                            ${new Date(title.createdAt).toLocaleDateString()}
-                        </span>
-                        <button class="equip-btn ${isEquipped ? 'unequip' : ''}" 
-                                onclick="equipTitle('${title.id}', '${title.titleName}', '${title.icon}', '${title.description}')">
-                            <i class="fas ${isEquipped ? 'fa-exchange-alt' : 'fa-check'}"></i>
-                            ${isEquipped ? '更换' : '佩戴'}
-                        </button>
-                    </div>
-                `;
-                
-                gridEl.appendChild(cardEl);
-            });
+                        <div class="title-header">
+                            <i class="fas fa-${title.icon} title-icon"></i>
+                        </div>
+                        <h3 class="title-name">${title.name}</h3>
+                        <p class="title-desc">${title.description}</p>
+                        <div class="title-meta">
+                            <span>获取于 ${new Date(title.createdAt).toLocaleDateString()}</span>
+                            <button class="equip-btn ${isEquipped ? 'unequip' : ''}" 
+                                    onclick="toggleEquip('${title._id}', ${!isEquipped})">
+                                <i class="fas ${isEquipped ? 'fa-times' : 'fa-check'}"></i>
+                                ${isEquipped ? '取消佩戴' : '佩戴'}
+                            </button>
+                        </div>
+                    `;
+                    titleGrid.appendChild(card);
+                });
+            } catch (err) {
+                console.error('加载称号失败:', err);
+                showNotification('加载称号失败', 'error');
+            }
         }
 
-        // 佩戴称号 - 同步更新到mainUserInfo
-        function equipTitle(titleId, titleName, icon, description) {
-            // 保存当前佩戴的称号到本地用户信息
-            currentUser.currentTitle = {
-                id: titleId,
-                name: titleName,
-                icon: icon,
-                description: description
-            };
-            
-            // 更新mainUserInfo中的称号信息
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            userInfo.currentTitle = currentUser.currentTitle;
-            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-            
-            // 更新导航栏显示
-            updateNavbarUserInfo();
-            
-            // 刷新称号卡片状态
-            loadUserTitles();
-            showNotification(`已成功佩戴称号：${titleName}`, 'success');
+        // 4. 获取当前佩戴的称号
+        async function getCurrentTitle() {
+            try {
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) return null;
+
+                const response = await fetch('/api/titles/current', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                return await response.json();
+            } catch (err) {
+                console.error('获取当前称号失败:', err);
+                return null;
+            }
         }
 
-        // 管理员授予专属称号 - 使用目标用户的username
-        function grantExclusiveTitle(event) {
+        // 5. 切换称号佩戴状态
+        async function toggleEquip(titleId, equip) {
+            try {
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    showNotification('请先登录', 'error');
+                    return;
+                }
+
+                const response = await fetch(`/api/titles/equip/${titleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ equip })
+                });
+
+                if (response.ok) {
+                    showNotification(equip ? '称号佩戴成功' : '称号取消佩戴成功', 'success');
+                    await loadUserTitles(); // 重新加载称号列表
+                    await initUserInfo(); // 更新导航栏显示
+                } else {
+                    const error = await response.json();
+                    showNotification(error.message || '操作失败', 'error');
+                }
+            } catch (err) {
+                console.error('切换佩戴状态失败:', err);
+                showNotification('操作失败', 'error');
+            }
+        }
+
+        // 6. 管理员授予称号
+        async function grantExclusiveTitle(event) {
             event.preventDefault();
             
+            // 获取表单数据
             const adminToken = document.getElementById('adminToken').value;
             const targetUsername = document.getElementById('targetUsername').value.trim();
             const titleName = document.getElementById('exclusiveTitleName').value.trim();
             const titleDesc = document.getElementById('exclusiveTitleDesc').value.trim();
             const titleIcon = document.getElementById('exclusiveTitleIcon').value;
-            
-            if (!adminToken || !targetUsername || !titleName) {
+
+            // 验证表单完整性
+            if (!adminToken || !targetUsername || !titleName || !titleDesc) {
                 showNotification('请填写完整信息', 'error');
                 return;
             }
 
-            // 调用后端授予接口 - 使用username作为标识
-            fetch(`${API_BASE_URL}/.netlify/functions/titles`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'grant',
-                    adminToken,
-                    targetUsername,  // 使用username作为目标用户标识
-                    titleName,
-                    description: titleDesc,
-                    icon: titleIcon,
-                    isExclusive: true,
-                    createdAt: new Date().toISOString()
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    showNotification(`已成功授予称号：${titleName}`, 'success');
-                    
-                    // 如果是授予当前用户，立即更新本地数据
-                    if (targetUsername === currentUser.username) {
-                        const newTitle = {
-                            id: result.titleId,
-                            titleName,
-                            description: titleDesc,
-                            icon: titleIcon,
-                            isExclusive: true,
-                            createdAt: new Date().toISOString()
-                        };
-                        
-                        // 更新本地存储
-                        if (!allUsersTitles[currentUser.username]) {
-                            allUsersTitles[currentUser.username] = [];
-                        }
-                        allUsersTitles[currentUser.username].push(newTitle);
-                        saveAllUsersTitles();
-                        
-                        // 重新渲染
-                        loadUserTitles();
-                    }
-                    
+            try {
+                // 发送请求到后端完成授予
+                const response = await fetch('/api/admin/add-title', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({
+                        adminToken,
+                        username: targetUsername,
+                        name: titleName,
+                        description: titleDesc,
+                        icon: titleIcon
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showNotification('称号授予成功', 'success');
+                    // 重置表单
                     event.target.reset();
                 } else {
-                    showNotification(`授予失败：${result.error}`, 'error');
+                    showNotification(result.message || '授予失败', 'error');
                 }
-            })
-            .catch(err => {
-                console.error('授予称号请求失败:', err);
-                showNotification('网络错误，无法连接服务器', 'error');
-            });
-        }
-
-        // 显示同步对话框
-        function showSyncDialog() {
-            document.getElementById('syncDialog').style.display = 'flex';
-            document.getElementById('syncUsername').value = '';
-            document.getElementById('syncUserKey').value = '';
-            document.getElementById('syncUsername').focus();
-        }
-
-        // 同步用户数据（带密钥验证）- 基于username
-        function syncUserData() {
-            const targetUsername = document.getElementById('syncUsername').value.trim();
-            const targetUserKey = document.getElementById('syncUserKey').value.trim();
-            
-            if (!targetUsername || !targetUserKey) {
-                showNotification('请输入用户名和访问密钥', 'error');
-                return;
-            }
-            
-            if (targetUsername === currentUser.username) {
-                showNotification('不能同步自己的用户名', 'error');
-                return;
-            }
-            
-            // 验证密钥是否正确 - 使用username作为键
-            if (userSecurityKeys[targetUsername] !== targetUserKey) {
-                showNotification('用户名或访问密钥不正确，无法同步', 'error');
-                return;
-            }
-            
-            // 检查目标用户是否存在
-            if (!allUsersTitles[targetUsername]) {
-                showNotification('该用户没有任何称号数据', 'error');
-                return;
-            }
-            
-            // 询问用户是否要覆盖当前数据
-            if (confirm(`确定要同步用户 ${targetUsername} 的数据吗？\n这将替换你当前的称号数据！`)) {
-                // 复制目标用户的称号数据 - 使用username作为键
-                allUsersTitles[currentUser.username] = JSON.parse(JSON.stringify(allUsersTitles[targetUsername]));
-                saveAllUsersTitles();
-                
-                // 更新当前佩戴的称号为同步后的数据中的第一个
-                if (allUsersTitles[currentUser.username].length > 0) {
-                    currentUser.currentTitle = allUsersTitles[currentUser.username][0];
-                    // 同步更新到mainUserInfo
-                    const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-                    userInfo.currentTitle = currentUser.currentTitle;
-                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-                }
-                
-                // 刷新页面显示
-                updateNavbarUserInfo();
-                loadUserTitles();
-                
-                showNotification('数据同步成功', 'success');
-                document.getElementById('syncDialog').style.display = 'none';
+            } catch (err) {
+                console.error('授予称号失败:', err);
+                showNotification('网络错误，授予失败', 'error');
             }
         }
 
-        // 复制用户名到剪贴板
-        function copyUsername() {
-            const username = currentUser.username;
-            navigator.clipboard.writeText(username).then(() => {
-                showNotification('用户名已复制到剪贴板', 'success');
-            }).catch(err => {
-                showNotification('复制失败，请手动复制', 'error');
-                console.error('复制失败:', err);
-            });
-        }
-
-        // 复制安全密钥到剪贴板
-        function copySecretKey() {
-            const secretKey = userSecurityKeys[currentUser.username];
-            navigator.clipboard.writeText(secretKey).then(() => {
-                showNotification('访问密钥已复制到剪贴板', 'success');
-            }).catch(err => {
-                showNotification('复制失败，请手动复制', 'error');
-                console.error('复制失败:', err);
-            });
-        }
-
-        // 显示通知
+        // 7. 通知提示功能
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
+            const textElement = document.getElementById('notificationText');
             
-            notificationText.textContent = message;
-            notification.className = 'notification';
+            textElement.textContent = message;
+            notification.className = 'notification'; // 重置样式
             notification.classList.add(type);
             notification.classList.add('show');
             
@@ -1193,18 +978,34 @@
             }, 3000);
         }
 
-        // 退出登录 - 与导航页保持一致
-        function logout() {
-            if (confirm('确定要退出登录吗？')) {
-                localStorage.removeItem('mainUserInfo');
-                window.location.href = 'indexlo.html';
-            }
+        // 8. 复制用户名
+        function copyUsername() {
+            const username = document.getElementById('currentUsername').textContent;
+            navigator.clipboard.writeText(username)
+                .then(() => showNotification('用户名已复制', 'success'))
+                .catch(() => showNotification('复制失败', 'error'));
         }
 
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initUser();
-        });
+        // 9. 复制密钥
+        function copySecretKey() {
+            const key = document.getElementById('userSecretKey').textContent;
+            navigator.clipboard.writeText(key)
+                .then(() => showNotification('密钥已复制', 'success'))
+                .catch(() => showNotification('复制失败', 'error'));
+        }
+
+        // 10. 显示同步对话框
+        function showSyncDialog() {
+            showNotification('同步功能开发中', 'info');
+        }
+
+        // 11. 退出登录
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('username');
+            localStorage.removeItem('avatar');
+            window.location.href = 'login.html';
+        }
     </script>
 </body>
 </html>
