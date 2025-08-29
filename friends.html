@@ -982,7 +982,7 @@
     
             // 连接WebSocket服务器 - 修复：移除URL中的token参数，避免URL过长
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUri = `${protocol}//${window.location.host}/.netlify/functions/chat?username=${encodeURIComponent(currentUser.username)}`;
+            const wsUri = `wss://thenuo2.netlify.app/.netlify/functions/ws?username=${userInfo.username}&token=${userInfo.token}`;
     
             webSocket = new WebSocket(wsUri);
     
