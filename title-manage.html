@@ -2,1078 +2,903 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>称号管理 - 多功能导航中心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>称号与头衔管理系统</title>
+    <!-- 加载Tailwind CSS库 -->
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* 基础样式重置 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f0f4f8;
-            color: #333;
-            min-height: 100vh;
-            line-height: 1.6;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(155, 89, 182, 0.05) 0%, transparent 20%);
-            padding-bottom: 80px; /* 底部留空，避免遮挡返回按钮 */
-        }
-
-        /* 导航栏样式 */
-        .navbar {
-            width: 100%;
-            background-color: #333;
-            padding: 12px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .navbar-title {
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .navbar-title i {
-            font-size: 1.2em;
-            color: #3498db;
-        }
-
-        .back-btn {
-            color: white;
-            text-decoration: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            transition: all 0.2s;
-            margin-right: 8px;
-        }
-
-        .back-btn:hover {
-            background-color: rgba(255,255,255,0.1);
-            transform: translateX(-2px);
-        }
-
-        .user-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid white;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.1);
-        }
-
-        .username {
-            white-space: nowrap;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .title-badge {
-            background: linear-gradient(135deg, #3498db, #9b59b6);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            margin-left: 5px;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .logout-btn {
-            background: #555;
-            border: none;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: #777;
-        }
-
-        /* 主容器样式 */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-
-        .page-title {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #2c3e50;
-            padding: 15px 0;
-        }
-
-        .page-title h1 {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
-            position: relative;
-            display: inline-block;
-            background: linear-gradient(90deg, #3498db, #9b59b6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .page-title h1::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            left: 10%;
-            width: 80%;
-            height: 2px;
-            background: linear-gradient(90deg, #3498db, #9b59b6);
-            border-radius: 3px;
-        }
-
-        .page-title p {
-            color: #7f8c8d;
-            font-size: 1rem;
-        }
-
-        /* 用户同步区域 */
-        .sync-section {
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-left: 3px solid #3498db;
-        }
-
-        .sync-title {
-            font-size: 1rem;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sync-controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .user-id-display {
-            flex: 1;
-            min-width: 200px;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .copy-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .copy-btn:hover {
-            background-color: #2980b9;
-        }
-
-        .sync-btn {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .sync-btn:hover {
-            background-color: #27ae60;
-        }
-
-        /* 安全提示样式 */
-        .security-hint {
-            font-size: 0.85rem;
-            color: #7f8c8d;
-            margin-top: 10px;
-            padding-left: 5px;
-            border-left: 2px solid #eee;
-        }
-
-        .key-display {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .secret-key {
-            font-family: monospace;
-            background-color: #f8f9fa;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            color: #34495e;
-            border: 1px solid #eee;
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* 管理员区域样式 */
-        .admin-section {
-            margin: 25px 0;
-            padding: 18px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-left: 3px solid #e74c3c;
-            display: none; /* 默认隐藏 */
-        }
-
-        .admin-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: #c0392b;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-        }
-
-        .grant-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            align-items: end;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            color: #2c3e50;
-            font-size: 0.85rem;
-        }
-
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 0.9rem;
-        }
-
-        .form-group input:focus, .form-group select:focus {
-            border-color: #3498db;
-            outline: none;
-        }
-
-        .grant-btn {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        /* 称号卡片样式 */
-        .title-section {
-            margin-bottom: 40px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e1e8ed;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-title i {
-            color: #3498db;
-        }
-
-        .title-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-        }
-
-        .title-card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .title-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 12px rgba(0,0,0,0.08);
-            border-left-color: #3498db;
-        }
-
-        .title-card.equipped {
-            border-left-color: #2ecc71;
-            background-color: rgba(46, 204, 113, 0.03);
-        }
-
-        .equipped-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background-color: #2ecc71;
-            color: white;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .title-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            position: relative;
-            padding: 8px 0;
-        }
-
-        .title-icon {
-            font-size: 1.8rem;
-            color: #3498db;
-        }
-
-        .title-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .title-desc {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            margin-bottom: 12px;
-            line-height: 1.6;
-        }
-
-        .title-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            color: #95a5a6;
-            padding-top: 8px;
-            border-top: 1px dashed #eee;
-        }
-
-        .equip-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 0.85rem;
-        }
-
-        .equip-btn.unequip {
-            background-color: #7f8c8d;
-        }
-
-        /* 空状态样式 */
-        .empty-state {
-            text-align: center;
-            padding: 40px 15px;
-            color: #95a5a6;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 15px;
-            opacity: 0.3;
-            color: #3498db;
-        }
-
-        .empty-state p {
-            font-size: 1rem;
-            margin-bottom: 15px;
-        }
-
-        /* 通知提示 */
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 15px;
-            background-color: #3498db;
-            color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            transform: translateX(120%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 80%;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.success {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-        }
-
-        .notification.error {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-        }
-
-        /* 底部返回按钮样式 */
-        .back-container {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 90;
-        }
-
-        .back-to-home {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 15px;
-            font-weight: 500;
-            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .back-to-home:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 12px rgba(52, 152, 219, 0.3);
-        }
-
-        /* 响应式设计增强 */
-        @media (max-width: 768px) {
-            .title-grid {
-                grid-template-columns: 1fr;
+    
+    <!-- 自定义样式 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
             }
-            
-            .username {
-                display: none; /* 移动端隐藏用户名，节省空间 */
-            }
-            
-            .page-title h1 {
-                font-size: 1.5rem;
-            }
-
-            .grant-form {
-                grid-template-columns: 1fr;
-            }
-
-            .admin-section {
-                padding: 15px;
-            }
-
-            .grant-btn {
-                width: 100%;
-                justify-content: center;
-                padding: 10px;
-            }
-
-            .sync-controls {
-                flex-direction: column;
-            }
-
-            .copy-btn, .sync-btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .navbar-title span {
-                display: none; /* 超小屏幕只显示图标 */
-            }
-            
-            .navbar-title {
-                gap: 0;
-            }
-            
-            .page-title {
-                padding: 10px 0;
-                margin-bottom: 20px;
-            }
-            
             .title-card {
-                padding: 15px;
+                @apply bg-white rounded-xl shadow-card overflow-hidden transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1 border border-gray-100;
+            }
+            .title-card-equipped {
+                @apply border-2 border-[#4F46E5] relative;
+            }
+            .title-card-equipped::before {
+                content: "已佩戴";
+                @apply absolute top-2 right-2 bg-[#4F46E5] text-white text-xs px-2 py-1 rounded-full;
+            }
+            .badge-icon {
+                @apply w-16 h-16 flex items-center justify-center rounded-full text-2xl mb-3 mx-auto;
+            }
+            .shine-effect {
+                position: relative;
+                overflow: hidden;
+            }
+            .shine-effect::after {
+                content: '';
+                @apply absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent;
+                transform: skewX(-25deg) translateX(-150%);
+                animation: shine 3s infinite;
+            }
+            @keyframes shine {
+                0% { transform: skewX(-25deg) translateX(-150%); }
+                100% { transform: skewX(-25deg) translateX(150%); }
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            .loading {
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
             }
         }
     </style>
-</head>
-<body>
-    <!-- 导航栏 -->
-    <div class="navbar">
-        <div class="navbar-title">
-            <a href="indexdaohang.html" class="back-btn">
-                <i class="fas fa-arrow-left"></i> 返回
-            </a>
-            <i class="fas fa-trophy"></i>
-            <span>称号管理中心</span>
-        </div>
-        <div class="user-area" id="userArea">
-            <span class="username" id="navbarUsername">加载中...</span>
-            <div id="navbarTitleBadge"></div>
-            <img src="" alt="用户头像" class="user-avatar" id="navbarAvatar">
-            <button class="logout-btn" onclick="auth.logout()">
-                <i class="fas fa-sign-out-alt"></i> 退出
-            </button>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="page-title">
-            <h1>我的专属称号 collection</h1>
-            <p>管理你的个人专属称号，展示独特身份</p>
-        </div>
-
-        <!-- 用户同步区域 -->
-        <div class="sync-section">
-            <h3 class="sync-title">
-                <i class="fas fa-sync-alt"></i> 跨设备同步
-            </h3>
-            <div class="sync-controls">
-                <div class="user-id-display">
-                    <i class="fas fa-user-secret"></i>
-                    <span>你的用户名: <strong id="currentUsername">加载中</strong></span>
-                </div>
-                <button class="copy-btn" onclick="user.copyUsername()">
-                    <i class="fas fa-copy"></i> 复制用户名
-                </button>
-                <button class="sync-btn" onclick="user.showSyncDialog()">
-                    <i class="fas fa-exchange-alt"></i> 同步数据
-                </button>
-            </div>
-            
-            <div class="key-display">
-                <i class="fas fa-key" style="color: #3498db;"></i>
-                <div class="secret-key" id="userSecretKey">加载中...</div>
-                <button class="copy-btn" onclick="user.copySecretKey()" style="padding: 5px 10px;">
-                    <i class="fas fa-copy"></i> 复制密钥
-                </button>
-            </div>
-            
-            <p class="security-hint">
-                <i class="fas fa-info-circle"></i> 重要：请妥善保管你的访问密钥，不要分享给陌生人。他人需要同时知道你的用户名和密钥才能访问你的数据。
-            </p>
-        </div>
-
-        <!-- 管理员授予称号区域 -->
-        <div class="admin-section" id="adminSection">
-            <h3 class="admin-title">
-                <i class="fas fa-user-shield"></i> 管理员操作 - 授予专属称号
-            </h3>
-            <form class="grant-form" onsubmit="admin.grantExclusiveTitle(event)">
-                <div class="form-group">
-                    <label for="adminToken">管理员密钥</label>
-                    <input type="password" id="adminToken" placeholder="输入管理员密钥" required>
-                </div>
-                <div class="form-group">
-                    <label for="targetUsername">目标用户名</label>
-                    <input type="text" id="targetUsername" placeholder="输入要授予的用户名" required>
-                </div>
-                <div class="form-group">
-                    <label for="exclusiveTitleName">称号名称</label>
-                    <input type="text" id="exclusiveTitleName" placeholder="输入专属称号名称" required>
-                </div>
-                <div class="form-group">
-                    <label for="exclusiveTitleDesc">称号描述</label>
-                    <input type="text" id="exclusiveTitleDesc" placeholder="输入称号描述" required>
-                </div>
-                <div class="form-group">
-                    <label for="exclusiveTitleIcon">称号图标</label>
-                    <select id="exclusiveTitleIcon" required>
-                        <option value="trophy">🏆 奖杯</option>
-                        <option value="star">⭐ 星星</option>
-                        <option value="crown">👑 皇冠</option>
-                        <option value="medal">🥇 奖牌</option>
-                        <option value="users">👥 社交</option>
-                    </select>
-                </div>
-                <button type="submit" class="grant-btn">
-                    <i class="fas fa-gift"></i> 授予称号
-                </button>
-            </form>
-        </div>
-
-        <!-- 我的称号区域 -->
-        <div class="title-section">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-award"></i> 我的称号
-                </h2>
-            </div>
-            <div class="title-grid" id="titleGrid">
-                <!-- 称号卡片会通过JS动态生成 -->
-                <div class="empty-state" id="emptyState">
-                    <i class="fas fa-trophy"></i>
-                    <p>你还没有获得任何称号</p>
-                    <p>完成特定任务或由管理员授予可获得专属称号</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="back-container">
-        <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">
-            <i class="fas fa-home"></i> 返回首页
-        </button>
-    </div>
-
-    <div class="notification" id="notification">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificationText">通知内容</span>
-    </div>
-
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // 模块化组织代码
-        const app = {
-            // 初始化应用
-            async init() {
-                try {
-                    // 按顺序初始化各模块
-                    await auth.init();
-                    await user.init();
-                    await titles.loadUserTitles();
-                    await admin.checkPermission();
-                } catch (error) {
-                    console.error('应用初始化失败:', error);
-                    app.showNotification('系统初始化失败，请刷新页面重试', 'error');
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    boxShadow: {
+                        'card': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+                        'card-hover': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    }
                 }
             }
-        };
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+    <!-- 导航栏 -->
+    <header class="bg-dark text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-award text-accent text-2xl mr-3"></i>
+                <h1 class="text-xl md:text-2xl font-bold">称号与头衔管理系统</h1>
+            </div>
+            <div id="user-info" class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center">
+                    <div id="user-avatar" class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mr-2">
+                        <i class="fas fa-user text-primary text-lg"></i>
+                    </div>
+                    <span id="username-display" class="font-medium"></span>
+                </div>
+                <button id="logout-btn" class="p-2 rounded-full hover:bg-gray-700 transition-colors hidden">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-        // 认证相关功能
-        const auth = {
-            async init() {
-                // 检查是否已登录
-                if (!this.isAuthenticated()) {
-                    window.location.href = 'indexlo.html';
-                    return false;
-                }
-                return true;
-            },
+    <!-- 未登录状态提示 -->
+    <div id="not-logged-in" class="hidden container mx-auto px-4 py-16 text-center">
+        <div class="bg-white rounded-xl shadow-lg p-8 max-w-md mx-auto fade-in">
+            <i class="fas fa-user-lock text-6xl text-gray-400 mb-6"></i>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">未登录状态</h2>
+            <p class="text-gray-600 mb-8">您尚未登录系统，请先登录后再访问称号管理功能。</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="go-to-login" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i> 前往登录
+                </button>
+                <button id="back-home" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center">
+                    <i class="fas fa-home mr-2"></i> 返回导航页
+                </button>
+            </div>
+        </div>
+    </div>
 
-            isAuthenticated() {
-                return !!localStorage.getItem('authToken');
-            },
+    <!-- 主内容区 - 登录后显示 -->
+    <main id="main-content" class="container mx-auto px-4 py-8">
+        <!-- 用户信息概览 -->
+        <section class="mb-10 bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mr-4">
+                        <i class="fas fa-user text-primary text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold" id="user-display-name"></h2>
+                        <p class="text-gray-500 text-sm">
+                            <i class="fas fa-trophy mr-1"></i>
+                            <span id="user-titles-count">0</span> 个称号 · 
+                            <span id="join-date">2023年1月1日</span> 加入
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="refresh-titles" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> 刷新
+                    </button>
+                    <button id="export-titles" class="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center">
+                        <i class="fas fa-download mr-2"></i> 导出称号
+                    </button>
+                </div>
+            </div>
+        </section>
 
-            getAuthToken() {
-                return localStorage.getItem('authToken');
-            },
+        <!-- 当前佩戴的称号 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold mb-6 flex items-center text-dark">
+                <i class="fas fa-crown text-accent mr-3"></i>
+                当前佩戴的称号
+            </h2>
+            <div id="current-title" class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center shine-effect">
+                <div class="text-gray-500 italic py-12" id="no-current-title">
+                    <i class="fas fa-trophy text-gray-300 text-4xl mb-4 block"></i>
+                    尚未佩戴任何称号
+                </div>
+                <div id="current-title-content" class="hidden">
+                    <div class="badge-icon bg-primary/10 text-primary mx-auto mb-6">
+                        <i id="current-title-icon" class="fas fa-star"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-primary mb-3" id="current-title-name"></div>
+                    <div class="text-gray-600 max-w-2xl mx-auto mb-6" id="current-title-desc"></div>
+                    <div class="text-sm text-gray-500">
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        获得于 <span id="current-title-date"></span>
+                    </div>
+                    <button id="remove-current-title" class="mt-4 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all">
+                        <i class="fas fa-times mr-1"></i> 取消佩戴
+                    </button>
+                </div>
+            </div>
+        </section>
 
-            logout() {
-                // 清除本地存储的认证信息
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('username');
-                localStorage.removeItem('avatar');
-                localStorage.removeItem('secretKey');
-                window.location.href = 'indexlo.html';
-            }
-        };
-
-        // 用户相关功能
-        const user = {
-            async init() {
-                try {
-                    await this.loadUserInfo();
-                } catch (error) {
-                    console.error('加载用户信息失败:', error);
-                    app.showNotification('加载用户信息失败', 'error');
-                }
-            },
-
-            async loadUserInfo() {
-                const username = localStorage.getItem('username') || '未知用户';
-                const avatar = localStorage.getItem('avatar') || 'default-avatar.png';
-                const secretKey = localStorage.getItem('secretKey') || '未设置';
-
-                // 更新DOM显示
-                document.getElementById('navbarUsername').textContent = username;
-                document.getElementById('currentUsername').textContent = username;
-                document.getElementById('navbarAvatar').src = avatar;
-                document.getElementById('userSecretKey').textContent = secretKey;
-
-                // 加载当前佩戴的称号
-                const currentTitle = await titles.getCurrentTitle();
-                if (currentTitle) {
-                    document.getElementById('navbarTitleBadge').innerHTML = `
-                        <span class="title-badge">
-                            <i class="fas fa-${currentTitle.icon}"></i> ${currentTitle.name}
-                        </span>
-                    `;
-                }
-            },
-
-            copyUsername() {
-                const username = document.getElementById('currentUsername').textContent;
-                navigator.clipboard.writeText(username)
-                    .then(() => app.showNotification('用户名已复制', 'success'))
-                    .catch(() => app.showNotification('复制失败，请手动复制', 'error'));
-            },
-
-            copySecretKey() {
-                const key = document.getElementById('userSecretKey').textContent;
-                navigator.clipboard.writeText(key)
-                    .then(() => app.showNotification('密钥已复制', 'success'))
-                    .catch(() => app.showNotification('复制失败，请手动复制', 'error'));
-            },
-
-            showSyncDialog() {
-                app.showNotification('同步功能开发中，敬请期待', 'info');
-            }
-        };
-
-        // 称号管理功能
-        const titles = {
-            async loadUserTitles() {
-                try {
-                    const username = localStorage.getItem('username');
-                    if (!username) {
-                        app.showNotification('未获取到用户信息', 'error');
-                        return;
-                    }
-
-                    const response = await fetch(`/api/titles?username=${encodeURIComponent(username)}`);
-                    
-                    // 检查HTTP错误状态
-                    if (!response.ok) {
-                        throw new Error(`加载称号失败: ${response.statusText}`);
-                    }
-                    
-                    const titles = await response.json();
-                    this.renderTitleGrid(titles);
-                } catch (error) {
-                    console.error('加载称号失败:', error);
-                    app.showNotification('加载称号失败', 'error');
-                }
-            },
-
-            async getCurrentTitle() {
-                try {
-                    const authToken = auth.getAuthToken();
-                    if (!authToken) return null;
-
-                    const response = await fetch('/api/titles/current', {
-                        headers: { 'Authorization': `Bearer ${authToken}` }
-                    });
-                    
-                    if (!response.ok) {
-                        return null;
-                    }
-                    
-                    return await response.json();
-                } catch (error) {
-                    console.error('获取当前称号失败:', error);
-                    return null;
-                }
-            },
-
-            renderTitleGrid(titleList) {
-                const titleGrid = document.getElementById('titleGrid');
-                const emptyState = document.getElementById('emptyState');
-
-                // 清空网格
-                titleGrid.innerHTML = '';
-
-                if (!titleList || titleList.length === 0) {
-                    emptyState.style.display = 'block';
-                    return;
-                }
-
-                // 隐藏空状态
-                emptyState.style.display = 'none';
-
-                // 获取当前佩戴的称号ID
-                this.getCurrentTitle().then(currentTitle => {
-                    const currentTitleId = currentTitle?._id || null;
-
-                    // 生成称号卡片
-                    titleList.forEach(title => {
-                        const isEquipped = title._id === currentTitleId;
-                        const card = document.createElement('div');
-                        card.className = `title-card ${isEquipped ? 'equipped' : ''}`;
-                        
-                        // 构建卡片内容
-                        card.innerHTML = `
-                            ${isEquipped ? `
-                                <div class="equipped-badge">
-                                    <i class="fas fa-check"></i> 已佩戴
-                                </div>
-                            ` : ''}
-                            <div class="title-header">
-                                <i class="fas fa-${title.icon} title-icon"></i>
-                            </div>
-                            <h3 class="title-name">${this.escapeHtml(title.name)}</h3>
-                            <p class="title-desc">${this.escapeHtml(title.description)}</p>
-                            <div class="title-meta">
-                                <span>获取于 ${new Date(title.createdAt).toLocaleDateString()}</span>
-                                <button class="equip-btn ${isEquipped ? 'unequip' : ''}" 
-                                        onclick="titles.toggleEquip('${title._id}', ${!isEquipped})">
-                                    <i class="fas ${isEquipped ? 'fa-times' : 'fa-check'}"></i>
-                                    ${isEquipped ? '取消佩戴' : '佩戴'}
-                                </button>
-                            </div>
-                        `;
-                        
-                        titleGrid.appendChild(card);
-                    });
-                });
-            },
-
-            async toggleEquip(titleId, equip) {
-                try {
-                    const authToken = auth.getAuthToken();
-                    if (!authToken) {
-                        app.showNotification('请先登录', 'error');
-                        return;
-                    }
-
-                    const response = await fetch(`/api/titles/equip/${titleId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${authToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ equip })
-                    });
-
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        app.showNotification(equip ? '称号佩戴成功' : '称号取消佩戴成功', 'success');
-                        await this.loadUserTitles(); // 重新加载称号列表
-                        await user.loadUserInfo(); // 更新导航栏显示
-                    } else {
-                        app.showNotification(result.message || '操作失败', 'error');
-                    }
-                } catch (error) {
-                    console.error('切换佩戴状态失败:', error);
-                    app.showNotification('操作失败，请重试', 'error');
-                }
-            },
-
-            // HTML转义，防止XSS攻击
-            escapeHtml(unsafe) {
-                if (!unsafe) return '';
-                return unsafe
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
-            }
-        };
-
-        // 管理员功能
-        const admin = {
-            async checkPermission() {
-                try {
-                    const authToken = auth.getAuthToken();
-                    if (!authToken) {
-                        return false;
-                    }
-
-                    const response = await fetch('/api/check-admin', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${authToken}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    const result = await response.json();
-                    
-                    if (result.isAdmin) {
-                        document.getElementById('adminSection').style.display = 'block';
-                        return true;
-                    }
-                    
-                    return false;
-                } catch (error) {
-                    console.error('验证管理员权限失败:', error);
-                    return false;
-                }
-            },
-
-            async grantExclusiveTitle(event) {
-                event.preventDefault();
+        <!-- 称号列表 -->
+        <section class="mb-12">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <h2 class="text-2xl font-bold flex items-center text-dark">
+                    <i class="fas fa-trophy text-accent mr-3"></i>
+                    我的称号 collection
+                </h2>
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <span id="titles-count" class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">
+                        0 个称号
+                    </span>
+                    <div class="relative">
+                        <select id="titles-filter" class="appearance-none bg-gray-200 text-gray-700 px-3 py-1 pr-8 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="all">全部称号</option>
+                            <option value="equipped">已佩戴</option>
+                            <option value="admin">管理员授予</option>
+                            <option value="custom">自定义</option>
+                            <option value="system">系统称号</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="titles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- 加载状态 -->
+                <div id="loading-titles" class="col-span-full text-center py-16 hidden">
+                    <i class="fas fa-circle-notch text-gray-400 text-5xl mb-4 block loading"></i>
+                    <p class="text-gray-500">加载称号中...</p>
+                </div>
                 
-                // 获取表单数据
-                const adminToken = document.getElementById('adminToken').value;
-                const targetUsername = document.getElementById('targetUsername').value.trim();
-                const titleName = document.getElementById('exclusiveTitleName').value.trim();
-                const titleDesc = document.getElementById('exclusiveTitleDesc').value.trim();
-                const titleIcon = document.getElementById('exclusiveTitleIcon').value;
+                <!-- 无称号提示 -->
+                <div class="col-span-full text-center text-gray-500 py-16" id="no-titles-message">
+                    <i class="fas fa-award text-gray-300 text-5xl mb-4 block"></i>
+                    暂无称号，继续努力获取吧！
+                </div>
+            </div>
+        </section>
 
-                // 验证表单完整性
-                if (!adminToken || !targetUsername || !titleName || !titleDesc) {
-                    app.showNotification('请填写完整信息', 'error');
-                    return;
-                }
+        <!-- 管理员区域 -->
+        <section id="admin-section" class="mb-12 hidden">
+            <h2 class="text-2xl font-bold mb-6 flex items-center text-dark">
+                <i class="fas fa-user-shield text-red-500 mr-3"></i>
+                管理员操作
+            </h2>
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">授予用户称号</h3>
+                <form id="grant-title-form" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="target-username" class="block text-gray-700 mb-2 font-medium">目标用户名</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" id="target-username" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="title-name" class="block text-gray-700 mb-2 font-medium">称号名称</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                    <i class="fas fa-tag"></i>
+                                </span>
+                                <input type="text" id="title-name" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="title-description" class="block text-gray-700 mb-2 font-medium">称号描述</label>
+                        <div class="relative">
+                            <span class="absolute top-3 left-3 text-gray-500">
+                                <i class="fas fa-align-left"></i>
+                            </span>
+                            <textarea id="title-description" rows="3" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="title-icon" class="block text-gray-700 mb-2 font-medium">
+                            图标类名 (Font Awesome)
+                            <span class="text-sm text-gray-500 ml-2">例如: fas fa-star</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                <i class="fas fa-icons"></i>
+                            </span>
+                            <input type="text" id="title-icon" placeholder="fas fa-star" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                            <div class="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <p class="text-sm text-gray-600 mb-2">常用图标参考：</p>
+                                <div class="flex flex-wrap gap-4">
+                                    <span class="flex items-center"><i class="fas fa-star text-yellow-500 mr-1"></i> fas fa-star</span>
+                                    <span class="flex items-center"><i class="fas fa-diamond text-blue-400 mr-1"></i> fas fa-diamond</span>
+                                    <span class="flex items-center"><i class="fas fa-heart text-red-500 mr-1"></i> fas fa-heart</span>
+                                    <span class="flex items-center"><i class="fas fa-rocket text-purple-500 mr-1"></i> fas fa-rocket</span>
+                                    <span class="flex items-center"><i class="fas fa-crown text-yellow-600 mr-1"></i> fas fa-crown</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg flex items-center">
+                        <i class="fas fa-gift mr-2"></i> 授予称号
+                    </button>
+                </form>
+            </div>
+        </section>
 
-                try {
-                    const authToken = auth.getAuthToken();
-                    if (!authToken) {
-                        app.showNotification('请先登录', 'error');
-                        return;
-                    }
+        <!-- 创建自定义称号 -->
+        <section>
+            <h2 class="text-2xl font-bold mb-6 flex items-center text-dark">
+                <i class="fas fa-pencil-alt text-secondary mr-3"></i>
+                创建自定义称号
+            </h2>
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                <form id="create-title-form" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="custom-title-name" class="block text-gray-700 mb-2 font-medium">称号名称</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                    <i class="fas fa-tag"></i>
+                                </span>
+                                <input type="text" id="custom-title-name" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary transition-all" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="custom-title-icon" class="block text-gray-700 mb-2 font-medium">
+                                图标类名
+                                <span class="text-sm text-gray-500 ml-2">例如: fas fa-heart</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                    <i class="fas fa-icons"></i>
+                                </span>
+                                <input type="text" id="custom-title-icon" placeholder="fas fa-heart" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary transition-all">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="custom-title-description" class="block text-gray-700 mb-2 font-medium">称号描述</label>
+                        <div class="relative">
+                            <span class="absolute top-3 left-3 text-gray-500">
+                                <i class="fas fa-align-left"></i>
+                            </span>
+                            <textarea id="custom-title-description" rows="3" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary transition-all"></textarea>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="custom-title-bg" class="block text-gray-700 mb-2 font-medium">
+                                背景颜色
+                            </label>
+                            <div class="grid grid-cols-6 gap-2">
+                                <div class="h-10 rounded-full bg-[#4F46E5]/10 cursor-pointer border-2 border-transparent hover:border-[#4F46E5]" data-color="bg-[#4F46E5]/10 text-[#4F46E5]"></div>
+                                <div class="h-10 rounded-full bg-[#10B981]/10 cursor-pointer border-2 border-transparent hover:border-[#10B981]" data-color="bg-[#10B981]/10 text-[#10B981]"></div>
+                                <div class="h-10 rounded-full bg-[#F59E0B]/10 cursor-pointer border-2 border-transparent hover:border-[#F59E0B]" data-color="bg-[#F59E0B]/10 text-[#F59E0B]"></div>
+                                <div class="h-10 rounded-full bg-red-500/10 cursor-pointer border-2 border-transparent hover:border-red-500" data-color="bg-red-500/10 text-red-500"></div>
+                                <div class="h-10 rounded-full bg-blue-500/10 cursor-pointer border-2 border-transparent hover:border-blue-500" data-color="bg-blue-500/10 text-blue-500"></div>
+                                <div class="h-10 rounded-full bg-purple-500/10 cursor-pointer border-2 border-transparent hover:border-purple-500" data-color="bg-purple-500/10 text-purple-500"></div>
+                            </div>
+                            <input type="hidden" id="custom-title-color" value="bg-[#4F46E5]/10 text-[#4F46E5]">
+                        </div>
+                    </div>
+                    <button type="submit" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i> 创建称号
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
 
-                    // 发送请求到后端完成授予
-                    const response = await fetch('/api/admin/add-title', {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: JSON.stringify({
-                            adminToken,
-                            username: targetUsername,
-                            name: titleName,
-                            description: titleDesc,
-                            icon: titleIcon
-                        })
-                    });
+    <footer class="bg-dark text-white py-8 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center items-center mb-4">
+                <i class="fas fa-award text-accent text-3xl mr-3"></i>
+                <h2 class="text-xl font-bold">称号与头衔管理系统</h2>
+            </div>
+            <p class="text-gray-400">探索你的成就，展示你的荣誉</p>
+        </div>
+    </footer>
 
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        app.showNotification('称号授予成功', 'success');
-                        // 重置表单
-                        event.target.reset();
-                    } else {
-                        app.showNotification(result.message || '授予失败', 'error');
-                    }
-                } catch (error) {
-                    console.error('授予称号失败:', error);
-                    app.showNotification('网络错误，授予失败', 'error');
-                }
-            }
-        };
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div>
 
-        // 通知功能
-        app.showNotification = function(message, type = 'info') {
+    <!-- 主功能脚本 -->
+    <script>
+        // 当前登录用户信息
+        let currentUser = null;
+        // 用户称号列表
+        let userTitles = [];
+        
+        // API 基础路径 - 实际项目中替换为你的后端API地址
+        const API_BASE_URL = '/api';
+        
+        // 工具函数：显示通知
+        function showNotification(message, isError = false) {
             const notification = document.getElementById('notification');
-            const textElement = document.getElementById('notificationText');
+            notification.textContent = message;
+            notification.className = `fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-2xl transform transition-all duration-300 z-50 ${
+                isError ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+            }`;
             
-            // 防止重复显示相同消息
-            if (textElement.textContent === message && notification.classList.contains(type)) {
+            setTimeout(() => {
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // 工具函数：显示加载状态
+        function showLoading(show = true) {
+            const loadingEl = document.getElementById('loading-titles');
+            const noTitlesEl = document.getElementById('no-titles-message');
+            
+            if (show) {
+                loadingEl.classList.remove('hidden');
+                noTitlesEl.classList.add('hidden');
+            } else {
+                loadingEl.classList.add('hidden');
+            }
+        }
+
+        // 从MongoDB查询用户信息
+        async function getUserByUsername(username) {
+            try {
+                // 实际项目中调用API查询MongoDB
+                const response = await fetch(`${API_BASE_URL}/users?username=${encodeURIComponent(username)}`);
+                
+                if (!response.ok) {
+                    throw new Error('查询用户失败');
+                }
+                
+                const user = await response.json();
+                return user;
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+                showNotification('获取用户信息失败', true);
+                return null;
+            }
+        }
+
+        // 检查用户登录状态并获取当前用户信息
+        async function checkAuthStatus() {
+            try {
+                // 模拟从本地存储获取当前登录用户名
+                const storedUsername = localStorage.getItem('currentUsername');
+                
+                // 如果没有登录信息，显示未登录页面
+                if (!storedUsername) {
+                    document.getElementById('not-logged-in').classList.remove('hidden');
+                    document.getElementById('main-content').classList.add('hidden');
+                    return false;
+                }
+                
+                // 从MongoDB查询用户信息
+                const user = await getUserByUsername(storedUsername);
+                
+                if (!user) {
+                    document.getElementById('not-logged-in').classList.remove('hidden');
+                    document.getElementById('main-content').classList.add('hidden');
+                    return false;
+                }
+                
+                // 保存当前用户信息
+                currentUser = user;
+                
+                // 显示用户信息
+                document.getElementById('username-display').textContent = user.username;
+                document.getElementById('user-display-name').textContent = user.username;
+                document.getElementById('join-date').textContent = formatDate(user.joinDate);
+                document.getElementById('logout-btn').classList.remove('hidden');
+                
+                // 如果是管理员，显示管理员区域
+                if (user.isAdmin) {
+                    document.getElementById('admin-section').classList.remove('hidden');
+                }
+                
+                document.getElementById('not-logged-in').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                return true;
+            } catch (error) {
+                console.error('验证登录状态失败:', error);
+                document.getElementById('not-logged-in').classList.remove('hidden');
+                document.getElementById('main-content').classList.add('hidden');
+                showNotification('验证登录状态失败', true);
+                return false;
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+
+        // 获取用户称号列表
+        async function fetchUserTitles() {
+            if (!currentUser) return [];
+            
+            try {
+                showLoading();
+                
+                // 实际项目中调用API获取用户称号
+                const response = await fetch(`${API_BASE_URL}/users/${currentUser._id}/titles`);
+                
+                if (!response.ok) {
+                    throw new Error('获取称号列表失败');
+                }
+                
+                const titles = await response.json();
+                return titles;
+            } catch (error) {
+                console.error('获取称号列表失败:', error);
+                showNotification('获取称号列表失败', true);
+                return [];
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 获取并显示用户称号
+        async function loadUserTitles() {
+            try {
+                // 从API获取称号数据
+                const titles = await fetchUserTitles();
+                userTitles = titles;
+                
+                // 更新称号计数
+                document.getElementById('titles-count').textContent = `${titles.length} 个称号`;
+                document.getElementById('user-titles-count').textContent = titles.length;
+                
+                // 显示称号列表
+                displayTitles(titles);
+                
+                // 显示当前佩戴的称号
+                const currentTitle = titles.find(title => title.isEquipped);
+                displayCurrentTitle(currentTitle);
+            } catch (error) {
+                console.error('加载称号失败:', error);
+                showNotification('加载称号时发生错误', true);
+            }
+        }
+
+        // 显示称号列表
+        function displayTitles(titles) {
+            const container = document.getElementById('titles-container');
+            const noTitlesMsg = document.getElementById('no-titles-message');
+            const filterValue = document.getElementById('titles-filter').value;
+            
+            // 清空容器
+            container.innerHTML = '';
+            container.appendChild(document.getElementById('loading-titles'));
+            container.appendChild(noTitlesMsg);
+            
+            // 根据筛选条件过滤称号
+            let filteredTitles = titles;
+            if (filterValue === 'equipped') {
+                filteredTitles = titles.filter(title => title.isEquipped);
+            } else if (filterValue === 'admin') {
+                filteredTitles = titles.filter(title => title.isAdminGranted);
+            } else if (filterValue === 'custom') {
+                filteredTitles = titles.filter(title => title.isCustom);
+            } else if (filterValue === 'system') {
+                filteredTitles = titles.filter(title => !title.isAdminGranted && !title.isCustom);
+            }
+            
+            if (filteredTitles.length === 0) {
+                noTitlesMsg.classList.remove('hidden');
                 return;
             }
             
-            textElement.textContent = message;
-            notification.className = 'notification'; // 重置样式
-            notification.classList.add(type);
-            notification.classList.add('show');
+            noTitlesMsg.classList.add('hidden');
             
-            // 3秒后自动隐藏
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        };
+            // 创建称号卡片
+            filteredTitles.forEach(title => {
+                // 称号颜色类，优先使用自定义颜色
+                const badgeColor = title.colorClass || 'bg-gray-100 text-gray-600';
+                
+                const card = document.createElement('div');
+                card.className = `title-card ${title.isEquipped ? 'title-card-equipped' : ''} fade-in`;
+                card.innerHTML = `
+                    <div class="p-5">
+                        <div class="badge-icon ${badgeColor}">
+                            <i class="${title.icon || 'fas fa-medal'}"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-center mb-2">${title.name}</h3>
+                        <p class="text-gray-600 text-sm text-center mb-4 line-clamp-2">${title.description || '无描述'}</p>
+                        <div class="text-xs text-gray-500 text-center mb-4">
+                            获得于 ${formatDate(title.createdAt)}
+                        </div>
+                        ${title.isAdminGranted ? 
+                            '<div class="text-center mb-4"><span class="bg-[#4F46E5]/10 text-[#4F46E5] text-xs px-2 py-1 rounded-full">管理员授予</span></div>' : ''
+                        }
+                        ${title.isCustom ? 
+                            '<div class="text-center mb-4"><span class="bg-[#10B981]/10 text-[#10B981] text-xs px-2 py-1 rounded-full">自定义</span></div>' : ''
+                        }
+                        <button class="equip-btn w-full py-2 rounded-lg font-medium transition-all ${title.isEquipped ? 
+                            'bg-gray-200 text-gray-500 cursor-not-allowed' : 
+                            'bg-[#4F46E5] hover:bg-[#4F46E5]/90 text-white'}" 
+                            data-title-id="${title._id}"
+                            ${title.isEquipped ? 'disabled' : ''}>
+                            ${title.isEquipped ? '已佩戴' : '佩戴此称号'}
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            // 添加佩戴按钮事件监听
+            document.querySelectorAll('.equip-btn:not([disabled])').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    await equipTitle(e.target.dataset.titleId);
+                });
+            });
+        }
 
-        // 页面加载完成后初始化应用
-        window.addEventListener('DOMContentLoaded', () => app.init());
+        // 显示当前佩戴的称号
+        function displayCurrentTitle(title) {
+            const noTitleEl = document.getElementById('no-current-title');
+            const titleContentEl = document.getElementById('current-title-content');
+            
+            if (!title) {
+                noTitleEl.classList.remove('hidden');
+                titleContentEl.classList.add('hidden');
+                return;
+            }
+            
+            noTitleEl.classList.add('hidden');
+            titleContentEl.classList.remove('hidden');
+            
+            document.getElementById('current-title-name').textContent = title.name;
+            document.getElementById('current-title-desc').textContent = title.description || '无描述';
+            document.getElementById('current-title-icon').className = title.icon || 'fas fa-medal';
+            document.getElementById('current-title-date').textContent = formatDate(title.createdAt);
+        }
+
+        // 佩戴称号
+        async function equipTitle(titleId) {
+            if (!currentUser) return;
+            
+            try {
+                // 先取消当前佩戴的称号
+                const currentEquippedTitle = userTitles.find(title => title.isEquipped);
+                if (currentEquippedTitle) {
+                    await fetch(`${API_BASE_URL}/titles/${currentEquippedTitle._id}/equip`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ equipped: false, userId: currentUser._id })
+                    });
+                }
+                
+                // 佩戴新称号
+                const response = await fetch(`${API_BASE_URL}/titles/${titleId}/equip`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ equipped: true, userId: currentUser._id })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('佩戴称号失败');
+                }
+                
+                showNotification('成功佩戴称号！');
+                // 重新加载称号列表
+                await loadUserTitles();
+            } catch (error) {
+                console.error('佩戴称号失败:', error);
+                showNotification('佩戴称号时发生错误', true);
+            }
+        }
+
+        // 取消佩戴当前称号
+        document.getElementById('remove-current-title').addEventListener('click', async () => {
+            if (!currentUser) return;
+            
+            try {
+                const currentEquippedTitle = userTitles.find(title => title.isEquipped);
+                if (!currentEquippedTitle) return;
+                
+                const response = await fetch(`${API_BASE_URL}/titles/${currentEquippedTitle._id}/equip`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ equipped: false, userId: currentUser._id })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('取消佩戴称号失败');
+                }
+                
+                showNotification('已取消佩戴称号');
+                // 重新加载称号列表
+                await loadUserTitles();
+            } catch (error) {
+                console.error('取消佩戴称号失败:', error);
+                showNotification('取消佩戴称号时发生错误', true);
+            }
+        });
+
+        // 刷新称号列表
+        document.getElementById('refresh-titles').addEventListener('click', async () => {
+            const refreshBtn = document.getElementById('refresh-titles');
+            const icon = refreshBtn.querySelector('i');
+            
+            // 添加加载动画
+            icon.classList.add('loading');
+            refreshBtn.disabled = true;
+            
+            try {
+                await loadUserTitles();
+                showNotification('称号列表已更新');
+            } finally {
+                // 移除加载动画
+                icon.classList.remove('loading');
+                refreshBtn.disabled = false;
+            }
+        });
+
+        // 导出称号
+        document.getElementById('export-titles').addEventListener('click', async () => {
+            if (!currentUser || userTitles.length === 0) {
+                showNotification('没有可导出的称号', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${currentUser._id}/titles/export`, {
+                    method: 'GET',
+                });
+                
+                if (!response.ok) {
+                    throw new Error('导出称号失败');
+                }
+                
+                // 处理导出文件
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentUser.username}_titles.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                showNotification('称号数据已导出');
+            } catch (error) {
+                console.error('导出称号失败:', error);
+                showNotification('导出称号时发生错误', true);
+            }
+        });
+
+        // 筛选称号
+        document.getElementById('titles-filter').addEventListener('change', () => {
+            displayTitles(userTitles);
+        });
+
+        // 选择自定义称号颜色
+        document.querySelectorAll('[data-color]').forEach(el => {
+            el.addEventListener('click', () => {
+                // 移除其他颜色选择的边框
+                document.querySelectorAll('[data-color]').forEach(item => {
+                    item.classList.remove('border-[#4F46E5]', 'border-[#10B981]', 'border-[#F59E0B]', 'border-red-500', 'border-blue-500', 'border-purple-500');
+                    item.classList.add('border-transparent');
+                });
+                
+                // 添加当前选择的边框
+                const colorClass = el.dataset.color;
+                if (colorClass.includes('#4F46E5')) {
+                    el.classList.add('border-[#4F46E5]');
+                } else if (colorClass.includes('#10B981')) {
+                    el.classList.add('border-[#10B981]');
+                } else if (colorClass.includes('#F59E0B')) {
+                    el.classList.add('border-[#F59E0B]');
+                } else if (colorClass.includes('red')) {
+                    el.classList.add('border-red-500');
+                } else if (colorClass.includes('blue')) {
+                    el.classList.add('border-blue-500');
+                } else if (colorClass.includes('purple')) {
+                    el.classList.add('border-purple-500');
+                }
+                
+                // 保存选择的颜色
+                document.getElementById('custom-title-color').value = colorClass;
+            });
+        });
+
+        // 管理员授予称号
+        document.getElementById('grant-title-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentUser || !currentUser.isAdmin) {
+                showNotification('没有权限执行此操作', true);
+                return;
+            }
+            
+            const targetUsername = document.getElementById('target-username').value;
+            const titleName = document.getElementById('title-name').value;
+            const titleDescription = document.getElementById('title-description').value;
+            const titleIcon = document.getElementById('title-icon').value || 'fas fa-medal';
+            
+            // 先查询目标用户是否存在
+            const targetUser = await getUserByUsername(targetUsername);
+            if (!targetUser) {
+                showNotification(`用户"${targetUsername}"不存在`, true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/titles/grant`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: targetUser._id,
+                        name: titleName,
+                        description: titleDescription,
+                        icon: titleIcon,
+                        isAdminGranted: true,
+                        isCustom: false,
+                        colorClass: 'bg-[#4F46E5]/10 text-[#4F46E5]'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('授予称号失败');
+                }
+                
+                showNotification(`成功授予用户"${targetUsername}"称号"${titleName}"！`);
+                e.target.reset();
+            } catch (error) {
+                console.error('授予称号失败:', error);
+                showNotification('授予称号时发生错误', true);
+            }
+        });
+
+        // 创建自定义称号
+        document.getElementById('create-title-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentUser) return;
+            
+            const titleName = document.getElementById('custom-title-name').value;
+            const titleDescription = document.getElementById('custom-title-description').value;
+            const titleIcon = document.getElementById('custom-title-icon').value || 'fas fa-medal';
+            const colorClass = document.getElementById('custom-title-color').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/titles`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: currentUser._id,
+                        name: titleName,
+                        description: titleDescription,
+                        icon: titleIcon,
+                        isAdminGranted: false,
+                        isCustom: true,
+                        colorClass: colorClass
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('创建称号失败');
+                }
+                
+                showNotification(`成功创建自定义称号"${titleName}"！`);
+                e.target.reset();
+                // 重置颜色选择
+                document.querySelectorAll('[data-color]').forEach(item => {
+                    item.classList.remove('border-[#4F46E5]', 'border-[#10B981]', 'border-[#F59E0B]', 'border-red-500', 'border-blue-500', 'border-purple-500');
+                    item.classList.add('border-transparent');
+                });
+                document.querySelector('[data-color="bg-[#4F46E5]/10 text-[#4F46E5]"]').classList.add('border-[#4F46E5]');
+                // 重新加载称号列表
+                await loadUserTitles();
+            } catch (error) {
+                console.error('创建称号失败:', error);
+                showNotification('创建称号时发生错误', true);
+            }
+        });
+
+        // 登出功能
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            // 清除本地存储的登录信息
+            localStorage.removeItem('currentUsername');
+            currentUser = null;
+            userTitles = [];
+            
+            showNotification('已成功登出');
+            // 登出后重新检查登录状态，显示未登录页面
+            checkAuthStatus();
+        });
+
+        // 前往登录页面
+        document.getElementById('go-to-login').addEventListener('click', () => {
+            window.location.href = '/indexlo.html';
+        });
+
+        // 返回导航页
+        document.getElementById('back-home').addEventListener('click', () => {
+            window.location.href = '/indexdaohang.html';
+            
+        });
+
+        // 页面加载时初始化
+        async function init() {
+            // 设置默认颜色选择
+            document.querySelector('[data-color="bg-[#4F46E5]/10 text-[#4F46E5]"]').classList.add('border-[#4F46E5]');
+            
+            const isAuthenticated = await checkAuthStatus();
+            if (isAuthenticated) {
+                await loadUserTitles();
+            }
+        }
+
+        // 启动应用
+        init();
     </script>
 </body>
 </html>

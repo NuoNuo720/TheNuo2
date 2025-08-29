@@ -1,45 +1,44 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const Schema = mongoose.Schema;
-const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  avatar: { type: String, default: 'https://picsum.photos/200' },
-  loginTime: { type: Date, default: Date.now },
-  profile: {
-    currentTitleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Title' },
-    // 其他个人资料字段
-  },
-  isAdmin: { type: Boolean, default: false }, // 管理员标识，默认false
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-  friends: [{ type: String, ref: 'User', refPath: 'username' }],
-  friendRequests: [{
-    from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' }
-  }]
-}, { timestamps: true });
 
-// 密码加密方法
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
+const TitleSchema = new Schema({
+  name: { type: String, required: true, trim: true },
+  description: { type: String, trim: true },
+  icon: { type: String }, // 称号图标URL
+  isAdminGranted: { type: Boolean, default: false }, // 是否管理员授予
+  createdAt: { type: Date, default: Date.now },
+  isEquipped: { type: Boolean, default: false }
 });
 
-// 密码验证方法
-userSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-userSchema.pre('save', function(next) {
+const UserSchema = new Schema({
+  username: { type: String, required: true, unique: true, trim: true },
+  password: { type: String, required: true }, // 实际项目中应存储哈希值
+  isAdmin: { type: Boolean, default: false },
+  titles: [TitleSchema],
+  currentTitle: { type: Schema.Types.ObjectId, ref: 'Title' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// 中间件：更新updatedAt字段
+UserSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
-module.exports = mongoose.model('User', userSchema);
+
+// 方法：获取用户所有称号
+UserSchema.methods.getAllTitles = function() {
+  return this.titles;
+};
+
+// 方法：获取当前佩戴的称号
+UserSchema.methods.getCurrentEquippedTitle = function() {
+  return this.titles.find(title => title.isEquipped) || null;
+};
+
+// 静态方法：通过用户名查找用户（包含称号）
+UserSchema.statics.findByUsernameWithTitles = async function(username) {
+  return this.findOne({ username }).lean();
+};
+
+module.exports = mongoose.model('User', UserSchema);
