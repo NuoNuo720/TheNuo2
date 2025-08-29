@@ -1,6 +1,5 @@
-const WebSocket = require('ws'); // 需先安装依赖：npm install ws
+const WebSocket = require('ws');
 
-// 存储所有连接的客户端（用于后续消息推送）
 const wss = new WebSocket.Server({ noServer: true });
 
 // 处理WebSocket连接
@@ -10,9 +9,9 @@ wss.on('connection', (ws, request) => {
   // 监听客户端消息
   ws.on('message', (message) => {
     console.log('收到消息:', message.toString());
-    // 示例：广播消息给所有客户端（根据业务需求调整）
+    // 广播消息给所有客户端
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(`转发消息: ${message}`);
       }
     });
@@ -22,55 +21,71 @@ wss.on('connection', (ws, request) => {
   ws.on('close', () => {
     console.log('客户端断开连接');
   });
+  
+  // 发送连接成功消息
+  ws.send('已成功建立WebSocket连接');
 });
 
-// Netlify Functions 入口函数
 exports.handler = async (event, context) => {
-  // 1. 处理预检请求（OPTIONS）：WebSocket握手前可能触发跨域预检
+  // 允许函数保持活跃以维持WebSocket连接
+  context.callbackWaitsForEmptyEventLoop = false;
+  
+  // 处理预检请求
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: {
-        // 允许的前端域名（生产环境必须指定具体域名，如https://your-frontend.com，不要用*）
-        'Access-Control-Allow-Origin': 'https://thenuo2.netlify.app', 
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, WEBSOCKET', // 明确包含WEBSOCKET
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization', // 匹配前端请求头
-        'Access-Control-Max-Age': '86400' // 预检请求缓存时间（24小时）
+        'Access-Control-Allow-Origin': 'https://thenuo2.netlify.app',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Upgrade, Connection, Sec-WebSocket-Key, Sec-WebSocket-Version',
+        'Access-Control-Max-Age': '86400'
       },
       body: ''
     };
   }
 
-  // 2. 处理WebSocket握手请求（HTTP升级为WS）
-  if (event.headers.upgrade !== 'websocket') {
+  // 处理WebSocket握手请求
+  if (event.headers.upgrade === 'websocket') {
+    // 创建模拟服务器对象
+    const server = {
+      on: () => {},
+      emit: (event, socket, request) => {
+        if (event === 'upgrade') {
+          wss.handleUpgrade(request, socket, Buffer.alloc(0), (ws) => {
+            wss.emit('connection', ws, request);
+          });
+        }
+      }
+    };
+
+    // 触发升级事件
+    server.emit('upgrade', event.socket, event);
+    
+    // 返回101切换协议响应
     return {
-      statusCode: 400,
-      body: '仅支持WebSocket连接' // 你看到的直接访问返回内容
+      statusCode: 101,
+      headers: {
+        'Connection': 'Upgrade',
+        'Upgrade': 'websocket',
+        'Sec-WebSocket-Accept': calculateAcceptValue(event.headers['sec-websocket-key'])
+      },
+      body: ''
     };
   }
 
-  // 3. 完成WebSocket握手（关键：将Netlify的请求对象传递给wss）
-  context.awsRequestId = context.awsRequestId || 'local-dev-id'; // 兼容本地开发
-  const server = {
-    on: (event, callback) => {
-      if (event === 'upgrade') callback(event, event.socket, event.headers);
-    },
-    emit: (event, ...args) => {}
-  };
-
-  // 触发WebSocket升级逻辑
-  wss.handleUpgrade(event, event.socket, event.headers, (ws) => {
-    wss.emit('connection', ws, event);
-  });
-
-  // Netlify Functions 需返回200状态（握手由wss处理）
+  // 非WebSocket请求
   return {
-    statusCode: 200,
-    headers: {
-      'Access-Control-Allow-Origin': 'https://your-frontend-domain.com', // 再次确保跨域头
-      'Connection': 'Upgrade',
-      'Upgrade': 'websocket'
-    },
-    body: ''
+    statusCode: 400,
+    body: '仅支持WebSocket连接'
   };
 };
+
+// 计算WebSocket握手响应值
+function calculateAcceptValue(key) {
+  const crypto = require('crypto');
+  const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+  return crypto
+    .createHash('sha1')
+    .update(key + GUID)
+    .digest('base64');
+}
