@@ -459,31 +459,6 @@
             background-color: #e74c3c;
         }
 
-        /* 公告模态框样式 */
-        .announcement-content {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-        }
-        
-        .announcement-item {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .announcement-item:last-child {
-            border-bottom: none;
-        }
-        
-        .announcement-item h3 {
-            margin-bottom: 5px;
-        }
-        
-        .announcement-item small {
-            color: #999;
-        }
-
         @media (max-width: 768px) {
             .card-grid {
                 grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -725,48 +700,6 @@
         </div>
     </div>
 
-    <!-- 公告模态框 -->
-    <div class="modal" id="announcementModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close-modal" onclick="closeAnnouncementModal()">&times;</span>
-            <h2 class="profile-title">最新公告</h2>
-            <div class="announcement-content">
-                <!-- 公告内容区域，可手动添加 -->
-                <div class="announcement-item">
-                    <h3 style="color: #e74c3c;">【重磅更新】最新版本内容</h3>
-                    <p>1. 新增多项功能，提升用户体验</p>
-                    <p>2. 优化系统性能，修复已知问题</p>
-                    <small>发布时间：2025-08-29</small>
-                </div>
-                <div class="announcement-item">
-                    <h3 style="color: #f39c12;">【BUG注意】</h3>
-                    <p>1. "称号与头衔"、「好友列表」功能目前仍存在bug，正在修复中...</p>
-                    <p>2. 移动端可能出现卡顿问题</p>
-                    <small>发布时间：2025-08-29</small>
-                </div>
-                <div class="announcement-item">
-                    <h3 style="color: #3498db;">【即将上线】</h3>
-                    <p>1. 新模式开发中，敬请期待</p>
-                    <p>2. 国庆节期间登录即可领取限定称号</p>
-                    <p>More: 更多版本前瞻就在「帮助中心」，等着你去探索</p>
-                    <small>发布时间：2025-08-29</small>
-                </div>
-                <div class="announcement-item">
-                    <h3 style="color: #9b59b6;">【限时活动】</h3>
-                    <p>1. 参与问卷调查有机会获得游戏道具</p>
-                    <small>发布时间：2025-08-29</small>
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                <input type="checkbox" id="dontShowAgain" style="margin-right: 10px;">
-                <label for="dontShowAgain">7天内不再显示</label>
-            </div>
-            <button class="save-btn" onclick="closeAnnouncementModal()">
-                <i class="fas fa-check"></i> 我知道了
-            </button>
-        </div>
-    </div>
-
     <!-- 通知组件 -->
     <div class="notification" id="notification">
         <i class="fas fa-info-circle"></i>
@@ -838,11 +771,6 @@
                 updateUserDisplay(userInfo);
                 loadUserTitles(userInfo);
                 checkUserValidity(userInfo);
-                
-                // 登录成功后检查是否需要显示公告
-                setTimeout(() => {
-                    checkAndShowAnnouncement();
-                }, 1000);
                 
             } catch (err) {
                 console.error("用户信息解析失败：", err);
@@ -1055,16 +983,11 @@
         }
 
         window.onclick = function(event) {
-            const profileModal = document.getElementById('profileModal');
-            const announcementModal = document.getElementById('announcementModal');
-            
-            if (event.target === profileModal) {
+            const modal = document.getElementById('profileModal');
+            if (event.target === modal) {
                 closeProfileModal();
             }
-            if (event.target === announcementModal) {
-                closeAnnouncementModal();
-            }
-        };
+        }
 
         // 修改为使用username进行权限检查
         function navigateTo(url, requiredRole = 'user') {
@@ -1197,36 +1120,6 @@
             setTimeout(() => {
                 window.location.href = 'indexlo.html?needLogin=true';
             }, 2000);
-        }
-
-        // 公告相关函数
-        function checkAndShowAnnouncement() {
-            const lastShown = localStorage.getItem('lastAnnouncementShown');
-            const now = new Date().getTime();
-            
-            // 如果从未显示过，或者已经超过7天，就显示公告
-            if (!lastShown || (now - parseInt(lastShown) > 7 * 24 * 60 * 60 * 1000)) {
-                showAnnouncementModal();
-            }
-        }
-
-        function showAnnouncementModal() {
-            const modal = document.getElementById('announcementModal');
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-
-        function closeAnnouncementModal() {
-            const modal = document.getElementById('announcementModal');
-            const dontShowAgain = document.getElementById('dontShowAgain').checked;
-            
-            // 如果勾选了不再显示，记录当前时间
-            if (dontShowAgain) {
-                localStorage.setItem('lastAnnouncementShown', new Date().getTime().toString());
-            }
-            
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
         }
     </script>
 </body>
