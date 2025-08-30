@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色盲派对派对 - 色彩挑战游戏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        danger: '#EF4444',
+                        dark: '#1F2937',
+                        light: '#F3F4F6'
+                    },
+                    fontFamily: {
+                        game: ['"Comic Sans MS"', '"Marker Felt"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .color-block {
+                @apply transition-all duration-200 cursor-pointer rounded-md shadow-md hover:shadow-lg active:scale-95;
+            }
+            .btn-game {
+                @apply bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50;
+            }
+            .btn-secondary {
+                @apply bg-light hover:bg-gray-200 text-dark font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none;
+            }
+            .game-container {
+                @apply max-w-6xl mx-auto p-4 md:p-6;
+            }
+            .screen {
+                @apply fixed inset-0 bg-dark/90 z-50 flex items-center justify-center transition-opacity duration-500;
+            }
+            .pulse-animation {
+                animation: pulse 1.5s infinite;
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+            .shake-animation {
+                animation: shake 0.5s;
+            }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen font-game text-dark">
+    <!-- 加载屏幕 -->
+    <div id="loading-screen" class="screen opacity-100">
+        <div class="text-center">
+            <div class="text-white text-4xl mb-6 pulse-animation">色盲派对</div>
+            <div class="w-24 h-24 border-4 border-t-primary border-white rounded-full animate-spin mx-auto mb-6"></div>
+            <p class="text-white text-lg">加载中...</p>
+        </div>
+    </div>
+
+    <!-- 主菜单屏幕 -->
+    <div id="main-menu" class="screen hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h1 class="text-4xl font-bold text-center mb-8 text-primary">色盲派对</h1>
+            
+            <div class="space-y-4 mb-6">
+                <button id="start-classic" class="btn-game w-full flex items-center justify-center">
+                    <i class="fa fa-play mr-2"></i> 经典模式
+                </button>
+                <button id="start-timed" class="btn-game w-full flex items-center justify-center">
+                    <i class="fa fa-clock-o mr-2"></i> 计时模式
+                </button>
+                <button id="start-challenge" class="btn-game w-full flex items-center justify-center">
+                    <i class="fa fa-flag mr-2"></i> 挑战模式
+                </button>
+                <button id="start-2player" class="btn-game w-full flex items-center justify-center">
+                    <i class="fa fa-users mr-2"></i> 双人对战
+                </button>
+                <button id="start-accessible" class="btn-game w-full flex items-center justify-center">
+                    <i class="fa fa-eye mr-2"></i> 色盲辅助模式
+                </button>
+                <button id="start-custom" class="btn-game w-full flex items-center justify-center">
+                    <i class="fa fa-sliders mr-2"></i> 自定义模式
+                </button>
+            </div>
+            
+            <div class="flex justify-center">
+                <button id="show-help" class="btn-secondary flex items-center">
+                    <i class="fa fa-question-circle mr-2"></i> 游戏说明
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义模式设置 -->
+    <div id="custom-settings" class="screen hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold text-center mb-6 text-primary">自定义模式设置</h2>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 mb-2">色块数量</label>
+                    <input type="range" id="block-count" min="4" max="36" value="9" step="1" 
+                           class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-sm text-gray-500 mt-1">
+                        <span>4</span>
+                        <span id="block-count-value">9</span>
+                        <span>36</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-2">颜色差异度</label>
+                    <input type="range" id="color-difference" min="1" max="10" value="5" step="1" 
+                           class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-sm text-gray-500 mt-1">
+                        <span>相似</span>
+                        <span id="color-diff-value">中等</span>
+                        <span>明显</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-2">每关时间(秒)</label>
+                    <input type="range" id="time-limit" min="3" max="30" value="10" step="1" 
+                           class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-sm text-gray-500 mt-1">
+                        <span>3</span>
+                        <span id="time-limit-value">10</span>
+                        <span>30</span>
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button id="start-custom-game" class="btn-game w-full">开始游戏</button>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button id="back-from-custom" class="text-primary hover:text-primary/80 transition-colors">
+                    <i class="fa fa-arrow-left mr-1"></i> 返回
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏说明 -->
+    <div id="help-screen" class="screen hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-primary">游戏说明</h2>
+                <button id="close-help" class="text-gray-500 hover:text-gray-700 text-xl">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-dark flex items-center">
+                        <i class="fa fa-bullseye text-accent mr-2"></i> 游戏目标
+                    </h3>
+                    <p class="text-gray-700">在限定时间内，从颜色矩阵中找出与其他颜色不同的色块，考验色彩辨别能力。</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-dark flex items-center">
+                        <i class="fa fa-list-alt text-accent mr-2"></i> 基本规则
+                    </h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li>每关会显示多个色块，其中有一个颜色不同</li>
+                        <li>用鼠标点击或触摸该不同色块即可完成本关</li>
+                        <li>每关有时间限制，难度越高时间越短</li>
+                        <li>正确找出差异色块得分，错误点击将结束游戏</li>
+                        <li>随着关卡提升，色块总数量会不断增加</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-dark flex items-center">
+                        <i class="fa fa-gamepad text-accent mr-2"></i> 游戏模式
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-medium">经典模式</p>
+                            <p class="text-sm text-gray-600 mt-1">无限关卡，难度逐渐提升</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-medium">计时模式 <span class="text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">已上线</span></p>
+                            <p class="text-sm text-gray-600 mt-1">60秒内尽可能完成更多关卡，难度固定</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-medium">挑战模式 <span class="text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">已上线</span></p>
+                            <p class="text-sm text-gray-600 mt-1">特定主题的色彩挑战，如渐变色、相似色等</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-medium">双人对战 <span class="text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">已上线</span></p>
+                            <p class="text-sm text-gray-600 mt-1">与好友比拼，看谁能更快找出差异色块</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-medium">色盲辅助模式 <span class="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">新上线</span></p>
+                            <p class="text-sm text-gray-600 mt-1">针对色盲用户优化的色彩差异，增加形状提示</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <p class="font-medium">自定义模式 <span class="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">新上线</span></p>
+                            <p class="text-sm text-gray-600 mt-1">可调整色块数量、颜色差异度和时间限制</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-dark flex items-center">
+                        <i class="fa fa-trophy text-accent mr-2"></i> 成就称号
+                    </h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-center">
+                            <i class="fa fa-trophy text-yellow-500 mr-2"></i>
+                            <span>色彩大师 - 达到50级</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-trophy text-yellow-500 mr-2"></i>
+                            <span>闪电眼 - 单关用时少于1秒</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-trophy text-yellow-500 mr-2"></i>
+                            <span>挑战王者 - 完成所有挑战模式</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏屏幕 -->
+    <div id="game-screen" class="hidden game-container">
+        <!-- 游戏头部信息 -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <div class="flex items-center gap-4">
+                <button id="back-to-menu" class="btn-secondary p-2">
+                    <i class="fa fa-home"></i>
+                </button>
+                <div>
+                    <h2 id="game-mode-title" class="text-2xl font-bold">经典模式</h2>
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <span id="current-level" class="flex items-center"><i class="fa fa-signal mr-1"></i> 关卡: 1</span>
+                        <span id="current-score" class="flex items-center"><i class="fa fa-star mr-1 text-yellow-500"></i> 得分: 0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div id="timer-container" class="bg-white px-4 py-2 rounded-lg shadow-md flex items-center">
+                    <i class="fa fa-clock-o text-primary mr-2"></i>
+                    <span id="timer" class="font-bold">10s</span>
+                </div>
+                <button id="pause-game" class="btn-secondary p-2">
+                    <i class="fa fa-pause"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 游戏区域 -->
+        <div id="game-board" class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 aspect-square max-w-2xl mx-auto">
+            <!-- 色块会动态生成在这里 -->
+        </div>
+        
+        <!-- 挑战模式提示 -->
+        <div id="challenge-hint" class="hidden bg-accent/10 text-accent text-center py-2 px-4 rounded-lg mb-6">
+            <p><i class="fa fa-lightbulb-o mr-2"></i><span id="hint-text">挑战：找出偏红的色块</span></p>
+        </div>
+        
+        <!-- 双人模式分数 -->
+        <div id="two-player-scores" class="hidden grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-blue-50 p-3 rounded-lg text-center">
+                <p class="font-bold">玩家1</p>
+                <p id="player1-score" class="text-2xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="bg-red-50 p-3 rounded-lg text-center">
+                <p class="font-bold">玩家2</p>
+                <p id="player2-score" class="text-2xl font-bold text-red-600">0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 暂停屏幕 -->
+    <div id="pause-screen" class="screen hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+            <h2 class="text-3xl font-bold mb-6 text-primary">游戏暂停</h2>
+            
+            <div class="space-y-4 mb-6">
+                <button id="resume-game" class="btn-game w-full">继续游戏</button>
+                <button id="restart-game" class="btn-secondary w-full">重新开始</button>
+                <button id="quit-to-menu" class="btn-secondary w-full">返回主菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束屏幕 -->
+    <div id="game-over-screen" class="screen hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+            <h2 class="text-3xl font-bold mb-2 text-danger">游戏结束</h2>
+            <p class="text-xl mb-6">再接再厉！</p>
+            
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <p class="text-gray-600 mb-1">最终得分</p>
+                <p id="final-score" class="text-4xl font-bold text-primary">0</p>
+                <p id="level-reached" class="text-gray-600 mt-1">达到关卡: 1</p>
+            </div>
+            
+            <div id="achievements-unlocked" class="mb-6 hidden">
+                <h3 class="font-bold mb-2 text-accent">解锁成就！</h3>
+                <div id="achievements-list" class="flex flex-wrap justify-center gap-2">
+                    <!-- 成就会动态添加在这里 -->
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <button id="play-again" class="btn-game w-full">再玩一次</button>
+                <button id="back-to-main" class="btn-secondary w-full">返回主菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态和配置
+        const gameState = {
+            mode: 'classic', // classic, timed, challenge, 2player, accessible, custom
+            level: 1,
+            score: 0,
+            timeLimit: 10,
+            timeRemaining: 10,
+            blockCount: 9,
+            colorDifference: 5,
+            timerInterval: null,
+            isPaused: false,
+            isGameOver: false,
+            correctBlockIndex: -1,
+            challengeType: '',
+            player1Score: 0,
+            player2Score: 0,
+            currentPlayer: 1,
+            gameTimeLeft: 60 // 用于计时模式
+        };
+
+        // DOM 元素
+        const elements = {
+            loadingScreen: document.getElementById('loading-screen'),
+            mainMenu: document.getElementById('main-menu'),
+            gameScreen: document.getElementById('game-screen'),
+            pauseScreen: document.getElementById('pause-screen'),
+            gameOverScreen: document.getElementById('game-over-screen'),
+            helpScreen: document.getElementById('help-screen'),
+            customSettings: document.getElementById('custom-settings'),
+            gameBoard: document.getElementById('game-board'),
+            currentLevel: document.getElementById('current-level'),
+            currentScore: document.getElementById('current-score'),
+            timer: document.getElementById('timer'),
+            finalScore: document.getElementById('final-score'),
+            levelReached: document.getElementById('level-reached'),
+            gameModeTitle: document.getElementById('game-mode-title'),
+            challengeHint: document.getElementById('challenge-hint'),
+            hintText: document.getElementById('hint-text'),
+            twoPlayerScores: document.getElementById('two-player-scores'),
+            player1Score: document.getElementById('player1-score'),
+            player2Score: document.getElementById('player2-score'),
+            achievementsUnlocked: document.getElementById('achievements-unlocked'),
+            achievementsList: document.getElementById('achievements-list')
+        };
+
+        // 初始化游戏
+        function init() {
+            // 模拟加载过程
+            setTimeout(() => {
+                elements.loadingScreen.classList.add('opacity-0');
+                setTimeout(() => {
+                    elements.loadingScreen.classList.add('hidden');
+                    elements.mainMenu.classList.remove('hidden');
+                }, 500);
+            }, 1500);
+
+            // 事件监听
+            document.getElementById('start-classic').addEventListener('click', () => startGame('classic'));
+            document.getElementById('start-timed').addEventListener('click', () => startGame('timed'));
+            document.getElementById('start-challenge').addEventListener('click', () => startGame('challenge'));
+            document.getElementById('start-2player').addEventListener('click', () => startGame('2player'));
+            document.getElementById('start-accessible').addEventListener('click', () => startGame('accessible'));
+            document.getElementById('start-custom').addEventListener('click', showCustomSettings);
+            document.getElementById('start-custom-game').addEventListener('click', startCustomGame);
+            document.getElementById('back-from-custom').addEventListener('click', hideCustomSettings);
+            
+            document.getElementById('show-help').addEventListener('click', showHelp);
+            document.getElementById('close-help').addEventListener('click', hideHelp);
+            
+            document.getElementById('back-to-menu').addEventListener('click', quitToMenu);
+            document.getElementById('pause-game').addEventListener('click', pauseGame);
+            document.getElementById('resume-game').addEventListener('click', resumeGame);
+            document.getElementById('restart-game').addEventListener('click', restartGame);
+            document.getElementById('quit-to-menu').addEventListener('click', quitToMenu);
+            document.getElementById('play-again').addEventListener('click', restartGame);
+            document.getElementById('back-to-main').addEventListener('click', quitToMenu);
+
+            // 自定义模式滑块
+            const blockCountSlider = document.getElementById('block-count');
+            const colorDiffSlider = document.getElementById('color-difference');
+            const timeLimitSlider = document.getElementById('time-limit');
+            
+            blockCountSlider.addEventListener('input', () => {
+                document.getElementById('block-count-value').textContent = blockCountSlider.value;
+            });
+            
+            colorDiffSlider.addEventListener('input', () => {
+                const value = colorDiffSlider.value;
+                let text = '';
+                if (value <= 3) text = '相似';
+                else if (value <= 7) text = '中等';
+                else text = '明显';
+                document.getElementById('color-diff-value').textContent = text;
+            });
+            
+            timeLimitSlider.addEventListener('input', () => {
+                document.getElementById('time-limit-value').textContent = timeLimitSlider.value;
+            });
+        }
+
+        // 开始游戏
+        function startGame(mode) {
+            // 重置游戏状态
+            resetGameState();
+            gameState.mode = mode;
+            
+            // 根据模式设置不同参数
+            switch(mode) {
+                case 'classic':
+                    elements.gameModeTitle.textContent = '经典模式';
+                    break;
+                case 'timed':
+                    elements.gameModeTitle.textContent = '计时模式';
+                    gameState.gameTimeLeft = 60;
+                    break;
+                case 'challenge':
+                    elements.gameModeTitle.textContent = '挑战模式';
+                    elements.challengeHint.classList.remove('hidden');
+                    setRandomChallenge();
+                    break;
+                case '2player':
+                    elements.gameModeTitle.textContent = '双人对战';
+                    elements.twoPlayerScores.classList.remove('hidden');
+                    break;
+                case 'accessible':
+                    elements.gameModeTitle.textContent = '色盲辅助模式';
+                    break;
+                case 'custom':
+                    elements.gameModeTitle.textContent = '自定义模式';
+                    break;
+            }
+            
+            // 显示游戏屏幕
+            elements.mainMenu.classList.add('hidden');
+            elements.customSettings.classList.add('hidden');
+            elements.gameScreen.classList.remove('hidden');
+            
+            // 生成第一关
+            generateLevel();
+            startTimer();
+        }
+
+        // 显示自定义模式设置
+        function showCustomSettings() {
+            elements.mainMenu.classList.add('hidden');
+            elements.customSettings.classList.remove('hidden');
+        }
+
+        // 隐藏自定义模式设置
+        function hideCustomSettings() {
+            elements.customSettings.classList.add('hidden');
+            elements.mainMenu.classList.remove('hidden');
+        }
+
+        // 开始自定义游戏
+        function startCustomGame() {
+            gameState.blockCount = parseInt(document.getElementById('block-count').value);
+            gameState.colorDifference = parseInt(document.getElementById('color-difference').value);
+            gameState.timeLimit = parseInt(document.getElementById('time-limit').value);
+            startGame('custom');
+        }
+
+        // 显示帮助
+        function showHelp() {
+            elements.mainMenu.classList.add('hidden');
+            elements.helpScreen.classList.remove('hidden');
+        }
+
+        // 隐藏帮助
+        function hideHelp() {
+            elements.helpScreen.classList.add('hidden');
+            elements.mainMenu.classList.remove('hidden');
+        }
+
+        // 重置游戏状态
+        function resetGameState() {
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.timeRemaining = gameState.timeLimit;
+            gameState.isPaused = false;
+            gameState.isGameOver = false;
+            gameState.correctBlockIndex = -1;
+            gameState.player1Score = 0;
+            gameState.player2Score = 0;
+            gameState.currentPlayer = 1;
+            
+            // 更新UI
+            elements.currentLevel.textContent = `关卡: ${gameState.level}`;
+            elements.currentScore.textContent = `得分: ${gameState.score}`;
+            elements.timer.textContent = `${gameState.timeLimit}s`;
+            elements.player1Score.textContent = '0';
+            elements.player2Score.textContent = '0';
+            elements.challengeHint.classList.add('hidden');
+            elements.twoPlayerScores.classList.add('hidden');
+            
+            // 清除计时器
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+
+        // 生成关卡
+        function generateLevel() {
+            // 根据关卡调整难度
+            if (gameState.mode === 'classic' || gameState.mode === '2player') {
+                // 经典模式和双人模式随关卡增加难度
+                gameState.blockCount = 9 + Math.floor((gameState.level - 1) / 3) * 4;
+                if (gameState.blockCount > 36) gameState.blockCount = 36;
+                
+                gameState.timeLimit = Math.max(3, 15 - Math.floor(gameState.level / 2));
+            } else if (gameState.mode === 'challenge') {
+                // 挑战模式难度固定但有特殊规则
+                gameState.blockCount = 16;
+                gameState.timeLimit = 10;
+            } else if (gameState.mode === 'timed') {
+                // 计时模式难度固定
+                gameState.blockCount = 12;
+                gameState.timeLimit = 10;
+            } else if (gameState.mode === 'accessible') {
+                // 色盲辅助模式
+                gameState.blockCount = 9 + Math.floor((gameState.level - 1) / 3) * 4;
+                gameState.timeLimit = Math.max(5, 20 - Math.floor(gameState.level / 2));
+                gameState.colorDifference = 7; // 更大的颜色差异
+            }
+            
+            gameState.timeRemaining = gameState.timeLimit;
+            elements.timer.textContent = `${gameState.timeRemaining}s`;
+            elements.timer.classList.remove('text-danger');
+            
+            // 清空游戏板
+            elements.gameBoard.innerHTML = '';
+            
+            // 计算网格尺寸
+            const gridSize = Math.ceil(Math.sqrt(gameState.blockCount));
+            elements.gameBoard.style.display = 'grid';
+            elements.gameBoard.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            elements.gameBoard.style.gap = '8px';
+            
+            // 生成基础颜色
+            const baseHue = Math.floor(Math.random() * 360);
+            const baseSaturation = 70;
+            const baseLightness = 60;
+            
+            // 计算差异颜色 - 基于颜色差异度调整
+            let diffHue, diffSaturation, diffLightness;
+            
+            if (gameState.mode === 'challenge') {
+                // 根据挑战类型生成差异
+                switch(gameState.challengeType) {
+                    case 'hue':
+                        diffHue = (baseHue + 30) % 360;
+                        diffSaturation = baseSaturation;
+                        diffLightness = baseLightness;
+                        break;
+                    case 'saturation':
+                        diffHue = baseHue;
+                        diffSaturation = Math.max(10, baseSaturation - 40);
+                        diffLightness = baseLightness;
+                        break;
+                    case 'lightness':
+                        diffHue = baseHue;
+                        diffSaturation = baseSaturation;
+                        diffLightness = Math.max(20, baseLightness - 30);
+                        break;
+                    case 'gradient':
+                        // 渐变色挑战 - 所有颜色构成渐变，其中一个不同
+                        diffHue = (baseHue + 180) % 360;
+                        diffSaturation = baseSaturation;
+                        diffLightness = baseLightness;
+                        break;
+                }
+            } else {
+                // 常规模式的颜色差异
+                const difference = 10 + (10 - gameState.colorDifference) * 5;
+                diffHue = (baseHue + difference) % 360;
+                diffSaturation = baseSaturation;
+                diffLightness = baseLightness;
+            }
+            
+            // 确定正确色块的位置
+            gameState.correctBlockIndex = Math.floor(Math.random() * gameState.blockCount);
+            
+            // 创建色块
+            for (let i = 0; i < gameState.blockCount; i++) {
+                const block = document.createElement('div');
+                block.classList.add('color-block');
+                
+                // 设置颜色
+                let hue, saturation, lightness;
+                if (i === gameState.correctBlockIndex) {
+                    hue = diffHue;
+                    saturation = diffSaturation;
+                    lightness = diffLightness;
+                } else {
+                    // 对于渐变挑战，创建渐变效果
+                    if (gameState.mode === 'challenge' && gameState.challengeType === 'gradient') {
+                        hue = (baseHue + (i * 5) % 30) % 360;
+                    } else {
+                        hue = baseHue;
+                    }
+                    saturation = baseSaturation;
+                    lightness = baseLightness;
+                }
+                
+                block.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                
+                // 色盲辅助模式添加形状差异
+                if (gameState.mode === 'accessible') {
+                    block.innerHTML = i === gameState.correctBlockIndex 
+                        ? '<i class="fa fa-circle text-black/30 text-xl flex items-center justify-center h-full"></i>'
+                        : '<i class="fa fa-square text-black/30 text-xl flex items-center justify-center h-full"></i>';
+                }
+                
+                // 添加点击事件
+                block.addEventListener('click', () => handleBlockClick(i));
+                
+                elements.gameBoard.appendChild(block);
+            }
+        }
+
+        // 设置随机挑战
+        function setRandomChallenge() {
+            const challenges = [
+                { type: 'hue', text: '挑战：找出色相不同的色块' },
+                { type: 'saturation', text: '挑战：找出饱和度不同的色块' },
+                { type: 'lightness', text: '挑战：找出亮度不同的色块' },
+                { type: 'gradient', text: '挑战：从渐变色中找出不同的色块' }
+            ];
+            
+            const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+            gameState.challengeType = randomChallenge.type;
+            elements.hintText.textContent = randomChallenge.text;
+        }
+
+        // 处理色块点击
+        function handleBlockClick(index) {
+            if (gameState.isPaused || gameState.isGameOver) return;
+            
+            const blocks = elements.gameBoard.getElementsByClassName('color-block');
+            
+            if (index === gameState.correctBlockIndex) {
+                // 正确点击
+                blocks[index].classList.add('border-4', 'border-green-500');
+                
+                // 计算得分 - 基于剩余时间
+                const timeBonus = Math.floor(gameState.timeRemaining / gameState.timeLimit * 100);
+                const levelBonus = gameState.level * 10;
+                const pointsEarned = 100 + timeBonus + levelBonus;
+                
+                // 更新分数
+                if (gameState.mode === '2player') {
+                    if (gameState.currentPlayer === 1) {
+                        gameState.player1Score += pointsEarned;
+                        elements.player1Score.textContent = gameState.player1Score;
+                    } else {
+                        gameState.player2Score += pointsEarned;
+                        elements.player2Score.textContent = gameState.player2Score;
+                    }
+                    // 切换玩家
+                    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                    elements.timer.textContent = `玩家 ${gameState.currentPlayer} 回合`;
+                } else {
+                    gameState.score += pointsEarned;
+                    elements.currentScore.textContent = `得分: ${gameState.score}`;
+                }
+                
+                // 检查成就
+                checkAchievements();
+                
+                // 延迟进入下一关
+                clearInterval(gameState.timerInterval);
+                setTimeout(() => {
+                    gameState.level++;
+                    elements.currentLevel.textContent = `关卡: ${gameState.level}`;
+                    
+                    // 挑战模式每关更换挑战类型
+                    if (gameState.mode === 'challenge' && gameState.level % 3 === 0) {
+                        setRandomChallenge();
+                    }
+                    
+                    generateLevel();
+                    startTimer();
+                }, 800);
+            } else {
+                // 错误点击
+                blocks[index].classList.add('border-4', 'border-red-500');
+                elements.gameBoard.classList.add('shake-animation');
+                
+                setTimeout(() => {
+                    elements.gameBoard.classList.remove('shake-animation');
+                    gameOver();
+                }, 500);
+            }
+        }
+
+        // 检查成就
+        function checkAchievements() {
+            const achievements = [];
+            
+            // 检查等级成就
+            if (gameState.level === 10) achievements.push('初探色彩');
+            if (gameState.level === 25) achievements.push('色彩达人');
+            if (gameState.level === 50) achievements.push('色彩大师');
+            
+            // 检查速度成就
+            if (gameState.timeRemaining > gameState.timeLimit - 1) {
+                achievements.push('闪电眼');
+            }
+            
+            // 检查挑战模式成就
+            if (gameState.mode === 'challenge' && gameState.level >= 10) {
+                achievements.push('挑战王者');
+            }
+            
+            // 如果有新成就，记录下来
+            if (achievements.length > 0) {
+                gameState.unlockedAchievements = achievements;
+            }
+        }
+
+        // 开始计时器
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            
+            if (gameState.mode === 'timed') {
+                // 计时模式 - 全局60秒倒计时
+                elements.timer.textContent = `${gameState.gameTimeLeft}s`;
+                gameState.timerInterval = setInterval(() => {
+                    gameState.gameTimeLeft--;
+                    elements.timer.textContent = `${gameState.gameTimeLeft}s`;
+                    
+                    if (gameState.gameTimeLeft <= 5) {
+                        elements.timer.classList.add('text-danger');
+                    }
+                    
+                    if (gameState.gameTimeLeft <= 0) {
+                        clearInterval(gameState.timerInterval);
+                        gameOver();
+                    }
+                }, 1000);
+            } else {
+                // 其他模式 - 每关倒计时
+                gameState.timerInterval = setInterval(() => {
+                    gameState.timeRemaining--;
+                    elements.timer.textContent = `${gameState.timeRemaining}s`;
+                    
+                    if (gameState.timeRemaining <= 5) {
+                        elements.timer.classList.add('text-danger');
+                    }
+                    
+                    if (gameState.timeRemaining <= 0) {
+                        clearInterval(gameState.timerInterval);
+                        gameOver();
+                    }
+                }, 1000);
+            }
+        }
+
+        // 暂停游戏
+        function pauseGame() {
+            if (gameState.isGameOver) return;
+            
+            gameState.isPaused = true;
+            clearInterval(gameState.timerInterval);
+            elements.gameScreen.classList.add('hidden');
+            elements.pauseScreen.classList.remove('hidden');
+        }
+
+        // 恢复游戏
+        function resumeGame() {
+            gameState.isPaused = false;
+            elements.pauseScreen.classList.add('hidden');
+            elements.gameScreen.classList.remove('hidden');
+            startTimer();
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            clearInterval(gameState.timerInterval);
+            const currentMode = gameState.mode;
+            elements.pauseScreen.classList.add('hidden');
+            elements.gameOverScreen.classList.add('hidden');
+            startGame(currentMode);
+        }
+
+        // 返回主菜单
+        function quitToMenu() {
+            clearInterval(gameState.timerInterval);
+            elements.pauseScreen.classList.add('hidden');
+            elements.gameOverScreen.classList.add('hidden');
+            elements.gameScreen.classList.add('hidden');
+            elements.mainMenu.classList.remove('hidden');
+        }
+
+        // 游戏结束
+        function gameOver() {
+            gameState.isGameOver = true;
+            clearInterval(gameState.timerInterval);
+            
+            // 更新游戏结束屏幕
+            elements.finalScore.textContent = gameState.mode === '2player' 
+                ? `${gameState.player1Score} - ${gameState.player2Score}`
+                : gameState.score;
+            
+            elements.levelReached.textContent = `达到关卡: ${gameState.level}`;
+            
+            // 显示解锁的成就
+            if (gameState.unlockedAchievements && gameState.unlockedAchievements.length > 0) {
+                elements.achievementsList.innerHTML = '';
+                gameState.unlockedAchievements.forEach(achievement => {
+                    const badge = document.createElement('div');
+                    badge.className = 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm flex items-center';
+                    badge.innerHTML = `<i class="fa fa-trophy mr-1"></i> ${achievement}`;
+                    elements.achievementsList.appendChild(badge);
+                });
+                elements.achievementsUnlocked.classList.remove('hidden');
+            } else {
+                elements.achievementsUnlocked.classList.add('hidden');
+            }
+            
+            // 显示游戏结束屏幕
+            elements.gameScreen.classList.add('hidden');
+            elements.gameOverScreen.classList.remove('hidden');
+        }
+
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -716,7 +716,7 @@
     <div class="navbar">
         <a href="indexdaohang.html" class="navbar-title">
             <i class="fas fa-compass"></i>
-            返回多功能导航中心
+            返回多功能导航中心 
         </a>
         <div class="user-area" id="userArea">
             <a href="indexlo.html" class="login-link">登录/注册</a>
@@ -1056,53 +1056,42 @@
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const host = window.location.host;
                 // 修改WebSocket URL，适应Edge Functions路径
-                const websocketUrl = `${protocol}//${host}/chat?username=${encodeURIComponent(currentUser.username)}&token=${currentUser.token}`;
+                const websocketUrl = `${protocol}//${host}/chat?username=${encodeURIComponent(currentUser.username)}`;
                 
                 console.log('尝试连接到WebSocket:', websocketUrl);
                 socket = new WebSocket(websocketUrl);
                 
                 socket.onopen = function() {
-                    console.log('WebSocket连接已建立');
-                    showNotification('实时聊天已连接', 'success');
-                    // 重置重连计数
-                    reconnectAttempts = 0;
-                    // 发送认证信息
-                    socket.send(JSON.stringify({
-                        type: 'auth',
-                        token: currentUser.token
-                    }));
+                    console.log('连接成功！');
+                    showNotification('聊天已连接', 'success');
+                    reconnectAttempts = 0; // 重置重连计数
                 };
                 
                 socket.onmessage = function(event) {
-                    try {
-                        const data = JSON.parse(event.data);
-                        handleWebSocketMessage(data);
-                    } catch (e) {
-                        console.error('解析WebSocket消息失败:', e);
-                    }
+                    console.log('收到消息:', event.data);
+                    // 这里可以添加处理消息的代码
                 };
-                
+        
+                // 发生错误
                 socket.onerror = function(error) {
-                    console.error('WebSocket错误:', error);
-                    showNotification('聊天连接发生错误，可能无法发送或接收消息', 'error');
+                    console.error('连接错误:', error);
+                    showNotification('聊天连接出错', 'error');
                 };
-                
+        
+                // 连接关闭
                 socket.onclose = function(event) {
-                    console.log(`WebSocket连接已关闭，代码: ${event.code}, 原因: ${event.reason}`);
-                    
-                    // 根据关闭代码判断是否需要重连
-                    if (event.code !== 1000 && event.code !== 1001) { // 不是正常关闭
-                        // 实现指数退避重连策略，避免频繁尝试
+                    console.log(`连接已关闭，代码: ${event.code}`);
+            
+                    // 如果是异常关闭，尝试重连
+                    if (event.code === 1006) {
                         const retryDelay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-                        showNotification(`聊天连接已断开，将在${retryDelay/1000}秒后尝试重连`, 'error');
+                        showNotification(`连接失败，${retryDelay/1000}秒后重试`, 'error');
                         setTimeout(initWebSocket, retryDelay);
                         reconnectAttempts++;
                     }
                 };
             } catch (e) {
                 console.error('建立WebSocket连接失败:', e);
-                showNotification('无法初始化聊天连接: ' + e.message, 'error');
-                // 10秒后重试
                 setTimeout(initWebSocket, 10000);
             }
         }
