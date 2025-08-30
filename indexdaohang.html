@@ -746,7 +746,7 @@
                 <p class="card-desc">持续更新中，即将上线即将上线更多实用工具</p>
             </div>
             
-            <div class="nav-card" onclick="navigateTo('admin-login.html', 'admin')">
+            <div class="nav-card" onclick="gotoAdminLogin()">
                 <div class="card-icon">
                     <i class="fas fa fa-cogs"></i>
                 </div>
@@ -1270,8 +1270,9 @@
             }
             
             // 管理员权限检查
-            if (requiredRole === 'admin' && (!userInfo.role || userInfo.role !== 'admin')) {
-                showNotification('您没有管理员权限', 'error');
+            if (requiredRole === 'admin' && url !== 'admin-login.html' && 
+                (!userInfo.role || userInfo.role !== 'admin')) {
+                showNotification('您没有管理员权限限', 'error');
                 return;
             }
             
@@ -1552,6 +1553,10 @@
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
             const points = userInfo.points || 0;
             document.getElementById('userPoints').textContent = points;
+        }
+        function gotoAdminLogin() {
+            // 无论是否登录，直接跳转到管理员登录页面
+            window.location.href = 'admin-login.html';
         }
     </script>
 </body>
