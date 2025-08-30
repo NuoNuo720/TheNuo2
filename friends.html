@@ -1051,48 +1051,46 @@
             }
             
             try {
-                // 对于Netlify Edge Functions，WebSocket路径通常直接映射
-                // 不需要包含/.netlify/functions/前缀
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const host = window.location.host;
-                // 修改WebSocket URL，适应Edge Functions路径
-                const websocketUrl = `${protocol}//${host}/chat?username=${encodeURIComponent(currentUser.username)}`;
-                
-                console.log('尝试连接到WebSocket:', websocketUrl);
+                // 1. 构建 WebSocket 连接地址（重点：路径是 /chat，不是 /.netlify/functions/chat）
+                const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                const websocketUrl = `${protocol}//${window.location.host}/chat?username=${encodeURIComponent(currentUser.username)}`;
+
+                console.log("尝试连接 WebSocket：", websocketUrl);
                 socket = new WebSocket(websocketUrl);
-                
-                socket.onopen = function() {
-                    console.log('连接成功！');
-                    showNotification('聊天已连接', 'success');
-                    reconnectAttempts = 0; // 重置重连计数
+
+                // 2. 连接成功：显示通知
+                socket.onopen = function () {
+                    console.log("WebSocket 连接成功！");
+                    showNotification("实时聊天已连接", "success");
                 };
-                
-                socket.onmessage = function(event) {
-                    console.log('收到消息:', event.data);
-                    // 这里可以添加处理消息的代码
+
+                // 3. 收到服务器消息：打印到控制台（验证通信）
+                socket.onmessage = function (event) {
+                    const data = JSON.parse(event.data);
+                    console.log("收到服务器消息：", data);
+                    // 如果是连接成功的消息，额外提示
+                    if (data.type === "success") {
+                        showNotification(data.message, "success");
+                    }
                 };
-        
-                // 发生错误
-                socket.onerror = function(error) {
-                    console.error('连接错误:', error);
-                    showNotification('聊天连接出错', 'error');
+
+                // 4. 连接错误：显示错误提示
+                socket.onerror = function (error) {
+                    console.error("WebSocket 错误：", error);
+                    showNotification("聊天连接出错，请稍后重试", "error");
                 };
-        
-                // 连接关闭
-                socket.onclose = function(event) {
-                    console.log(`连接已关闭，代码: ${event.code}`);
-            
-                    // 如果是异常关闭，尝试重连
+
+                // 5. 连接关闭：尝试重连（只处理异常关闭）
+                socket.onclose = function (event) {
+                    console.log(`连接关闭，代码：${event.code}`);
+                    // 1006 是异常关闭，2秒后重试
                     if (event.code === 1006) {
-                        const retryDelay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-                        showNotification(`连接失败，${retryDelay/1000}秒后重试`, 'error');
-                        setTimeout(initWebSocket, retryDelay);
-                        reconnectAttempts++;
+                        setTimeout(initWebSocket, 2000);
                     }
                 };
             } catch (e) {
-                console.error('建立WebSocket连接失败:', e);
-                setTimeout(initWebSocket, 10000);
+                console.error("初始化连接失败：", e);
+                setTimeout(initWebSocket, 2000);
             }
         }
 

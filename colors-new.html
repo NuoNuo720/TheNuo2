@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="色盲派对 - 考验色彩辨别能力的休闲游戏，多种模式可供选择">
+    <meta name="keywords" content="色盲派对,色彩游戏,休闲游戏,多人游戏,挑战模式">
+    <title>色盲派对 - 色彩挑战游戏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1E293B',
+                        light: '#F8FAFC',
+                        error: '#EF4444',
+                        warning: '#F59E0B',
+                        success: '#10B981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif', 'Arial'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .color-block {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .color-block:hover {
+                transform: scale(1.03);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .color-block:active {
+                transform: scale(0.98);
+            }
+            .mode-card {
+                transition: all 0.3s ease;
+            }
+            .mode-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .pulse-animation {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            .loading-spinner {
+                border-top-color: theme('colors.primary');
+                animation: spinner 0.6s linear infinite;
+            }
+            @keyframes spinner {
+                to { transform: rotate(360deg); }
+            }
+            .progress-bar {
+                transition: width 0.3s ease;
+            }
+            .block-disabled {
+                pointer-events: none;
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-3">
+                <a href="indexdaohang.html" class="text-xl font-bold text-primary flex items-center">
+                    <i class="fa fa-gamepad mr-2"></i>
+                    <span>TheNuo</span>
+                </a>
+                
+                <div class="flex items-center space-x-6">
+                    <a href="indexdaohang.html" class="text-gray-600 hover:text-primary transition-colors hidden md:block">导航</a>
+                    <a href="24gameinformation.html" class="text-gray-600 hover:text-primary transition-colors hidden md:block">游戏合集</a>
+                    <a href="friends.html" class="text-gray-600 hover:text-primary transition-colors hidden md:block">社交</a>
+                    <a href="help.html" class="text-gray-600 hover:text-primary transition-colors hidden md:block">帮助</a>
+                    
+                    <div class="relative">
+                        <img src="https://picsum.photos/id/64/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover border-2 border-gray-200">
+                    </div>
+                    
+                    <button class="md:hidden text-gray-600" aria-label="菜单" id="mobileMenuBtn">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 游戏标题区 -->
+    <header class="bg-gradient-to-r from-green-500 to-teal-400 text-white py-8 sm:py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-shadow">色盲派对</h1>
+            <p class="max-w-md mx-auto text-green-50 text-lg">挑战你的色彩辨别能力，找出隐藏的色彩差异</p>
+            
+            <div class="mt-6 inline-flex bg-white/20 backdrop-blur-sm rounded-full px-4 py-1">
+                <span class="text-sm mr-3">难度: 初级到专家级</span>
+                <span class="text-sm mr-3">• 单人/多人</span>
+                <span class="text-sm">• 休闲益智</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="container mx-auto px-4 py-8 sm:py-12">
+        <!-- 游戏模式选择 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold mb-6 text-center">选择游戏模式</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 经典模式 -->
+                <div class="mode-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="h-3 bg-green-500"></div>
+                    <div class="p-6">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-play text-green-600 text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">经典模式</h3>
+                        <p class="text-gray-600 mb-4">无限关卡，难度快速提升，挑战你的极限</p>
+                        <ul class="text-sm text-gray-500 space-y-1 mb-6">
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-green-500 mr-2"></i>
+                                <span>每关时间递减</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-green-500 mr-2"></i>
+                                <span>难度快速增加</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-green-500 mr-2"></i>
+                                <span>全球排行榜</span>
+                            </li>
+                        </ul>
+                        <button id="startClassic" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center">
+                            <i class="fa fa-gamepad mr-2"></i> 开始游戏
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 计时模式 -->
+                <div class="mode-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="h-3 bg-yellow-500"></div>
+                    <div class="p-6">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-clock-o text-yellow-600 text-xl"></i>
+                            </div>
+                            <span class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                新
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">计时模式</h3>
+                        <p class="text-gray-600 mb-4">60秒内完成尽可能多的关卡，挑战速度极限</p>
+                        <ul class="text-sm text-gray-500 space-y-1 mb-6">
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-yellow-500 mr-2"></i>
+                                <span>60秒倒计时</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-yellow-500 mr-2"></i>
+                                <span>难度随时间增加</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-yellow-500 mr-2"></i>
+                                <span>速度加成奖励</span>
+                            </li>
+                        </ul>
+                        <button id="startTimed" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center">
+                            <i class="fa fa-hourglass-start mr-2"></i> 开始计时挑战
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 挑战模式 -->
+                <div class="mode-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="h-3 bg-purple-500"></div>
+                    <div class="p-6">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-trophy text-purple-600 text-xl"></i>
+                            </div>
+                            <span class="absolute -top-1 -right-1 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                新
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">挑战模式</h3>
+                        <p class="text-gray-600 mb-4">特定主题的色彩挑战，考验专业色彩辨别力</p>
+                        <ul class="text-sm text-gray-500 space-y-1 mb-6">
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-purple-500 mr-2"></i>
+                                <span>渐变色挑战</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-purple-500 mr-2"></i>
+                                <span>相似色挑战</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-check text-purple-500 mr-2"></i>
+                                <span>特殊色彩主题</span>
+                            </li>
+                        </ul>
+                        <button id="startChallenge" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg transition-colors font-medium flex items-center justify-center">
+                            <i class="fa fa-flag-checkered mr-2"></i> 开始主题挑战
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 双人对战模式（即将上线） -->
+            <div class="mt-6 mode-card bg-white rounded-xl shadow-md overflow-hidden border-2 border-dashed border-gray-200">
+                <div class="h-3 bg-blue-500"></div>
+                <div class="p-6">
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-users text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            即将上线
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">双人对战模式</h3>
+                    <p class="text-gray-600 mb-4">玩家实时比拼，看谁能更快找出差异色块</p>
+                    <ul class="text-sm text-gray-500 space-y-1 mb-6">
+                        <li class="flex items-center">
+                            <i class="fa fa-check text-blue-500 mr-2"></i>
+                            <span>好友邀请对战</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-check text-blue-500 mr-2"></i>
+                            <span>随机匹配对手</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-check text-blue-500 mr-2"></i>
+                            <span>对战积分系统</span>
+                        </li>
+                    </ul>
+                    <button disabled class="w-full bg-gray-300 text-gray-600 py-3 rounded-lg font-medium flex items-center justify-center cursor-not-allowed">
+                        <i class="fa fa-calendar mr-2"></i> 预计2025年第四季度上线
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 游戏介绍 -->
+        <section class="mb-12 bg-white rounded-xl shadow-md p-6 sm:p-8">
+            <h2 class="text-2xl font-bold mb-4 flex items-center">
+                <i class="fa fa-info-circle text-green-500 mr-2"></i> 游戏介绍
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <p class="mb-4 text-gray-700">色盲派对是一款考验色彩辨别能力的休闲益智游戏。每关会显示多个色块，其中有一个颜色与其他不同，你需要在限定时间内找出这个不同的色块。</p>
+                    
+                    <h3 class="text-lg font-semibold mb-3">游戏特点</h3>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>难度快速提升，挑战玩家极限</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>严格的防误触机制，提升游戏体验</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>多种游戏模式，满足不同玩家需求</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>精选成就系统，解锁专属称号</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">难度说明</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="font-medium">初级 (1-5关)</span>
+                                <span class="text-sm text-gray-500">简单</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                                <div class="bg-green-500 h-2.5 rounded-full" style="width: 30%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600">颜色差异明显，时间充足</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="font-medium">中级 (6-15关)</span>
+                                <span class="text-sm text-gray-500">中等</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                                <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 60%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600">颜色差异减小，色块数量增加</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="font-medium">高级 (16-30关)</span>
+                                <span class="text-sm text-gray-500">困难</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                                <div class="bg-red-500 h-2.5 rounded-full" style="width: 80%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600">颜色非常相似，时间紧张</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="font-medium">专家级 (31关以上)</span>
+                                <span class="text-sm text-gray-500">极难</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                                <div class="bg-purple-500 h-2.5 rounded-full" style="width: 95%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600">颜色差异极小，考验专业能力</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 成就与称号 -->
+        <section class="mb-12 bg-white rounded-xl shadow-md p-6 sm:p-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fa fa-trophy text-yellow-500 mr-2"></i> 成就与称号
+            </h2>
+            
+            <p class="mb-6 text-gray-700">完成特定挑战可获得专属称号，展示你的色彩辨别能力！</p>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <!-- 已解锁称号 -->
+                <div class="text-center p-3 rounded-lg border border-gray-200">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-200 to-green-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-paint-brush text-2xl text-green-700"></i>
+                    </div>
+                    <p class="font-medium text-sm">暂无</p>
+                    <p class="text-xs text-gray-500 mt-1">暂无</p>
+                    <span class="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">已解锁</span>
+                </div>
+                
+                <div class="text-center p-3 rounded-lg border border-gray-200">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-200 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-eye text-2xl text-blue-700"></i>
+                    </div>
+                    <p class="font-medium text-sm">暂无</p>
+                    <p class="text-xs text-gray-500 mt-1">暂无</p>
+                    <span class="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">已解锁</span>
+                </div>
+                
+                <!-- 未解锁称号 -->
+                <div class="text-center p-3 rounded-lg border border-gray-200 opacity-70">
+                    <div class="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-diamond text-2xl text-gray-500"></i>
+                    </div>
+                    <p class="font-medium text-sm">暂无</p>
+                    <p class="text-xs text-gray-500 mt-1">暂无</p>
+                    <span class="inline-block mt-2 px-2 py-0.5 bg-gray-100 text-gray-800 text-xs rounded-full">未解锁</span>
+                </div>
+                
+                <div class="text-center p-3 rounded-lg border border-gray-200 opacity-70">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-200 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fa fa-bolt text-2xl text-purple-700"></i>
+                    </div>
+                    <p class="font-medium text-sm">暂无</p>
+                    <p class="text-xs text-gray-500 mt-1">暂无</p>
+                    <span class="inline-block mt-2 px-2 py-0.5 bg-gray-100 text-gray-800 text-xs rounded-full">未解锁</span>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="font-medium text-gray-700 mb-2">称号系统说明</h3>
+                <p class="text-sm text-gray-600 mb-2">称号系统已精简，只保留最具代表性的成就，让每个称号都更有价值</p>
+                <button id="viewAllAchievements" class="text-primary hover:text-primary/80 text-sm font-medium flex items-center mt-2">
+                    查看全部成就 <i class="fa fa-angle-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+        
+        <!-- 排行榜 -->
+        <section class="mb-12 bg-white rounded-xl shadow-md p-6 sm:p-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fa fa-bar-chart text-green-500 mr-2"></i> 排行榜
+            </h2>
+            
+            <div class="mb-6">
+                <div class="flex border-b border-gray-200">
+                    <button class="leaderboard-tab py-2 px-4 font-medium text-green-500 border-b-2 border-green-500">经典模式</button>
+                    <button class="leaderboard-tab py-2 px-4 font-medium text-gray-500 hover:text-gray-700">计时模式</button>
+                    <button class="leaderboard-tab py-2 px-4 font-medium text-gray-500 hover:text-gray-700">挑战模式</button>
+                </div>
+                
+                <div class="mt-4 leaderboard-content active" data-mode="classic">
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center font-bold text-yellow-600 mr-3">1</div>
+                        <img src="https://picsum.photos/id/1/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">Good</p>
+                            <p class="text-xs text-gray-500">通关127关</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">127</p>
+                            <p class="text-xs text-gray-500">最高关卡</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 mr-3">2</div>
+                        <img src="https://picsum.photos/id/20/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">奶龙</p>
+                            <p class="text-xs text-gray-500">通关112关</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">112</p>
+                            <p class="text-xs text-gray-500">最高关卡</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center font-bold text-orange-600 mr-3">3</div>
+                        <img src="https://picsum.photos/id/30/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">贝利亚</p>
+                            <p class="text-xs text-gray-500">通关98关</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">98</p>
+                            <p class="text-xs text-gray-500">最高关卡</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 leaderboard-content hidden" data-mode="timed">
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center font-bold text-yellow-600 mr-3">1</div>
+                        <img src="https://picsum.photos/id/10/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">速</p>
+                            <p class="text-xs text-gray-500">60秒内完成35关</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">1250</p>
+                            <p class="text-xs text-gray-500">最高得分</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 mr-3">2</div>
+                        <img src="https://picsum.photos/id/25/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">闪电</p>
+                            <p class="text-xs text-gray-500">60秒内完成31关</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">1120</p>
+                            <p class="text-xs text-gray-500">最高得分</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center font-bold text-orange-600 mr-3">3</div>
+                        <img src="https://picsum.photos/id/35/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">Nice</p>
+                            <p class="text-xs text-gray-500">60秒内完成28关</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">980</p>
+                            <p class="text-xs text-gray-500">最高得分</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 leaderboard-content hidden" data-mode="challenge">
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center font-bold text-yellow-600 mr-3">1</div>
+                        <img src="https://picsum.photos/id/15/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">lanqiu</p>
+                            <p class="text-xs text-gray-500">完成所有主题挑战</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">24</p>
+                            <p class="text-xs text-gray-500">完成挑战数</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 mr-3">2</div>
+                        <img src="https://picsum.photos/id/28/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">?</p>
+                            <p class="text-xs text-gray-500">完成19个主题挑战</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">19</p>
+                            <p class="text-xs text-gray-500">完成挑战数</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg mb-2">
+                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center font-bold text-orange-600 mr-3">3</div>
+                        <img src="https://picsum.photos/id/33/40/40" alt="用户头像" class="w-8 h-8 rounded-full mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">zhangxuanxuan3</p>
+                            <p class="text-xs text-gray-500">完成15个主题挑战</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">15</p>
+                            <p class="text-xs text-gray-500">完成挑战数</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="viewFullLeaderboard" class="w-full py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                查看完整排行榜
+            </button>
+        </section>
+        
+        <!-- 游戏分享 -->
+        <section class="mb-12 bg-white rounded-xl shadow-md p-6 sm:p-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fa fa-share-alt text-green-500 mr-2"></i> 分享游戏
+            </h2>
+            
+            <p class="mb-6 text-gray-700">觉得游戏有趣？分享给好友一起挑战吧！</p>
+            
+            <div class="flex flex-wrap gap-4 mb-6">
+                <button id="shareTwitter" class="flex items-center px-5 py-3 bg-[#1DA1F2]/10 text-[#1DA1F2] rounded-lg hover:bg-[#1DA1F2]/20 transition-colors">
+                    <i class="fa fa-twitter mr-2"></i> 分享到Twitter
+                </button>
+                <button id="shareFacebook" class="flex items-center px-5 py-3 bg-[#4267B2]/10 text-[#4267B2] rounded-lg hover:bg-[#4267B2]/20 transition-colors">
+                    <i class="fa fa-facebook mr-2"></i> 分享到Facebook
+                </button>
+                <button id="shareWhatsapp" class="flex items-center px-5 py-3 bg-[#25D366]/10 text-[#25D366] rounded-lg hover:bg-[#25D366]/20 transition-colors">
+                    <i class="fa fa-whatsapp mr-2"></i> 分享到WhatsApp
+                </button>
+                <button id="copyLink" class="flex items-center px-5 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa fa-link mr-2"></i> 复制链接
+                </button>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-medium mb-3">邀请好友一起玩</h3>
+                <p class="text-sm text-gray-600 mb-4">邀请好友加入游戏，双方都可获得奖励！</p>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1">
+                        <input type="text" placeholder="输入好友的邮箱地址" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                    </div>
+                    <button id="sendInvite" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors font-medium whitespace-nowrap">
+                        发送邀请
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-10">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">游戏平台</h3>
+                    <p class="text-gray-400 mb-4">让游戏连接你我，创造快乐时光</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl">
+                            <i class="fa fa-weibo"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl">
+                            <i class="fa fa-weixin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors text-xl">
+                            <i class="fa fa-qq"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">快速链接</h3>
+                    <ul class="space-y-2">
+                        <li><a href="indexdaohang.html" class="text-gray-400 hover:text-white transition-colors">导航页面</a></li>
+                        <li><a href="24gameinformation.html" class="text-gray-400 hover:text-white transition-colors">小游戏合集</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">最新活动</a></li>
+                        <li><a href="help.html" class="text-gray-400 hover:text-white transition-colors">帮助中心</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">用户协议</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">联系我们</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fa fa-envelope text-gray-400 mt-1 mr-3"></i>
+                            <span class="text-gray-400">3668417644@qq.com</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-user text-gray-400 mt-1 mr-3"></i>
+                            <span class="text-gray-400">在线客服：每日 9:00-22:00</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500 text-sm mb-4 md:mb-0">© 2025 游戏平台 版权所有</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-300 text-sm transition-colors">用户协议</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-300 text-sm transition-colors">隐私政策</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-300 text-sm transition-colors">未成年人保护</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 游戏模态框 (默认隐藏) -->
+    <div id="gameModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <!-- 游戏头部 -->
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fa fa-paint-brush text-green-500 mr-2"></i>
+                    <h3 id="gameModeTitle" class="font-bold text-lg">色盲派对 - 经典模式</h3>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center">
+                        <span class="text-sm text-gray-600 mr-2">关卡:</span>
+                        <span id="currentLevel" class="font-bold">1</span>
+                    </div>
+                    <div class="hidden md:flex items-center">
+                        <span class="text-sm text-gray-600 mr-2">得分:</span>
+                        <span id="currentScore" class="font-bold">0</span>
+                    </div>
+                    <button id="closeGame" class="text-gray-500 hover:text-gray-700 transition-colors" aria-label="关闭游戏">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 游戏区域 -->
+            <div class="flex-1 p-4 overflow-auto">
+                <div id="gameArea" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
+                    <!-- 游戏色块将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 游戏底部 -->
+            <div class="p-4 border-t border-gray-200 flex justify-between items-center">
+                <button id="pauseGame" class="flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                    <i class="fa fa-pause mr-2"></i>
+                    <span>暂停</span>
+                </button>
+                <div class="hidden sm:block">
+                    <div class="w-48 bg-gray-200 rounded-full h-2">
+                        <div id="timeBar" class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+                </div>
+                <button id="helpGame" class="flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+                    <i class="fa fa-question-circle mr-2"></i>
+                    <span>帮助</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // 游戏状态变量
+        const gameState = {
+            isPlaying: false,
+            currentLevel: 1,
+            score: 0,
+            timeLeft: 10,
+            timer: null,
+            gameMode: 'classic', // classic, timed, challenge
+            colorBlocks: [],
+            targetIndex: -1,
+            isProcessing: false, // 防止快速点击
+            comboCount: 0, // 连击计数
+            baseColorDiff: 40 // 基础颜色差异值，会随关卡提升而减小
+        };
+
+        // DOM元素
+        const gameModal = document.getElementById('gameModal');
+        const gameArea = document.getElementById('gameArea');
+        const currentLevelEl = document.getElementById('currentLevel');
+        const currentScoreEl = document.getElementById('currentScore');
+        const timeBarEl = document.getElementById('timeBar');
+        const gameModeTitleEl = document.getElementById('gameModeTitle');
+        const startClassicBtn = document.getElementById('startClassic');
+        const startTimedBtn = document.getElementById('startTimed');
+        const startChallengeBtn = document.getElementById('startChallenge');
+        const closeGameBtn = document.getElementById('closeGame');
+        const pauseGameBtn = document.getElementById('pauseGame');
+        const helpGameBtn = document.getElementById('helpGame');
+        const leaderboardTabs = document.querySelectorAll('.leaderboard-tab');
+        const leaderboardContents = document.querySelectorAll('.leaderboard-content');
+        const viewAllAchievementsBtn = document.getElementById('viewAllAchievements');
+        const viewFullLeaderboardBtn = document.getElementById('viewFullLeaderboard');
+        const shareButtons = {
+            twitter: document.getElementById('shareTwitter'),
+            facebook: document.getElementById('shareFacebook'),
+            whatsapp: document.getElementById('shareWhatsapp'),
+            copyLink: document.getElementById('copyLink')
+        };
+        const sendInviteBtn = document.getElementById('sendInvite');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+        // 生成随机颜色
+        function getRandomColor(baseHue = null, variance = 30) {
+            if (baseHue === null) {
+                baseHue = Math.floor(Math.random() * 360);
+            }
+            
+            // 确保色相在0-360范围内
+            const hue = Math.floor(((baseHue + (Math.random() * variance * 2 - variance)) % 360) + 360) % 360;
+            const saturation = 70 + Math.floor(Math.random() * 20); // 70-90%
+            const lightness = 40 + Math.floor(Math.random() * 20); // 40-60%
+            
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        // 生成游戏色块
+        function generateColorBlocks() {
+            gameArea.innerHTML = '';
+            gameState.colorBlocks = [];
+            
+            // 根据关卡决定色块数量，更快增加难度
+            const baseCount = 9;
+            const additionalCount = Math.min(Math.floor((gameState.currentLevel - 1) / 2), 8); // 每2关增加一个色块，最多增加8个
+            const blockCount = baseCount + additionalCount;
+            
+            // 生成基础颜色
+            let baseHue = Math.floor(Math.random() * 360);
+            let variance = gameState.baseColorDiff - Math.min(35, gameState.currentLevel * 1.5); // 难度提升更快
+            variance = Math.max(5, variance); // 最小差异为5，更具挑战性
+            
+            // 为挑战模式调整颜色
+            if (gameState.gameMode === 'challenge') {
+                const challengeType = Math.floor(gameState.currentLevel % 3);
+                switch(challengeType) {
+                    case 1: // 渐变色挑战
+                        variance = 10;
+                        break;
+                    case 2: // 相似色挑战
+                        variance = 5; // 更小的差异
+                        baseHue = [0, 30, 60, 120, 180, 240, 300][Math.floor(Math.random() * 7)];
+                        break;
+                }
+            }
+            
+            // 生成目标颜色（与基础颜色有差异）
+            let targetHue;
+            if (gameState.gameMode === 'challenge' && Math.floor(gameState.currentLevel % 3) === 2) {
+                // 相似色挑战中目标色差异也很小
+                targetHue = baseHue + (variance * 1.8) * (Math.random() > 0.5 ? 1 : -1);
+            } else {
+                targetHue = (baseHue + 180 + (Math.random() * 40 - 20)) % 360;
+            }
+            
+            const baseColor = getRandomColor(baseHue, variance);
+            const targetColor = getRandomColor(targetHue, 10);
+            
+            // 随机选择目标色块的位置
+            gameState.targetIndex = Math.floor(Math.random() * blockCount);
+            
+            // 创建色块
+            for (let i = 0; i < blockCount; i++) {
+                const block = document.createElement('div');
+                block.className = 'color-block aspect-square rounded-lg cursor-pointer';
+                block.style.backgroundColor = i === gameState.targetIndex ? targetColor : baseColor;
+                block.dataset.index = i;
+                
+                // 添加点击事件
+                block.addEventListener('click', checkAnswer);
+                
+                gameArea.appendChild(block);
+                gameState.colorBlocks.push(block);
+            }
+        }
+
+        // 检查答案
+        function checkAnswer(e) {
+            // 防止快速点击和误触
+            if (!gameState.isPlaying || gameState.isProcessing) return;
+            gameState.isProcessing = true;
+            
+            const selectedIndex = parseInt(e.currentTarget.dataset.index);
+            const isCorrect = selectedIndex === gameState.targetIndex;
+            
+            // 显示反馈
+            if (isCorrect) {
+                e.currentTarget.classList.add('ring-4', 'ring-green-500');
+                // 连击系统，增加得分策略
+                gameState.comboCount++;
+                const comboBonus = Math.min(5, Math.floor(gameState.comboCount / 3)); // 每3连击增加1分奖励，最多5分
+                const timeBonus = Math.floor(gameState.timeLeft);
+                const levelBonus = Math.floor(gameState.currentLevel / 5);
+                
+                gameState.score += 10 + timeBonus + comboBonus + levelBonus;
+                gameState.currentLevel++;
+                
+                // 快速提升难度
+                if (gameState.currentLevel % 3 === 0) {
+                    gameState.baseColorDiff = Math.max(5, gameState.baseColorDiff - 2);
+                }
+                
+                updateGameInfo();
+                
+                // 延迟进入下一关，防止误触
+                setTimeout(() => {
+                    nextLevel();
+                    gameState.isProcessing = false;
+                }, 600); // 适当延长延迟，防止快速连续点击
+            } else {
+                e.currentTarget.classList.add('ring-4', 'ring-red-500');
+                gameState.colorBlocks[gameState.targetIndex].classList.add('ring-4', 'ring-green-500');
+                gameState.comboCount = 0; // 错误时重置连击
+                endGame(false);
+            }
+        }
+
+        // 更新游戏信息
+        function updateGameInfo() {
+            currentLevelEl.textContent = gameState.currentLevel;
+            currentScoreEl.textContent = gameState.score;
+        }
+
+        // 开始计时
+        function startTimer() {
+            clearInterval(gameState.timer);
+            
+            if (gameState.gameMode === 'timed') {
+                // 计时模式 - 总时间60秒
+                gameState.timeLeft = 60;
+                timeBarEl.style.width = '100%';
+                
+                gameState.timer = setInterval(() => {
+                    gameState.timeLeft--;
+                    timeBarEl.style.width = `${(gameState.timeLeft / 60) * 100}%`;
+                    
+                    // 随时间增加难度
+                    if (gameState.timeLeft % 10 === 0 && gameState.timeLeft < 50) {
+                        gameState.baseColorDiff = Math.max(5, gameState.baseColorDiff - 1);
+                    }
+                    
+                    if (gameState.timeLeft <= 0) {
+                        endGame(true);
+                    }
+                }, 1000);
+            } else {
+                // 经典模式和挑战模式 - 每关计时，时间减少更快
+                const baseTime = Math.max(3, 12 - Math.floor(gameState.currentLevel / 3)); // 每3关减少1秒，最低3秒
+                gameState.timeLeft = baseTime;
+                timeBarEl.style.width = '100%';
+                
+                gameState.timer = setInterval(() => {
+                    gameState.timeLeft--;
+                    timeBarEl.style.width = `${(gameState.timeLeft / baseTime) * 100}%`;
+                    
+                    if (gameState.timeLeft <= 0) {
+                        endGame(false);
+                    }
+                }, 1000);
+            }
+        }
+
+        // 下一关
+        function nextLevel() {
+            generateColorBlocks();
+            startTimer();
+        }
+
+        // 开始游戏
+        function startGame(mode) {
+            gameState.gameMode = mode;
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.isPlaying = true;
+            gameState.isProcessing = false;
+            gameState.comboCount = 0;
+            gameState.baseColorDiff = 40; // 重置基础颜色差异
+            
+            // 更新游戏标题
+            const modeTitles = {
+                classic: "色盲派对 - 经典模式",
+                timed: "色盲派对 - 计时模式",
+                challenge: "色盲派对 - 挑战模式"
+            };
+            gameModeTitleEl.textContent = modeTitles[mode];
+            
+            updateGameInfo();
+            generateColorBlocks();
+            startTimer();
+            
+            gameModal.style.display = 'flex';
+            gameModal.classList.add('fade-in');
+        }
+
+        // 结束游戏
+        function endGame(isTimeUp) {
+            gameState.isPlaying = false;
+            clearInterval(gameState.timer);
+            
+            // 显示游戏结束信息
+            let message, title;
+            
+            if (isTimeUp && gameState.gameMode === 'timed') {
+                title = '时间到!';
+                message = `你在60秒内完成了${gameState.currentLevel - 1}关，得分${gameState.score}！`;
+            } else if (isTimeUp) {
+                title = '时间到!';
+                message = `你在第${gameState.currentLevel}关超时了，最终得分${gameState.score}！`;
+            } else {
+                title = '挑战失败';
+                message = `你在第${gameState.currentLevel}关答错了，最终得分${gameState.score}！`;
+            }
+            
+            // 显示结果弹窗
+            setTimeout(() => {
+                if (confirm(`${title}\n${message}\n是否重新开始游戏？`)) {
+                    startGame(gameState.gameMode);
+                } else {
+                    gameModal.style.display = 'none';
+                }
+                gameState.isProcessing = false;
+            }, 1000);
+        }
+
+        // 暂停游戏
+        function pauseGame() {
+            if (!gameState.isPlaying) return;
+            
+            gameState.isPlaying = false;
+            clearInterval(gameState.timer);
+            
+            if (confirm(`游戏已暂停\n当前关卡: ${gameState.currentLevel}\n当前得分: ${gameState.score}\n是否继续游戏？`)) {
+                gameState.isPlaying = true;
+                startTimer();
+            } else {
+                gameModal.style.display = 'none';
+            }
+        }
+
+        // 游戏帮助
+        function showHelp() {
+            const helpText = gameState.gameMode === 'classic' 
+                ? "在经典模式中，找出与其他颜色不同的色块。随着关卡提升，难度会快速增加，时间会越来越短。"
+                : gameState.gameMode === 'timed'
+                    ? "在计时模式中，60秒内找出尽可能多的不同色块，速度越快得分越高，时间越往后难度越大。"
+                    : "在挑战模式中，会有各种特殊色彩挑战，包括渐变色和高相似度色彩，非常考验色彩辨别能力。";
+            
+            alert(helpText);
+        }
+
+        // 排行榜标签切换
+        leaderboardTabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                // 移除所有标签的活跃状态
+                leaderboardTabs.forEach(t => {
+                    t.classList.remove('text-green-500', 'border-b-2', 'border-green-500');
+                    t.classList.add('text-gray-500');
+                });
+                
+                // 设置当前标签为活跃状态
+                tab.classList.remove('text-gray-500');
+                tab.classList.add('text-green-500', 'border-b-2', 'border-green-500');
+                
+                // 切换内容
+                const modes = ['classic', 'timed', 'challenge'];
+                leaderboardContents.forEach(content => {
+                    content.classList.add('hidden');
+                    content.classList.remove('active');
+                });
+                
+                const activeContent = document.querySelector(`.leaderboard-content[data-mode="${modes[index]}"]`);
+                activeContent.classList.remove('hidden');
+                activeContent.classList.add('active');
+            });
+        });
+
+        // 按钮功能实现
+        viewAllAchievementsBtn.addEventListener('click', () => {
+            alert('成就系统\n\n已解锁:\n- 暂无: 完成10关\n- 暂无: 连续10关快速通关\n\n未解锁:\n- 暂无: 完成50关\n- 暂无: 计时模式得800分以上\n- 暂无: 完成所有主题挑战');
+        });
+
+        viewFullLeaderboardBtn.addEventListener('click', () => {
+            alert('完整排行榜功能即将推出，敬请期待！');
+        });
+
+        // 分享功能
+        shareButtons.twitter.addEventListener('click', () => {
+            alert('已打开Twitter分享界面');
+        });
+
+        shareButtons.facebook.addEventListener('click', () => {
+            alert('已打开Facebook分享界面');
+        });
+
+        shareButtons.whatsapp.addEventListener('click', () => {
+            alert('已打开WhatsApp分享界面');
+        });
+
+        shareButtons.copyLink.addEventListener('click', () => {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('游戏链接已复制到剪贴板');
+            }).catch(err => {
+                alert('复制失败，请手动复制链接');
+                console.error('复制失败:', err);
+            });
+        });
+
+        // 发送邀请
+        sendInviteBtn.addEventListener('click', () => {
+            const emailInput = document.querySelector('input[placeholder="输入好友的邮箱地址"]');
+            if (emailInput.value && emailInput.value.includes('@')) {
+                alert(`邀请已发送至 ${emailInput.value}`);
+                emailInput.value = '';
+            } else {
+                alert('请输入有效的邮箱地址');
+            }
+        });
+
+        // 移动端菜单
+        mobileMenuBtn.addEventListener('click', () => {
+            alert('移动端菜单已打开');
+            // 实际项目中这里应该显示移动端导航菜单
+        });
+
+        // 游戏控制事件监听
+        startClassicBtn.addEventListener('click', () => startGame('classic'));
+        startTimedBtn.addEventListener('click', () => startGame('timed'));
+        startChallengeBtn.addEventListener('click', () => startGame('challenge'));
+        closeGameBtn.addEventListener('click', () => {
+            gameState.isPlaying = false;
+            clearInterval(gameState.timer);
+            gameModal.style.display = 'none';
+        });
+        pauseGameBtn.addEventListener('click', pauseGame);
+        helpGameBtn.addEventListener('click', showHelp);
+
+        // 防止点击模态框内部时关闭模态框
+        gameModal.addEventListener('click', (e) => {
+            if (e.target === gameModal) {
+                gameState.isPlaying = false;
+                clearInterval(gameState.timer);
+                gameModal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
