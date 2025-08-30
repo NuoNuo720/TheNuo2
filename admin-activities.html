@@ -431,7 +431,7 @@
             // 检查用户是否登录且拥有管理员权限
             if (!userInfo || !userInfo.username || userInfo.role !== 'admin') {
                 alert('您没有管理员权限，无法访问此页面');
-                window.location.href = 'index.html';
+                window.location.href = 'indexdaohang.html';
                 return false;
             }
             
@@ -712,7 +712,7 @@
         // 退出登录
         function logout() {
             localStorage.removeItem('mainUserInfo');
-            window.location.href = 'index.html';
+            window.location.href = 'indexdaohang.html';
         }
     </script>
 </body>
