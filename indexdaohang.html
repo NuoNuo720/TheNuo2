@@ -6,13 +6,14 @@
     <title>多功能导航中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保持原有样式不变 */
+        /* 基础样式 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
         .title-badge {
             background: linear-gradient(135deg, #3498db, #9b59b6);
             color: white;
@@ -49,6 +50,7 @@
             border-color: #2980b9;
             font-weight: 500;
         }
+        
         body {
             background-color: #f0f4f8;
             color: #333;
@@ -260,6 +262,7 @@
             color: #3498db;
         }
 
+        /* 模态框样式 */
         .modal {
             display: none;
             position: fixed;
@@ -484,6 +487,87 @@
             color: #999;
         }
 
+        /* 活动、商城、任务相关样式 */
+        .event-item, .shop-item, .task-item {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+        
+        .event-item:hover, .shop-item:hover, .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .event-item {
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .shop-item {
+            border-left: 4px solid #f39c12;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-item {
+            border-left: 4px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .event-date, .task-difficulty {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .shop-price {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .redeem-btn, .complete-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .redeem-btn:hover, .complete-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .task-reward {
+            color: #2ecc71;
+            font-weight: 500;
+        }
+        
+        /* 状态标签样式 */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .status-active {
+            background-color: #d5f5e3;
+            color: #27ae60;
+        }
+        
+        .status-inactive {
+            background-color: #fadbd8;
+            color: #c0392b;
+        }
+
         @media (max-width: 768px) {
             .card-grid {
                 grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -557,6 +641,7 @@
 
     <div class="container">
         <div class="card-grid">
+            <!-- 现有功能卡片 -->
             <div class="nav-card" onclick="navigateTo('HelpAndGuide.html')">
                 <div class="card-icon">
                     <i class="fas fa-poll"></i>
@@ -565,8 +650,6 @@
                 <p class="card-desc">Help</p>
             </div>
 
-
-            <!-- 冷知识百宝箱 -->
             <div class="nav-card" onclick="navigateTo('knowledge.html')">
                 <div class="card-icon">
                     <i class="fas fa-book"></i>
@@ -575,7 +658,6 @@
                 <p class="card-desc">半猫小知识丷</p>
             </div>
 
-            <!-- 调查问卷 -->
             <div class="nav-card" onclick="navigateTo('diaochawenjuan.html')">
                 <div class="card-icon">
                     <i class="fas fa-poll"></i>
@@ -584,7 +666,6 @@
                 <p class="card-desc">提交实时反馈，有机会获取限定称号</p>
             </div>
 
-            <!-- 英语单词测试 -->
             <div class="nav-card" onclick="navigateTo('words.html')">
                 <div class="card-icon">
                     <i class="fas fa-spell-check"></i>
@@ -592,6 +673,7 @@
                 <h2 class="card-title">English words</h2>
                 <p class="card-desc">检验和提升你的英文单词储备量</p>
             </div>
+            
             <div class="nav-card" onclick="navigateTo('words2.html')">
                 <div class="card-icon">
                     <i class="fas fa-spell-check"></i>
@@ -600,7 +682,6 @@
                 <p class="card-desc">高二选修一专属模式[限定]</p>
             </div>
 
-            <!-- 更新公告 -->
             <div class="nav-card" onclick="navigateTo('versions.html')">
                 <div class="card-icon">
                     <i class="fas fa-newspaper"></i>
@@ -609,7 +690,6 @@
                 <p class="card-desc">查看最新版本更新内容和功能预告</p>
             </div>
         
-            <!-- 小游戏合集 -->
             <div class="nav-card" onclick="navigateTo('24gameinformation.html')">
                 <div class="card-icon">
                     <i class="fas fa-gamepad"></i>
@@ -618,7 +698,6 @@
                 <p class="card-desc">Interesting Games</p>
             </div>
             
-            <!-- 好友列表 -->
             <div class="nav-card" onclick="navigateTo('friends(old2).html')">
                 <div class="card-icon">
                     <i class="fas fa-users"></i>
@@ -627,7 +706,6 @@
                 <p class="card-desc">管理你的好友和联系人，一起互动(目前有bug 等待修复中...)</p>
             </div>
 
-            <!-- 自由电子冒险1 -->
             <div class="nav-card" onclick="navigateTo('e(finally).html')">
                 <div class="card-icon">
                     <i class="fas fa-gamepad"></i>
@@ -636,7 +714,6 @@
                 <p class="card-desc">自由电子冒险之旅！</p>
             </div>
 
-            <!-- 自由电子冒险2 -->
             <div class="nav-card" onclick="navigateTo('freee2.html')">
                 <div class="card-icon">
                     <i class="fas fa-gamepad"></i>
@@ -645,38 +722,61 @@
                 <p class="card-desc">自由电子冒险之旅！</p>
             </div>
             
-            <!-- 自由电子冒险3 -->
             <div class="nav-card" onclick="navigateTo('freee3.html')">
                 <div class="card-icon">
                     <i class="fas fa-gamepad"></i>
                 </div>
                 <h2 class="card-title">自由电子冒险3</h2>
-                <p class="card-desc">自由电子冒险之旅！</p>
+                <p class="card-desc">自由电子自由电子冒险之旅！</p>
             </div>
-            <!-- 新模式 -->
+            
             <div class="nav-card" onclick="showDisabledNotice('自由电子冒险4')">
                 <div class="card-icon">
                     <i class="fas fa-gamepad"></i>
                 </div>
-                <h2 class="card-title">自由电子冒险4</h2>
-                <p class="card-desc">自由电子冒险之旅！</p>
+                <h2 class="card-title">自由电子电子冒险4</h2>
+                <p class="card-desc">自由自由电子冒险之旅！</p>
             </div>
             
-            <!-- 更多功能 -->
             <div class="nav-card" onclick="showComingSoonNotice()">
                 <div class="card-icon">
                     <i class="fas fa-cogs"></i>
                 </div>
                 <h2 class="card-title">更多功能</h2>
-                <p class="card-desc">持续更新中，即将上线更多实用工具</p>
+                <p class="card-desc">持续更新中，即将上线即将上线更多实用工具</p>
             </div>
-            <!-- 管理员登录页面 -->
+            
             <div class="nav-card" onclick="navigateTo('admin-login.html', 'admin')">
                 <div class="card-icon">
-                    <i class="fas fa-cogs"></i>
+                    <i class="fas fa fa-cogs"></i>
                 </div>
                 <h2 class="card-title">我是管理员?</h2>
                 <p class="card-desc">管理员特殊功能登录页面...</p>
+            </div>
+
+            <!-- 新增功能卡片 -->
+            <div class="nav-card" onclick="openEventsModal()">
+                <div class="card-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h2 class="card-title">活动中心</h2>
+                <p class="card-desc">参与限时活动，赢取丰厚奖励</p>
+            </div>
+
+            <div class="nav-card" onclick="openShopModal()">
+                <div class="card-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <h2 class="card-title">积分商城</h2>
+                <p class="card-desc">使用积分兑换各种精美道具</p>
+            </div>
+
+            <div class="nav-card" onclick="openTasksModal()">
+                <div class="card-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h2 class="card-title">每日任务</h2>
+                <p class="card-desc">完成任务获取积分和特殊奖励</p>
             </div>
         </div>
     </div>
@@ -694,16 +794,19 @@
                 </button>
                 <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarUpload(event)">
             </div>
+            
             <div class="profile-section">
                 <label class="profile-label">当前称号</label>
                 <div id="titleDisplay" class="profile-value">暂无称号</div>
             </div>
+            
             <div class="profile-section">
                 <label class="profile-label">称号管理</label>
                 <button class="upload-btn" onclick="navigateTo('title-manage.html')">
                     <i class="fas fa-trophy"></i> 查看/管理我的称号
                 </button>
             </div>
+            
             <div class="profile-section">
                 <label class="profile-label">用户名</label>
                 <div id="usernameDisplay" class="profile-value"></div>
@@ -718,6 +821,12 @@
                 <label class="profile-label">账号状态</label>
                 <div id="accountStatus" class="profile-value">正常</div>
             </div>
+
+            <!-- 积分显示 -->
+            <div class="profile-section">
+                <label class="profile-label">我的积分</label>
+                <div id="userPoints" class="profile-value">0</div>
+            </div>
             
             <button class="save-btn" onclick="saveAvatar()">
                 <i class="fas fa-save"></i> 保存头像
@@ -731,7 +840,6 @@
             <span class="close-modal" onclick="closeAnnouncementModal()">&times;</span>
             <h2 class="profile-title">最新公告</h2>
             <div class="announcement-content">
-                <!-- 公告内容区域，可手动添加 -->
                 <div class="announcement-item">
                     <h3 style="color: #e74c3c;">【重磅更新】最新版本内容</h3>
                     <p>1. 新增多项功能，提升用户体验</p>
@@ -767,6 +875,87 @@
         </div>
     </div>
 
+    <!-- 活动模态框 -->
+    <div class="modal" id="eventsModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="closeEventsModal()">&times;</span>
+            <h2 class="profile-title">活动中心</h2>
+            <div class="announcement-content">
+                <!-- 活动内容将通过JavaScript动态加载 -->
+            </div>
+            <button class="save-btn" onclick="closeEventsModal()">
+                <i class="fas fa-check"></i> 关闭
+            </button>
+        </div>
+    </div>
+
+    <!-- 商城模态框 -->
+    <div class="modal" id="shopModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="closeShopModal()">&times;</span>
+            <h2 class="profile-title">积分商城</h2>
+            <div class="announcement-content">
+                <div class="shop-item">
+                    <div>
+                        <h3>初级称号礼盒</h3>
+                        <p>随机获得一个初级称号</p>
+                    </div>
+                    <div>
+                        <span class="shop-price">50积分</span>
+                        <button class="redeem-btn" onclick="redeemItem('初级称号礼盒', 50)">兑换</button>
+                    </div>
+                </div>
+                <div class="shop-item">
+                    <div>
+                        <h3>中级称号礼盒</h3>
+                        <p>随机获得一个中级称号</p>
+                    </div>
+                    <div>
+                        <span class="shop-price">150积分</span>
+                        <button class="redeem-btn" onclick="redeemItem('中级称号礼盒', 150)">兑换</button>
+                    </div>
+                </div>
+                <div class="shop-item">
+                    <div>
+                        <h3>高级称号礼盒</h3>
+                        <p>随机获得一个高级称号</p>
+                    </div>
+                    <div>
+                        <span class="shop-price">300积分</span>
+                        <button class="redeem-btn" onclick="redeemItem('高级称号礼盒', 300)">兑换</button>
+                    </div>
+                </div>
+                <div class="shop-item">
+                    <div>
+                        <h3>特殊道具：双倍积分卡</h3>
+                        <p>24小时内任务积分翻倍</p>
+                    </div>
+                    <div>
+                        <span class="shop-price">200积分</span>
+                        <button class="redeem-btn" onclick="redeemItem('双倍积分卡', 200)">兑换</button>
+                    </div>
+                </div>
+            </div>
+            <button class="save-btn" onclick="closeShopModal()">
+                <i class="fas fa-check"></i> 关闭
+            </button>
+        </div>
+    </div>
+
+    <!-- 任务模态框 -->
+    <div class="modal" id="tasksModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="closeTasksModal()">&times;</span>
+            <h2 class="profile-title">每日任务</h2>
+            <div class="announcement-content">
+                <!-- 任务内容将通过JavaScript动态加载 -->
+            </div>
+            <button class="save-btn" onclick="closeTasksModal()">
+                <i class="fas fa-check"></i> 关闭
+            </button>
+        </div>
+    </div>
+
     <!-- 通知组件 -->
     <div class="notification" id="notification">
         <i class="fas fa-info-circle"></i>
@@ -778,13 +967,17 @@
     </footer>
 
     <script>
-        // 页面加载时验证登录状态并初始化
+        // 页面加载时初始化
         window.onload = function() {
             checkLoginStatus();
             initCardAnimations();
             checkLoginParams();
+            loadUserPoints();
+            loadPlatformActivities(); // 加载平台活动
+            loadPlatformTasks(); // 加载平台任务
         };
 
+        // 检查登录参数
         function checkLoginParams() {
             const params = new URLSearchParams(window.location.search);
             if (params.has('loginSuccess')) {
@@ -792,10 +985,9 @@
             }
         }
 
-        // 修改为使用username作为用户标识
+        // 检查登录状态
         function checkLoginStatus() {
             const userInfoStr = localStorage.getItem('mainUserInfo');
-            console.log("读取到的用户信息：", userInfoStr);
             
             if (!userInfoStr) {
                 handleUnauthorizedAccess();
@@ -803,20 +995,12 @@
             }
             
             try {
-                let userInfo;
-                try {
-                    userInfo = JSON.parse(userInfoStr);
-                } catch (parseError) {
-                    console.error("用户信息解析失败：", parseError);
-                    throw new Error("用户信息格式错误，请重新登录");
-                }
+                let userInfo = JSON.parse(userInfoStr);
         
-                // 核心修改：使用username作为必填字段
                 const requiredFields = ['username', 'loginTime'];
                 const missingFields = requiredFields.filter(field => !userInfo[field]);
         
                 if (missingFields.length > 0) {
-                    // 核心修改：检查username是否存在
                     if (missingFields.includes('username')) {
                         throw new Error("用户身份信息不完整，缺少用户名，请重新登录");
                     } else {
@@ -851,7 +1035,7 @@
             }
         }
 
-        // 修改为使用username验证用户有效性
+        // 检查用户有效性
         async function checkUserValidity(userInfo) {
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
@@ -864,7 +1048,6 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-                // 核心修改：使用username作为验证标识
                 const response = await fetch('/.netlify/functions/verifyUser', {
                     method: 'POST',
                     headers: {
@@ -902,6 +1085,7 @@
             }
         }
 
+        // 更新用户显示信息
         function updateUserDisplay(userInfo) {
             const userAreaEl = document.getElementById('userArea');
             const avatarUrl = userInfo.avatar || 'https://picsum.photos/200';
@@ -938,6 +1122,7 @@
             }
         }
 
+        // 初始化卡片动画
         function initCardAnimations() {
             const cards = document.querySelectorAll('.nav-card');
             cards.forEach((card, index) => {
@@ -948,6 +1133,7 @@
             });
         }
 
+        // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
                 localStorage.removeItem('mainUserInfo');
@@ -955,6 +1141,7 @@
             }
         }
 
+        // 个人信息模态框控制
         function toggleModal(show) {
             const modal = document.getElementById('profileModal');
             if (show) {
@@ -974,6 +1161,7 @@
             toggleModal(false);
         }
 
+        // 头像上传处理
         function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (file) {
@@ -998,10 +1186,9 @@
             }
         }
     
-        // 修改为使用username检查用户信息完整性
+        // 保存头像
         function saveAvatar() {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            // 核心修改：检查username是否存在
             if (!userInfo.username) {
                 showNotification('用户信息不完整，请重新登录', 'error');
                 return;
@@ -1020,9 +1207,8 @@
             closeProfileModal();
         }
 
-        // 修改为使用username保存用户信息
+        // 保存用户信息到服务器
         async function saveUserInfoToServer(userData) {
-            // 核心修改：检查username是否存在
             if (!userData.username) {
                 console.error('保存失败：缺少用户名');
                 return;
@@ -1054,57 +1240,52 @@
             }
         }
 
+        // 点击模态框外部关闭
         window.onclick = function(event) {
-            const profileModal = document.getElementById('profileModal');
-            const announcementModal = document.getElementById('announcementModal');
+            const modals = [
+                document.getElementById('profileModal'),
+                document.getElementById('announcementModal'),
+                document.getElementById('eventsModal'),
+                document.getElementById('shopModal'),
+                document.getElementById('tasksModal')
+            ];
             
-            if (event.target === profileModal) {
-                closeProfileModal();
-            }
-            if (event.target === announcementModal) {
-                closeAnnouncementModal();
-            }
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    if (modal.id === 'profileModal') closeProfileModal();
+                    if (modal.id === 'announcementModal') closeAnnouncementModal();
+                    if (modal.id === 'eventsModal') closeEventsModal();
+                    if (modal.id === 'shopModal') closeShopModal();
+                    if (modal.id === 'tasksModal') closeTasksModal();
+                }
+            });
         };
 
-        // 修改为使用username进行权限检查
+        // 页面导航
         function navigateTo(url, requiredRole = 'user') {
             const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            // 核心修改：检查username是否存在
             if (!userInfo.username) {
                 showNotification('请先登录', 'error');
-                setTimeout(() => {
-                    window.location.href = 'indexlo.html';
-                }, 1000);
                 return;
             }
             
-            if (url.includes('admin-login.html') && !(userInfo.isAdmin || userInfo.role === 'admin')) {
-                showNotification('无管理员权限，无法访问', 'error');
+            // 管理员权限检查
+            if (requiredRole === 'admin' && (!userInfo.role || userInfo.role !== 'admin')) {
+                showNotification('您没有管理员权限', 'error');
                 return;
             }
             
-            showNotification('正在跳转...', 'info');
-            
-            setTimeout(() => {
-                window.location.href = url;
-            }, 300);
+            window.location.href = url;
         }
 
-        function showDisabledNotice(featureName) {
-            showNotification(`${featureName}模式即将上线，敬请期待`, 'info');
-        }
-
-        function showComingSoonNotice() {
-            showNotification('更多精彩功能正在开发中，敬请期待！', 'info');
-        }
-
+        // 显示通知
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
+            const textElement = document.getElementById('notificationText');
             
-            notificationText.textContent = message;
             notification.className = 'notification';
             notification.classList.add(type);
+            textElement.textContent = message;
             
             notification.classList.add('show');
             
@@ -1113,104 +1294,36 @@
             }, 3000);
         }
 
-        // 修改为使用username作为唯一键
-        function loadUserTitles(userInfo) {
-            // 核心修改：使用username作为键
-            const uniqueKey = `userTitles_${userInfo.username}`;
-            const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
-            
-            if (userTitles.length === 0) {
-                fetchUserTitlesFromServer(userInfo);
-            } else {
-                if (userTitles.length > 0 && !userInfo.currentTitle) {
-                    userInfo.currentTitle = userTitles[0];
-                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-                    updateUserDisplay(userInfo);
-                }
-            }
+        // 显示即将上线通知
+        function showComingSoonNotice() {
+            showNotification('更多功能正在开发中，敬请期待！', 'info');
         }
 
-        // 修改为使用username获取用户称号
-        async function fetchUserTitlesFromServer(userInfo) {
-            // 核心修改：检查username是否存在
-            if (!userInfo.username) {
-                console.error('获取称号失败：缺少用户名');
-                return;
-            }
-            
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (isLocalDev) {
-                console.log('本地开发模式，使用默认称号数据');
-                const defaultTitles = [
-                    { name: '探索者', icon: 'compass' }
-                ];
-                // 核心修改：使用username作为键
-                const uniqueKey = `userTitles_${userInfo.username}`;
-                localStorage.setItem(uniqueKey, JSON.stringify(defaultTitles));
-                
-                if (defaultTitles.length > 0) {
-                    const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
-                    userData.currentTitle = defaultTitles[0];
-                    localStorage.setItem('mainUserInfo', JSON.stringify(userData));
-                    updateUserDisplay(userData);
-                }
-                return;
-            }
-            
-            try {
-                // 核心修改：使用username
-                const response = await fetch(`/.netlify/functions/titles?username=${encodeURIComponent(userInfo.username)}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-Username': userInfo.username,
-                        'Content-Type': 'application/json'
-                    }
-                });
-        
-                if (response.ok) {
-                    const titles = await response.json();
-                    // 核心修改：使用username作为键
-                    const uniqueKey = `userTitles_${userInfo.username}`;
-                    localStorage.setItem(uniqueKey, JSON.stringify(titles));
-            
-                    if (titles.length > 0) {
-                        const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
-                        userData.currentTitle = titles[0];
-                        localStorage.setItem('mainUserInfo', JSON.stringify(userData));
-                        updateUserDisplay(userData);
-                    }
-                }
-            } catch (error) {
-                console.error('获取称号失败:', error);
-            }
+        function showDisabledNotice(featureName) {
+            showNotification(`${featureName} 功能暂未开放，敬请期待！`, 'info');
         }
 
-        function handleUnauthorizedAccess(errorMessage = "请先登录") {
-            if (window.location.pathname.includes('indexlo.html')) {
-                showNotification(errorMessage, 'error');
-                return;
-            }
-    
-            localStorage.setItem('redirectUrl', window.location.href);
-    
-            showNotification(errorMessage + '，即将跳转到登录页', 'error');
+        // 未授权访问处理
+        function handleUnauthorizedAccess(message = '请先登录以使用全部功能') {
+            document.getElementById('errorMsg').textContent = message;
+            document.getElementById('errorMsg').style.display = 'block';
+            
             setTimeout(() => {
-                window.location.href = 'indexlo.html?needLogin=true';
-            }, 2000);
+                document.getElementById('errorMsg').style.display = 'none';
+            }, 3000);
         }
 
-        // 公告相关函数
+        // 公告相关
         function checkAndShowAnnouncement() {
             const lastShown = localStorage.getItem('lastAnnouncementShown');
             const now = new Date().getTime();
             
-            // 如果从未显示过，或者已经超过1天，就显示公告
-            if (!lastShown || (now - parseInt(lastShown) > 1 * 24 * 60 * 60 * 1000)) {
-                showAnnouncementModal();
+            if (!lastShown || now - lastShown > 24 * 60 * 60 * 1000) {
+                openAnnouncementModal();
             }
         }
 
-        function showAnnouncementModal() {
+        function openAnnouncementModal() {
             const modal = document.getElementById('announcementModal');
             modal.style.display = 'flex';
             setTimeout(() => modal.classList.add('active'), 10);
@@ -1218,15 +1331,227 @@
 
         function closeAnnouncementModal() {
             const modal = document.getElementById('announcementModal');
-            const dontShowAgain = document.getElementById('dontShowAgain').checked;
+            modal.classList.remove('active');
             
-            // 如果勾选了不再显示，记录当前时间
-            if (dontShowAgain) {
+            if (document.getElementById('dontShowAgain').checked) {
                 localStorage.setItem('lastAnnouncementShown', new Date().getTime().toString());
             }
             
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        // 加载用户称号
+        function loadUserTitles(userInfo) {
+            console.log('加载用户称号', userInfo.titles || '暂无称号');
+        }
+
+        // 活动相关函数
+        function openEventsModal() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                return;
+            }
+            
+            const modal = document.getElementById('eventsModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeEventsModal() {
+            const modal = document.getElementById('eventsModal');
             modal.classList.remove('active');
             setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        // 加载管理员发布的活动
+        function loadPlatformActivities() {
+            const activities = JSON.parse(localStorage.getItem('platformActivities') || '[]');
+            const eventsContainer = document.querySelector('#eventsModal .announcement-content');
+            
+            eventsContainer.innerHTML = '';
+            
+            if (activities.length === 0) {
+                eventsContainer.innerHTML = '<p>暂无活动，敬请期待</p>';
+                return;
+            }
+            
+            // 按开始日期排序
+            activities.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+            
+            activities.forEach(activity => {
+                const statusClass = activity.status === 'active' ? 'status-active' : 
+                                  activity.status === 'upcoming' ? 'status-inactive' : 'status-inactive';
+                const statusText = activity.status === 'active' ? '进行中' : 
+                                  activity.status === 'upcoming' ? '即将开始' : '已结束';
+                
+                const eventItem = document.createElement('div');
+                eventItem.className = 'event-item';
+                eventItem.innerHTML = `
+                    <div class="event-date">${activity.startDate} 至 ${activity.endDate} 
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <h3>${activity.title}</h3>
+                    <p>${activity.description}</p>
+                    <p class="task-reward">奖励：${activity.reward}</p>
+                    <button class="redeem-btn" 
+                            onclick="joinEvent('${activity.id}', '${activity.title}')"
+                            ${activity.status === 'ended' ? 'disabled' : ''}>
+                        ${activity.status === 'ended' ? '已结束' : '立即参与'}
+                    </button>
+                `;
+                eventsContainer.appendChild(eventItem);
+            });
+        }
+
+        // 参与活动
+        function joinEvent(eventId, eventName) {
+            let userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                return;
+            }
+            
+            userInfo.joinedEvents = userInfo.joinedEvents || [];
+            
+            if (userInfo.joinedEvents.includes(eventId)) {
+                showNotification('您已参与该活动', 'info');
+                return;
+            }
+            
+            userInfo.joinedEvents.push(eventId);
+            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+            
+            showNotification(`成功参与${eventName}！`, 'success');
+            loadPlatformActivities();
+        }
+
+        // 商城相关函数
+        function openShopModal() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                return;
+            }
+            
+            const modal = document.getElementById('shopModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeShopModal() {
+            const modal = document.getElementById('shopModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        // 兑换物品
+        function redeemItem(itemName, points) {
+            let userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            userInfo.points = userInfo.points || 0;
+            
+            if (userInfo.points >= points) {
+                userInfo.points -= points;
+                localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                showNotification(`成功兑换${itemName}！`, 'success');
+                loadUserPoints();
+            } else {
+                showNotification('积分不足，无法兑换', 'error');
+            }
+        }
+
+        // 任务相关函数
+        function openTasksModal() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                return;
+            }
+            
+            const modal = document.getElementById('tasksModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeTasksModal() {
+            const modal = document.getElementById('tasksModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        // 加载管理员发布的任务
+        function loadPlatformTasks() {
+            const tasks = JSON.parse(localStorage.getItem('platformTasks') || '[]');
+            const tasksContainer = document.querySelector('#tasksModal .announcement-content');
+            
+            tasksContainer.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                tasksContainer.innerHTML = '<p>暂无任务，敬请期待</p>';
+                return;
+            }
+            
+            // 只显示启用的任务
+            const activeTasks = tasks.filter(task => task.status === 'active');
+            
+            if (activeTasks.length === 0) {
+                tasksContainer.innerHTML = '<p>暂无可用任务</p>';
+                return;
+            }
+            
+            activeTasks.forEach(task => {
+                const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+                const isCompleted = userInfo.completedTasks && userInfo.completedTasks.includes(task.id);
+                
+                const taskItem = document.createElement('div');
+                taskItem.className = 'task-item';
+                taskItem.innerHTML = `
+                    <div>
+                        <div class="task-difficulty">难度：${task.difficulty} | 类型：${task.type === 'daily' ? '每日任务' : task.type === 'weekly' ? '每周任务' : '一次性任务'}</div>
+                        <h3>${task.title}</h3>
+                        <p>${task.description}</p>
+                        <p class="task-reward">奖励：${task.reward}积分</p>
+                    </div>
+                    <button class="complete-btn" 
+                            onclick="completeTask('${task.id}', '${task.title}', ${task.reward})"
+                            ${isCompleted ? 'disabled' : ''}>
+                        ${isCompleted ? '已完成' : '完成'}
+                    </button>
+                `;
+                tasksContainer.appendChild(taskItem);
+            });
+        }
+
+        // 完成任务
+        function completeTask(taskId, taskName, points) {
+            let userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                return;
+            }
+            
+            userInfo.points = userInfo.points || 0;
+            userInfo.completedTasks = userInfo.completedTasks || [];
+            
+            if (userInfo.completedTasks.includes(taskId)) {
+                showNotification('该任务已完成，无法重复领取奖励', 'error');
+                return;
+            }
+            
+            userInfo.points += points;
+            userInfo.completedTasks.push(taskId);
+            
+            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+            showNotification(`成功完成${taskName}，获得${points}积分！`, 'success');
+            loadUserPoints();
+            loadPlatformTasks();
+        }
+
+        // 加载并显示用户积分
+        function loadUserPoints() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            const points = userInfo.points || 0;
+            document.getElementById('userPoints').textContent = points;
         }
     </script>
 </body>

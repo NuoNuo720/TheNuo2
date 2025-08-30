@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动与任务管理 - 管理员后台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-title {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+        
+        .logout-btn {
+            background: #555;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .logout-btn:hover {
+            background: #777;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .item-list {
+            margin-top: 20px;
+        }
+        
+        .list-item {
+            padding: 15px;
+            border-radius: 4px;
+            background: white;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .item-info h3 {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .item-info p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        
+        .edit-btn {
+            color: #3498db;
+        }
+        
+        .delete-btn {
+            color: #e74c3c;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .status-active {
+            background-color: #d5f5e3;
+            color: #27ae60;
+        }
+        
+        .status-inactive {
+            background-color: #fadbd8;
+            color: #c0392b;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: #2ecc71;
+        }
+        
+        .notification.error {
+            background-color: #e74c3c;
+        }
+        
+        @media (max-width: 768px) {
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .item-actions {
+                margin-top: 10px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-title">
+            <i class="fas fa-shield-alt"></i>
+            管理员后台 - 活动与任务管理
+        </div>
+        <div class="user-area">
+            <span id="adminName">管理员</span>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>活动与任务管理</h1>
+            <p>在这里发布和管理平台的活动与任务</p>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="activities">活动管理</div>
+            <div class="tab" data-tab="tasks">任务管理</div>
+        </div>
+
+        <!-- 活动管理 -->
+        <div class="tab-content active" id="activities">
+            <div class="card">
+                <h2>发布新活动</h2>
+                <form id="activityForm">
+                    <input type="hidden" id="activityId">
+                    
+                    <div class="form-group">
+                        <label for="activityTitle">活动标题</label>
+                        <input type="text" id="activityTitle" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityDescription">活动描述</label>
+                        <textarea id="activityDescription" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityStartDate">开始日期</label>
+                        <input type="date" id="activityStartDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityEndDate">结束日期</label>
+                        <input type="date" id="activityEndDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityReward">活动奖励</label>
+                        <input type="text" id="activityReward" placeholder="例如：100积分 + 限定称号" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activityStatus">状态</label>
+                        <select id="activityStatus" required>
+                            <option value="active">正在进行中</option>
+                            <option value="upcoming">即将开始</option>
+                            <option value="ended">已结束</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn">保存活动</button>
+                </form>
+            </div>
+
+            <div class="list-header">
+                <h2>活动列表</h2>
+            </div>
+            
+            <div class="item-list" id="activityList">
+                <!-- 活动列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <!-- 任务管理 -->
+        <div class="tab-content" id="tasks">
+            <div class="card">
+                <h2>发布新任务</h2>
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+                    
+                    <div class="form-group">
+                        <label for="taskTitle">任务标题</label>
+                        <input type="text" id="taskTitle" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDescription">任务描述</label>
+                        <textarea id="taskDescription" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDifficulty">难度</label>
+                        <select id="taskDifficulty" required>
+                            <option value="简单">简单</option>
+                            <option value="中等">中等</option>
+                            <option value="困难">困难</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskReward">任务奖励（积分）</label>
+                        <input type="number" id="taskReward" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskType">任务类型</label>
+                        <select id="taskType" required>
+                            <option value="daily">每日任务</option>
+                            <option value="weekly">每周任务</option>
+                            <option value="once">一次性任务</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskStatus">状态</label>
+                        <select id="taskStatus" required>
+                            <option value="active">启用</option>
+                            <option value="inactive">禁用</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn">保存任务</button>
+                </form>
+            </div>
+
+            <div class="list-header">
+                <h2>任务列表</h2>
+            </div>
+            
+            <div class="item-list" id="taskList">
+                <!-- 任务列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // 页面加载时验证管理员身份
+        window.onload = function() {
+            checkAdminAuth();
+            initTabs();
+            loadActivities();
+            loadTasks();
+            setupFormSubmissions();
+        };
+        
+        // 验证管理员身份
+        function checkAdminAuth() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            
+            // 检查用户是否登录且拥有管理员权限
+            if (!userInfo || !userInfo.username || userInfo.role !== 'admin') {
+                alert('您没有管理员权限，无法访问此页面');
+                window.location.href = 'index.html';
+                return false;
+            }
+            
+            document.getElementById('adminName').textContent = userInfo.username;
+            return true;
+        }
+        
+        // 初始化标签页切换
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有活动状态
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // 添加当前活动状态
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // 加载活动列表
+        function loadActivities() {
+            const activities = JSON.parse(localStorage.getItem('platformActivities') || '[]');
+            const activityList = document.getElementById('activityList');
+            activityList.innerHTML = '';
+            
+            if (activities.length === 0) {
+                activityList.innerHTML = '<p>暂无活动，请添加新活动</p>';
+                return;
+            }
+            
+            activities.forEach(activity => {
+                const statusClass = activity.status === 'active' ? 'status-active' : 
+                                  activity.status === 'upcoming' ? 'status-inactive' : 'status-inactive';
+                const statusText = activity.status === 'active' ? '进行中' : 
+                                  activity.status === 'upcoming' ? '即将开始' : '已结束';
+                
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="item-info">
+                        <h3>
+                            ${activity.title}
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </h3>
+                        <p>${activity.description.substring(0, 50)}${activity.description.length > 50 ? '...' : ''}</p>
+                        <p>
+                            <small>
+                                ${activity.startDate} 至 ${activity.endDate} | 奖励: ${activity.reward}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn edit-btn" onclick="editActivity('${activity.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteActivity('${activity.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                activityList.appendChild(item);
+            });
+        }
+        
+        // 加载任务列表
+        function loadTasks() {
+            const tasks = JSON.parse(localStorage.getItem('platformTasks') || '[]');
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<p>暂无任务，请添加新任务</p>';
+                return;
+            }
+            
+            tasks.forEach(task => {
+                const statusClass = task.status === 'active' ? 'status-active' : 'status-inactive';
+                const statusText = task.status === 'active' ? '启用' : '禁用';
+                
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="item-info">
+                        <h3>
+                            ${task.title}
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </h3>
+                        <p>${task.description.substring(0, 50)}${task.description.length > 50 ? '...' : ''}</p>
+                        <p>
+                            <small>
+                                难度: ${task.difficulty} | 奖励: ${task.reward}积分 | 类型: ${task.type === 'daily' ? '每日任务' : task.type === 'weekly' ? '每周任务' : '一次性任务'}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn edit-btn" onclick="editTask('${task.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteTask('${task.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                taskList.appendChild(item);
+            });
+        }
+        
+        // 设置表单提交事件
+        function setupFormSubmissions() {
+            // 活动表单提交
+            document.getElementById('activityForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveActivity();
+            });
+            
+            // 任务表单提交
+            document.getElementById('taskForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveTask();
+            });
+        }
+        
+        // 保存活动
+        function saveActivity() {
+            const activityId = document.getElementById('activityId').value;
+            const activities = JSON.parse(localStorage.getItem('platformActivities') || '[]');
+            
+            const activity = {
+                id: activityId || generateId(),
+                title: document.getElementById('activityTitle').value,
+                description: document.getElementById('activityDescription').value,
+                startDate: document.getElementById('activityStartDate').value,
+                endDate: document.getElementById('activityEndDate').value,
+                reward: document.getElementById('activityReward').value,
+                status: document.getElementById('activityStatus').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            // 如果是编辑现有活动
+            if (activityId) {
+                const index = activities.findIndex(a => a.id === activityId);
+                activities[index] = activity;
+            } else {
+                // 新增活动
+                activities.push(activity);
+            }
+            
+            localStorage.setItem('platformActivities', JSON.stringify(activities));
+            showNotification('活动保存成功', 'success');
+            
+            // 重置表单并刷新列表
+            document.getElementById('activityForm').reset();
+            document.getElementById('activityId').value = '';
+            loadActivities();
+        }
+        
+        // 保存任务
+        function saveTask() {
+            const taskId = document.getElementById('taskId').value;
+            const tasks = JSON.parse(localStorage.getItem('platformTasks') || '[]');
+            
+            const task = {
+                id: taskId || generateId(),
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                difficulty: document.getElementById('taskDifficulty').value,
+                reward: document.getElementById('taskReward').value,
+                type: document.getElementById('taskType').value,
+                status: document.getElementById('taskStatus').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            // 如果是编辑现有任务
+            if (taskId) {
+                const index = tasks.findIndex(t => t.id === taskId);
+                tasks[index] = task;
+            } else {
+                // 新增任务
+                tasks.push(task);
+            }
+            
+            localStorage.setItem('platformTasks', JSON.stringify(tasks));
+            showNotification('任务保存成功', 'success');
+            
+            // 重置表单并刷新列表
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            loadTasks();
+        }
+        
+        // 编辑活动
+        function editActivity(id) {
+            const activities = JSON.parse(localStorage.getItem('platformActivities') || '[]');
+            const activity = activities.find(a => a.id === id);
+            
+            if (!activity) return;
+            
+            document.getElementById('activityId').value = activity.id;
+            document.getElementById('activityTitle').value = activity.title;
+            document.getElementById('activityDescription').value = activity.description;
+            document.getElementById('activityStartDate').value = activity.startDate;
+            document.getElementById('activityEndDate').value = activity.endDate;
+            document.getElementById('activityReward').value = activity.reward;
+            document.getElementById('activityStatus').value = activity.status;
+            
+            // 滚动到表单
+            document.getElementById('activityForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 编辑任务
+        function editTask(id) {
+            const tasks = JSON.parse(localStorage.getItem('platformTasks') || '[]');
+            const task = tasks.find(t => t.id === id);
+            
+            if (!task) return;
+            
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskTitle').value = task.title;
+            document.getElementById('taskDescription').value = task.description;
+            document.getElementById('taskDifficulty').value = task.difficulty;
+            document.getElementById('taskReward').value = task.reward;
+            document.getElementById('taskType').value = task.type;
+            document.getElementById('taskStatus').value = task.status;
+            
+            // 滚动到表单
+            document.getElementById('taskForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 删除活动
+        function deleteActivity(id) {
+            if (confirm('确定要删除这个活动吗？')) {
+                let activities = JSON.parse(localStorage.getItem('platformActivities') || '[]');
+                activities = activities.filter(a => a.id !== id);
+                localStorage.setItem('platformActivities', JSON.stringify(activities));
+                showNotification('活动已删除', 'success');
+                loadActivities();
+            }
+        }
+        
+        // 删除任务
+        function deleteTask(id) {
+            if (confirm('确定要删除这个任务吗？')) {
+                let tasks = JSON.parse(localStorage.getItem('platformTasks') || '[]');
+                tasks = tasks.filter(t => t.id !== id);
+                localStorage.setItem('platformTasks', JSON.stringify(tasks));
+                showNotification('任务已删除', 'success');
+                loadTasks();
+            }
+        }
+        
+        // 生成唯一ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const textElement = document.getElementById('notificationText');
+            
+            notification.className = 'notification';
+            notification.classList.add(type);
+            textElement.textContent = message;
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('mainUserInfo');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
