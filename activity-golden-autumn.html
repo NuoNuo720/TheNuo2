@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金秋九月 - 感恩回馈活动</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f5f1;
+            color: #333;
+            line-height: 1.6;
+            padding-bottom: 50px;
+        }
+        
+        .header-banner {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><text x="50" y="50" font-size="12" text-anchor="middle" fill="rgba(255,255,255,0.1)">🍂</text></svg>');
+            opacity: 0.3;
+        }
+        
+        .banner-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-banner h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .header-banner p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .activity-date {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+        
+        .section-title {
+            color: #d35400;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1c40f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .activity-details {
+            line-height: 1.8;
+        }
+        
+        .activity-details p {
+            margin-bottom: 15px;
+        }
+        
+        .task-list {
+            margin-top: 20px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fef9f3;
+            margin-bottom: 15px;
+            border-left: 4px solid #e67e22;
+        }
+        
+        .task-icon {
+            font-size: 1.5rem;
+            color: #e67e22;
+            margin-top: 3px;
+        }
+        
+        .task-content h4 {
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+        
+        .reward-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .reward-card {
+            background-color: #fff8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #ffe6cc;
+            transition: transform 0.3s;
+        }
+        
+        .reward-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .reward-icon {
+            font-size: 2.5rem;
+            color: #e67e22;
+            margin-bottom: 15px;
+        }
+        
+        .reward-card h4 {
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+        
+        .reward-description {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        
+        .btn {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #d35400;
+        }
+        
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .progress-section {
+            margin-top: 10px;
+        }
+        
+        .progress-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #fef9f3;
+            border-radius: 5px;
+        }
+        
+        .activity-actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        #activityResultsSection {
+            display: none;
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        .winner-badge {
+            font-size: 3rem;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .reward-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-banner h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-banner">
+        <div class="banner-content">
+            <h1>金秋九月，感恩回馈活动</h1>
+            <p>秋意渐浓，丹桂飘香，为感谢广大用户的支持，特推出"金秋九月"主题活动！</p>
+            <span class="activity-date">活动时间：2025-09-01 至 2025-09-30</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i> 活动详情
+            </h2>
+            <div class="activity-details">
+                <p>在这个丰收的季节里，参与我们的系列活动，即可获得丰厚奖励。活动期间完成指定任务可额外获得积分加成，更有机会赢取限定秋季礼包！</p>
+                
+                <div class="task-list">
+                    <div class="task-item">
+                        <div class="task-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="task-content">
+                            <h4>每日登录签到</h4>
+                            <p>活动期间，每日登录并签到可领取"秋日签到礼"，获得50积分</p>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <div class="task-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="task-content">
+                            <h4>完成周任务</h4>
+                            <p>完成3个及以上周任务可获得"秋日耕耘奖"，解锁额外奖励</p>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <div class="task-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="task-content">
+                            <h4>邀请新用户</h4>
+                            <p>邀请新用户注册可获得"金秋引荐礼"，邀请越多奖励越丰厚</p>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <div class="task-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="task-content">
+                            <h4>积分商城兑换</h4>
+                            <p>积分商城将上架秋季限定物品，限时兑换，不要错过</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <i class="fas fa-gift"></i> 活动奖励
+            </h2>
+            
+            <div class="reward-list">
+                <div class="reward-card">
+                    <div class="reward-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h4>参与奖</h4>
+                    <div class="reward-description">
+                        100积分 + 秋日徽章
+                    </div>
+                    <button class="btn" id="claimParticipation" disabled>领取奖励</button>
+                </div>
+                
+                <div class="reward-card">
+                    <div class="reward-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h4>全任务奖</h4>
+                    <div class="reward-description">
+                        500积分 + "秋收达人"称号
+                    </div>
+                    <button class="btn" id="claimAllTasks" disabled>领取奖励</button>
+                </div>
+                
+                <div class="reward-card">
+                    <div class="reward-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>邀请奖</h4>
+                    <div class="reward-description">
+                        1000积分 + 限定头像框
+                    </div>
+                    <button class="btn" id="claimInvite" disabled>领取奖励</button>
+                </div>
+                
+                <div class="reward-card">
+                    <div class="reward-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <h4>幸运奖</h4>
+                    <div class="reward-description">
+                        秋季限定礼包（活动结束后抽取10名）
+                    </div>
+                    <button class="btn" disabled>活动结束后抽取</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i> 我的活动进度
+            </h2>
+            
+            <div id="activityJoinSection">
+                <div class="activity-actions">
+                    <button class="btn" id="joinGoldenAutumn">立即参与活动</button>
+                    <p style="margin-top: 10px;">当前状态: <span id="activityJoinStatus">未参与活动</span></p>
+                </div>
+                
+                <div class="progress-section">
+                    <div class="progress-item">
+                        <span>每日签到进度:</span>
+                        <span id="signInCount">0天</span>
+                    </div>
+                    <div class="progress-item">
+                        <span>周任务完成情况:</span>
+                        <span id="weeklyTasksCount">0/3</span>
+                    </div>
+                    <div class="progress-item">
+                        <span>邀请新用户数:</span>
+                        <span id="invitedCount">0人</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn" id="dailySignIn">每日签到</button>
+                    <button class="btn" id="inviteFriend">邀请好友</button>
+                </div>
+            </div>
+            
+            <div id="activityResultsSection">
+                <h3>活动已结束</h3>
+                <p id="winnerNotice"></p>
+                <div class="winner-badge">
+                    <i class="fas fa-gift"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/notification.js"></script> <!-- 假设已有的通知功能 -->
+    <script src="js/user-info.js"></script> <!-- 假设已有的用户信息功能 -->
+    <script src="js/activity-handler.js"></script>
+    <script>
+        // 页面加载时初始化活动
+        window.onload = function() {
+            initGoldenAutumnActivity();
+        };
+    </script>
+</body>
+</html>
