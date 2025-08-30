@@ -5,7 +5,9 @@
   # 修正超时配置的语法
   [functions."*"]
     timeout = 900  # 单位为秒，设置为15分钟
-
+[[edge_functions]]
+  function = "chat"
+  path = "/chat"
 [[redirects]]
   from = "/api/*"                 # 匹配所有以/api/开头的请求
   to = "/.netlify/functions/api/:splat"  # 转发到api函数处理

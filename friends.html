@@ -850,6 +850,8 @@
         let socket = null;
         // 当前用户信息
         let currentUser = null;
+        // 重连尝试次数
+        let reconnectAttempts = 0;
 
         // 页面加载时初始化
         window.onload = function() {
@@ -1039,13 +1041,9 @@
             });
         }
 
-        // 初始化WebSocket连接
+        // 初始化WebSocket连接（已修复）
         function initWebSocket() {
             if (!currentUser) return;
-            
-            // 根据环境选择WebSocket协议
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.host;
             
             // 关闭已存在的连接
             if (socket) {
@@ -1053,12 +1051,26 @@
             }
             
             try {
-                // 连接到聊天服务
-                socket = new WebSocket(`${protocol}//${host}/.netlify/functions/chat?username=${encodeURIComponent(currentUser.username)}`);
+                // 对于Netlify Edge Functions，WebSocket路径通常直接映射
+                // 不需要包含/.netlify/functions/前缀
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host;
+                // 修改WebSocket URL，适应Edge Functions路径
+                const websocketUrl = `${protocol}//${host}/chat?username=${encodeURIComponent(currentUser.username)}&token=${currentUser.token}`;
+                
+                console.log('尝试连接到WebSocket:', websocketUrl);
+                socket = new WebSocket(websocketUrl);
                 
                 socket.onopen = function() {
                     console.log('WebSocket连接已建立');
                     showNotification('实时聊天已连接', 'success');
+                    // 重置重连计数
+                    reconnectAttempts = 0;
+                    // 发送认证信息
+                    socket.send(JSON.stringify({
+                        type: 'auth',
+                        token: currentUser.token
+                    }));
                 };
                 
                 socket.onmessage = function(event) {
@@ -1072,19 +1084,26 @@
                 
                 socket.onerror = function(error) {
                     console.error('WebSocket错误:', error);
-                    showNotification('聊天连接发生错误', 'error');
+                    showNotification('聊天连接发生错误，可能无法发送或接收消息', 'error');
                 };
                 
-                socket.onclose = function() {
-                    console.log('WebSocket连接已关闭');
-                    showNotification('聊天连接已断开，将尝试重连', 'error');
+                socket.onclose = function(event) {
+                    console.log(`WebSocket连接已关闭，代码: ${event.code}, 原因: ${event.reason}`);
                     
-                    // 自动重连
-                    setTimeout(initWebSocket, 5000);
+                    // 根据关闭代码判断是否需要重连
+                    if (event.code !== 1000 && event.code !== 1001) { // 不是正常关闭
+                        // 实现指数退避重连策略，避免频繁尝试
+                        const retryDelay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                        showNotification(`聊天连接已断开，将在${retryDelay/1000}秒后尝试重连`, 'error');
+                        setTimeout(initWebSocket, retryDelay);
+                        reconnectAttempts++;
+                    }
                 };
             } catch (e) {
                 console.error('建立WebSocket连接失败:', e);
-                showNotification('无法建立聊天连接', 'error');
+                showNotification('无法初始化聊天连接: ' + e.message, 'error');
+                // 10秒后重试
+                setTimeout(initWebSocket, 10000);
             }
         }
 
@@ -1118,6 +1137,11 @@
                 case 'status':
                     // 状态更新
                     updateFriendStatus(data.username, data.status);
+                    break;
+                    
+                case 'error':
+                    // 错误消息
+                    showNotification(`服务器错误: ${data.message}`, 'error');
                     break;
             }
         }
