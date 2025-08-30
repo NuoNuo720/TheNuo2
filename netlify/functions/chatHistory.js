@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
     const headers = {
         'Access-Control-Allow-Origin': process.env.CLIENT_ORIGIN || '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'GET, OPTIONS'
     };
 
     // 处理预检请求
@@ -25,21 +25,21 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // 仅允许POST请求
-        if (event.httpMethod !== 'POST') {
+        // 仅允许GET请求
+        if (event.httpMethod !== 'GET') {
             return {
                 statusCode: 405,
                 headers,
-                body: JSON.stringify({ error: '只允许POST请求' })
+                body: JSON.stringify({ error: '只允许GET请求' })
             };
         }
 
-        // 解析请求体
-        const body = JSON.parse(event.body);
-        const { sender, recipient, content, timestamp } = body;
+        // 获取查询参数
+        const { with: friendUsername, limit = 50, before } = event.queryStringParameters;
+        const currentUser = event.queryStringParameters.username;
 
         // 验证必要参数
-        if (!sender || !recipient || !content) {
+        if (!currentUser || !friendUsername) {
             return {
                 statusCode: 400,
                 headers,
@@ -59,11 +59,9 @@ exports.handler = async (event, context) => {
 
         // 验证token有效性
         const token = authHeader.split(' ')[1];
-        let decoded;
         try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET);
-            // 确保token中的用户名与发送者一致
-            if (decoded.username !== sender) {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (decoded.username !== currentUser) {
                 return {
                     statusCode: 403,
                     headers,
@@ -83,53 +81,28 @@ exports.handler = async (event, context) => {
         // 连接数据库
         const db = await connectToDatabase();
         
-        // 检查接收者是否存在
-        const recipientExists = await db.collection('users').findOne(
-            { username: recipient },
-            { projection: { _id: 1 } }
-        );
-        
-        if (!recipientExists) {
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ error: '接收者不存在' })
-            };
-        }
-        
-        // 检查是否为好友
-        const isFriend = await db.collection('friends').findOne({
+        // 构建查询条件：双方之间的消息
+        const query = {
             $or: [
-                { user1: sender, user2: recipient },
-                { user1: recipient, user2: sender }
+                { sender: currentUser, recipient: friendUsername },
+                { sender: friendUsername, recipient: currentUser }
             ]
-        });
+        };
         
-        if (!isFriend) {
-            return {
-                statusCode: 403,
-                headers,
-                body: JSON.stringify({ error: '只能向好友发送消息' })
-            };
+        // 如果指定了before参数，只查询该时间之前的消息
+        if (before) {
+            query.timestamp = { $lt: new Date(before) };
         }
 
-        // 保存消息
-        const message = {
-            sender,
-            recipient,
-            content,
-            timestamp: timestamp ? new Date(timestamp) : new Date(),
-            status: 'sent', // 消息状态：sent, delivered, read
-            createdAt: new Date()
-        };
-
-        const result = await db.collection('messages').insertOne(message);
+        // 查询聊天历史
+        const messages = await db.collection('messages')
+            .find(query)
+            .sort({ timestamp: -1 }) // 按时间倒序
+            .limit(parseInt(limit))
+            .toArray();
         
-        // 更新发送者最后活跃时间
-        await db.collection('users').updateOne(
-            { username: sender },
-            { $set: { lastActive: new Date(), status: 'online' } }
-        );
+        // 反转数组，让消息按时间正序排列
+        messages.reverse();
 
         return {
             statusCode: 200,
@@ -137,13 +110,17 @@ exports.handler = async (event, context) => {
                 ...headers,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                success: true,
-                messageId: result.insertedId.toString()
-            })
+            body: JSON.stringify(messages.map(msg => ({
+                id: msg._id.toString(),
+                sender: msg.sender,
+                recipient: msg.recipient,
+                content: msg.content,
+                timestamp: msg.timestamp,
+                status: msg.status
+            })))
         };
     } catch (error) {
-        console.error('发送消息时出错:', error);
+        console.error('获取聊天历史时出错:', error);
         return {
             statusCode: 500,
             headers,

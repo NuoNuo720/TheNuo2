@@ -686,6 +686,53 @@
             100% { opacity: 1; }
         }
 
+        /* 加载指示器 */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        .loading-overlay .loader {
+            width: 40px;
+            height: 40px;
+            border-top-color: #3498db;
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        /* 离线消息提示 */
+        .offline-badge {
+            display: inline-block;
+            background-color: #f39c12;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.8rem;
@@ -797,7 +844,7 @@
                 <i class="fas fa-search"></i>
                 <h3>暂无好友</h3>
                 <p>添加好友，开始互动吧！</p>
-                <button class="add-friend-btn">
+                <button class="add-friend-btn" onclick="openAddFriendModal()">
                     <i class="fas fa-plus"></i> 添加第一个好友
                 </button>
             </div>
@@ -845,6 +892,9 @@
             </div>
             <div class="chat-messages" id="chatMessages">
                 <!-- 聊天消息将通过JavaScript动态生成 -->
+                <div class="loading-overlay" id="chatLoading" style="display: none;">
+                    <div class="loader"></div>
+                </div>
             </div>
             <div class="chat-input-area">
                 <input type="text" class="chat-input" id="chatInput" placeholder="输入消息...">
@@ -898,6 +948,10 @@
         let pollRetryCount = 0;
         const MAX_RETRY_COUNT = 5;
         const BASE_POLL_INTERVAL = 3000; // 基础轮询间隔3秒
+        let currentPollInterval = BASE_POLL_INTERVAL; // 当前轮询间隔，会根据情况调整
+        
+        // 离线消息队列
+        let offlineMessagesQueue = [];
         
         // 当前用户信息
         let currentUser = null;
@@ -910,17 +964,31 @@
             // 初始化事件监听
             initEventListeners();
             
+            // 加载离线消息队列
+            loadOfflineMessagesQueue();
+            
             // 如果用户已登录，加载好友列表并初始化轮询
             if (currentUser) {
                 loadFriends();
+                loadFriendRequestsCount();
                 initPolling();
+                
+                // 如果有离线消息，尝试发送
+                if (offlineMessagesQueue.length > 0) {
+                    showNotification(`检测到 ${offlineMessagesQueue.length} 条未发送消息，正在尝试发送...`, 'info');
+                    sendQueuedOfflineMessages();
+                }
             }
             
             // 监听页面可见性变化，优化轮询
             document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // 监听网络状态变化
+            window.addEventListener('online', handleNetworkOnline);
+            window.addEventListener('offline', handleNetworkOffline);
         };
 
-        // 复用主页面的用户验证逻辑
+        // 检查登录状态
         function checkLoginStatus() {
             const userInfoStr = localStorage.getItem('mainUserInfo');
             console.log("读取到的用户信息：", userInfoStr);
@@ -940,7 +1008,7 @@
                 }
         
                 // 验证必要字段
-                const requiredFields = ['username', 'loginTime'];
+                const requiredFields = ['username', 'loginTime', 'token'];
                 const missingFields = requiredFields.filter(field => !userInfo[field]);
         
                 if (missingFields.length > 0) {
@@ -981,7 +1049,7 @@
             }
         }
 
-        // 复用主页面的用户有效性检查
+        // 检查用户有效性
         async function checkUserValidity(userInfo) {
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
@@ -998,6 +1066,7 @@
                     method: 'POST',
                     headers: {
                         'X-Username': userInfo.username,
+                        'Authorization': `Bearer ${userInfo.token}`,
                         'Content-Type': 'application/json'
                     },
                     signal: controller.signal
@@ -1033,7 +1102,7 @@
             }
         }
 
-        // 复用主页面的用户信息显示
+        // 更新用户显示
         function updateUserDisplay(userInfo) {
             const userAreaEl = document.getElementById('userArea');
             const avatarUrl = userInfo.avatar || 'https://picsum.photos/200';
@@ -1106,7 +1175,7 @@
             checkForNewMessages();
             
             // 设置轮询定时器
-            pollInterval = setInterval(checkForNewMessages, BASE_POLL_INTERVAL);
+            pollInterval = setInterval(checkForNewMessages, currentPollInterval);
             pollActive = true;
             pollRetryCount = 0;
             
@@ -1121,8 +1190,8 @@
             try {
                 updatePollStatus(true, "正在同步...");
                 
-                // 构建请求URL，包含最后一条消息的时间戳以获取增量更新
-                const url = `/api/messages?username=${encodeURIComponent(currentUser.username)}&since=${encodeURIComponent(lastMessageTime)}`;
+                // 构建请求URL，使用Netlify Functions路径
+                const url = `/.netlify/functions/messages?username=${encodeURIComponent(currentUser.username)}&since=${encodeURIComponent(lastMessageTime)}`;
                 
                 // 设置请求超时（5秒）
                 const controller = new AbortController();
@@ -1140,8 +1209,12 @@
                 clearTimeout(timeoutId);
                 
                 if (response.ok) {
-                    // 重置重试计数器
+                    // 重置重试计数器和轮询间隔
                     pollRetryCount = 0;
+                    currentPollInterval = BASE_POLL_INTERVAL;
+                    
+                    // 调整轮询间隔
+                    adjustPollingInterval(true);
                     
                     const data = await response.json();
                     if (data.messages && data.messages.length > 0) {
@@ -1154,6 +1227,16 @@
                     
                     updatePollStatus(true, "消息同步中");
                 } else {
+                    // 处理特定状态码
+                    if (response.status === 401) {
+                        const errorData = await response.json();
+                        showNotification(errorData.error || "身份验证失败，请重新登录", "error");
+                        // 401错误通常需要重新登录，停止轮询
+                        stopPolling();
+                        setTimeout(() => handleUnauthorizedAccess(), 3000);
+                        return;
+                    }
+                    
                     handlePollError(`服务器错误: ${response.status}`);
                 }
             } catch (error) {
@@ -1169,6 +1252,9 @@
         function handlePollError(errorMessage) {
             console.error("轮询错误:", errorMessage);
             pollRetryCount++;
+            
+            // 错误时调整轮询间隔（退避策略）
+            adjustPollingInterval(false);
             
             // 更新状态显示
             updatePollStatus(false, `同步失败 (${pollRetryCount}/${MAX_RETRY_COUNT})`);
@@ -1189,6 +1275,24 @@
                 
                 // 5秒后重新初始化
                 setTimeout(initPolling, 5000);
+            }
+        }
+
+        // 调整轮询间隔（退避策略）
+        function adjustPollingInterval(isSuccess) {
+            if (isSuccess) {
+                // 成功时恢复到基础间隔
+                currentPollInterval = BASE_POLL_INTERVAL;
+            } else {
+                // 失败时指数退避，但不超过最大间隔
+                const maxInterval = BASE_POLL_INTERVAL * 8; // 最大间隔为基础的8倍
+                currentPollInterval = Math.min(currentPollInterval * 2, maxInterval);
+            }
+            
+            // 应用新的间隔
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = setInterval(checkForNewMessages, currentPollInterval);
             }
         }
 
@@ -1214,20 +1318,41 @@
                 // 页面不可见时，延长轮询间隔
                 if (pollInterval) {
                     clearInterval(pollInterval);
-                    pollInterval = setInterval(checkForNewMessages, BASE_POLL_INTERVAL * 3); // 延长到3倍
+                    pollInterval = setInterval(checkForNewMessages, currentPollInterval * 3); // 延长到3倍
                     updatePollStatus(true, "后台同步中");
                 }
             } else {
                 // 页面可见时，恢复正常轮询间隔
                 if (pollInterval) {
                     clearInterval(pollInterval);
-                    pollInterval = setInterval(checkForNewMessages, BASE_POLL_INTERVAL);
+                    pollInterval = setInterval(checkForNewMessages, currentPollInterval);
                     updatePollStatus(true, "消息同步中");
                     
                     // 立即检查一次新消息
                     checkForNewMessages();
                 }
             }
+        }
+
+        // 处理网络在线事件
+        function handleNetworkOnline() {
+            showNotification("网络已恢复连接", "success");
+            
+            // 重新启动轮询（如果已停止）
+            if (!pollActive && currentUser) {
+                initPolling();
+            }
+            
+            // 发送队列中的离线消息
+            if (offlineMessagesQueue.length > 0) {
+                showNotification(`网络恢复，正在发送 ${offlineMessagesQueue.length} 条离线消息...`, "info");
+                sendQueuedOfflineMessages();
+            }
+        }
+
+        // 处理网络离线事件
+        function handleNetworkOffline() {
+            showNotification("网络连接已断开，将使用离线模式", "error");
         }
 
         // 处理接收到的消息
@@ -1239,6 +1364,11 @@
                     // 收到新消息
                     addMessageToChat(data.sender, data.content, new Date(data.timestamp), data.sender !== currentUser.username);
                     
+                    // 如果是当前聊天对象的消息，更新为已读
+                    if (currentChatFriend === data.sender) {
+                        markMessageAsRead(data.id);
+                    }
+                    
                     // 如果聊天窗口未打开，显示通知
                     if (!document.getElementById('chatModal').classList.contains('active') || currentChatFriend !== data.sender) {
                         showNotification(`收到来自 ${data.sender} 的消息: ${data.content}`, 'info');
@@ -1248,7 +1378,7 @@
                 case 'friendRequest':
                     // 收到好友请求
                     showNotification(`收到来自 ${data.sender} 的好友请求`, 'info');
-                    loadFriendRequests(); // 刷新请求列表
+                    loadFriendRequestsCount(); // 刷新请求数量
                     break;
                     
                 case 'requestAccepted':
@@ -1270,10 +1400,82 @@
         }
 
         // 加载好友列表
-        function loadFriends() {
+        async function loadFriends() {
             if (!currentUser) return;
             
-            // 从本地存储获取好友列表（实际应用中应从服务器获取）
+            // 显示加载状态
+            const friendListEl = document.getElementById('friendList');
+            friendListEl.innerHTML = `
+                <div class="empty-state">
+                    <div class="loader"></div>
+                    <p>正在加载好友列表...</p>
+                </div>
+            `;
+            
+            try {
+                // 从服务器获取好友列表
+                const response = await fetch(`/.netlify/functions/friends?username=${encodeURIComponent(currentUser.username)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const friends = await response.json();
+                    
+                    if (friends.length === 0) {
+                        friendListEl.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-search"></i>
+                                <h3>暂无好友</h3>
+                                <p>添加好友，开始互动吧！</p>
+                                <button class="add-friend-btn" onclick="openAddFriendModal()">
+                                    <i class="fas fa-plus"></i> 添加第一个好友
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // 生成好友列表HTML
+                    let friendsHTML = '';
+                    friends.forEach(friend => {
+                        friendsHTML += `
+                            <div class="friend-item">
+                                <img src="${friend.avatar || 'https://picsum.photos/200?random=' + friend.username}" alt="${friend.username}" class="friend-avatar">
+                                <div class="friend-info">
+                                    <div class="friend-name">${friend.username}</div>
+                                    <div class="friend-status ${friend.status === 'online' ? 'text-success' : ''}">
+                                        ${friend.status === 'online' ? '<i class="fas fa-circle"></i> 在线' : '<i class="fas fa-circle"></i> 离线'}
+                                    </div>
+                                </div>
+                                <div class="friend-actions">
+                                    <button class="action-btn message-btn" onclick="openChatModal('${friend.username}', '${friend.avatar || ''}')">
+                                        <i class="fas fa-comment"></i>
+                                    </button>
+                                    <button class="action-btn remove-btn" onclick="removeFriend('${friend.username}')">
+                                        <i class="fas fa-user-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    friendListEl.innerHTML = friendsHTML;
+                } else {
+                    // 服务器加载失败，使用本地缓存
+                    loadFriendsFromLocalStorage();
+                }
+            } catch (error) {
+                console.error("加载好友列表失败:", error);
+                // 网络错误，使用本地缓存
+                loadFriendsFromLocalStorage();
+            }
+        }
+
+        // 从本地存储加载好友列表（作为备份）
+        function loadFriendsFromLocalStorage() {
             const uniqueKey = `friends_${currentUser.username}`;
             const friends = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
             
@@ -1318,13 +1520,105 @@
             });
             
             friendListEl.innerHTML = friendsHTML;
+            showNotification("使用本地缓存的好友列表", "info");
+        }
+
+        // 加载好友请求数量
+        async function loadFriendRequestsCount() {
+            if (!currentUser) return;
+            
+            try {
+                const response = await fetch(`/.netlify/functions/friendRequests?username=${encodeURIComponent(currentUser.username)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const requests = await response.json();
+                    document.getElementById('requestCount').textContent = requests.length;
+                }
+            } catch (error) {
+                console.error("加载好友请求数量失败:", error);
+            }
         }
 
         // 加载好友请求
-        function loadFriendRequests() {
+        async function loadFriendRequests() {
             if (!currentUser) return;
             
-            // 从本地存储获取好友请求（实际应用中应从服务器获取）
+            // 显示加载状态
+            const friendListEl = document.getElementById('friendList');
+            friendListEl.innerHTML = `
+                <div class="empty-state">
+                    <div class="loader"></div>
+                    <p>正在加载好友请求...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`/.netlify/functions/friendRequests?username=${encodeURIComponent(currentUser.username)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const requests = await response.json();
+                    const requestCountEl = document.getElementById('requestCount');
+                    
+                    // 更新请求数量
+                    requestCountEl.textContent = requests.length;
+                    
+                    if (requests.length === 0) {
+                        friendListEl.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-envelope-open"></i>
+                                <h3>暂无好友请求</h3>
+                                <p>当有新的好友请求时，会显示在这里</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // 生成请求列表HTML
+                    let requestsHTML = '';
+                    requests.forEach(request => {
+                        requestsHTML += `
+                            <div class="friend-item">
+                                <img src="${request.avatar || 'https://picsum.photos/200?random=' + request.sender}" alt="${request.sender}" class="friend-avatar">
+                                <div class="friend-info">
+                                    <div class="friend-name">${request.sender}</div>
+                                    <div class="friend-status">${request.message || '想添加你为好友'}</div>
+                                </div>
+                                <div class="friend-actions">
+                                    <button class="action-btn message-btn" onclick="acceptFriendRequest('${request.id}', '${request.sender}', '${request.avatar || ''}')">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="action-btn remove-btn" onclick="declineFriendRequest('${request.id}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    friendListEl.innerHTML = requestsHTML;
+                } else {
+                    // 加载失败，使用本地缓存
+                    loadFriendRequestsFromLocalStorage();
+                }
+            } catch (error) {
+                console.error("加载好友请求失败:", error);
+                // 网络错误，使用本地缓存
+                loadFriendRequestsFromLocalStorage();
+            }
+        }
+
+        // 从本地存储加载好友请求（作为备份）
+        function loadFriendRequestsFromLocalStorage() {
             const uniqueKey = `friendRequests_${currentUser.username}`;
             const requests = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
             
@@ -1350,16 +1644,16 @@
             requests.forEach(request => {
                 requestsHTML += `
                     <div class="friend-item">
-                        <img src="${request.avatar || 'https://picsum.photos/200?random=' + request.username}" alt="${request.username}" class="friend-avatar">
+                        <img src="${request.avatar || 'https://picsum.photos/200?random=' + request.sender}" alt="${request.sender}" class="friend-avatar">
                         <div class="friend-info">
-                            <div class="friend-name">${request.username}</div>
+                            <div class="friend-name">${request.sender}</div>
                             <div class="friend-status">${request.message || '想添加你为好友'}</div>
                         </div>
                         <div class="friend-actions">
-                            <button class="action-btn message-btn" onclick="acceptFriendRequest('${request.username}', '${request.avatar || ''}')">
+                            <button class="action-btn message-btn" onclick="acceptFriendRequest('${request.id}', '${request.sender}', '${request.avatar || ''}')">
                                 <i class="fas fa-check"></i>
                             </button>
-                            <button class="action-btn remove-btn" onclick="declineFriendRequest('${request.username}')">
+                            <button class="action-btn remove-btn" onclick="declineFriendRequest('${request.id}')">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -1368,6 +1662,7 @@
             });
             
             friendListEl.innerHTML = requestsHTML;
+            showNotification("使用本地缓存的好友请求", "info");
         }
 
         // 发送好友请求
@@ -1387,43 +1682,10 @@
                 return;
             }
             
-            // 检查是否已经是好友
-            const friendsKey = `friends_${currentUser.username}`;
-            const friends = JSON.parse(localStorage.getItem(friendsKey) || '[]');
-            const isAlreadyFriend = friends.some(f => f.username === friendUsername);
-            
-            if (isAlreadyFriend) {
-                showNotification('该用户已经是你的好友', 'error');
-                closeAddFriendModal();
-                return;
-            }
-            
-            // 检查是否已经发送过请求
-            const recipientRequestsKey = `friendRequests_${friendUsername}`;
-            const recipientRequests = JSON.parse(localStorage.getItem(recipientRequestsKey) || '[]');
-            const requestExists = recipientRequests.some(r => r.username === currentUser.username);
-            
-            if (requestExists) {
-                showNotification('已经向该用户发送过好友请求', 'error');
-                return;
-            }
-            
-            // 构建请求数据
-            const requestData = {
-                username: currentUser.username,
-                avatar: currentUser.avatar,
-                message: message,
-                timestamp: new Date().toISOString()
-            };
-            
             // 发送请求到服务器
-            sendFriendRequestToServer(friendUsername, requestData)
+            sendFriendRequestToServer(friendUsername, message)
                 .then(success => {
                     if (success) {
-                        // 本地保存请求（作为备份）
-                        recipientRequests.push(requestData);
-                        localStorage.setItem(recipientRequestsKey, JSON.stringify(recipientRequests));
-                        
                         showNotification('好友请求已发送', 'success');
                         closeAddFriendModal();
                         
@@ -1435,65 +1697,43 @@
         }
 
         // 发送好友请求到服务器
-        async function sendFriendRequestToServer(recipient, requestData) {
+        async function sendFriendRequestToServer(recipient, message) {
             try {
-                const response = await fetch('/api/sendFriendRequest', {
+                const response = await fetch('/.netlify/functions/friendRequests', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
+                        action: 'send',
                         recipient: recipient,
-                        requestData: requestData
+                        message: message
                     })
                 });
                 
                 if (response.ok) {
                     return true;
                 } else {
-                    const error = await response.text();
-                    showNotification(`发送请求失败: ${error}`, 'error');
+                    const error = await response.json();
+                    showNotification(`发送请求失败: ${error.error}`, 'error');
                     return false;
                 }
             } catch (error) {
                 console.error("发送好友请求失败:", error);
                 showNotification("发送请求失败，请检查网络连接", 'error');
-                
-                // 在本地模拟成功，以便在离线环境下也能使用
-                return true;
+                return false;
             }
         }
 
         // 接受好友请求
-        function acceptFriendRequest(username, avatar) {
+        function acceptFriendRequest(requestId, username, avatar) {
             if (!currentUser) return;
             
             // 发送接受请求到服务器
-            acceptFriendRequestOnServer(username)
+            acceptFriendRequestOnServer(requestId)
                 .then(success => {
                     if (success) {
-                        // 从请求列表中移除
-                        const requestsKey = `friendRequests_${currentUser.username}`;
-                        let requests = JSON.parse(localStorage.getItem(requestsKey) || '[]');
-                        requests = requests.filter(r => r.username !== username);
-                        localStorage.setItem(requestsKey, JSON.stringify(requests));
-                        
-                        // 添加到好友列表
-                        const myFriendsKey = `friends_${currentUser.username}`;
-                        const myFriends = JSON.parse(localStorage.getItem(myFriendsKey) || '[]');
-                        
-                        // 检查是否已经在好友列表中
-                        if (!myFriends.some(f => f.username === username)) {
-                            myFriends.push({
-                                username: username,
-                                avatar: avatar,
-                                status: 'offline',
-                                addedTime: new Date().toISOString()
-                            });
-                            localStorage.setItem(myFriendsKey, JSON.stringify(myFriends));
-                        }
-                        
                         showNotification(`已添加 ${username} 为好友`, 'success');
                         loadFriendRequests();
                         loadFriends();
@@ -1502,82 +1742,74 @@
         }
 
         // 在服务器上接受好友请求
-        async function acceptFriendRequestOnServer(username) {
+        async function acceptFriendRequestOnServer(requestId) {
             try {
-                const response = await fetch('/api/acceptFriendRequest', {
+                const response = await fetch('/.netlify/functions/friendRequests', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        friendUsername: username
+                        action: 'accept',
+                        requestId: requestId
                     })
                 });
                 
                 if (response.ok) {
                     return true;
                 } else {
-                    const error = await response.text();
-                    showNotification(`操作失败: ${error}`, 'error');
+                    const error = await response.json();
+                    showNotification(`操作失败: ${error.error}`, 'error');
                     return false;
                 }
             } catch (error) {
                 console.error("接受好友请求失败:", error);
                 showNotification("操作失败，请检查网络连接", 'error');
-                
-                // 在本地模拟成功，以便在离线环境下也能使用
-                return true;
+                return false;
             }
         }
 
         // 拒绝好友请求
-        function declineFriendRequest(username) {
+        function declineFriendRequest(requestId) {
             if (!currentUser) return;
             
             // 发送拒绝请求到服务器
-            declineFriendRequestOnServer(username)
+            declineFriendRequestOnServer(requestId)
                 .then(success => {
                     if (success) {
-                        // 从请求列表中移除
-                        const requestsKey = `friendRequests_${currentUser.username}`;
-                        let requests = JSON.parse(localStorage.getItem(requestsKey) || '[]');
-                        requests = requests.filter(r => r.username !== username);
-                        localStorage.setItem(requestsKey, JSON.stringify(requests));
-                        
-                        showNotification(`已拒绝 ${username} 的好友请求`, 'info');
+                        showNotification('已拒绝好友请求', 'info');
                         loadFriendRequests();
                     }
                 });
         }
 
         // 在服务器上拒绝好友请求
-        async function declineFriendRequestOnServer(username) {
+        async function declineFriendRequestOnServer(requestId) {
             try {
-                const response = await fetch('/api/declineFriendRequest', {
+                const response = await fetch('/.netlify/functions/friendRequests', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        friendUsername: username
+                        action: 'reject',
+                        requestId: requestId
                     })
                 });
                 
                 if (response.ok) {
                     return true;
                 } else {
-                    const error = await response.text();
-                    showNotification(`操作失败: ${error}`, 'error');
+                    const error = await response.json();
+                    showNotification(`操作失败: ${error.error}`, 'error');
                     return false;
                 }
             } catch (error) {
                 console.error("拒绝好友请求失败:", error);
                 showNotification("操作失败，请检查网络连接", 'error');
-                
-                // 在本地模拟成功，以便在离线环境下也能使用
-                return true;
+                return false;
             }
         }
 
@@ -1593,12 +1825,6 @@
             removeFriendOnServer(username)
                 .then(success => {
                     if (success) {
-                        // 从我的好友列表中移除
-                        const myFriendsKey = `friends_${currentUser.username}`;
-                        let myFriends = JSON.parse(localStorage.getItem(myFriendsKey) || '[]');
-                        myFriends = myFriends.filter(f => f.username !== username);
-                        localStorage.setItem(myFriendsKey, JSON.stringify(myFriends));
-                        
                         // 如果正在和该好友聊天，关闭聊天窗口
                         if (currentChatFriend === username) {
                             closeChatModal();
@@ -1613,7 +1839,7 @@
         // 在服务器上移除好友
         async function removeFriendOnServer(username) {
             try {
-                const response = await fetch('/api/removeFriend', {
+                const response = await fetch('/.netlify/functions/removeFriend', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1627,16 +1853,14 @@
                 if (response.ok) {
                     return true;
                 } else {
-                    const error = await response.text();
-                    showNotification(`操作失败: ${error}`, 'error');
+                    const error = await response.json();
+                    showNotification(`操作失败: ${error.error}`, 'error');
                     return false;
                 }
             } catch (error) {
                 console.error("移除好友失败:", error);
                 showNotification("操作失败，请检查网络连接", 'error');
-                
-                // 在本地模拟成功，以便在离线环境下也能使用
-                return true;
+                return false;
             }
         }
 
@@ -1650,8 +1874,15 @@
             document.getElementById('chatName').textContent = friendUsername;
             document.getElementById('chatAvatar').src = friendAvatar || `https://picsum.photos/200?random=${friendUsername}`;
             
+            // 显示加载状态
+            document.getElementById('chatLoading').style.display = 'flex';
+            
             // 加载历史消息
-            loadChatHistory(friendUsername);
+            loadChatHistory(friendUsername)
+                .finally(() => {
+                    // 隐藏加载状态
+                    document.getElementById('chatLoading').style.display = 'none';
+                });
             
             // 显示聊天窗口
             const modal = document.getElementById('chatModal');
@@ -1682,15 +1913,41 @@
             }
             
             const timestamp = new Date();
-            const messageId = `msg_${Date.now()}`; // 生成临时消息ID
             
-            // 先在本地显示消息，标记为"发送中"
+            // 检查网络状态
+            if (!navigator.onLine) {
+                // 离线状态，加入队列
+                const offlineMessage = {
+                    recipient: currentChatFriend,
+                    content: message,
+                    timestamp: timestamp.toISOString()
+                };
+                
+                offlineMessagesQueue.push(offlineMessage);
+                saveOfflineMessagesQueue();
+                
+                // 本地显示消息，标记为离线
+                addMessageToChat(
+                    currentUser.username, 
+                    message, 
+                    timestamp, 
+                    false, 
+                    true, // 发送中
+                    true  // 离线
+                );
+                
+                inputEl.value = '';
+                showNotification("已保存离线消息，将在网络恢复后发送", "info");
+                return;
+            }
+            
+            // 在线状态，直接发送
             const tempMessageEl = addMessageToChat(
                 currentUser.username, 
                 message, 
                 timestamp, 
                 false, 
-                true // 标记为发送中
+                true // 发送中
             );
             
             // 发送消息到服务器
@@ -1719,7 +1976,7 @@
         // 发送消息到服务器
         async function sendMessageToServer(recipient, message, timestamp) {
             try {
-                const response = await fetch('/api/sendMessage', {
+                const response = await fetch('/.netlify/functions/sendMessage', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1736,8 +1993,9 @@
                 if (response.ok) {
                     return true;
                 } else {
-                    const error = await response.text();
+                    const error = await response.json();
                     console.error("发送消息失败:", error);
+                    showNotification(error.error || "发送消息失败", "error");
                     return false;
                 }
             } catch (error) {
@@ -1747,7 +2005,7 @@
         }
 
         // 添加消息到聊天窗口
-        function addMessageToChat(sender, content, timestamp, isReceived, isSending = false) {
+        function addMessageToChat(sender, content, timestamp, isReceived, isSending = false, isOffline = false) {
             // 如果不是当前聊天对象的消息，不添加到窗口
             if (currentChatFriend && sender !== currentChatFriend && sender !== currentUser.username) {
                 return null;
@@ -1757,16 +2015,24 @@
             const timeString = timestamp.toLocaleTimeString();
             
             // 消息状态指示（发送中/已发送/发送失败）
-            const statusIndicator = isSending ? 
-                '<span class="message-status">...</span>' : 
-                '<span class="message-status">✓</span>';
+            let statusIndicator = '';
+            if (!isReceived) {
+                if (isSending) {
+                    statusIndicator = '<span class="message-status"><div class="loader" style="width: 12px; height: 12px;"></div></span>';
+                } else {
+                    statusIndicator = '<span class="message-status">✓</span>';
+                }
+            }
+            
+            // 离线消息标记
+            const offlineIndicator = isOffline ? '<span class="offline-badge">离线</span>' : '';
             
             const messageHTML = `
                 <div class="message ${isReceived ? 'received' : 'sent'}">
-                    <div class="message-content">${content}</div>
+                    <div class="message-content">${content} ${offlineIndicator}</div>
                     <div class="message-time">
                         ${timeString}
-                        ${!isReceived ? statusIndicator : ''}
+                        ${statusIndicator}
                     </div>
                 </div>
             `;
@@ -1781,17 +2047,26 @@
         }
 
         // 加载聊天历史
-        function loadChatHistory(friendUsername) {
+        async function loadChatHistory(friendUsername) {
             if (!currentUser) return;
             
             const chatMessagesEl = document.getElementById('chatMessages');
             chatMessagesEl.innerHTML = ''; // 清空现有消息
             
-            // 先从服务器加载历史消息
-            loadChatHistoryFromServer(friendUsername)
-                .then(messages => {
-                    if (messages && messages.length > 0) {
-                        // 服务器加载成功，显示服务器消息
+            try {
+                // 从服务器加载历史消息
+                const response = await fetch(`/.netlify/functions/chatHistory?username=${encodeURIComponent(currentUser.username)}&with=${encodeURIComponent(friendUsername)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentUser.token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const messages = await response.json();
+                    
+                    if (messages.length > 0) {
+                        // 添加历史消息
                         messages.forEach(msg => {
                             addMessageToChat(
                                 msg.sender,
@@ -1802,45 +2077,38 @@
                         });
                         
                         // 更新最后消息时间
-                        if (messages.length > 0) {
-                            lastMessageTime = new Date(messages[messages.length - 1].timestamp).toISOString();
-                        }
+                        lastMessageTime = new Date(messages[messages.length - 1].timestamp).toISOString();
                     } else {
-                        // 服务器加载失败或无消息，加载本地历史
-                        const historyKey = `chatHistory_${currentUser.username}_${friendUsername}`;
-                        const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
-                        
-                        // 添加历史消息
-                        history.forEach(msg => {
-                            addMessageToChat(
-                                msg.sender,
-                                msg.content,
-                                new Date(msg.timestamp),
-                                msg.sender !== currentUser.username
-                            );
-                        });
+                        // 没有历史消息
+                        chatMessagesEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">暂无聊天记录</div>';
                     }
-                });
-        }
-
-        // 从服务器加载聊天历史
-        async function loadChatHistoryFromServer(friendUsername) {
-            try {
-                const response = await fetch(`/api/chatHistory?with=${encodeURIComponent(friendUsername)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${currentUser.token}`
-                    }
-                });
-                
-                if (response.ok) {
-                    return await response.json();
+                    
+                    return true;
                 }
             } catch (error) {
                 console.error("加载聊天历史失败:", error);
             }
             
-            return null;
+            // 服务器加载失败，加载本地历史
+            const historyKey = `chatHistory_${currentUser.username}_${friendUsername}`;
+            const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            
+            if (history.length > 0) {
+                // 添加历史消息
+                history.forEach(msg => {
+                    addMessageToChat(
+                        msg.sender,
+                        msg.content,
+                        new Date(msg.timestamp),
+                        msg.sender !== currentUser.username
+                    );
+                });
+                showNotification("使用本地缓存的聊天记录", "info");
+            } else {
+                chatMessagesEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">暂无聊天记录</div>';
+            }
+            
+            return false;
         }
 
         // 保存消息到本地历史记录
@@ -1857,12 +2125,33 @@
                 timestamp: timestamp.toISOString()
             });
             
-            // 限制历史记录数量（最多100条）
-            if (history.length > 100) {
-                history.splice(0, history.length - 100);
+            // 限制历史记录数量（最多200条）
+            if (history.length > 200) {
+                history.splice(0, history.length - 200);
             }
             
             localStorage.setItem(historyKey, JSON.stringify(history));
+        }
+
+        // 标记消息为已读
+        async function markMessageAsRead(messageId) {
+            if (!currentUser) return;
+            
+            try {
+                await fetch('/.netlify/functions/markAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({
+                        messageId: messageId
+                    })
+                });
+            } catch (error) {
+                console.error("标记消息为已读失败:", error);
+                // 失败不影响用户体验，无需特别处理
+            }
         }
 
         // 更新好友状态
@@ -1900,6 +2189,72 @@
                 return friend;
             });
             localStorage.setItem(friendsKey, JSON.stringify(friends));
+        }
+
+        // 离线消息队列管理
+        function loadOfflineMessagesQueue() {
+            if (!currentUser) return;
+            
+            const queueKey = `offlineMessages_${currentUser.username}`;
+            const queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
+            offlineMessagesQueue = queue;
+        }
+
+        function saveOfflineMessagesQueue() {
+            if (!currentUser) return;
+            
+            const queueKey = `offlineMessages_${currentUser.username}`;
+            localStorage.setItem(queueKey, JSON.stringify(offlineMessagesQueue));
+        }
+
+        // 发送队列中的离线消息
+        async function sendQueuedOfflineMessages() {
+            if (!currentUser || offlineMessagesQueue.length === 0 || !navigator.onLine) {
+                return;
+            }
+            
+            // 复制队列并清空，避免重复发送
+            const messagesToSend = [...offlineMessagesQueue];
+            offlineMessagesQueue = [];
+            saveOfflineMessagesQueue();
+            
+            let successCount = 0;
+            
+            // 逐个发送消息
+            for (const msg of messagesToSend) {
+                try {
+                    const timestamp = new Date(msg.timestamp);
+                    const success = await sendMessageToServer(msg.recipient, msg.content, timestamp);
+                    
+                    if (success) {
+                        successCount++;
+                        // 保存到历史记录
+                        saveMessageToHistory(currentUser.username, msg.recipient, msg.content, timestamp);
+                    } else {
+                        // 发送失败，重新加入队列
+                        offlineMessagesQueue.push(msg);
+                    }
+                } catch (error) {
+                    console.error("发送离线消息失败:", error);
+                    // 发送失败，重新加入队列
+                    offlineMessagesQueue.push(msg);
+                }
+                
+                // 每条消息之间稍作延迟，避免服务器压力过大
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // 保存更新后的队列
+            saveOfflineMessagesQueue();
+            
+            // 显示结果
+            if (successCount > 0) {
+                showNotification(`成功发送 ${successCount} 条离线消息`, "success");
+            }
+            
+            if (offlineMessagesQueue.length > 0) {
+                showNotification(`仍有 ${offlineMessagesQueue.length} 条消息发送失败`, "error");
+            }
         }
 
         // 打开添加好友模态框
@@ -1947,15 +2302,20 @@
             }, 3000);
         }
 
+        // 停止轮询
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollActive = false;
+                updatePollStatus(false, "已停止");
+            }
+        }
+
         // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
                 // 停止轮询
-                if (pollInterval) {
-                    clearInterval(pollInterval);
-                    pollActive = false;
-                    updatePollStatus(false, "已停止");
-                }
+                stopPolling();
                 
                 localStorage.removeItem('mainUserInfo');
                 window.location.href = 'indexlo.html';
