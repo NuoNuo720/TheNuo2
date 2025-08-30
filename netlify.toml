@@ -2,7 +2,9 @@
   publish = "."                   # 前端文件所在目录（根目录）
   functions = "netlify/functions"  # 函数文件所在目录
 [functions]
-  timeout = 900  # 增加这一行，设置函数超时时间为15分钟（900秒）
+  # 修正超时配置的语法
+  [functions."*"]
+    timeout = 900  # 单位为秒，设置为15分钟
 
 [[redirects]]
   from = "/api/*"                 # 匹配所有以/api/开头的请求
