@@ -1133,7 +1133,7 @@
 
     <script>
         // 页面加载时显示卡片动画
-        window.addEventListener('load', () => {
+        function initCardAnimations() {
             const cards = document.querySelectorAll('.nav-card');
             cards.forEach((card, index) => {
                 setTimeout(() => {
@@ -1141,15 +1141,42 @@
                     card.style.transform = 'translateY(0)';
                 }, 100 * index);
             });
-        });
+        }
 
         // 导航功能
-        function navigateTo(url) {
-            window.location.href = url;
+        function navigateTo(url, requiredRole = 'user') {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 1000);
+                return;
+            }
+            
+            if (url.includes('admin-login.html') && !(userInfo.isAdmin || userInfo.role === 'admin')) {
+                showNotification('无管理员权限，无法访问', 'error');
+                return;
+            }
+            
+            showNotification('正在跳转...', 'info');
+            
+            setTimeout(() => {
+                window.location.href = url;
+            }, 300);
         }
 
         // 系列模态框控制
         function openFreeElectronSeries() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 1000);
+                return;
+            }
+            
             document.getElementById('freeElectronModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('freeElectronModal').classList.add('active');
@@ -1164,6 +1191,15 @@
         }
 
         function openLearningSeries() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 1000);
+                return;
+            }
+            
             document.getElementById('learningModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('learningModal').classList.add('active');
@@ -1211,7 +1247,7 @@
 
         // 管理员登录
         function gotoAdminLogin() {
-            navigateTo('admin_login.html');
+            navigateTo('admin_login.html', 'admin');
         }
 
         // 其他模态框控制函数
@@ -1244,6 +1280,15 @@
         }
 
         function openEventsModal() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 1000);
+                return;
+            }
+            
             document.getElementById('eventsModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('eventsModal').classList.add('active');
@@ -1258,6 +1303,15 @@
         }
 
         function openShopModal() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 1000);
+                return;
+            }
+            
             document.getElementById('shopModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('shopModal').classList.add('active');
@@ -1272,6 +1326,15 @@
         }
 
         function openTasksModal() {
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html';
+                }, 1000);
+                return;
+            }
+            
             document.getElementById('tasksModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('tasksModal').classList.add('active');
@@ -1289,6 +1352,19 @@
         function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (file) {
+                // 检查文件大小，限制在5MB以内
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('图片大小不能超过5MB', 'error');
+                    return;
+                }
+                
+                // 检查文件类型
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    showNotification('请上传JPG、PNG或GIF格式的图片', 'error');
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('modalAvatar').src = e.target.result;
@@ -1299,16 +1375,332 @@
 
         // 保存头像
         function saveAvatar() {
-            showNotification('头像保存成功！', 'success');
-            setTimeout(() => {
-                closeProfileModal();
-            }, 1000);
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            if (!userInfo.username) {
+                showNotification('用户信息不完整，请重新登录', 'error');
+                return;
+            }
+            
+            const newAvatar = document.getElementById('modalAvatar').src;
+
+            userInfo.avatar = newAvatar;
+            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+
+            document.querySelector('.user-avatar').src = newAvatar;
+
+            saveUserInfoToServer(userInfo);
+
+            showNotification('头像已更新成功！', 'success');
+            closeProfileModal();
         }
 
         // 兑换物品
         function redeemItem(itemName, points) {
-            showNotification(`成功兑换 ${itemName}！`, 'success');
+            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
+            
+            // 初始化用户积分
+            if (!userInfo.points) {
+                userInfo.points = 0;
+            }
+            
+            if (userInfo.points >= points) {
+                userInfo.points -= points;
+                localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                document.getElementById('userPoints').textContent = userInfo.points;
+                showNotification(`成功兑换 ${itemName}！`, 'success');
+            } else {
+                showNotification('积分不足，无法兑换', 'error');
+            }
         }
+
+        // 检查登录状态并验证用户信息
+        function checkLoginStatus() {
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            
+            if (!userInfoStr) {
+                handleUnauthorizedAccess(false);
+                return;
+            }
+            
+            try {
+                let userInfo;
+                try {
+                    userInfo = JSON.parse(userInfoStr);
+                } catch (parseError) {
+                    console.error("用户信息解析失败：", parseError);
+                    throw new Error("用户信息格式错误，请重新登录");
+                }
+
+                // 验证必要字段
+                const requiredFields = ['username', 'loginTime'];
+                const missingFields = requiredFields.filter(field => !userInfo[field]);
+
+                if (missingFields.length > 0) {
+                    if (missingFields.includes('username')) {
+                        throw new Error("用户身份信息不完整，缺少用户名，请重新登录");
+                    } else {
+                        throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}，请重新登录`);
+                    }
+                }
+
+                // 验证登录时间有效性
+                const loginTime = new Date(userInfo.loginTime);
+                if (isNaN(loginTime.getTime())) {
+                    throw new Error("登录时间格式无效，请重新登录");
+                }
+
+                // 7天会话有效期检查
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                if (loginTime < sevenDaysAgo) {
+                    throw new Error("登录已超过7天，请重新登录");
+                }
+
+                // 更新用户显示信息
+                updateUserDisplay(userInfo);
+                loadUserTitles(userInfo);
+                checkUserValidity(userInfo);
+                
+            } catch (err) {
+                console.error("用户信息验证失败：", err);
+                localStorage.removeItem('mainUserInfo');
+                handleUnauthorizedAccess(true, err.message);
+            }
+        }
+
+        // 处理未授权访问
+        function handleUnauthorizedAccess(showError = true, errorMessage = "请先登录") {
+            if (window.location.pathname.includes('indexlo.html')) {
+                if (showError) showNotification(errorMessage, 'error');
+                return;
+            }
+
+            // 非登录页面且需要显示错误信息
+            if (showError) {
+                localStorage.setItem('redirectUrl', window.location.href);
+                showNotification(errorMessage + '，即将跳转到登录页', 'error');
+                setTimeout(() => {
+                    window.location.href = 'indexlo.html?needLogin=true';
+                }, 2000);
+            }
+        }
+
+        // 验证用户有效性（与服务器同步）
+        async function checkUserValidity(userInfo) {
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (isLocalDev) {
+                console.log('本地开发模式，跳过用户验证');
+                return;
+            }
+            
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch('/.netlify/functions/verifyUser', {
+                    method: 'POST',
+                    headers: {
+                        'X-Username': userInfo.username,
+                        'Content-Type': 'application/json'
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('用户身份已失效，请重新登录');
+                    }
+                    throw new Error(`验证失败: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                if (result.valid) {
+                    // 更新登录时间
+                    userInfo.loginTime = new Date().toISOString();
+                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                }
+            } catch (error) {
+                console.error('用户验证失败:', error);
+                if (error.name !== 'AbortError') {
+                    showNotification(error.message, 'error');
+                    setTimeout(() => {
+                        if (confirm('登录状态已失效，是否重新登录？')) {
+                            localStorage.removeItem('mainUserInfo');
+                            window.location.href = 'indexlo.html?sessionExpired=true';
+                        }
+                    }, 3000);
+                }
+            }
+        }
+
+        // 加载用户称号
+        function loadUserTitles(userInfo) {
+            const uniqueKey = `userTitles_${userInfo.username}`;
+            const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
+            
+            if (userTitles.length === 0) {
+                fetchUserTitlesFromServer(userInfo);
+            } else {
+                if (userTitles.length > 0 && !userInfo.currentTitle) {
+                    userInfo.currentTitle = userTitles[0];
+                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                    updateUserDisplay(userInfo);
+                }
+            }
+        }
+
+        // 从服务器获取用户称号
+        async function fetchUserTitlesFromServer(userInfo) {
+            if (!userInfo.username) {
+                console.error('获取称号失败：缺少用户名');
+                return;
+            }
+            
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalDev) {
+                console.log('本地开发模式，使用默认称号数据');
+                const defaultTitles = [
+                    { name: '探索者', icon: 'compass' }
+                ];
+                const uniqueKey = `userTitles_${userInfo.username}`;
+                localStorage.setItem(uniqueKey, JSON.stringify(defaultTitles));
+                
+                if (defaultTitles.length > 0) {
+                    const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
+                    userData.currentTitle = defaultTitles[0];
+                    localStorage.setItem('mainUserInfo', JSON.stringify(userData));
+                    updateUserDisplay(userData);
+                }
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/.netlify/functions/titles?username=${encodeURIComponent(userInfo.username)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Username': userInfo.username,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const titles = await response.json();
+                    const uniqueKey = `userTitles_${userInfo.username}`;
+                    localStorage.setItem(uniqueKey, JSON.stringify(titles));
+    
+                    if (titles.length > 0) {
+                        const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
+                        userData.currentTitle = titles[0];
+                        localStorage.setItem('mainUserInfo', JSON.stringify(userData));
+                        updateUserDisplay(userData);
+                    }
+                }
+            } catch (error) {
+                console.error('获取称号失败:', error);
+            }
+        }
+
+        // 更新用户显示信息
+        function updateUserDisplay(userInfo) {
+            const userAreaEl = document.getElementById('userArea');
+            const avatarUrl = userInfo.avatar || 'https://picsum.photos/200';
+            
+            const loginTime = new Date(userInfo.loginTime);
+            const formattedTime = loginTime.toLocaleString();
+            
+            let titleBadge = '';
+            if (userInfo.currentTitle) {
+                titleBadge = `<span class="title-badge">
+                    <i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i>
+                    ${userInfo.currentTitle.name}
+                </span>`;
+            }
+            
+            // 初始化用户积分
+            if (!userInfo.points) {
+                userInfo.points = 0;
+                localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+            }
+            
+            userAreaEl.innerHTML = `
+                <span class="username">${decodeURIComponent(userInfo.username)}</span>
+                ${titleBadge}
+                <img src="${avatarUrl}" alt="用户头像" class="user-avatar" onclick="openProfileModal()">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </button>
+            `;
+            
+            document.getElementById('modalAvatar').src = avatarUrl;
+            document.getElementById('usernameDisplay').textContent = decodeURIComponent(userInfo.username);
+            document.getElementById('loginTimeDisplay').textContent = formattedTime;
+            document.getElementById('userPoints').textContent = userInfo.points;
+            
+            const titleDisplay = document.getElementById('titleDisplay');
+            if (userInfo.currentTitle) {
+                titleDisplay.innerHTML = `<i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i> ${userInfo.currentTitle.name}`;
+            } else {
+                titleDisplay.textContent = '暂无称号';
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('mainUserInfo');
+                window.location.href = 'indexlo.html';
+            }
+        }
+
+        // 保存用户信息到服务器
+        async function saveUserInfoToServer(userData) {
+            if (!userData.username) {
+                console.error('保存失败：缺少用户名');
+                return;
+            }
+            
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalDev) {
+                console.log('本地开发模式，跳过服务器保存');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/.netlify/functions/saveUserInfo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('保存失败');
+                }
+
+                console.log('用户信息已同步到服务器');
+            } catch (error) {
+                console.error('保存用户信息失败:', error);
+                showNotification('信息同步失败', 'error');
+            }
+        }
+
+        function checkLoginParams() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('loginSuccess')) {
+                showNotification('欢迎回来！登录成功', 'success');
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            checkLoginStatus();
+            initCardAnimations();
+            checkLoginParams();
+        };
     </script>
 </body>
 </html>

@@ -32,6 +32,12 @@
             font-size: 18px;
             line-height: 1.6;
             color: #555;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .knowledge-box.fade {
+            opacity: 0;
+            transform: translateY(10px);
         }
         
         #refreshBtn {
@@ -48,89 +54,223 @@
         #refreshBtn:hover {
             background-color: #45a049;
         }
+        
+        /* 新增按钮加载状态样式 */
+        #refreshBtn.loading {
+            background-color: #ccc;
+            cursor: not-allowed;
+            position: relative;
+        }
+
+        #refreshBtn.loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid white;
+            border-top: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            right: 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         .back-container {
             position: fixed; /* 固定在视窗底部 */
             bottom: 30px; /* 距离底部30px */
             left: 50%; /* 水平居中 */
             transform: translateX(-50%); /* 精确居中 */
         }
+        
+        /* 返回按钮样式统一 */
+        .back-to-home {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
 
+        .back-to-home:hover {
+            background-color: #5a6268;
+        }
     </style>
 </head>
 <body>
     <h1>冷知识百宝箱</h1>
     
-    <div class="knowledge-box" id="knowledgeText">
+    <div class="knowledge-box" id="knowledgeText" role="region" aria-live="polite">
         点击下方按钮，获取一条冷知识~
     </div>
     
-    <button id="refreshBtn">刷新冷知识</button>
-
-    <script>
-        // 冷知识数据库
-        const knowledgeList = [
-            "蜂蜜永远不会变质，考古学家曾发现过3000年前的可食用蜂蜜。",
-            "企鹅的膝盖是存在的，只是被羽毛覆盖看不见。",
-            "草莓不是浆果，而香蕉是。",
-            "你无法同时打喷嚏并保持眼睛睁开。",
-            "章鱼有三颗心脏。",
-            "人民币纸币上的“中国人民银行”六个字，是马文蔚先生书写的。",
-            "打火机发明于火柴之前。",
-            "鳄鱼无法伸出舌头。",
-            "每根头发的寿命约为3-7年。",
-            "鸵鸟的眼睛比它的大脑还大。",
-            "键盘上的“F”和“J”键有小凸起，是为了方便盲打定位。",
-            "牛仔裤上的小口袋最初是用来装怀表的。",
-            "据说月半猫和奶龙是至交。",
-            "芦台一中厕所会不定期刷出蚊香 因此被作者称为'蚊香地mol'。",
-            "最好不要招惹自由电子。",
-            "sin²A-sin²B=sin(A+B)sin(A-B).",
-            "lead sb. to (doing) sth.",
-            "Can I trust you?",
-            "此去元知万事空，但悲不见九州同。",
-            "马太效应:强者愈强，弱者愈弱。",
-            "手表定理:如果有两块显示不同时间的手表，而它们都属于你，那么你无法准确知道时间。",
-            "水桶定理:团队能力往往受限于其最薄弱的环节。",
-            "Oh~Dream~",
-            "自由电子的微信头像是一个自由电子。",
-            "Ityz。",
-            "电子带负电。——自由电子",
-            "据说自由电子和奶龙有着密切的关系？",
-            "自由电子的政治拿过倒数第一。",
-            "Free e-.",
-            "自由电子并非'完全自由'，因为它/他受到原子核的'弱束缚'。",
-            "金属的颜色由自由电子'决定'。",
-            "自由电子的历史也拿过倒数第一。——自由电子",
-            "自由电子上化学课睡觉。",
-            "据说自由电子是半猫诺丷的绯闻男友？",
-            "半猫诺丷并不是一只半猫。",
-            "比起半猫和奶龙我更喜欢贝利亚。——自由电子",
-            "lne(-1)=iπ.",
-            "你是vandoor射手吗？",
-            "金星上的一天比金星上的一年还要长。",
-            "在给行李箱装上轮子之前，人类就已经登上了月球。",
-            "澳大利亚比月球还宽。",
-            "最后一次断头台处决发生在1977年9月。"
-        ];
-
-        // 获取元素
-        const knowledgeText = document.getElementById('knowledgeText');
-        const refreshBtn = document.getElementById('refreshBtn');
-
-        // 刷新冷知识函数
-        function refreshKnowledge() {
-            // 随机获取一条冷知识
-            const randomIndex = Math.floor(Math.random() * knowledgeList.length);
-            knowledgeText.textContent = knowledgeList[randomIndex];
-        }
-
-        // 绑定按钮点击事件
-        refreshBtn.addEventListener('click', refreshKnowledge);
-        refreshKnowledge();
-    </script>
+    <button id="refreshBtn" aria-label="获取新的冷知识">刷新冷知识</button>
     <div class="back-container">
         <button class="back-to-home" onclick="window.location.href='indexdaohang.html'">返回导航页面</button>
     </div>
+
+    <script>
+        // 1. 数据与逻辑分离：冷知识数据存储
+        const knowledgeStore = {
+            list: [
+                // 原有冷知识列表
+                "蜂蜜永远不会变质，考古学家曾发现过3000年前的可食用蜂蜜。",
+                "企鹅的膝盖是存在的，只是被羽毛覆盖看不见。",
+                "草莓不是浆果，而香蕉是。",
+                "你无法同时打喷嚏并保持眼睛睁开。",
+                "章鱼有三颗心脏。",
+                "人民币纸币上的“中国人民银行”六个字，是马文蔚先生书写的。",
+                "打火机发明于火柴之前。",
+                "鳄鱼无法伸出舌头。",
+                "每根头发的寿命约为3-7年。",
+                "鸵鸟的眼睛比它的大脑还大。",
+                "键盘上的“F”和“J”键有小凸起，是为了方便盲打定位。",
+                "牛仔裤上的小口袋最初是用来装怀表的。",
+                "据说月半猫和奶龙是至交。",
+                "芦台一中厕所会不定期刷出蚊香 因此被作者称为'蚊香地mol'。",
+                "最好不要招惹自由电子。",
+                "sin²A-sin²B=sin(A+B)sin(A-B).",
+                "lead sb. to (doing) sth.",
+                "Can I trust you?",
+                "此去元知万事空，但悲不见九州同。",
+                "马太效应:强者愈强，弱者愈弱。",
+                "手表定理:如果有两块显示不同时间的手表，而它们都属于你，那么你无法准确知道时间。",
+                "水桶定理:团队能力往往受限于其最薄弱的环节。",
+                "Oh~Dream~",
+                "自由电子的微信头像是一个自由电子。",
+                "Ityz。",
+                "电子带负电。——自由电子",
+                "据说自由电子和奶龙有着密切的关系？",
+                "自由电子的政治拿过倒数第一。",
+                "Free e-.",
+                "自由电子并非'完全自由'，因为它/他受到原子核的'弱束缚'。",
+                "金属的颜色由自由电子'决定'。",
+                "自由电子的历史也拿过倒数第一。——自由电子",
+                "自由电子上化学课睡觉。",
+                "据说自由电子是半猫诺丷的绯闻男友？",
+                "半猫诺丷并不是一只半猫。",
+                "比起半猫和奶龙我更喜欢贝利亚。——自由电子",
+                "lne(-1)=iπ.",
+                "你是vandoor射手吗？",
+                "金星上的一天比金星上的一年还要长。",
+                "在给行李箱装上轮子之前，人类就已经登上了月球。",
+                "澳大利亚比月球还宽。",
+                "最后一次断头台处决发生在1977年9月。",
+                // 新增30条冷知识
+                "打喷嚏的速度可达每小时160公里，相当于台风级风速。",
+                "香蕉皮比香蕉本身含有更多的钾元素。",
+                "普通成年人的骨骼数量是206块，但新生儿出生时约有300块骨骼。",
+                "扑克牌中的大王代表太阳，小王代表月亮，四种花色分别对应四季。",
+                "长颈鹿每天只需要睡20-30分钟，且大多是站着睡。",
+                "麦当劳的黄色“M”标志，是全球最易识别的品牌标志之一。",
+                "“二维码”的发明者是日本人腾弘原，最初用于追踪汽车零部件。",
+                "人类的眼睛相当于5.76亿像素的相机，但无法像相机一样存储图像。",
+                "鲸鱼的心跳非常慢，最快时每分钟也仅20-30次，潜水时可低至每分钟10次。",
+                "“奥斯卡金像奖”的正式名称是“美国电影艺术与科学学院奖”，“奥斯卡”是昵称。",
+                "煮熟的鸡蛋在旋转时，如果突然按住再松开，熟蛋会继续旋转，生蛋则不会。",
+                "骆驼的驼峰不是用来储水的，而是储存脂肪，脂肪分解时可同时产生水和能量。",
+                "世界上第一台电脑“ENIAC”诞生于1946年，重达30吨，占地167平方米。",
+                "向日葵只有在花盘未成熟时才会跟着太阳转，成熟后花盘固定朝向东方。",
+                "身份证最后一位的“X”代表数字10，是为了统一身份证号码的18位长度。",
+                "蜜蜂一生只能酿造约0.6克蜂蜜，需要采集约5000朵花的花蜜。",
+                "冰箱冷冻室的温度通常在-18℃以下，这个温度能让食物保存更久且不易滋生细菌。",
+                "乒乓球是唯一一项由中国人发明却在西方普及后再传回中国的运动。",
+                "猫头鹰的眼睛不能转动，只能通过转动头部来观察周围，其头部最大可转270度。",
+                "“可乐”最初是作为药物发明的，含有可卡因成分，后来才改良为饮料。",
+                "普通铅笔的笔芯主要成分是石墨，不是铅，“铅笔”名称源于早期的金属铅笔。",
+                "蜗牛的牙齿数量最多，一只蜗牛约有26000颗牙齿，藏在齿舌上。",
+                "世界上第一根冰棍是1905年由美国男孩弗兰克·埃珀森意外发明的，当时他把饮料忘在户外结冰了。",
+                "手机屏幕上的“刘海”或“打孔”设计，主要是为了容纳前置摄像头、听筒等元器件。",
+                "蝙蝠是唯一能真正飞行的哺乳动物，其他会“飞”的哺乳动物（如鼯鼠）只是滑翔。",
+                "“WiFi”并不是“Wireless Fidelity”的缩写，而是一个没有实际含义的品牌名称。",
+                "人体皮肤每28天左右更新一次，一生会脱落约18公斤的皮肤碎屑。",
+                "篮球比赛中，最初的篮筐是真正的竹篮，进球后需要有人爬梯子把球拿出来。",
+                "世界上第一双运动鞋是1868年由英国公司J.W. Foster制作的，用于跑步运动。",
+                "章鱼会使用工具，比如用椰子壳作为自己的“房子”或防御敌人。"
+            ],
+            // 获取随机冷知识
+            getRandom() {
+                return this.list[Math.floor(Math.random() * this.list.length)];
+            },
+            // 获取冷知识总数（可选调用）
+            getLength() {
+                return this.list.length;
+            }
+        };
+
+        // 2. 获取DOM元素
+        const knowledgeText = document.getElementById('knowledgeText');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        // 3. 核心功能函数：刷新冷知识
+        function refreshKnowledge() {
+            // 防止重复点击
+            if (refreshBtn.classList.contains('loading')) return;
+            
+            // 添加加载状态
+            refreshBtn.classList.add('loading');
+            refreshBtn.textContent = '加载中...';
+            
+            // 触发切换动画
+            knowledgeText.classList.add('fade');
+            
+            // 延迟加载新内容，增强动画流畅度
+            setTimeout(() => {
+                // 从数据存储中获取随机冷知识
+                const randomFact = knowledgeStore.getRandom();
+                knowledgeText.textContent = randomFact;
+                
+                // 强制重绘，确保动画生效
+                knowledgeText.offsetWidth;
+                knowledgeText.classList.remove('fade');
+                
+                // 恢复按钮初始状态
+                refreshBtn.classList.remove('loading');
+                refreshBtn.textContent = '刷新冷知识';
+            }, 300);
+        }
+
+        // 4. 事件处理函数
+        // 键盘事件：空格键刷新
+        function handleKeydown(e) {
+            if (e.code === 'Space') {
+                e.preventDefault(); // 阻止页面滚动
+                refreshKnowledge();
+            }
+        }
+
+        // 页面加载事件：入场动画
+        function handlePageLoad() {
+            knowledgeText.classList.add('fade');
+            setTimeout(() => {
+                knowledgeText.classList.remove('fade');
+            }, 100);
+        }
+
+        // 5. 事件绑定初始化
+        function initEvents() {
+            // 按钮点击事件
+            refreshBtn.addEventListener('click', refreshKnowledge);
+            // 键盘空格键事件
+            document.addEventListener('keydown', handleKeydown);
+            // 页面加载完成事件
+            window.addEventListener('load', handlePageLoad);
+        }
+
+        // 6. 页面初始化入口
+        function init() {
+            initEvents();
+            // 页面加载时默认显示一条冷知识
+            refreshKnowledge();
+        }
+
+        // 7. 页面DOM加载完成后执行初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
- 

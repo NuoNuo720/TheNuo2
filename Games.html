@@ -19,7 +19,9 @@
                         secondary: '#4ECDC4', // 派对蓝
                         accent: '#FFD166', // 派对黄
                         dark: '#2A2D34',
-                        light: '#F7FFF7'
+                        light: '#F7FFF7',
+                        teal: '#0D9488',  // 用于数字迷宫游戏
+                        purple: '#9D4EDD'  // 用于新增游戏
                     },
                     fontFamily: {
                         party: ['"Comic Sans MS"', '"Marker Felt"', 'sans-serif']
@@ -54,6 +56,27 @@
             }
             .pulse-slow {
                 animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .guide-highlight {
+                animation: highlight 1.5s infinite alternate;
+            }
+            @keyframes highlight {
+                from { box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.5), 0 0 0 6px rgba(255, 209, 102, 0.3); }
+                to { box-shadow: 0 0 0 5px rgba(255, 209, 102, 0.7), 0 0 0 10px rgba(255, 209, 102, 0.5); }
+            }
+            .scale-in {
+                animation: scaleIn 0.5s ease-out forwards;
+            }
+            @keyframes scaleIn {
+                from { transform: scale(0.8); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+            .score-animation {
+                animation: scorePopup 1s ease-out forwards;
+            }
+            @keyframes scorePopup {
+                0% { transform: translateY(0); opacity: 1; }
+                100% { transform: translateY(-50px); opacity: 0; }
             }
         }
     </style>
@@ -185,9 +208,9 @@
         }
         
         @keyframes level-complete {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity(1); }
+            100% { transform: translate(-50%, -50%) scale(2); opacity(0); }
         }
         
         /* 倒计时动画 */
@@ -209,9 +232,9 @@
         }
         
         @keyframes countdown {
-            0% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            0% { transform: translate(-50%, -50%) scale(3); opacity(0); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(0.5); opacity(0); }
         }
         
         /* 通用动画元素 */
@@ -230,9 +253,9 @@
         }
         
         @keyframes hit {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.8; }
-            100% { transform: scale(0); opacity: 0; }
+            0% { transform: scale(1); opacity(1); }
+            50% { transform: scale(1.5); opacity(0.8); }
+            100% { transform: scale(0); opacity(0); }
         }
         
         .pop {
@@ -274,6 +297,229 @@
             50% { transform: scale(0.9); box-shadow: 0 0 10px red; }
             100% { transform: scale(1); }
         }
+        
+        /* 新手引导遮罩 */
+        .guide-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .guide-content {
+            background-color: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 90%;
+            width: 500px;
+            position: relative;
+        }
+        
+        .guide-step {
+            display: none;
+        }
+        
+        .guide-step.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 排行榜样式 */
+        .leaderboard-item {
+            transition: all 0.2s ease;
+        }
+        
+        .leaderboard-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .leaderboard-item.top-1 {
+            background-color: rgba(255, 210, 102, 0.2);
+            border-left: 4px solid #FFD166;
+        }
+        
+        .leaderboard-item.top-2 {
+            background-color: rgba(200, 200, 200, 0.2);
+            border-left: 4px solid #CCCCCC;
+        }
+        
+        .leaderboard-item.top-3 {
+            background-color: rgba(205, 127, 50, 0.2);
+            border-left: 4px solid #CD7F32;
+        }
+        
+        /* 成就徽章 */
+        .achievement-badge {
+            transition: all 0.3s ease;
+            filter: grayscale(100%);
+            opacity: 0.7;
+        }
+        
+        .achievement-badge.unlocked {
+            filter: grayscale(0);
+            opacity: 1;
+            animation: unlock 1s ease-out;
+        }
+        
+        @keyframes unlock {
+            0% { transform: scale(0.5); opacity(0); }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity(1); }
+        }
+        
+        /* 记忆游戏增强样式 */
+        .memory-cell-active {
+            animation: memoryPulse 0.8s ease-in-out;
+        }
+        
+        @keyframes memoryPulse {
+            0% { background-color: #4ECDC4; transform: scale(1); }
+            50% { background-color: #3aa7a0; transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .memory-status {
+            transition: all 0.3s ease;
+        }
+        
+        .level-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(78, 205, 196, 0.2);
+            color: #2A2D34;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* 数字迷宫游戏样式 */
+        .maze-cell {
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .maze-cell.path {
+            background-color: #E0F2F1;
+        }
+        
+        .maze-cell.wall {
+            background-color: #2A2D34;
+        }
+        
+        .maze-cell.start {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .maze-cell.end {
+            background-color: #FF6B6B;
+            color: white;
+        }
+        
+        .maze-cell.current {
+            background-color: #0D9488;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .maze-cell.visited {
+            background-color: #B2DFDB;
+        }
+        
+        /* 游戏模式选择 */
+        .mode-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .mode-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .mode-card.selected {
+            border-color: #FF6B6B;
+            background-color: rgba(255, 107, 107, 0.1);
+        }
+        
+        /* 声音和文字大小控制 */
+        .control-slider {
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+        }
+        
+        .control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #FF6B6B;
+            cursor: pointer;
+        }
+        
+        /* 新增游戏样式 */
+        .tap-target {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #9D4EDD;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .math-option {
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .math-option:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        
+        .word-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body class="font-party text-dark">
@@ -281,6 +527,7 @@
     <div class="bg-element" style="width: 300px; height: 300px; background: #FF6B6B; top: -150px; left: -150px;"></div>
     <div class="bg-element" style="width: 200px; height: 200px; background: #4ECDC4; bottom: 100px; right: -100px;"></div>
     <div class="bg-element" style="width: 150px; height: 150px; background: #FFD166; top: 30%; right: 10%;"></div>
+    <div class="bg-element" style="width: 250px; height: 250px; background: #0D9488; bottom: 30%; left: 10%;"></div>
     
     <!-- 顶部导航 -->
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
@@ -294,6 +541,15 @@
             <div class="flex items-center space-x-4">
                 <button id="sound-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
                     <i class="fa fa-volume-up text-xl"></i>
+                </button>
+                <button id="leaderboard-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-trophy text-xl"></i>
+                </button>
+                <button id="achievements-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-star text-xl"></i>
+                </button>
+                <button id="settings-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-cog text-xl"></i>
                 </button>
                 <button id="help-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
                     <i class="fa fa-question text-xl"></i>
@@ -309,85 +565,96 @@
                 <div class="relative inline-block mb-8">
                     <img src="https://picsum.photos/400/200" alt="派对游戏合集封面" class="rounded-3xl shadow shadow-xl">
                     <div class="absolute -bottom-4 -right-4 bg-accent text-dark px-4 py-2 rounded-full font-bold shadow-lg bounce-light">
-                        15款游戏!
+                        7款游戏!
                     </div>
                 </div>
                 
-                <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4 text-primary">随机闯关挑战</h2>
-                <p class="text-lg mb-8 max-w-xl mx-auto">从多个趣味关卡中随机抽取4个进行挑战，完成所有关卡获得最终奖励！</p>
+                <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4 text-primary">随机挑战模式</h2>
+                <p class="text-lg mb-8 max-w-xl mx-auto">系统将随机选择3个关卡，完成挑战获得奖励</p>
                 
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
-                    <!-- 基础关卡展示 -->
+                <!-- 游戏展示 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                     <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
                         <div class="h-24 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
                             <i class="fa fa-paint-brush text-4xl text-primary"></i>
                         </div>
-                        <h3 class="font-bold text-sm">色盲派对</h3>
+                        <h3 class="font-bold text-sm">颜色点击</h3>
                     </div>
                     
                     <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
                         <div class="h-24 bg-secondary/10 rounded-xl flex items-center justify-center mb-2">
-                            <i class="fa fa-calculator text-4xl text-secondary"></i>
+                            <i class="fa fa-cubes text-4xl text-secondary"></i>
                         </div>
-                        <h3 class="font-bold text-sm">24点游戏</h3>
+                        <h3 class="font-bold text-sm">快速记忆</h3>
                     </div>
                     
                     <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
                         <div class="h-24 bg-accent/10 rounded-xl flex items-center justify-center mb-2">
-                            <i class="fa fa-font text-4xl text-accent"></i>
+                            <i class="fa fa-sort-numeric-asc text-4xl text-accent"></i>
                         </div>
-                        <h3 class="font-bold text-sm">单词消消乐</h3>
+                        <h3 class="font-bold text-sm">数字配对</h3>
+                    </div>
+
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-teal/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-map-signs text-4xl text-teal"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">数字迷宫</h3>
                     </div>
                     
                     <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
-                        <div class="h-24 bg-green-100 rounded-xl flex items-center justify-center mb-2">
-                            <i class="fa fa-running text-4xl text-green-500"></i>
+                        <div class="h-24 bg-purple/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-hand-pointer-o text-4xl text-purple"></i>
                         </div>
-                        <h3 class="font-bold text-sm">障碍跑酷</h3>
+                        <h3 class="font-bold text-sm">快速点击</h3>
                     </div>
                     
                     <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
-                        <div class="h-24 bg-purple-100 rounded-xl flex items-center justify-center mb-2">
-                            <i class="fa fa-music text-4xl text-purple-500"></i>
+                        <div class="h-24 bg-green-500/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-calculator text-4xl text-green-500"></i>
                         </div>
-                        <h3 class="font-bold text-sm">节奏大师</h3>
+                        <h3 class="font-bold text-sm">数学挑战</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-blue-500/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-font text-4xl text-blue-500"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">词语配对</h3>
                     </div>
                 </div>
                 
                 <div class="flex flex-wrap justify-center gap-4 mb-10">
                     <span class="bg-primary/10 text-primary px-4 py-2 rounded-full text-sm">
-                        <i class="fa fa-check-circle mr-1"></i> 随机4个关卡
+                        <i class="fa fa-check-circle mr-1"></i> 随机挑战
                     </span>
                     <span class="bg-secondary/10 text-secondary px-4 py-2 rounded-full text-sm">
                         <i class="fa fa-clock-o mr-1"></i> 限时挑战
                     </span>
                     <span class="bg-accent/10 text-accent px-4 py-2 rounded-full text-sm">
-                        <i class="fa fa-trophy mr-1"></i> 闯关奖励
-                    </span>
-                    <span class="bg-dark/10 text-dark px-4 py-2 rounded-full text-sm">
-                        <i class="fa fa-plus-circle mr-1"></i> 15种关卡
+                        <i class="fa fa-trophy mr-1"></i> 成就与排行
                     </span>
                 </div>
                 
                 <button id="start-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg party-hover mb-6">
-                    开始闯关 <i class="fa fa-arrow-right ml-2"></i>
+                    开始游戏 <i class="fa fa-arrow-right ml-2"></i>
                 </button>
                 
-                <p class="text-sm text-gray-500">包含15种不同类型的游戏关卡</p>
+                <p class="text-sm text-gray-500">包含7种不同类型的游戏关卡</p>
             </div>
         </section>
         
         <!-- 关卡选择/加载界面 -->
         <section id="level-select" class="py-8 hidden">
             <div class="max-w-2xl mx-auto text-center">
-                <h2 class="text-2xl font-bold mb-8 text-primary">正在随机选择关卡...</h2>
+                <h2 class="text-2xl font-bold mb-8 text-primary" id="level-select-title">正在随机选择关卡...</h2>
                 
                 <div class="flex justify-center mb-8">
                     <div class="loader"></div>
                 </div>
                 
-                <div class="grid grid-cols-4 gap-4 mb-8" id="selected-levels">
-                    <!-- 这里会动态显示选中的4个关卡 -->
+                <div class="grid grid-cols-3 gap-4 mb-8" id="selected-levels">
+                    <!-- 动态显示选中关卡 -->
                     <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
                         <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
                     </div>
@@ -397,12 +664,12 @@
                     <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
                         <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.4s"></div>
                     </div>
-                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
-                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.6s"></div>
-                    </div>
                 </div>
                 
-                <p class="text-gray-600">准备好迎接挑战了吗？</p>
+                <!-- 返回按钮 -->
+                <button id="back-from-level-select-btn" class="bg-white hover:bg-gray-50 text-dark font-bold py-2 px-6 rounded-full shadow-md party-hover border border-gray-200">
+                    <i class="fa fa-arrow-left mr-1"></i> 返回
+                </button>
             </div>
         </section>
         
@@ -412,15 +679,15 @@
                 <!-- 游戏进度 -->
                 <div class="bg-white rounded-xl p-4 shadow-md mb-6">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-bold">闯关进度</h3>
+                        <h3 class="font-bold">游戏进度</h3>
                         <div class="text-sm text-gray-600">
-                            <span id="current-level">1</span>/4 关卡
+                            <span id="current-level">1</span>/<span id="total-levels">3</span> 关卡
                         </div>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div id="progress-bar" class="bg-primary h-3 rounded-full" style="width: 25%"></div>
+                        <div id="progress-bar" class="bg-primary h-3 rounded-full" style="width: 33%"></div>
                     </div>
-                    <div class="flex justify-between mt-4 text-sm">
+                    <div class="flex flex-wrap justify-between mt-4 text-sm gap-2">
                         <div>
                             <span class="font-bold text-accent">总分: </span>
                             <span id="total-score">0</span>
@@ -433,11 +700,42 @@
                 </div>
                 
                 <!-- 游戏容器 -->
-                <div id="game-container" class="bg-white rounded-2xl shadow-lg p-6 min-h-[400px] flex flex-col items-center justify-center">
-                    <!-- 游戏内容容器 -->
+                <div id="game-container" class="bg-white rounded-2xl shadow-lg p-6 min-h-[400px] flex flex-col items-center justify-center relative">
+                    <!-- 关卡难度指示器 -->
+                    <div class="level-indicator" id="memory-level-indicator" style="display: none;">
+                        难度: Lv.<span id="memory-level">2</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-center gap-4">
+                    <button id="pause-btn" class="bg-white hover:bg-gray-50 text-dark font-bold py-2 px-6 rounded-full shadow-md party-hover border border-gray-200">
+                        <i class="fa fa-pause mr-1"></i> 暂停
+                    </button>
+                    <button id="back-from-game-btn" class="bg-white hover:bg-gray-50 text-dark font-bold py-2 px-6 rounded-full shadow-md party-hover border border-gray-200">
+                        <i class="fa fa-arrow-left mr-1"></i> 返回
+                    </button>
                 </div>
             </div>
         </section>
+        
+        <!-- 暂停菜单 -->
+        <div id="pause-menu" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 text-center">
+                <h3 class="text-2xl font-bold mb-6">游戏暂停</h3>
+                
+                <div class="space-y-3 mb-6">
+                    <button id="resume-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-full shadow-md party-hover">
+                        继续游戏
+                    </button>
+                    <button id="restart-level-btn" class="w-full bg-white hover:bg-gray-50 text-dark font-bold py-3 px-6 rounded-full shadow-md party-hover border border-gray-200">
+                        重新开始本关
+                    </button>
+                    <button id="quit-game-btn" class="w-full bg-white hover:bg-gray-50 text-dark font-bold py-3 px-6 rounded-full shadow-md party-hover border border-gray-200">
+                        退出游戏
+                    </button>
+                </div>
+            </div>
+        </div>
         
         <!-- 游戏结束界面 -->
         <section id="result-screen" class="py-8 text-center hidden">
@@ -447,8 +745,8 @@
                         <i class="fa fa-trophy text-5xl text-accent"></i>
                     </div>
                     
-                    <h2 class="text-3xl font-bold mb-2">闯关完成！</h2>
-                    <p class="text-gray-600 mb-6">恭喜你完成了所有挑战</p>
+                    <h2 class="text-3xl font-bold mb-2">游戏结束！</h2>
+                    <p class="text-gray-600 mb-6" id="result-message">恭喜你完成了所有挑战</p>
                     
                     <div class="bg-light rounded-xl p-6 mb-6">
                         <div class="flex justify-between items-center mb-4">
@@ -457,7 +755,7 @@
                         </div>
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-gray-600">完成关卡</span>
-                            <span id="completed-levels" class="font-bold">4/4</span>
+                            <span id="completed-levels" class="font-bold">3/3</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">获得评级</span>
@@ -465,9 +763,17 @@
                         </div>
                     </div>
                     
+                    <!-- 新增成就提示 -->
+                    <div id="new-achievements" class="mb-6 hidden">
+                        <h3 class="font-bold mb-3 text-primary">恭喜解锁新成就！</h3>
+                        <div id="unlocked-achievements" class="flex justify-center gap-4">
+                            <!-- 动态显示解锁的成就 -->
+                        </div>
+                    </div>
+                    
                     <h3 class="font-bold mb-3">关卡详情</h3>
                     <div id="levels-details" class="space-y-3 mb-8">
-                        <!-- 关卡详情会动态加载到这里 -->
+                        <!-- 关卡详情动态加载 -->
                     </div>
                 </div>
                 
@@ -482,6 +788,95 @@
             </div>
         </section>
         
+        <!-- 排行榜模态框 -->
+        <div id="leaderboard-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">排行榜</h3>
+                    <button id="close-leaderboard-btn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex border-b pb-2 mb-3">
+                        <button class="leaderboard-tab active mr-4 font-bold text-primary" data-mode="all">所有记录</button>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div id="leaderboard-content">
+                            <!-- 排行榜内容将动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 成就模态框 -->
+        <div id="achievements-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">成就</h3>
+                    <button id="close-achievements-btn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="achievements-container">
+                    <!-- 成就将动态加载 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 设置模态框 -->
+        <div id="settings-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">设置</h3>
+                    <button id="close-settings-btn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="font-bold mb-2">声音设置</h4>
+                        <div class="flex items-center">
+                            <i class="fa fa-volume-up text-gray-500 mr-3"></i>
+                            <input type="range" id="volume-control" class="control-slider flex-grow" min="0" max="100" value="80">
+                            <span id="volume-value" class="ml-3 font-bold">80%</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold mb-2">文字大小</h4>
+                        <div class="flex items-center">
+                            <i class="fa fa-text-height text-gray-500 mr-3"></i>
+                            <input type="range" id="text-size-control" class="control-slider flex-grow" min="80" max="120" value="100">
+                            <span id="text-size-value" class="ml-3 font-bold">100%</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold mb-2">其他设置</h4>
+                        <div class="flex items-center justify-between">
+                            <span>显示新手引导</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="show-tutorial" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button id="reset-settings-btn" class="w-full bg-white hover:bg-gray-50 text-dark font-bold py-2 px-4 rounded-full shadow-md border border-gray-200">
+                            重置为默认设置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- 帮助模态框 -->
         <div id="help-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
             <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
@@ -495,11 +890,2271 @@
                 <div class="space-y-4 text-sm">
                     <div>
                         <h4 class="font-bold text-primary mb-1">游戏规则</h4>
-                        <p>系统会从所有关卡中随机选择4个不同的游戏，你需要依次完成这些关卡。每个关卡都有时间限制，完成越快，得分越高！如果有一关时间耗尽或者中途失误，游戏将直接结束并结算。</p>
+                        <p>系统会随机选择3个关卡进行挑战。每个关卡都有时间限制，完成越快，得分越高！</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-secondary mb-1">快速记忆</h4>
+                        <p>根据当前难度等级，记住亮起的方块位置（亮起时有脉冲动画提示），记忆时间随难度增加而缩短，按顺序点击即可过关，连续正确将提升难度。</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-secondary mb-1">颜色点击（5关）</h4>
+                        <p>共5个小关卡，根据提示文字点击对应的颜色方块，注意文字颜色可能与文字描述不同哦！完成5关即挑战成功。</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-secondary mb-1">数字配对</h4>
+                        <p>找出相同数字的卡片对，在时间结束前匹配所有卡片。</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-teal mb-1">数字迷宫</h4>
+                        <p>从起点(数字1)开始，按照1→2→3→...→15的顺序找到终点。使用方向键或点击相邻格子移动，最短时间内完成可获得高分。</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-purple mb-1">快速点击</h4>
+                        <p>在限定时间内尽可能快地点击出现的目标，目标会越来越小，速度越来越快。</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-green-500 mb-1">数学挑战</h4>
+                        <p>快速计算并选择正确的答案，题目难度会逐渐增加。</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-blue-500 mb-1">词语配对</h4>
+                        <p>找出意思相近的词语对，在时间结束前匹配所有词语。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新手引导 -->
+        <div id="tutorial-overlay" class="guide-overlay hidden">
+            <div class="guide-content">
+                <div class="guide-step active" data-step="1">
+                    <h3 class="text-xl font-bold mb-4">欢迎来到派对游戏合集！</h3>
+                    <p class="mb-4">这是一个包含多种趣味小游戏的合集，适合派对时一起游玩。</p>
+                    <div class="text-right">
+                        <button class="next-tutorial bg-primary text-white px-4 py-2 rounded-full">下一步</button>
+                    </div>
+                </div>
+                
+                <div class="guide-step" data-step="2">
+                    <h3 class="text-xl font-bold mb-4">随机挑战模式</h3>
+                    <p class="mb-4">系统会从所有游戏中随机选择3个进行闯关。</p>
+                    <p class="mb-4">每个关卡都有时间限制，完成越快，得分越高！</p>
+                    <div class="text-right">
+                        <button class="prev-tutorial bg-gray-200 text-dark px-4 py-2 rounded-full mr-2">上一步</button>
+                        <button class="next-tutorial bg-primary text-white px-4 py-2 rounded-full">下一步</button>
+                    </div>
+                </div>
+                
+                <div class="guide-step" data-step="3">
+                    <h3 class="text-xl font-bold mb-4">游戏操作</h3>
+                    <p class="mb-4">每个游戏都有简单的操作方式，主要通过点击屏幕进行。</p>
+                    <p class="mb-4">数字迷宫游戏还支持方向键控制移动。</p>
+                    <div class="text-right">
+                        <button class="prev-tutorial bg-gray-200 text-dark px-4 py-2 rounded-full mr-2">上一步</button>
+                        <button class="next-tutorial bg-primary text-white px-4 py-2 rounded-full">下一步</button>
+                    </div>
+                </div>
+                
+                <div class="guide-step" data-step="4">
+                    <h3 class="text-xl font-bold mb-4">成就与排行</h3>
+                    <p class="mb-4">完成特定任务可以解锁成就，获得高分可以登上排行榜。</p>
+                    <div class="text-right">
+                        <button class="prev-tutorial bg-gray-200 text-dark px-4 py-2 rounded-full mr-2">上一步</button>
+                        <button class="start-game-tutorial bg-primary text-white px-4 py-2 rounded-full">开始游戏</button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <script>
+        // 游戏存档和设置管理
+        const storageManager = {
+            // 保存数据到本地存储
+            save: function(key, data) {
+                localStorage.setItem(key, JSON.stringify(data));
+            },
+            
+            // 从本地存储加载数据
+            load: function(key, defaultValue = null) {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : defaultValue;
+            },
+            
+            // 清除本地存储中的数据
+            clear: function(key) {
+                if (key) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.clear();
+                }
+            }
+        };
+        
+        // 初始化游戏数据
+        function initGameData() {
+            // 如果是首次游戏，显示新手引导
+            const hasPlayed = storageManager.load('hasPlayed', false);
+            if (!hasPlayed && settings.showTutorial) {
+                showTutorial();
+            }
+            
+            // 加载成就数据
+            const savedAchievements = storageManager.load('achievements');
+            if (savedAchievements) {
+                achievements = savedAchievements;
+            } else {
+                // 初始化成就
+                initAchievements();
+                storageManager.save('achievements', achievements);
+            }
+            
+            // 加载排行榜数据
+            const savedLeaderboard = storageManager.load('leaderboard');
+            if (savedLeaderboard) {
+                leaderboard = savedLeaderboard;
+            } else {
+                // 初始化排行榜
+                leaderboard = {
+                    all: []
+                };
+                storageManager.save('leaderboard', leaderboard);
+            }
+            
+            // 加载设置
+            const savedSettings = storageManager.load('settings');
+            if (savedSettings) {
+                settings = { ...defaultSettings, ...savedSettings };
+                applySettings();
+            } else {
+                settings = { ...defaultSettings };
+                storageManager.save('settings', settings);
+            }
+        }
+        
+        // 游戏设置
+        let settings = {};
+        const defaultSettings = {
+            volume: 80,
+            textSize: 100,
+            showTutorial: true,
+            soundEnabled: true
+        };
+        
+        // 成就系统
+        let achievements = [];
+        
+        function initAchievements() {
+            achievements = [
+                {
+                    id: 'first_win',
+                    name: '初次胜利',
+                    description: '完成第一次随机挑战',
+                    icon: 'fa-trophy',
+                    color: 'text-accent',
+                    unlocked: false
+                },
+                {
+                    id: 'perfect_score',
+                    name: '完美评分',
+                    description: '获得一次S级评价',
+                    icon: 'fa-star',
+                    color: 'text-yellow-500',
+                    unlocked: false
+                },
+                {
+                    id: 'memory_master',
+                    name: '记忆大师',
+                    description: '在记忆游戏中达到5级难度',
+                    icon: 'fa-cubes',
+                    color: 'text-secondary',
+                    unlocked: false
+                },
+                {
+                    id: 'color_master',
+                    name: '色彩大师',
+                    description: '在颜色点击游戏中获得满分',
+                    icon: 'fa-paint-brush',
+                    color: 'text-primary',
+                    unlocked: false
+                },
+                {
+                    id: 'maze_runner',
+                    name: '迷宫奔跑者',
+                    description: '在60秒内完成数字迷宫',
+                    icon: 'fa-map-signs',
+                    color: 'text-teal',
+                    unlocked: false
+                },
+                {
+                    id: 'card_shark',
+                    name: '卡牌高手',
+                    description: '在30秒内完成数字配对',
+                    icon: 'fa-sort-numeric-asc',
+                    color: 'text-accent',
+                    unlocked: false
+                },
+                {
+                    id: 'quick_tapper',
+                    name: '快速点击王',
+                    description: '在快速点击游戏中获得80分以上',
+                    icon: 'fa-hand-pointer-o',
+                    color: 'text-purple',
+                    unlocked: false
+                },
+                {
+                    id: 'math_whiz',
+                    name: '数学天才',
+                    description: '在数学挑战中连续答对10题',
+                    icon: 'fa-calculator',
+                    color: 'text-green-500',
+                    unlocked: false
+                },
+                {
+                    id: 'word_master',
+                    name: '词语大师',
+                    description: '在40秒内完成词语配对',
+                    icon: 'fa-font',
+                    color: 'text-blue-500',
+                    unlocked: false
+                },
+                {
+                    id: 'all_games',
+                    name: '全能玩家',
+                    description: '玩过所有类型的游戏',
+                    icon: 'fa-gamepad',
+                    color: 'text-primary',
+                    unlocked: false
+                }
+            ];
+        }
+        
+        // 检查并解锁成就
+        function checkAchievements(condition) {
+            const newlyUnlocked = [];
+            
+            achievements.forEach(achievement => {
+                if (!achievement.unlocked) {
+                    let unlocked = false;
+                    
+                    switch (achievement.id) {
+                        case 'first_win':
+                            unlocked = condition.type === 'random_complete';
+                            break;
+                        case 'perfect_score':
+                            unlocked = condition.type === 'rating' && condition.rating === 'S级';
+                            break;
+                        case 'memory_master':
+                            unlocked = condition.type === 'memory_level' && condition.level >= 5;
+                            break;
+                        case 'color_master':
+                            unlocked = condition.type === 'color_click_score' && condition.score >= 100;
+                            break;
+                        case 'maze_runner':
+                            unlocked = condition.type === 'maze_time' && condition.time < 60;
+                            break;
+                        case 'card_shark':
+                            unlocked = condition.type === 'number_match_time' && condition.time < 30;
+                            break;
+                        case 'quick_tapper':
+                            unlocked = condition.type === 'quick_tap_score' && condition.score >= 80;
+                            break;
+                        case 'math_whiz':
+                            unlocked = condition.type === 'math_streak' && condition.streak >= 10;
+                            break;
+                        case 'word_master':
+                            unlocked = condition.type === 'word_match_time' && condition.time < 40;
+                            break;
+                        case 'all_games':
+                            unlocked = condition.type === 'all_games_played' && condition.completed;
+                            break;
+                    }
+                    
+                    if (unlocked) {
+                        achievement.unlocked = true;
+                        newlyUnlocked.push(achievement);
+                    }
+                }
+            });
+            
+            // 保存成就数据
+            if (newlyUnlocked.length > 0) {
+                storageManager.save('achievements', achievements);
+                showUnlockedAchievements(newlyUnlocked);
+            }
+            
+            return newlyUnlocked;
+        }
+        
+        // 显示解锁的成就
+        function showUnlockedAchievements(unlocked) {
+            // 在结果页面显示新解锁的成就
+            const newAchievementsEl = document.getElementById('new-achievements');
+            const unlockedContainer = document.getElementById('unlocked-achievements');
+            
+            if (unlocked.length > 0) {
+                unlockedContainer.innerHTML = '';
+                unlocked.forEach(achievement => {
+                    const badge = document.createElement('div');
+                    badge.className = 'achievement-badge unlocked w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center';
+                    badge.innerHTML = `<i class="fa ${achievement.icon} text-2xl ${achievement.color}"></i>`;
+                    unlockedContainer.appendChild(badge);
+                });
+                newAchievementsEl.classList.remove('hidden');
+            } else {
+                newAchievementsEl.classList.add('hidden');
+            }
+        }
+        
+        // 排行榜系统
+        let leaderboard = {
+            all: []
+        };
+        
+        // 添加分数到排行榜
+        function addToLeaderboard(score) {
+            // 简单起见，使用"玩家"作为用户名
+            const entry = {
+                name: '玩家',
+                score: score,
+                date: new Date().toISOString()
+            };
+            
+            // 添加到排行榜
+            leaderboard.all.push(entry);
+            
+            // 按分数排序，保留前10名
+            leaderboard.all.sort((a, b) => b.score - a.score);
+            if (leaderboard.all.length > 10) {
+                leaderboard.all = leaderboard.all.slice(0, 10);
+            }
+            
+            // 保存排行榜数据
+            storageManager.save('leaderboard', leaderboard);
+        }
+        
+        // 显示排行榜
+        function displayLeaderboard() {
+            const leaderboardContent = document.getElementById('leaderboard-content');
+            leaderboardContent.innerHTML = '';
+            
+            const entries = leaderboard.all;
+            
+            if (entries.length === 0) {
+                leaderboardContent.innerHTML = '<div class="text-center py-4 text-gray-500">暂无记录</div>';
+                return;
+            }
+            
+            entries.forEach((entry, index) => {
+                const item = document.createElement('div');
+                item.className = `leaderboard-item flex justify-between items-center p-3 rounded-lg ${index < 3 ? `top-${index + 1}` : ''}`;
+                
+                // 格式化日期
+                const date = new Date(entry.date);
+                const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="font-bold w-8">${index + 1}.</span>
+                        <span class="ml-2">${entry.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold">${entry.score}</span>
+                        <span class="text-xs text-gray-500 ml-2">${formattedDate}</span>
+                    </div>
+                `;
+                
+                leaderboardContent.appendChild(item);
+            });
+        }
+        
+        // 游戏状态管理
+        const gameState = {
+            currentLevel: 0,
+            totalScore: 0,
+            selectedLevels: [],
+            levelScores: [],
+            gameTime: 30,
+            timeLeft: 0,
+            timer: null,
+            gameMode: 'random', // 只保留随机模式
+            playedGames: [], // 记录已玩过的游戏类型
+            isPaused: false,
+            // 快速记忆游戏专属状态
+            memoryGame: {
+                currentDifficulty: 2, // 初始难度（需要记忆的方块数）
+                maxDifficulty: 8,     // 最高难度
+                memoryDuration: 1500, // 初始记忆时间（毫秒）
+                baseScore: 20         // 基础得分
+            },
+            // 颜色点击游戏专属状态（限制为5关）
+            colorClickGame: {
+                currentRound: 0,
+                totalRounds: 5,      // 5关
+                baseScore: 10,
+                perfectScore: false
+            },
+            // 数字迷宫游戏状态
+            numberMazeGame: {
+                currentNumber: 1,
+                totalNumbers: 15,
+                startTime: 0,
+                baseScore: 25
+            },
+            // 快速点击游戏状态
+            quickTapGame: {
+                score: 0,
+                targetsHit: 0,
+                currentTargetSize: 60,
+                speed: 1500
+            },
+            // 数学挑战游戏状态
+            mathGame: {
+                currentQuestion: 0,
+                totalQuestions: 10,
+                correctAnswers: 0,
+                streak: 0,
+                difficulty: 1
+            },
+            // 词语配对游戏状态
+            wordMatchGame: {
+                matchedPairs: 0,
+                totalPairs: 6,
+                startTime: 0
+            },
+            games: [
+                { id: 'color-click', name: '颜色点击', icon: 'fa-paint-brush', color: 'primary' },
+                { id: 'memory-game', name: '快速记忆', icon: 'fa-cubes', color: 'secondary' },
+                { id: 'number-match', name: '数字配对', icon: 'fa-sort-numeric-asc', color: 'accent' },
+                { id: 'number-maze', name: '数字迷宫', icon: 'fa-map-signs', color: 'teal' },
+                { id: 'quick-tap', name: '快速点击', icon: 'fa-hand-pointer-o', color: 'purple' },
+                { id: 'math-challenge', name: '数学挑战', icon: 'fa-calculator', color: 'green-500' },
+                { id: 'word-match', name: '词语配对', icon: 'fa-font', color: 'blue-500' }
+            ]
+        };
+
+        // DOM元素
+        const elements = {
+            startScreen: document.getElementById('start-screen'),
+            levelSelectScreen: document.getElementById('level-select'),
+            levelSelectTitle: document.getElementById('level-select-title'),
+            gameScreen: document.getElementById('game-screen'),
+            resultScreen: document.getElementById('result-screen'),
+            gameContainer: document.getElementById('game-container'),
+            selectedLevels: document.getElementById('selected-levels'),
+            startBtn: document.getElementById('start-btn'),
+            backFromLevelSelectBtn: document.getElementById('back-from-level-select-btn'),
+            backFromGameBtn: document.getElementById('back-from-game-btn'),
+            playAgainBtn: document.getElementById('play-again-btn'),
+            backToHomeBtn: document.getElementById('back-to-home-btn'),
+            currentLevelEl: document.getElementById('current-level'),
+            totalLevelsEl: document.getElementById('total-levels'),
+            progressBar: document.getElementById('progress-bar'),
+            totalScoreEl: document.getElementById('total-score'),
+            levelTimeEl: document.getElementById('level-time'),
+            finalScoreEl: document.getElementById('final-score'),
+            completedLevelsEl: document.getElementById('completed-levels'),
+            finalRatingEl: document.getElementById('final-rating'),
+            levelsDetailsEl: document.getElementById('levels-details'),
+            resultMessage: document.getElementById('result-message'),
+            helpBtn: document.getElementById('help-btn'),
+            closeHelpBtn: document.getElementById('close-help-btn'),
+            helpModal: document.getElementById('help-modal'),
+            soundToggle: document.getElementById('sound-toggle'),
+            // 快速记忆游戏元素
+            memoryLevelIndicator: document.getElementById('memory-level-indicator'),
+            memoryLevel: document.getElementById('memory-level'),
+            // 暂停菜单元素
+            pauseBtn: document.getElementById('pause-btn'),
+            pauseMenu: document.getElementById('pause-menu'),
+            resumeBtn: document.getElementById('resume-btn'),
+            restartLevelBtn: document.getElementById('restart-level-btn'),
+            quitGameBtn: document.getElementById('quit-game-btn'),
+            // 排行榜元素
+            leaderboardBtn: document.getElementById('leaderboard-btn'),
+            leaderboardModal: document.getElementById('leaderboard-modal'),
+            closeLeaderboardBtn: document.getElementById('close-leaderboard-btn'),
+            leaderboardTabs: document.querySelectorAll('.leaderboard-tab'),
+            // 成就元素
+            achievementsBtn: document.getElementById('achievements-btn'),
+            achievementsModal: document.getElementById('achievements-modal'),
+            closeAchievementsBtn: document.getElementById('close-achievements-btn'),
+            achievementsContainer: document.getElementById('achievements-container'),
+            // 设置元素
+            settingsBtn: document.getElementById('settings-btn'),
+            settingsModal: document.getElementById('settings-modal'),
+            closeSettingsBtn: document.getElementById('close-settings-btn'),
+            volumeControl: document.getElementById('volume-control'),
+            volumeValue: document.getElementById('volume-value'),
+            textSizeControl: document.getElementById('text-size-control'),
+            textSizeValue: document.getElementById('text-size-value'),
+            showTutorial: document.getElementById('show-tutorial'),
+            resetSettingsBtn: document.getElementById('reset-settings-btn'),
+            // 游戏模式选择
+            modeCards: document.querySelectorAll('.mode-card'),
+            // 新手引导
+            tutorialOverlay: document.getElementById('tutorial-overlay'),
+            guideSteps: document.querySelectorAll('.guide-step'),
+            nextTutorialBtn: document.querySelectorAll('.next-tutorial'),
+            prevTutorialBtn: document.querySelectorAll('.prev-tutorial'),
+            startGameTutorialBtn: document.querySelector('.start-game-tutorial'),
+            // 新成就提示
+            newAchievements: document.getElementById('new-achievements'),
+            unlockedAchievements: document.getElementById('unlocked-achievements')
+        };
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 游戏开始和导航按钮
+            elements.startBtn.addEventListener('click', startGame);
+            elements.playAgainBtn.addEventListener('click', restartGame);
+            elements.backToHomeBtn.addEventListener('click', backToHome);
+            elements.backFromLevelSelectBtn.addEventListener('click', () => {
+                elements.levelSelectScreen.classList.add('hidden');
+                elements.startScreen.classList.remove('hidden');
+            });
+            elements.backFromGameBtn.addEventListener('click', () => {
+                clearInterval(gameState.timer);
+                elements.gameScreen.classList.add('hidden');
+                elements.levelSelectScreen.classList.remove('hidden');
+            });
+            
+            // 帮助模态框
+            elements.helpBtn.addEventListener('click', () => elements.helpModal.classList.remove('hidden'));
+            elements.closeHelpBtn.addEventListener('click', () => elements.helpModal.classList.add('hidden'));
+            
+            // 声音切换
+            elements.soundToggle.addEventListener('click', toggleSound);
+            
+            // 暂停菜单
+            elements.pauseBtn.addEventListener('click', togglePause);
+            elements.resumeBtn.addEventListener('click', togglePause);
+            elements.restartLevelBtn.addEventListener('click', () => {
+                elements.pauseMenu.classList.add('hidden');
+                gameState.isPaused = false;
+                loadLevel(gameState.currentLevel);
+            });
+            elements.quitGameBtn.addEventListener('click', () => {
+                elements.pauseMenu.classList.add('hidden');
+                gameState.isPaused = false;
+                backToHome();
+            });
+            
+            // 排行榜
+            elements.leaderboardBtn.addEventListener('click', () => {
+                displayLeaderboard();
+                elements.leaderboardModal.classList.remove('hidden');
+            });
+            elements.closeLeaderboardBtn.addEventListener('click', () => {
+                elements.leaderboardModal.classList.add('hidden');
+            });
+            elements.leaderboardTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    elements.leaderboardTabs.forEach(t => {
+                        t.classList.remove('active', 'text-primary');
+                        t.classList.add('text-gray-500');
+                    });
+                    
+                    tab.classList.add('active', 'text-primary');
+                    tab.classList.remove('text-gray-500');
+                    
+                    displayLeaderboard();
+                });
+            });
+            
+            // 成就
+            elements.achievementsBtn.addEventListener('click', displayAchievements);
+            elements.closeAchievementsBtn.addEventListener('click', () => {
+                elements.achievementsModal.classList.add('hidden');
+            });
+            
+            // 设置
+            elements.settingsBtn.addEventListener('click', () => {
+                elements.settingsModal.classList.remove('hidden');
+            });
+            elements.closeSettingsBtn.addEventListener('click', () => {
+                elements.settingsModal.classList.add('hidden');
+            });
+            
+            // 音量控制
+            elements.volumeControl.addEventListener('input', (e) => {
+                const value = e.target.value;
+                elements.volumeValue.textContent = `${value}%`;
+                settings.volume = parseInt(value);
+                storageManager.save('settings', settings);
+            });
+            
+            // 文字大小控制
+            elements.textSizeControl.addEventListener('input', (e) => {
+                const value = e.target.value;
+                elements.textSizeValue.textContent = `${value}%`;
+                settings.textSize = parseInt(value);
+                applyTextSize();
+                storageManager.save('settings', settings);
+            });
+            
+            // 显示新手引导设置
+            elements.showTutorial.addEventListener('change', (e) => {
+                settings.showTutorial = e.target.checked;
+                storageManager.save('settings', settings);
+            });
+            
+            // 重置设置
+            elements.resetSettingsBtn.addEventListener('click', () => {
+                settings = { ...defaultSettings };
+                applySettings();
+                storageManager.save('settings', settings);
+            });
+            
+            // 新手引导
+            elements.nextTutorialBtn.forEach(btn => {
+                btn.addEventListener('click', nextTutorialStep);
+            });
+            
+            elements.prevTutorialBtn.forEach(btn => {
+                btn.addEventListener('click', prevTutorialStep);
+            });
+            
+            elements.startGameTutorialBtn.addEventListener('click', () => {
+                elements.tutorialOverlay.classList.add('hidden');
+                storageManager.save('hasPlayed', true);
+            });
+        }
+        
+        // 应用设置
+        function applySettings() {
+            elements.volumeControl.value = settings.volume;
+            elements.volumeValue.textContent = `${settings.volume}%`;
+            
+            elements.textSizeControl.value = settings.textSize;
+            elements.textSizeValue.textContent = `${settings.textSize}%`;
+            
+            elements.showTutorial.checked = settings.showTutorial;
+            
+            applyTextSize();
+            
+            // 更新声音图标
+            const icon = elements.soundToggle.querySelector('i');
+            if (settings.soundEnabled) {
+                icon.classList.remove('fa-volume-off');
+                icon.classList.add('fa-volume-up');
+            } else {
+                icon.classList.remove('fa-volume-up');
+                icon.classList.add('fa-volume-off');
+            }
+        }
+        
+        // 应用文字大小设置
+        function applyTextSize() {
+            document.documentElement.style.fontSize = `${settings.textSize}%`;
+        }
+        
+        // 显示新手引导
+        function showTutorial() {
+            elements.tutorialOverlay.classList.remove('hidden');
+        }
+        
+        // 下一个引导步骤
+        function nextTutorialStep() {
+            const currentStep = document.querySelector('.guide-step.active');
+            const currentStepNum = parseInt(currentStep.dataset.step);
+            const nextStep = document.querySelector(`.guide-step[data-step="${currentStepNum + 1}"]`);
+            
+            if (nextStep) {
+                currentStep.classList.remove('active');
+                nextStep.classList.add('active');
+            }
+        }
+        
+        // 上一个引导步骤
+        function prevTutorialStep() {
+            const currentStep = document.querySelector('.guide-step.active');
+            const currentStepNum = parseInt(currentStep.dataset.step);
+            const prevStep = document.querySelector(`.guide-step[data-step="${currentStepNum - 1}"]`);
+            
+            if (prevStep) {
+                currentStep.classList.remove('active');
+                prevStep.classList.add('active');
+            }
+        }
+        
+        // 显示成就
+        function displayAchievements() {
+            elements.achievementsContainer.innerHTML = '';
+            
+            achievements.forEach(achievement => {
+                const achievementEl = document.createElement('div');
+                achievementEl.className = `bg-light rounded-xl p-4 flex items-center ${achievement.unlocked ? '' : 'opacity-50'}`;
+                
+                achievementEl.innerHTML = `
+                    <div class="achievement-badge ${achievement.unlocked ? 'unlocked' : ''} w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mr-4">
+                        <i class="fa ${achievement.icon} text-xl ${achievement.color}"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="font-bold">${achievement.name}</h4>
+                        <p class="text-sm text-gray-600">${achievement.description}</p>
+                    </div>
+                    ${achievement.unlocked ? '<i class="fa fa-check-circle text-green-500"></i>' : '<i class="fa fa-lock text-gray-400"></i>'}
+                `;
+                
+                elements.achievementsContainer.appendChild(achievementEl);
+            });
+            
+            elements.achievementsModal.classList.remove('hidden');
+        }
+        
+        // 切换声音
+        function toggleSound() {
+            settings.soundEnabled = !settings.soundEnabled;
+            storageManager.save('settings', settings);
+            
+            const icon = elements.soundToggle.querySelector('i');
+            if (settings.soundEnabled) {
+                icon.classList.remove('fa-volume-off');
+                icon.classList.add('fa-volume-up');
+            } else {
+                icon.classList.remove('fa-volume-up');
+                icon.classList.add('fa-volume-off');
+            }
+        }
+        
+        // 切换暂停状态
+        function togglePause() {
+            gameState.isPaused = !gameState.isPaused;
+            
+            if (gameState.isPaused) {
+                // 暂停游戏
+                clearInterval(gameState.timer);
+                elements.pauseMenu.classList.remove('hidden');
+                
+                // 暂停数字迷宫的键盘控制
+                if (gameState.selectedLevels[gameState.currentLevel]?.id === 'number-maze' && window.mazeKeyPressHandler) {
+                    document.removeEventListener('keydown', window.mazeKeyPressHandler, true);
+                }
+            } else {
+                // 恢复游戏
+                elements.pauseMenu.classList.add('hidden');
+                if (gameState.timeLeft > 0) {
+                    gameState.timer = setInterval(updateTimer, 1000);
+                }
+                
+                // 恢复数字迷宫的键盘控制
+                if (gameState.selectedLevels[gameState.currentLevel]?.id === 'number-maze' && window.mazeKeyPressHandler) {
+                    document.addEventListener('keydown', window.mazeKeyPressHandler, true);
+                }
+            }
+        }
+        
+        // 关卡开始前的倒计时
+        function startLevelCountdown() {
+            elements.levelSelectScreen.classList.add('hidden');
+            
+            // 创建倒计时元素
+            let countdownEl = document.createElement('div');
+            countdownEl.className = 'countdown';
+            document.body.appendChild(countdownEl);
+            
+            // 倒计时逻辑
+            let count = 3;
+            const countdownInterval = setInterval(() => {
+                if (count > 0) {
+                    // 重置动画状态
+                    countdownEl.classList.remove('countdown-animate');
+                    // 强制重绘
+                    void countdownEl.offsetWidth;
+                    // 设置当前数字并添加动画
+                    countdownEl.textContent = count;
+                    countdownEl.classList.add('countdown-animate');
+                    count--;
+                } else {
+                    clearInterval(countdownInterval);
+                    document.body.removeChild(countdownEl);
+                    // 重置游戏状态
+                    resetGameState();
+                    // 开始第一关
+                    gameState.currentLevel = 0;
+                    gameState.totalScore = 0;
+                    gameState.levelScores = [];
+                    gameState.playedGames = [];
+                    loadLevel(gameState.currentLevel);
+                }
+            }, 1000);
+        }
+        
+        // 重置游戏状态
+        function resetGameState() {
+            gameState.memoryGame.currentDifficulty = 2;
+            gameState.memoryGame.memoryDuration = 1500;
+            gameState.colorClickGame.currentRound = 0;
+            gameState.colorClickGame.perfectScore = false;
+            gameState.numberMazeGame.currentNumber = 1;
+            gameState.quickTapGame = {
+                score: 0,
+                targetsHit: 0,
+                currentTargetSize: 60,
+                speed: 1500
+            };
+            gameState.mathGame = {
+                currentQuestion: 0,
+                totalQuestions: 10,
+                correctAnswers: 0,
+                streak: 0,
+                difficulty: 1
+            };
+            gameState.wordMatchGame = {
+                matchedPairs: 0,
+                totalPairs: 6,
+                startTime: 0
+            };
+        }
+        
+        // 加载关卡
+        function loadLevel(index) {
+            if (index >= gameState.selectedLevels.length) {
+                endGame();
+                return;
+            }
+            
+            elements.gameScreen.classList.remove('hidden');
+            gameState.currentLevel = index;
+            elements.currentLevelEl.textContent = index + 1;
+            elements.totalLevelsEl.textContent = gameState.selectedLevels.length;
+            elements.progressBar.style.width = `${((index + 1) / gameState.selectedLevels.length) * 100}%`;
+            elements.totalScoreEl.textContent = gameState.totalScore;
+            
+            const game = gameState.selectedLevels[index];
+            
+            // 记录已玩过的游戏
+            if (!gameState.playedGames.includes(game.id)) {
+                gameState.playedGames.push(game.id);
+                
+                // 检查是否玩过所有游戏
+                if (gameState.playedGames.length === gameState.games.length) {
+                    checkAchievements({ type: 'all_games_played', completed: true });
+                }
+            }
+            
+            elements.gameContainer.innerHTML = '';
+            
+            // 根据游戏类型设置关卡时间
+            let gameTime = 0;
+            switch (game.id) {
+                case 'memory-game':
+                    gameTime = 60;
+                    break;
+                case 'number-match':
+                    gameTime = 60;
+                    break;
+                case 'number-maze':
+                    gameTime = 90;
+                    break;
+                case 'color-click':
+                    gameTime = 30;
+                    break;
+                case 'quick-tap':
+                    gameTime = 45;
+                    break;
+                case 'math-challenge':
+                    gameTime = 60;
+                    break;
+                case 'word-match':
+                    gameTime = 60;
+                    break;
+            }
+            
+            gameState.timeLeft = gameTime;
+            elements.levelTimeEl.textContent = gameState.timeLeft;
+            
+            // 启动计时器
+            if (gameState.timer) clearInterval(gameState.timer);
+            gameState.timer = setInterval(updateTimer, 1000);
+            
+            // 显示快速记忆难度指示器
+            if (game.id === 'memory-game') {
+                elements.memoryLevelIndicator.style.display = 'block';
+                elements.memoryLevel.textContent = gameState.memoryGame.currentDifficulty - 1;
+            } else {
+                elements.memoryLevelIndicator.style.display = 'none';
+            }
+            
+            // 根据游戏类型加载
+            switch (game.id) {
+                case 'color-click':
+                    loadColorClickGame();
+                    break;
+                case 'memory-game':
+                    loadMemoryGame();
+                    break;
+                case 'number-match':
+                    loadNumberMatchGame();
+                    break;
+                case 'number-maze':
+                    loadNumberMazeGame();
+                    break;
+                case 'quick-tap':
+                    loadQuickTapGame();
+                    break;
+                case 'math-challenge':
+                    loadMathChallengeGame();
+                    break;
+                case 'word-match':
+                    loadWordMatchGame();
+                    break;
+            }
+        }
+        
+        // 更新计时器
+        function updateTimer() {
+            if (gameState.isPaused) return;
+            
+            gameState.timeLeft--;
+            elements.levelTimeEl.textContent = gameState.timeLeft;
+            
+            if (gameState.timeLeft <= 0) {
+                clearInterval(gameState.timer);
+                showLevelComplete(false);
+            }
+            
+            if (gameState.timeLeft <= 10) {
+                elements.levelTimeEl.classList.add('text-primary', 'animate-pulse');
+            } else {
+                elements.levelTimeEl.classList.remove('text-primary', 'animate-pulse');
+            }
+        }
+        
+        // 显示关卡完成效果
+        function showLevelComplete(success, score = 0) {
+            clearInterval(gameState.timer);
+            
+            // 移除数字迷宫的键盘事件监听
+            if (gameState.selectedLevels[gameState.currentLevel]?.id === 'number-maze' && window.mazeKeyPressHandler) {
+                document.removeEventListener('keydown', window.mazeKeyPressHandler, true);
+                window.mazeKeyPressHandler = null;
+            }
+            
+            if (success) {
+                gameState.totalScore += score;
+                gameState.levelScores.push({
+                    name: gameState.selectedLevels[gameState.currentLevel].name,
+                    score: score
+                });
+                
+                const scorePopup = document.createElement('div');
+                scorePopup.className = 'score-popup';
+                scorePopup.textContent = `+${score}`;
+                elements.gameContainer.appendChild(scorePopup);
+                
+                const completeEl = document.createElement('div');
+                completeEl.className = 'level-complete';
+                completeEl.textContent = '完成!';
+                document.body.appendChild(completeEl);
+                
+                setTimeout(() => {
+                    document.body.removeChild(completeEl);
+                    elements.gameScreen.classList.add('hidden');
+                    loadLevel(gameState.currentLevel + 1);
+                }, 1500);
+            } else {
+                const failEl = document.createElement('div');
+                failEl.className = 'level-complete';
+                failEl.textContent = '时间到!';
+                document.body.appendChild(failEl);
+                
+                setTimeout(() => {
+                    document.body.removeChild(failEl);
+                    endGame();
+                }, 1500);
+            }
+        }
+        
+        // 快速记忆游戏
+        function loadMemoryGame() {
+            const gridSize = 4; // 4x4固定网格
+            const { currentDifficulty, memoryDuration, baseScore, maxDifficulty } = gameState.memoryGame;
+            
+            // 游戏标题
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'text-2xl font-bold mb-4 text-secondary';
+            titleEl.textContent = `快速记忆（记住 ${currentDifficulty} 个方块）`;
+            elements.gameContainer.appendChild(titleEl);
+            
+            // 状态提示
+            const statusEl = document.createElement('div');
+            statusEl.className = 'text-lg font-bold mb-6 text-primary memory-status';
+            statusEl.textContent = '准备记忆...';
+            elements.gameContainer.appendChild(statusEl);
+            
+            // 创建4x4游戏网格
+            const gridEl = document.createElement('div');
+            gridEl.className = `grid grid-cols-${gridSize} gap-3 w-full max-w-md`;
+            elements.gameContainer.appendChild(gridEl);
+            
+            // 创建网格单元格
+            const cells = [];
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'aspect-square bg-gray-200 rounded-lg transition-all duration-300 cursor-pointer';
+                cell.dataset.index = i;
+                gridEl.appendChild(cell);
+                cells.push(cell);
+            }
+            
+            // 随机选择要亮起的单元格
+            const selectedIndices = [];
+            while (selectedIndices.length < currentDifficulty) {
+                const randomIndex = Math.floor(Math.random() * cells.length);
+                if (!selectedIndices.includes(randomIndex)) {
+                    selectedIndices.push(randomIndex);
+                }
+            }
+            
+            // 显示记忆序列
+            let step = 0;
+            let isShowingSequence = true;
+            const showSequence = () => {
+                if (step < selectedIndices.length) {
+                    // 先关闭所有单元格
+                    cells.forEach(cell => {
+                        cell.classList.remove('bg-secondary', 'memory-cell-active', 'scale-110');
+                        cell.classList.add('bg-gray-200');
+                    });
+                    
+                    // 更新状态文本
+                    statusEl.textContent = `记忆中...(${step + 1}/${currentDifficulty})`;
+                    
+                    // 显示当前步骤的单元格
+                    setTimeout(() => {
+                        const cell = cells[selectedIndices[step]];
+                        cell.classList.remove('bg-gray-200');
+                        cell.classList.add('bg-secondary', 'memory-cell-active', 'scale-110');
+                        step++;
+                        // 动态调整显示时间
+                        setTimeout(showSequence, Math.max(500, memoryDuration - (currentDifficulty * 100)));
+                    }, 300);
+                } else {
+                    // 序列显示完毕，准备用户输入
+                    setTimeout(() => {
+                        // 重置所有单元格
+                        cells.forEach(cell => {
+                            cell.classList.remove('bg-secondary', 'memory-cell-active', 'scale-110');
+                            cell.classList.add('bg-gray-200', 'hover:bg-gray-300');
+                        });
+                        
+                        isShowingSequence = false;
+                        statusEl.textContent = '请按顺序点击（点击错误会重新开始）';
+                        statusEl.classList.add('text-secondary');
+                        
+                        let userStep = 0;
+                        let currentScore = 0;
+                        let isProcessing = false;
+                        
+                        // 添加点击事件
+                        const handleCellClick = function() {
+                            if (isProcessing || isShowingSequence || gameState.isPaused) return;
+                            isProcessing = true;
+                            
+                            const index = parseInt(this.dataset.index);
+                            
+                            // 检查是否正确
+                            if (index === selectedIndices[userStep]) {
+                                // 正确点击
+                                this.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+                                this.classList.add('bg-green-500', 'correct');
+                                
+                                currentScore += baseScore * (gameState.timeLeft / 60) * 2;
+                                userStep++;
+                                
+                                // 更新状态
+                                statusEl.textContent = `正确! (${userStep}/${currentDifficulty})`;
+                                
+                                // 检查是否完成所有步骤
+                                if (userStep >= selectedIndices.length) {
+                                    statusEl.textContent = '太棒了! 准备结束...';
+                                    
+                                    // 增加难度
+                                    if (gameState.memoryGame.currentDifficulty < maxDifficulty) {
+                                        gameState.memoryGame.currentDifficulty++;
+                                        gameState.memoryGame.memoryDuration = Math.max(800, memoryDuration - 100);
+                                        elements.memoryLevel.textContent = gameState.memoryGame.currentDifficulty - 1;
+                                        
+                                        // 检查记忆大师成就
+                                        checkAchievements({ 
+                                            type: 'memory_level', 
+                                            level: gameState.memoryGame.currentDifficulty 
+                                        });
+                                    }
+                                    
+                                    // 完成当前难度等级
+                                    setTimeout(() => {
+                                        showLevelComplete(true, Math.floor(currentScore));
+                                    }, 1000);
+                                    return;
+                                }
+                                
+                                setTimeout(() => {
+                                    this.classList.remove('bg-green-500', 'correct');
+                                    this.classList.add('bg-gray-200', 'hover:bg-gray-300');
+                                    isProcessing = false;
+                                }, 500);
+                            } else {
+                                // 错误点击
+                                this.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+                                this.classList.add('bg-primary', 'incorrect');
+                                statusEl.textContent = '错误! 重新开始...';
+                                statusEl.classList.add('text-primary');
+                                
+                                // 重新开始当前难度
+                                setTimeout(() => {
+                                    cells.forEach(cell => {
+                                        cell.classList.remove('bg-primary', 'incorrect', 'bg-green-500', 'correct');
+                                        cell.classList.add('bg-gray-200');
+                                    });
+                                    
+                                    // 重新显示序列
+                                    step = 0;
+                                    isShowingSequence = true;
+                                    statusEl.textContent = '重新记忆...';
+                                    showSequence();
+                                    
+                                    // 移除事件监听
+                                    cells.forEach(cell => {
+                                        cell.removeEventListener('click', handleCellClick);
+                                    });
+                                    
+                                    isProcessing = false;
+                                }, 1000);
+                            }
+                        };
+                        
+                        // 为所有单元格添加点击事件
+                        cells.forEach(cell => {
+                            cell.addEventListener('click', handleCellClick);
+                        });
+                    }, 500);
+                }
+            };
+            
+            // 开始显示序列
+            showSequence();
+        }
+        
+        // 颜色点击游戏（限制为5关）
+        function loadColorClickGame() {
+            // 重置当前回合
+            gameState.colorClickGame.currentRound = 0;
+            gameState.colorClickGame.perfectScore = true;
+            
+            // 颜色映射表
+            const colors = {
+                '红色': 'bg-red-500',
+                '蓝色': 'bg-blue-500',
+                '绿色': 'bg-green-500',
+                '黄色': 'bg-yellow-500',
+                '紫色': 'bg-purple-500',
+                '橙色': 'bg-orange-500'
+            };
+            
+            // 颜色名称数组
+            const colorNames = Object.keys(colors);
+            
+            // 创建游戏标题
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'text-2xl font-bold mb-6 text-primary';
+            titleEl.textContent = '颜色点击挑战';
+            elements.gameContainer.appendChild(titleEl);
+            
+            // 创建回合指示器
+            const roundEl = document.createElement('div');
+            roundEl.className = 'text-lg mb-6 font-bold';
+            roundEl.textContent = `第 ${gameState.colorClickGame.currentRound + 1}/${gameState.colorClickGame.totalRounds} 关`;
+            elements.gameContainer.appendChild(roundEl);
+            
+            // 创建提示文本
+            const promptEl = document.createElement('div');
+            promptEl.className = 'text-2xl font-bold mb-8';
+            elements.gameContainer.appendChild(promptEl);
+            
+            // 创建颜色选项容器
+            const colorsContainer = document.createElement('div');
+            colorsContainer.className = 'grid grid-cols-3 gap-4 w-full max-w-md';
+            elements.gameContainer.appendChild(colorsContainer);
+            
+            // 生成颜色选项
+            const colorOptions = [];
+            for (let i = 0; i < 6; i++) {
+                const colorBtn = document.createElement('div');
+                colorBtn.className = `aspect-square rounded-lg ${colors[colorNames[i]]} cursor-pointer transition-transform hover:scale-105`;
+                colorBtn.dataset.color = colorNames[i];
+                colorsContainer.appendChild(colorBtn);
+                colorOptions.push(colorBtn);
+            }
+            
+            // 计算当前关卡得分
+            let totalScore = 0;
+            
+            // 生成当前回合
+            const generateRound = () => {
+                // 随机选择目标颜色
+                const targetColor = colorNames[Math.floor(Math.random() * colorNames.length)];
+                
+                // 随机选择显示颜色（可能与目标颜色不同）
+                const displayColor = colorNames[Math.floor(Math.random() * colorNames.length)];
+                
+                // 设置提示文本
+                promptEl.textContent = targetColor;
+                promptEl.className = `text-2xl font-bold mb-8 ${colors[displayColor].replace('bg-', 'text-')}`;
+                
+                // 更新回合指示器
+                roundEl.textContent = `第 ${gameState.colorClickGame.currentRound + 1}/${gameState.colorClickGame.totalRounds} 关`;
+                
+                // 添加点击事件
+                colorOptions.forEach(btn => {
+                    btn.onclick = () => checkAnswer(btn.dataset.color, targetColor);
+                });
+            };
+            
+            // 检查答案
+            const checkAnswer = (selectedColor, targetColor) => {
+                if (gameState.isPaused) return;
+                
+                // 移除所有点击事件
+                colorOptions.forEach(btn => {
+                    btn.onclick = null;
+                });
+                
+                // 找到选中的按钮
+                const selectedBtn = colorOptions.find(btn => btn.dataset.color === selectedColor);
+                
+                if (selectedColor === targetColor) {
+                    // 正确答案
+                    selectedBtn.classList.add('correct');
+                    
+                    // 基于剩余时间计算得分
+                    const roundScore = Math.floor(gameState.colorClickGame.baseScore * (gameState.timeLeft / 30) * 2);
+                    totalScore += roundScore;
+                    
+                    // 如果不是满分，标记为非完美
+                    if (roundScore < gameState.colorClickGame.baseScore * 2) {
+                        gameState.colorClickGame.perfectScore = false;
+                    }
+                    
+                    // 显示得分
+                    const scorePopup = document.createElement('div');
+                    scorePopup.className = 'score-popup';
+                    scorePopup.textContent = `+${roundScore}`;
+                    elements.gameContainer.appendChild(scorePopup);
+                    
+                    // 检查是否完成所有回合
+                    gameState.colorClickGame.currentRound++;
+                    if (gameState.colorClickGame.currentRound >= gameState.colorClickGame.totalRounds) {
+                        // 完成所有5关
+                        
+                        // 检查色彩大师成就
+                        if (gameState.colorClickGame.perfectScore) {
+                            checkAchievements({ 
+                                type: 'color_click_score', 
+                                score: totalScore 
+                            });
+                        }
+                        
+                        setTimeout(() => {
+                            showLevelComplete(true, totalScore);
+                        }, 1000);
+                    } else {
+                        // 进入下一回合
+                        setTimeout(() => {
+                            selectedBtn.classList.remove('correct');
+                            generateRound();
+                        }, 800);
+                    }
+                } else {
+                    // 错误答案
+                    selectedBtn.classList.add('incorrect');
+                    gameState.colorClickGame.perfectScore = false;
+                    setTimeout(() => {
+                        showLevelComplete(false);
+                    }, 1000);
+                }
+            };
+            
+            // 开始第一回合
+            generateRound();
+        }
+        
+        // 数字配对游戏
+        function loadNumberMatchGame() {
+            const pairs = 8; // 8对卡片，共16张
+            const numbers = [];
+            for (let i = 1; i <= pairs; i++) {
+                numbers.push(i, i);
+            }
+            
+            const shuffledNumbers = [...numbers].sort(() => Math.random() - 0.5);
+            let flippedCards = [];
+            let matchedPairs = 0;
+            const totalPairs = numbers.length / 2;
+            let isProcessing = false;
+            let baseScore = 10;
+            let totalScore = 0;
+            const startTime = Date.now();
+            
+            // 创建游戏标题
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'text-2xl font-bold mb-6 text-accent';
+            titleEl.textContent = '数字配对';
+            elements.gameContainer.appendChild(titleEl);
+            
+            // 创建状态文本
+            const statusEl = document.createElement('div');
+            statusEl.className = 'text-lg mb-6';
+            statusEl.textContent = `已匹配: ${matchedPairs}/${totalPairs}`;
+            elements.gameContainer.appendChild(statusEl);
+            
+            // 计算网格列数
+            const cols = 4;
+            
+            // 创建游戏网格
+            const gridEl = document.createElement('div');
+            gridEl.className = `grid grid-cols-${cols} gap-3 w-full max-w-md`;
+            elements.gameContainer.appendChild(gridEl);
+            
+            // 创建卡片
+            shuffledNumbers.forEach((num, index) => {
+                const card = document.createElement('div');
+                card.className = 'aspect-square bg-accent/20 rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-all duration-300 hover:bg-accent/30';
+                card.dataset.number = num;
+                card.dataset.index = index;
+                card.textContent = '?';
+                
+                card.addEventListener('click', () => flipCard(card));
+                gridEl.appendChild(card);
+            });
+            
+            // 翻牌逻辑
+            function flipCard(card) {
+                if (isProcessing || flippedCards.length >= 2 || card.textContent !== '?' || card.classList.contains('matched') || gameState.isPaused) {
+                    return;
+                }
+                
+                // 翻牌
+                card.textContent = card.dataset.number;
+                card.classList.remove('bg-accent/20', 'hover:bg-accent/30');
+                card.classList.add('bg-white');
+                flippedCards.push(card);
+                
+                // 检查是否翻了两张牌
+                if (flippedCards.length === 2) {
+                    isProcessing = true;
+                    
+                    if (flippedCards[0].dataset.number === flippedCards[1].dataset.number) {
+                        // 匹配成功
+                        flippedCards.forEach(c => {
+                            c.classList.add('matched', 'correct');
+                            c.classList.remove('cursor-pointer');
+                        });
+                        
+                        matchedPairs++;
+                        statusEl.textContent = `已匹配: ${matchedPairs}/${totalPairs}`;
+                        
+                        // 计算得分
+                        const timeTaken = (Date.now() - startTime) / 1000;
+                        const pairScore = Math.floor(baseScore * (gameState.timeLeft / 60) * 2);
+                        totalScore += pairScore;
+                        
+                        // 显示得分
+                        const scorePopup = document.createElement('div');
+                        scorePopup.className = 'score-popup';
+                        scorePopup.textContent = `+${pairScore}`;
+                        elements.gameContainer.appendChild(scorePopup);
+                        
+                        // 检查游戏是否结束
+                        if (matchedPairs === totalPairs) {
+                            // 检查卡牌高手成就
+                            if (timeTaken < 30) {
+                                checkAchievements({ 
+                                    type: 'number_match_time', 
+                                    time: timeTaken 
+                                });
+                            }
+                            
+                            setTimeout(() => {
+                                showLevelComplete(true, totalScore);
+                            }, 1000);
+                            return;
+                        }
+                        
+                        flippedCards = [];
+                        isProcessing = false;
+                    } else {
+                        // 匹配失败
+                        flippedCards.forEach(c => {
+                            c.classList.add('incorrect');
+                        });
+                        
+                        // 翻回去
+                        setTimeout(() => {
+                            flippedCards.forEach(c => {
+                                c.textContent = '?';
+                                c.classList.remove('bg-white', 'incorrect');
+                                c.classList.add('bg-accent/20', 'hover:bg-accent/30');
+                            });
+                            
+                            flippedCards = [];
+                            isProcessing = false;
+                        }, 1000);
+                    }
+                }
+            }
+        }
+        
+        // 数字迷宫游戏（1-15）- 已修复键盘控制问题
+        function loadNumberMazeGame() {
+            const mazeSize = 7; // 7x7迷宫
+            
+            // 初始化迷宫
+            let maze = createMaze(mazeSize);
+            
+            // 重置游戏状态
+            gameState.numberMazeGame.currentNumber = 1;
+            gameState.numberMazeGame.startTime = Date.now();
+            
+            // 创建游戏标题
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'text-2xl font-bold mb-6 text-teal';
+            titleEl.textContent = '数字迷宫';
+            elements.gameContainer.appendChild(titleEl);
+            
+            // 创建状态文本
+            const statusEl = document.createElement('div');
+            statusEl.className = 'text-lg mb-6';
+            statusEl.textContent = `当前数字: ${gameState.numberMazeGame.currentNumber}/${gameState.numberMazeGame.totalNumbers}`;
+            elements.gameContainer.appendChild(statusEl);
+            
+            // 创建操作提示
+            const controlHint = document.createElement('div');
+            controlHint.className = 'text-sm text-gray-500 mb-6';
+            controlHint.innerHTML = '使用方向键或点击相邻格子移动，从1按顺序找到15';
+            elements.gameContainer.appendChild(controlHint);
+            
+            // 创建迷宫容器
+            const mazeContainer = document.createElement('div');
+            mazeContainer.className = 'grid gap-1 w-full max-w-md mx-auto';
+            mazeContainer.style.gridTemplateColumns = `repeat(${mazeSize}, 1fr)`;
+            mazeContainer.tabIndex = 0; // 使容器可以获得焦点
+            elements.gameContainer.appendChild(mazeContainer);
+            
+            // 找到起点位置（数字1的位置）
+            let currentPosition = findNumberPosition(maze, 1);
+            
+            // 键盘控制事件 - 修复版本
+            // 保存事件处理函数的引用以便后续移除
+            window.mazeKeyPressHandler = (e) => {
+                if (gameState.isPaused) return;
+                
+                const [x, y] = currentPosition;
+                
+                // 阻止按键的默认行为（如页面滚动）
+                e.preventDefault();
+                
+                switch (e.key) {
+                    case 'ArrowUp':
+                        moveTo(x - 1, y);
+                        break;
+                    case 'ArrowDown':
+                        moveTo(x + 1, y);
+                        break;
+                    case 'ArrowLeft':
+                        moveTo(x, y - 1);
+                        break;
+                    case 'ArrowRight':
+                        moveTo(x, y + 1);
+                        break;
+                }
+            };
+            
+            // 使用捕获阶段监听事件，确保能捕获到按键
+            document.addEventListener('keydown', window.mazeKeyPressHandler, true);
+            
+            // 自动聚焦到迷宫容器
+            mazeContainer.focus();
+            
+            // 渲染迷宫
+            renderMaze();
+            
+            // 创建迷宫函数
+            function createMaze(size) {
+                // 初始化全为墙的迷宫
+                let maze = Array(size).fill().map(() => Array(size).fill('wall'));
+                
+                // 随机DFS算法生成路径
+                let stack = [];
+                let visited = Array(size).fill().map(() => Array(size).fill(false));
+                
+                // 从中心附近开始
+                let startX = Math.floor(size / 2);
+                let startY = Math.floor(size / 2);
+                
+                stack.push([startX, startY]);
+                visited[startX][startY] = true;
+                maze[startX][startY] = 'path';
+                
+                // 方向向量：上、右、下、左
+                const directions = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+                
+                while (stack.length > 0) {
+                    let [x, y] = stack.pop();
+                    let neighbors = [];
+                    
+                    // 检查所有方向的邻居
+                    for (let [dx, dy] of directions) {
+                        let nx = x + dx;
+                        let ny = y + dy;
+                        
+                        // 确保邻居在迷宫内且未访问
+                        if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && !visited[nx][ny]) {
+                            neighbors.push([nx, ny, dx, dy]);
+                        }
+                    }
+                    
+                    if (neighbors.length > 0) {
+                        // 将当前单元格重新入栈
+                        stack.push([x, y]);
+                        
+                        // 随机选择一个邻居
+                        let [nx, ny, dx, dy] = neighbors[Math.floor(Math.random() * neighbors.length)];
+                        
+                        // 标记为已访问并设置为路径
+                        visited[nx][ny] = true;
+                        maze[nx][ny] = 'path';
+                        
+                        // 将邻居入栈
+                        stack.push([nx, ny]);
+                    }
+                }
+                
+                // 放置数字1-15在路径上
+                placeNumbersInMaze(maze, size);
+                
+                return maze;
+            }
+            
+            // 在迷宫路径上放置数字1-15
+            function placeNumbersInMaze(maze, size) {
+                // 收集所有路径单元格
+                let pathCells = [];
+                for (let i = 0; i < size; i++) {
+                    for (let j = 0; j < size; j++) {
+                        if (maze[i][j] === 'path') {
+                            pathCells.push([i, j]);
+                        }
+                    }
+                }
+                
+                // 确保有足够的路径单元格放置所有数字
+                if (pathCells.length < gameState.numberMazeGame.totalNumbers) {
+                    throw new Error('迷宫路径不足，无法放置所有数字');
+                }
+                
+                // 随机打乱路径单元格
+                pathCells.sort(() => Math.random() - 0.5);
+                
+                // 放置数字1-15
+                for (let num = 1; num <= gameState.numberMazeGame.totalNumbers; num++) {
+                    let [x, y] = pathCells[num - 1];
+                    maze[x][y] = num;
+                    
+                    // 设置起点和终点标记
+                    if (num === 1) {
+                        maze[x][y] = { value: 1, type: 'start' };
+                    } else if (num === gameState.numberMazeGame.totalNumbers) {
+                        maze[x][y] = { value: num, type: 'end' };
+                    } else {
+                        maze[x][y] = { value: num, type: 'path' };
+                    }
+                }
+            }
+            
+            // 查找数字在迷宫中的位置
+            function findNumberPosition(maze, number) {
+                for (let i = 0; i < maze.length; i++) {
+                    for (let j = 0; j < maze[i].length; j++) {
+                        if (maze[i][j] !== 'wall' && maze[i][j] !== 'path' && maze[i][j].value === number) {
+                            return [i, j];
+                        }
+                    }
+                }
+                return [0, 0]; // 默认位置
+            }
+            
+            // 渲染迷宫
+            function renderMaze() {
+                mazeContainer.innerHTML = '';
+                
+                for (let i = 0; i < mazeSize; i++) {
+                    for (let j = 0; j < mazeSize; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'maze-cell';
+                        cell.dataset.x = i;
+                        cell.dataset.y = j;
+                        
+                        // 根据单元格类型设置样式
+                        if (maze[i][j] === 'wall') {
+                            cell.classList.add('wall');
+                        } else if (maze[i][j] === 'path') {
+                            cell.classList.add('path');
+                        } else {
+                            // 数字单元格
+                            cell.classList.add(maze[i][j].type);
+                            cell.textContent = maze[i][j].value;
+                            
+                            // 如果是当前位置，添加当前标记
+                            if (maze[i][j].value === gameState.numberMazeGame.currentNumber) {
+                                cell.classList.add('current');
+                            }
+                            
+                            // 如果已经访问过，添加已访问标记
+                            if (maze[i][j].value < gameState.numberMazeGame.currentNumber) {
+                                cell.classList.add('visited');
+                            }
+                        }
+                        
+                        // 为路径和数字单元格添加点击事件
+                        if (maze[i][j] !== 'wall') {
+                            cell.addEventListener('click', () => {
+                                if (gameState.isPaused) return;
+                                
+                                const x = parseInt(cell.dataset.x);
+                                const y = parseInt(cell.dataset.y);
+                                moveTo(x, y);
+                            });
+                        }
+                        
+                        mazeContainer.appendChild(cell);
+                    }
+                }
+            }
+            
+            // 移动到指定位置
+            function moveTo(x, y) {
+                // 检查是否在迷宫范围内
+                if (x < 0 || x >= mazeSize || y < 0 || y >= mazeSize) {
+                    return;
+                }
+                
+                // 检查是否是墙
+                if (maze[x,y] === 'wall') {
+                    return;
+                }
+                
+                const [currentX, currentY] = currentPosition;
+                
+                // 检查是否相邻（上下左右）
+                const isAdjacent = 
+                    (Math.abs(x - currentX) === 1 && y === currentY) || 
+                    (Math.abs(y - currentY) === 1 && x === currentX);
+                
+                if (!isAdjacent) {
+                    return;
+                }
+                
+                // 如果是下一个数字
+                if (maze[x][y] !== 'path' && maze[x][y].value === gameState.numberMazeGame.currentNumber + 1) {
+                    // 更新当前位置
+                    currentPosition = [x, y];
+                    
+                    // 增加当前数字
+                    gameState.numberMazeGame.currentNumber++;
+                    statusEl.textContent = `当前数字: ${gameState.numberMazeGame.currentNumber}/${gameState.numberMazeGame.totalNumbers}`;
+                    
+                    // 显示得分
+                    const scorePopup = document.createElement('div');
+                    scorePopup.className = 'score-popup';
+                    scorePopup.textContent = `+5`;
+                    elements.gameContainer.appendChild(scorePopup);
+                    
+                    // 检查是否到达终点
+                    if (gameState.numberMazeGame.currentNumber > gameState.numberMazeGame.totalNumbers) {
+                        const timeTaken = (Date.now() - gameState.numberMazeGame.startTime) / 1000;
+                        const baseScore = gameState.numberMazeGame.baseScore;
+                        // 时间越短得分越高
+                        const finalScore = Math.floor(baseScore * (90 / Math.max(10, timeTaken)));
+                        
+                        // 检查迷宫奔跑者成就
+                        if (timeTaken < 60) {
+                            checkAchievements({ 
+                                type: 'maze_time', 
+                                time: timeTaken 
+                            });
+                        }
+                        
+                        // 移除键盘事件监听
+                        document.removeEventListener('keydown', window.mazeKeyPressHandler, true);
+                        window.mazeKeyPressHandler = null;
+                        
+                        // 显示完成
+                        setTimeout(() => {
+                            showLevelComplete(true, finalScore);
+                        }, 500);
+                        return;
+                    }
+                    
+                    // 重新渲染迷宫
+                    renderMaze();
+                } else if (maze[x][y] === 'path' || (maze[x][y].value && maze[x][y].value < gameState.numberMazeGame.currentNumber)) {
+                    // 可以移动到路径或已访问的数字
+                    currentPosition = [x, y];
+                    renderMaze();
+                }
+            }
+        }
+        
+        // 快速点击游戏（新增）
+        function loadQuickTapGame() {
+            // 重置游戏状态
+            gameState.quickTapGame = {
+                score: 0,
+                targetsHit: 0,
+                currentTargetSize: 60,
+                speed: 1500
+            };
+            
+            // 创建游戏标题
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'text-2xl font-bold mb-6 text-purple';
+            titleEl.textContent = '快速点击';
+            elements.gameContainer.appendChild(titleEl);
+            
+            // 创建得分显示
+            const scoreEl = document.createElement('div');
+            scoreEl.className = 'text-4xl font-bold mb-6 text-purple';
+            scoreEl.textContent = `得分: ${gameState.quickTapGame.score}`;
+            elements.gameContainer.appendChild(scoreEl);
+            
+            // 创建提示文本
+            const hintEl = document.createElement('div');
+            hintEl.className = 'text-sm text-gray-500 mb-6';
+            hintEl.textContent = '快速点击出现的目标，目标会越来越小、越来越快';
+            elements.gameContainer.appendChild(hintEl);
+            
+            // 创建游戏区域
+            const gameArea = document.createElement('div');
+            gameArea.className = 'relative w-full max-w-md aspect-square bg-gray-100 rounded-2xl overflow-hidden';
+            elements.gameContainer.appendChild(gameArea);
+            
+            // 显示下一个目标
+            function showNextTarget() {
+                if (gameState.isPaused || gameState.timeLeft <= 0) return;
+                
+                // 清除当前目标
+                while (gameArea.firstChild) {
+                    gameArea.removeChild(gameArea.firstChild);
+                }
+                
+                // 随机位置
+                const maxPos = gameArea.clientWidth - gameState.quickTapGame.currentTargetSize;
+                const x = Math.floor(Math.random() * maxPos);
+                const y = Math.floor(Math.random() * maxPos);
+                
+                // 创建目标
+                const target = document.createElement('div');
+                target.className = 'tap-target pop';
+                target.style.width = `${gameState.quickTapGame.currentTargetSize}px`;
+                target.style.height = `${gameState.quickTapGame.currentTargetSize}px`;
+                target.style.left = `${x}px`;
+                target.style.top = `${y}px`;
+                target.textContent = '+1';
+                
+                // 点击目标
+                target.addEventListener('click', () => {
+                    gameState.quickTapGame.score += 10;
+                    gameState.quickTapGame.targetsHit++;
+                    scoreEl.textContent = `得分: ${gameState.quickTapGame.score}`;
+                    
+                    // 显示得分动画
+                    const scorePopup = document.createElement('div');
+                    scorePopup.className = 'score-popup';
+                    scorePopup.textContent = '+10';
+                    gameArea.appendChild(scorePopup);
+                    
+                    // 难度递增
+                    if (gameState.quickTapGame.targetsHit % 3 === 0) {
+                        // 目标变小
+                        gameState.quickTapGame.currentTargetSize = Math.max(20, gameState.quickTapGame.currentTargetSize - 3);
+                        // 速度变快
+                        gameState.quickTapGame.speed = Math.max(500, gameState.quickTapGame.speed - 100);
+                    }
+                    
+                    // 移除当前目标
+                    gameArea.removeChild(target);
+                    
+                    // 显示下一个目标
+                    setTimeout(showNextTarget, 200);
+                });
+                
+                gameArea.appendChild(target);
+                
+                // 如果目标在一段时间内未被点击，自动消失
+                setTimeout(() => {
+                    if (gameArea.contains(target)) {
+                        gameArea.removeChild(target);
+                        showNextTarget();
+                    }
+                }, gameState.quickTapGame.speed);
+            }
+            
+            // 游戏结束检查
+            const endCheckInterval = setInterval(() => {
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(endCheckInterval);
+                    
+                    // 检查快速点击王成就
+                    if (gameState.quickTapGame.score >= 80) {
+                        checkAchievements({ 
+                            type: 'quick_tap_score', 
+                            score: gameState.quickTapGame.score 
+                        });
+                    }
+                    
+                    // 清除当前目标
+                    while (gameArea.firstChild) {
+                        gameArea.removeChild(gameArea.firstChild);
+                    }
+                    
+                    showLevelComplete(true, gameState.quickTapGame.score);
+                }
+            }, 1000);
+            
+            // 开始游戏
+            showNextTarget();
+        }
+        
+        // 数学挑战游戏（新增）
+        function loadMathChallengeGame() {
+            // 重置游戏状态
+            gameState.mathGame = {
+                currentQuestion: 0,
+                totalQuestions: 10,
+                correctAnswers: 0,
+                streak: 0,
+                difficulty: 1
+            };
+            
+            // 创建游戏标题
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'text-2xl font-bold mb-6 text-green-500';
+            titleEl.textContent = '数学挑战';
+            elements.gameContainer.appendChild(titleEl);
+            
+            // 创建问题计数器
+            const questionCounter = document.createElement('div');
+            questionCounter.className = 'text-lg mb-4';
+            questionCounter.textContent = `问题 ${gameState.mathGame.currentQuestion + 1}/${gameState.mathGame.totalQuestions}`;
+            elements.gameContainer.appendChild(questionCounter);
+            
+            // 创建当前问题
+            const questionEl = document.createElement('div');
+            questionEl.className = 'text-3xl font-bold mb-8 text-center';
+            elements.gameContainer.appendChild(questionEl);
+            
+            // 创建答案选项容器
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'grid grid-cols-2 gap-4 w-full max-w-md';
+            elements.gameContainer.appendChild(optionsContainer);
+            
+            // 创建当前得分
+            const scoreEl = document.createElement('div');
+            scoreEl.className = 'mt-8 text-lg font-bold';
+            scoreEl.textContent = `当前得分: 0`;
+            elements.gameContainer.appendChild(scoreEl);
+            
+            // 生成问题
+            function generateQuestion() {
+                if (gameState.mathGame.currentQuestion >= gameState.mathGame.totalQuestions) {
+                    // 完成所有问题
+                    const finalScore = gameState.mathGame.correctAnswers * 10 + Math.floor(gameState.mathGame.streak * 2);
+                    showLevelComplete(true, finalScore);
+                    return;
+                }
+                
+                // 更新问题计数器
+                questionCounter.textContent = `问题 ${gameState.mathGame.currentQuestion + 1}/${gameState.mathGame.totalQuestions}`;
+                
+                // 根据难度调整数字范围
+                const maxNumber = 10 + (gameState.mathGame.difficulty * 5);
+                
+                // 随机生成两个数字
+                const num1 = Math.floor(Math.random() * maxNumber) + 1;
+                const num2 = Math.floor(Math.random() * maxNumber) + 1;
+                
+                // 随机选择运算符
+                const operators = ['+', '-', '*'];
+                const operator = operators[Math.floor(Math.random() * operators.length)];
+                
+                // 确保减法结果不为负数
+                let result;
+                if (operator === '-') {
+                    // 确保num1 >= num2
+                    const temp = Math.max(num1, num2);
+                    num2 = Math.min(num1, num2);
+                    num1 = temp;
+                    result = num1 - num2;
+                } else if (operator === '+') {
+                    result = num1 + num2;
+                } else { // *
+                    result = num1 * num2;
+                }
+                
+                // 显示问题
+                questionEl.textContent = `${num1} ${operator} ${num2} = ?`;
+                
+                // 生成错误答案
+                const wrongAnswers = new Set();
+                while (wrongAnswers.size < 3) {
+                    // 生成一个接近正确答案的错误答案
+                    let wrong = result + (Math.floor(Math.random() * 7) - 3);
+                    if (wrong <= 0) wrong = 1; // 确保答案为正数
+                    if (wrong !== result) {
+                        wrongAnswers.add(wrong);
+                    }
+                }
+                
+                // 创建选项数组并打乱顺序
+                const options = [result, ...wrongAnswers];
+                options.sort(() => Math.random() - 0.5);
+                
+                // 清空并创建选项
+                optionsContainer.innerHTML = '';
+                options.forEach(option => {
+                    const optionEl = document.createElement('div');
+                    optionEl.className = 'math-option';
+                    optionEl.textContent = option;
+                    
+                    optionEl.addEventListener('click', () => {
+                        checkMathAnswer(option, result);
+                    });
+                    
+                    optionsContainer.appendChild(optionEl);
+                });
+            }
+            
+            // 检查答案
+            function checkMathAnswer(selected, correct) {
+                // 禁用所有选项
+                const options = optionsContainer.querySelectorAll('.math-option');
+                options.forEach(option => {
+                    option.style.pointerEvents = 'none';
+                    if (parseInt(option.textContent) === correct) {
+                        option.classList.add('bg-green-100', 'correct');
+                    } else if (parseInt(option.textContent) === selected) {
+                        option.classList.add('bg-red-100', 'incorrect');
+                    }
+                });
+                
+                if (selected === correct) {
+                    // 答案正确
+                    gameState.mathGame.correctAnswers++;
+                    gameState.mathGame.streak++;
+                    
+                    // 检查数学天才成就
+                    if (gameState.mathGame.streak >= 10) {
+                        checkAchievements({ 
+                            type: 'math_streak', 
+                            streak: gameState.mathGame.streak 
+                        });
+                    }
+                    
+                    // 每答对3题增加难度
+                    if (gameState.mathGame.correctAnswers % 3 === 0) {
+                        gameState.mathGame.difficulty++;
+                    }
+                } else {
+                    // 答案错误
+                    gameState.mathGame.streak = 0;
+                }
+                
+                // 更新得分
+                const currentScore = gameState.mathGame.correctAnswers * 10 + Math.floor(gameState.mathGame.streak * 2);
+                scoreEl.textContent = `当前得分: ${currentScore}`;
+                
+                // 进入下一题
+                gameState.mathGame.currentQuestion++;
+                setTimeout(generateQuestion, 1000);
+            }
+            
+            // 开始游戏
+            generateQuestion();
+        }
+        
+        // 词语配对游戏（新增）
+        function loadWordMatchGame() {
+            // 重置游戏状态
+            gameState.wordMatchGame = {
+                matchedPairs: 0,
+                totalPairs: 6,
+                startTime: Date.now()
+            };
+            
+            // 词语对（近义词）
+            const wordPairs = [
+                ['高兴', '快乐'],
+                ['美丽', '漂亮'],
+                ['快速', '迅速'],
+                ['安静', '宁静'],
+                ['巨大', '庞大'],
+                ['寒冷', '冰冷'],
+                ['困难', '艰难'],
+                ['聪明', '智慧'],
+                ['危险', '风险'],
+                ['友好', '友善']
+            ];
+            
+            // 随机选择6对词语
+            const selectedPairs = [];
+            while (selectedPairs.length < gameState.wordMatchGame.totalPairs) {
+                const randomIndex = Math.floor(Math.random() * wordPairs.length);
+                if (!selectedPairs.includes(wordPairs[randomIndex])) {
+                    selectedPairs.push(wordPairs[randomIndex]);
+                }
+            }
+            
+            // 打乱词语顺序
+            let words = [];
+            selectedPairs.forEach(pair => {
+                words.push(...pair);
+            });
+            words = [...words].sort(() => Math.random() - 0.5);
+            
+            let flippedCards = [];
+            let isProcessing = false;
+            let totalScore = 0;
+            
+            // 创建游戏标题
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'text-2xl font-bold mb-6 text-blue-500';
+            titleEl.textContent = '词语配对';
+            elements.gameContainer.appendChild(titleEl);
+            
+            // 创建状态文本
+            const statusEl = document.createElement('div');
+            statusEl.className = 'text-lg mb-6';
+            statusEl.textContent = `已匹配: ${gameState.wordMatchGame.matchedPairs}/${gameState.wordMatchGame.totalPairs}`;
+            elements.gameContainer.appendChild(statusEl);
+            
+            // 创建游戏网格
+            const gridEl = document.createElement('div');
+            gridEl.className = 'grid grid-cols-3 gap-4 w-full max-w-md';
+            elements.gameContainer.appendChild(gridEl);
+            
+            // 创建词语卡片
+            words.forEach((word, index) => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+                card.dataset.word = word;
+                card.dataset.index = index;
+                card.textContent = word;
+                
+                card.addEventListener('click', () => flipWordCard(card));
+                gridEl.appendChild(card);
+            });
+            
+            // 翻牌逻辑
+            function flipWordCard(card) {
+                if (isProcessing || flippedCards.length >= 2 || card.classList.contains('matched') || gameState.isPaused) {
+                    return;
+                }
+                
+                // 翻牌
+                card.classList.add('bg-blue-500/20', 'scale-105');
+                
+                flippedCards.push(card);
+                
+                // 检查是否翻了两张牌
+                if (flippedCards.length === 2) {
+                    isProcessing = true;
+                    
+                    // 检查是否是近义词对
+                    const isMatch = selectedPairs.some(pair => 
+                        (pair[0] === flippedCards[0].dataset.word && pair[1] === flippedCards[1].dataset.word) ||
+                        (pair[1] === flippedCards[0].dataset.word && pair[0] === flippedCards[1].dataset.word)
+                    );
+                    
+                    if (isMatch) {
+                        // 匹配成功
+                        flippedCards.forEach(c => {
+                            c.classList.add('matched', 'correct', 'bg-green-100');
+                            c.classList.remove('bg-blue-500/20', 'cursor-pointer');
+                        });
+                        
+                        gameState.wordMatchGame.matchedPairs++;
+                        statusEl.textContent = `已匹配: ${gameState.wordMatchGame.matchedPairs}/${gameState.wordMatchGame.totalPairs}`;
+                        
+                        // 计算得分
+                        const timeTaken = (Date.now() - gameState.wordMatchGame.startTime) / 1000;
+                        const pairScore = Math.floor(10 * (gameState.timeLeft / 60) * 2);
+                        totalScore += pairScore;
+                        
+                        // 显示得分
+                        const scorePopup = document.createElement('div');
+                        scorePopup.className = 'score-popup';
+                        scorePopup.textContent = `+${pairScore}`;
+                        elements.gameContainer.appendChild(scorePopup);
+                        
+                        // 检查游戏是否结束
+                        if (gameState.wordMatchGame.matchedPairs === gameState.wordMatchGame.totalPairs) {
+                            // 检查词语大师成就
+                            if (timeTaken < 40) {
+                                checkAchievements({ 
+                                    type: 'word_match_time', 
+                                    time: timeTaken 
+                                });
+                            }
+                            
+                            setTimeout(() => {
+                                showLevelComplete(true, totalScore);
+                            }, 1000);
+                            return;
+                        }
+                        
+                        flippedCards = [];
+                        isProcessing = false;
+                    } else {
+                        // 匹配失败
+                        flippedCards.forEach(c => {
+                            c.classList.add('incorrect', 'bg-red-100');
+                        });
+                        
+                        // 翻回去
+                        setTimeout(() => {
+                            flippedCards.forEach(c => {
+                                c.classList.remove('bg-blue-500/20', 'incorrect', 'bg-red-100', 'scale-105');
+                            });
+                            
+                            flippedCards = [];
+                            isProcessing = false;
+                        }, 1000);
+                    }
+                }
+            }
+        }
+        
+        // 开始游戏
+        function startGame() {
+            elements.startScreen.classList.add('hidden');
+            elements.levelSelectScreen.classList.remove('hidden');
+            
+            // 随机选择3个不重复的游戏
+            const shuffledGames = [...gameState.games].sort(() => Math.random() - 0.5);
+            gameState.selectedLevels = shuffledGames.slice(0, 3);
+            
+            // 显示选中的关卡
+            elements.levelSelectTitle.textContent = '已选择以下关卡：';
+            displaySelectedLevels();
+            
+            // 开始倒计时
+            setTimeout(startLevelCountdown, 1500);
+        }
+        
+        // 显示选中的关卡
+        function displaySelectedLevels() {
+            elements.selectedLevels.innerHTML = '';
+            
+            gameState.selectedLevels.forEach(game => {
+                const levelEl = document.createElement('div');
+                levelEl.className = 'bg-white rounded-xl p-4 h-24 flex flex-col items-center justify-center shadow-md scale-in';
+                levelEl.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-${game.color}/10 flex items-center justify-center mb-2">
+                        <i class="fa ${game.icon} text-xl text-${game.color}"></i>
+                    </div>
+                    <span class="font-bold text-sm">${game.name}</span>
+                `;
+                elements.selectedLevels.appendChild(levelEl);
+            });
+        }
+        
+        // 结束游戏
+        function endGame() {
+            clearInterval(gameState.timer);
+            elements.gameScreen.classList.add('hidden');
+            elements.resultScreen.classList.remove('hidden');
+            
+            // 更新结果页面
+            elements.finalScoreEl.textContent = gameState.totalScore;
+            elements.completedLevelsEl.textContent = `${gameState.levelScores.length}/${gameState.selectedLevels.length}`;
+            
+            // 计算评级
+            let rating = 'C级';
+            if (gameState.totalScore > 500) {
+                rating = 'S级';
+                checkAchievements({ type: 'rating', rating: 'S级' });
+            } else if (gameState.totalScore > 300) {
+                rating = 'A级';
+            } else if (gameState.totalScore > 150) {
+                rating = 'B级';
+            }
+            elements.finalRatingEl.textContent = rating;
+            
+            // 更新结果消息
+            elements.resultMessage.textContent = gameState.levelScores.length === gameState.selectedLevels.length 
+                ? '恭喜你完成了所有挑战！' 
+                : '挑战未完成，再接再厉！';
+            
+            // 添加到总排行榜
+            addToLeaderboard(gameState.totalScore);
+            
+            // 显示关卡详情
+            elements.levelsDetailsEl.innerHTML = '';
+            gameState.levelScores.forEach((level, index) => {
+                const detailEl = document.createElement('div');
+                detailEl.className = 'flex justify-between items-center p-2 bg-light rounded-lg';
+                detailEl.innerHTML = `
+                    <span>${index + 1}. ${level.name}</span>
+                    <span class="font-bold text-primary">${level.score}分</span>
+                `;
+                elements.levelsDetailsEl.appendChild(detailEl);
+            });
+            
+            // 检查初次胜利成就
+            if (gameState.levelScores.length === gameState.selectedLevels.length) {
+                checkAchievements({ type: 'first_win' });
+            }
+            
+            // 显示解锁的成就
+            showUnlockedAchievements(achievements.filter(a => a.unlocked).slice(-3));
+            
+            // 标记为已玩过游戏
+            storageManager.save('hasPlayed', true);
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            elements.resultScreen.classList.add('hidden');
+            startGame();
+        }
+        
+        // 返回主页
+        function backToHome() {
+            clearInterval(gameState.timer);
+            elements.gameScreen.classList.add('hidden');
+            elements.resultScreen.classList.add('hidden');
+            elements.levelSelectScreen.classList.add('hidden');
+            elements.startScreen.classList.remove('hidden');
+        }
+        
+        // 初始化游戏
+        function init() {
+            initGameData();
+            initEventListeners();
+        }
+        
+        // 启动游戏
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
