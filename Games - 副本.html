@@ -1,0 +1,3312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>派对游戏合集</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B6B', // 派对红
+                        secondary: '#4ECDC4', // 派对蓝
+                        accent: '#FFD166', // 派对黄
+                        dark: '#2A2D34',
+                        light: '#F7FFF7'
+                    },
+                    fontFamily: {
+                        party: ['"Comic Sans MS"', '"Marker Felt"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .party-shadow {
+                box-shadow: 0 6px 0 rgba(0,0,0,0.1), 0 8px 10px rgba(0,0,0,0.05);
+            }
+            .party-hover {
+                transition: all 0.2s ease;
+            }
+            .party-hover:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 0 rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.07);
+            }
+            .bounce-light {
+                animation: bounce-light 2s infinite;
+            }
+            @keyframes bounce-light {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+            }
+            .pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+        }
+    </style>
+    
+    <style>
+        /* 全局动画和基础样式 */
+        body {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFF0E6 100%);
+            background-image: 
+                radial-gradient(#FFD16615 0.5px, transparent 0.5px),
+                radial-gradient(#4ECDC415 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 动态背景元素 */
+        .bg-element {
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        /* 游戏卡片效果 */
+        .game-card {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .game-card:hover {
+            transform: scale(1.03) rotate(1deg);
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f7f7f7;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #FFD166;
+            border-radius: 10px;
+            border: 3px solid #f7f7f7;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FFC533;
+        }
+        
+        /* 游戏过渡动画 */
+        .game-transition {
+            animation: game-transition 0.5s ease-out;
+        }
+        
+        @keyframes game-transition {
+            0% { transform: scale(0.8) opacity(0); }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1) opacity(1); }
+        }
+        
+        /* 关卡转场动画 */
+        .level-transition {
+            animation: level-transition 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes level-transition {
+            0% { transform: translateX(0) scale(1); opacity(1); }
+            50% { transform: translateX(-50px) scale(0.8); opacity(0.5); }
+            100% { transform: translateX(-100vw) scale(0.5); opacity(0); }
+        }
+        
+        .level-transition-in {
+            animation: level-transition-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes level-transition-in {
+            0% { transform: translateX(100vw) scale(0.5); opacity(0); }
+            50% { transform: translateX(50px) scale(0.8); opacity(0.5); }
+            100% { transform: translateX(0) scale(1); opacity(1); }
+        }
+        
+        /* 得分动画 */
+        .score-popup {
+            animation: score-popup 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            position: absolute;
+            color: #FF6B6B;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        
+        @keyframes score-popup {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-30px); opacity: 0; }
+        }
+        
+        /* 跑酷游戏相关样式 */
+        #parkour-game {
+            position: relative;
+            overflow: hidden;
+            height: 300px;
+        }
+        
+        .player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #FF6B6B;
+            border-radius: 50%;
+            bottom: 0;
+            left: 50px;
+            z-index: 20;
+            transition: all 0.1s;
+        }
+        
+        .obstacle {
+            position: absolute;
+            width: 30px;
+            background-color: #2A2D34;
+            bottom: 0;
+            z-index: 10;
+        }
+        
+        .ground {
+            position: absolute;
+            height: 10px;
+            width: 100%;
+            background-color: #4ECDC4;
+            bottom: 0;
+            z-index: 5;
+        }
+        
+        /* 音游相关样式 */
+        #music-game {
+            position: relative;
+            overflow: hidden;
+            height: 300px;
+        }
+        
+        .note {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            z-index: 10;
+            transition: transform 0.1s linear;
+        }
+        
+        .note.hold {
+            border-radius: 20px;
+            width: 30px;
+        }
+        
+        .hit-area {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px dashed #2A2D34;
+            bottom: 20px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .hit-area.active {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 记忆卡片样式 */
+        .memory-card {
+            width: 100%;
+            height: 80px;
+            position: relative;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .memory-card-inner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .memory-card.flipped .memory-card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .memory-card.matched .memory-card-inner {
+            animation: matched 0.5s ease-in-out;
+        }
+        
+        @keyframes matched {
+            0% { transform: rotateY(180deg) scale(1); }
+            50% { transform: rotateY(180deg) scale(1.1); }
+            100% { transform: rotateY(180deg) scale(1); }
+        }
+        
+        .memory-card-front, .memory-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 24px;
+        }
+        
+        .memory-card-front {
+            background-color: #FF6B6B;
+            color: white;
+        }
+        
+        .memory-card-back {
+            background-color: #4ECDC4;
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        /* 反应测试样式 */
+        #reaction-game {
+            position: relative;
+            overflow: hidden;
+            height: 300px;
+        }
+        
+        .reaction-target {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .reaction-target.hit {
+            animation: hit 0.3s ease-out;
+        }
+        
+        @keyframes hit {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        /* 打字比赛样式 */
+        #typing-game .current-char {
+            text-decoration: underline;
+            font-weight: bold;
+            color: #FF6B6B;
+        }
+        
+        #typing-game .correct {
+            color: #4CAF50;
+        }
+        
+        #typing-game .incorrect {
+            color: #F44336;
+            text-decoration: line-through;
+        }
+        
+        /* 快速点击样式 */
+        #click-game {
+            position: relative;
+            height: 300px;
+        }
+        
+        #click-game .click-target {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none;
+            color: white;
+            font-weight: bold;
+        }
+        
+        #click-game .click-target.popped {
+            animation: pop 0.3s ease-out forwards;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        #click-game .click-target.clicked {
+            animation: click 0.2s ease-out forwards;
+        }
+        
+        @keyframes click {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.8); }
+            100% { transform: scale(0); }
+        }
+        
+        /* 颜色单词样式 */
+        #color-word-game .color-word {
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        #color-word-game .color-word:hover {
+            transform: scale(1.05);
+        }
+        
+        #color-word-game .color-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        #color-word-game .color-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        #color-word-game .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        #color-word-game .color-option.correct {
+            animation: correct 0.5s ease-in-out;
+        }
+        
+        #color-word-game .color-option.incorrect {
+            animation: incorrect 0.5s ease-in-out;
+        }
+        
+        @keyframes correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); box-shadow: 0 0 10px green; }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes incorrect {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9); box-shadow: 0 0 10px red; }
+            100% { transform: scale(1); }
+        }
+        
+        /* 单词消消乐样式 */
+        #word-game {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #word-game .letters-container {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        #word-game .letter {
+            width: 50px;
+            height: 50px;
+            background-color: #FFD166;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #word-game .letter:hover {
+            transform: translateY(-5px);
+        }
+        
+        #word-game .letter.selected {
+            background-color: #FF6B6B;
+            color: white;
+        }
+        
+        #word-game .solution {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        
+        #word-game .solution-letter {
+            width: 40px;
+            height: 40px;
+            border-bottom: 3px solid #2A2D34;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        /* 数字拼图样式 */
+        #number-puzzle {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #number-puzzle .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        
+        #number-puzzle .puzzle-cell {
+            background-color: #4ECDC4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #number-puzzle .puzzle-cell.empty {
+            background-color: #eee;
+            cursor: default;
+        }
+        
+        #number-puzzle .puzzle-cell:hover:not(.empty) {
+            transform: scale(1.05);
+            background-color: #3dbbba;
+        }
+        
+        /* 水果忍者样式 */
+        #fruit-ninja {
+            position: relative;
+            height: 300px;
+            overflow: hidden;
+            background-color: #87CEEB;
+            border-radius: 10px;
+        }
+        
+        #fruit-ninja .fruit {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        #fruit-ninja .fruit.sliced {
+            animation: slice 0.5s ease-out forwards;
+        }
+        
+        @keyframes slice {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.2) rotate(10deg); opacity: 0.8; }
+            100% { transform: scale(0.5) rotate(20deg); opacity: 0; }
+        }
+        
+        #fruit-ninja .bomb {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        #fruit-ninja .bomb.hit {
+            animation: explode 0.5s ease-out forwards;
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(1); }
+            50% { transform: scale(2); opacity: 0.8; box-shadow: 0 0 20px red; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        
+        /* 猜单词样式 */
+        #hangman-game {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #hangman-game .hangman-drawing {
+            width: 100px;
+            height: 150px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        #hangman-game .word-display {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        #hangman-game .letter-box {
+            width: 30px;
+            height: 40px;
+            border-bottom: 3px solid #2A2D34;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        #hangman-game .keyboard {
+            display: grid;
+            grid-template-columns: repeat(9, 30px);
+            gap: 5px;
+        }
+        
+        #hangman-game .key {
+            width: 30px;
+            height: 30px;
+            background-color: #eee;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #hangman-game .key.used {
+            background-color: #ccc;
+            color: #666;
+            cursor: default;
+        }
+        
+        #hangman-game .key.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        #hangman-game .key.incorrect {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        /* 加载动画 */
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #FFF;
+            border-bottom-color: #FF6B6B;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+        
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 关卡完成动画 */
+        .level-complete {
+            animation: level-complete 1s ease-out;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFD166;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 100;
+            opacity: 0;
+        }
+        
+        @keyframes level-complete {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+        
+        /* 倒计时动画 */
+        .countdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8rem;
+            font-weight: bold;
+            color: rgba(255, 107, 107, 0.8);
+            z-index: 1000;
+            opacity: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .countdown-animate {
+            animation: countdown 1s ease-out forwards;
+        }
+        
+        @keyframes countdown {
+            0% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+        }
+        
+        /* 色盲派对关卡指示器 */
+        .color-level-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .color-level-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ddd;
+        }
+        
+        .color-level-dot.completed {
+            background-color: #4CAF50;
+        }
+        
+        /* 滑块拼图样式 */
+        #slider-puzzle {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #slider-puzzle .slider-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 60px);
+            grid-template-rows: repeat(4, 60px);
+            gap: 2px;
+            margin: 10px 0;
+        }
+        
+        #slider-puzzle .slider-tile {
+            background-color: #FF6B6B;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #slider-puzzle .slider-tile.empty {
+            background-color: #eee;
+            cursor: default;
+        }
+        
+        #slider-puzzle .slider-tile:hover:not(.empty) {
+            background-color: #ff5252;
+        }
+    </style>
+</head>
+<body class="font-party text-dark">
+    <!-- 动态背景元素 -->
+    <div class="bg-element" style="width: 300px; height: 300px; background: #FF6B6B; top: -150px; left: -150px;"></div>
+    <div class="bg-element" style="width: 200px; height: 200px; background: #4ECDC4; bottom: 100px; right: -100px;"></div>
+    <div class="bg-element" style="width: 150px; height: 150px; background: #FFD166; top: 30%; right: 10%;"></div>
+    
+    <!-- 顶部导航 -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xl">
+                    <i class="fa fa-gamepad"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">派对游戏合集</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="sound-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-volume-up text-xl"></i>
+                </button>
+                <button id="help-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-question text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 开始界面 -->
+        <section id="start-screen" class="py-8 text-center">
+            <div class="max-w-3xl mx-auto">
+                <div class="relative inline-block mb-8">
+                    <img src="https://picsum.photos/400/200" alt="派对游戏合集封面" class="rounded-3xl shadow shadow-xl">
+                    <div class="absolute -bottom-4 -right-4 bg-accent text-dark px-4 py-2 rounded-full font-bold shadow-lg bounce-light">
+                        15款游戏!
+                    </div>
+                </div>
+                
+                <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4 text-primary">随机闯关挑战</h2>
+                <p class="text-lg mb-8 max-w-xl mx-auto">从多个趣味关卡中随机抽取4个进行挑战，完成所有关卡获得最终奖励！</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
+                    <!-- 基础关卡展示 -->
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-paint-brush text-4xl text-primary"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">色盲派对</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-secondary/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-calculator text-4xl text-secondary"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">24点游戏</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-accent/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-font text-4xl text-accent"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">单词消消乐</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-green-100 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-running text-4xl text-green-500"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">障碍跑酷</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-purple-100 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-music text-4xl text-purple-500"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">节奏大师</h3>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap justify-center gap-4 mb-10">
+                    <span class="bg-primary/10 text-primary px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-check-circle mr-1"></i> 随机4个关卡
+                    </span>
+                    <span class="bg-secondary/10 text-secondary px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-clock-o mr-1"></i> 限时挑战
+                    </span>
+                    <span class="bg-accent/10 text-accent px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-trophy mr-1"></i> 闯关奖励
+                    </span>
+                    <span class="bg-dark/10 text-dark px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-plus-circle mr-1"></i> 15种关卡
+                    </span>
+                </div>
+                
+                <button id="start-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg party-hover mb-6">
+                    开始闯关 <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+                
+                <p class="text-sm text-gray-500">包含15种不同类型的游戏关卡</p>
+            </div>
+        </section>
+        
+        <!-- 关卡选择/加载界面 -->
+        <section id="level-select" class="py-8 hidden">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-2xl font-bold mb-8 text-primary">正在随机选择关卡...</h2>
+                
+                <div class="flex justify-center mb-8">
+                    <div class="loader"></div>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-4 mb-8" id="selected-levels">
+                    <!-- 这里会动态显示选中的4个关卡 -->
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.2s"></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.4s"></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.6s"></div>
+                    </div>
+                </div>
+                
+                <p class="text-gray-600">准备好迎接挑战了吗？</p>
+            </div>
+        </section>
+        
+        <!-- 游戏进行界面 -->
+        <section id="game-screen" class="py-8 hidden">
+            <div class="max-w-3xl mx-auto">
+                <!-- 游戏进度 -->
+                <div class="bg-white rounded-xl p-4 shadow-md mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold">闯关进度</h3>
+                        <div class="text-sm text-gray-600">
+                            <span id="current-level">1</span>/4 关卡
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="progress-bar" class="bg-primary h-3 rounded-full" style="width: 25%"></div>
+                    </div>
+                    <div class="flex justify-between mt-4 text-sm">
+                        <div>
+                            <span class="font-bold text-accent">总分: </span>
+                            <span id="total-score">0</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-secondary">剩余时间: </span>
+                            <span id="level-time" class="font-bold"></span>秒
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 游戏容器 -->
+                <div id="game-container" class="bg-white rounded-2xl shadow-lg p-6 min-h-[400px] flex flex-col items-center justify-center">
+                    <!-- 游戏内容会动态加载到这里 -->
+                </div>
+            </div>
+        </section>
+        
+        <!-- 游戏结束界面 -->
+        <section id="result-screen" class="py-8 text-center hidden">
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-2xl p-8 shadow-xl mb-8">
+                    <div class="inline-block p-4 rounded-full bg-accent/20 mb-6">
+                        <i class="fa fa-trophy text-5xl text-accent"></i>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold mb-2">闯关完成！</h2>
+                    <p class="text-gray-600 mb-6">恭喜你完成了所有挑战</p>
+                    
+                    <div class="bg-light rounded-xl p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-gray-600">最终得分</span>
+                            <span id="final-score" class="text-3xl font-bold text-primary">0</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-gray-600">完成关卡</span>
+                            <span id="completed-levels" class="font-bold">4/4</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">获得评级</span>
+                            <span id="final-rating" class="font-bold text-accent">S级</span>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-bold mb-3">关卡详情</h3>
+                    <div id="levels-details" class="space-y-3 mb-8">
+                        <!-- 关卡详情会动态加载到这里 -->
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="play-again-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-full shadow-lg party-hover">
+                        再玩一次 <i class="fa fa-refresh ml-1"></i>
+                    </button>
+                    <button id="back-to-home-btn" class="bg-white hover:bg-gray-50 text-dark font-bold py-3 px-8 rounded-full shadow-lg party-hover border border-gray-200">
+                        返回主页 <i class="fa fa-home ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 帮助模态框 -->
+        <div id="help-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">游戏帮助</h3>
+                    <button id="close-help-btn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <h4 class="font-bold text-primary mb-1">游戏规则</h4>
+                        <p>系统会从所有关卡中随机选择4个不同的游戏，你需要依次完成这些关卡。每个关卡都有时间限制，完成越快，得分越高！如果有一关时间耗尽或者中途失误，游戏将直接结束并结算。</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-primary mb-1">关卡类型</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><span class="font-bold">色盲派对：</span>在限时内找出颜色不同的方块，共3小关，连续完成三次正确点击算通关</li>
+                            <li><span class="font-bold">24点游戏：</span>使用给出的4个数字，通过加减乘除得到24，30秒内答出即可过关</li>
+                            <li><span class="font-bold">单词消消乐：</span>拼出被打乱字母顺序的单词</li>
+                            <li><span class="font-bold">障碍跑酷：</span>控制角色跳跃躲避障碍物</li>
+                            <li><span class="font-bold">节奏大师：</span>按节奏点击掉落的音符</li>
+                            <li><span class="font-bold">记忆翻牌：</span>找出相同图案的卡片对</li>
+                            <li><span class="font-bold">反应测试：</span>快速点击出现的目标</li>
+                            <li><span class="font-bold">打字比赛：</span>按顺序输入每个汉字，完成所有单个汉字输入即为成功</li>
+                            <li><span class="font-bold">快速点击：</span>在限时内尽可能多地点击目标</li>
+                            <li><span class="font-bold">颜色单词：</span>选择单词描述的颜色而非单词本身的颜色</li>
+                            <li><span class="font-bold">数字拼图：</span>将数字按顺序排列成1-8</li>
+                            <li><span class="font-bold">水果忍者：</span>点击切开飞来的水果，避开炸弹</li>
+                            <li><span class="font-bold">猜单词：</span>猜出隐藏的单词，有6次错误机会</li>
+                            <li><span class="font-bold">滑块拼图：</span>将数字滑块按顺序排列</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-primary mb-1">操作说明</h4>
+                        <p>根据不同游戏使用键盘或鼠标操作，游戏内会有具体提示。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center items-center space-x-2 mb-3">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                    <i class="fa fa-gamepad"></i>
+                </div>
+                <h2 class="text-xl font-bold">派对游戏合集</h2>
+            </div>
+            <p class="text-sm text-gray-400">享受游戏的乐趣吧！</p>
+        </div>
+    </footer>
+
+    <script>
+        // 创建额外的背景元素增加视觉效果
+        function createBackgroundElements() {
+            const count = 5;
+            for (let i = 0; i < count; i++) {
+                const element = document.createElement('div');
+                element.className = 'bg-element';
+                
+                const size = 50 + Math.random() * 150;
+                const color = ['#FF6B6B', '#4ECDC4', '#FFD166', '#9B6AFA'][Math.floor(Math.random() * 4)];
+                const top = Math.random() * 100;
+                const left = Math.random() * 100;
+                
+                element.style.width = `${size}px`;
+                element.style.height = `${size}px`;
+                element.style.background = color;
+                element.style.top = `${top}%`;
+                element.style.left = `${left}%`;
+                element.style.animation = `float ${15 + Math.random() * 30}s linear infinite`;
+                
+                document.body.appendChild(element);
+            }
+        }
+        
+        // 添加浮动动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% { transform: translate(0, 0) rotate(0deg); }
+                25% { transform: translate(20px, -10px) rotate(5deg); }
+                50% { transform: translate(0, -20px) rotate(0deg); }
+                75% { transform: translate(-20px, -10px) rotate(-5deg); }
+                100% { transform: translate(0, 0) rotate(0deg); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 初始化背景元素
+        createBackgroundElements();
+        
+        // 游戏数据 - 每关时间设置为15-35秒
+        const games = [
+            {
+                id: 'color-game',
+                name: '色盲派对',
+                icon: 'fa-paint-brush',
+                color: 'primary',
+                description: '找出颜色不同的方块（3小关）',
+                timeLimit: 30 // 30秒
+            },
+            {
+                id: '24-game',
+                name: '24点游戏',
+                icon: 'fa-calculator',
+                color: 'secondary',
+                description: '计算出24点赢取分数',
+                timeLimit: 30
+            },
+            {
+                id: 'word-game',
+                name: '单词消消乐',
+                icon: 'fa-font',
+                color: 'accent',
+                description: '拼出正确的单词',
+                timeLimit: 30
+            },
+            {
+                id: 'parkour-game',
+                name: '障碍跑酷',
+                icon: 'fa-running',
+                color: 'green-500',
+                description: '跳跃躲避障碍物',
+                timeLimit: 25
+            },
+            {
+                id: 'music-game',
+                name: '节奏大师',
+                icon: 'fa-music',
+                color: 'purple-500',
+                description: '按节奏点击音符',
+                timeLimit: 20
+            },
+            {
+                id: 'memory-game',
+                name: '记忆翻牌',
+                icon: 'fa-clone',
+                color: 'indigo-500',
+                description: '找出相同图案的卡片',
+                timeLimit: 30
+            },
+            {
+                id: 'reaction-game',
+                name: '反应测试',
+                icon: 'fa-bolt',
+                color: 'yellow-500',
+                description: '快速点击出现的目标',
+                timeLimit: 15
+            },
+            {
+                id: 'typing-game',
+                name: '打字比赛',
+                icon: 'fa-keyboard-o',
+                color: 'blue-500',
+                description: '按顺序输入每个汉字',
+                timeLimit: 30
+            },
+            {
+                id: 'click-game',
+                name: '快速点击',
+                icon: 'fa-mouse-pointer',
+                color: 'red-500',
+                description: '尽可能多地点击目标',
+                timeLimit: 20
+            },
+            {
+                id: 'color-word-game',
+                name: '颜色单词',
+                icon: 'fa-font',
+                color: 'pink-500',
+                description: '选择单词描述的颜色',
+                timeLimit: 25
+            },
+            // 新增的五个游戏
+            {
+                id: 'number-puzzle',
+                name: '数字拼图',
+                icon: 'fa-th',
+                color: 'teal-500',
+                description: '将数字按顺序排列',
+                timeLimit: 40
+            },
+            {
+                id: 'fruit-ninja',
+                name: '水果忍者',
+                icon: 'fa-cutlery',
+                color: 'orange-500',
+                description: '切开飞来的水果',
+                timeLimit: 25
+            },
+            {
+                id: 'hangman-game',
+                name: '猜单词',
+                icon: 'fa-question-circle',
+                color: 'brown-500',
+                description: '猜出隐藏的单词',
+                timeLimit: 40
+            },
+            {
+                id: 'slider-puzzle',
+                name: '滑块拼图',
+                icon: 'fa-puzzle-piece',
+                color: 'blue-600',
+                description: '将滑块按顺序排列',
+                timeLimit: 50
+            }
+        ];
+        
+        // 游戏状态
+        let gameState = {
+            selectedGames: [],
+            currentGameIndex: 0,
+            totalScore: 0,
+            gameScores: [],
+            timer: null,
+            timeLeft: 0,
+            // 游戏特定状态
+            colorGame: {
+                currentLevel: 0,
+                requiredCorrect: 3
+            },
+            memoryGame: {
+                flippedCards: [],
+                matchedPairs: 0,
+                totalPairs: 0,
+                isProcessing: false
+            },
+            numberPuzzle: {
+                board: [],
+                emptyCell: {row: 2, col: 2}
+            },
+            fruitNinja: {
+                score: 0,
+                spawnInterval: null
+            },
+            hangman: {
+                word: "",
+                guessedLetters: [],
+                incorrectGuesses: 0,
+                maxIncorrect: 6
+            },
+            sliderPuzzle: {
+                board: [],
+                emptyCell: {row: 3, col: 3},
+                moves: 0
+            }
+        };
+        
+        // DOM元素
+        const startScreen = document.getElementById('start-screen');
+        const levelSelectScreen = document.getElementById('level-select');
+        const gameScreen = document.getElementById('game-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const gameContainer = document.getElementById('game-container');
+        const selectedLevelsContainer = document.getElementById('selected-levels');
+        const progressBar = document.getElementById('progress-bar');
+        const currentLevelEl = document.getElementById('current-level');
+        const totalScoreEl = document.getElementById('total-score');
+        const levelTimeEl = document.getElementById('level-time');
+        const finalScoreEl = document.getElementById('final-score');
+        const finalRatingEl = document.getElementById('final-rating');
+        const levelsDetailsContainer = document.getElementById('levels-details');
+        const helpModal = document.getElementById('help-modal');
+        
+        // 按钮
+        const startBtn = document.getElementById('start-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const backToHomeBtn = document.getElementById('back-to-home-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const closeHelpBtn = document.getElementById('close-help-btn');
+        const soundToggleBtn = document.getElementById('sound-toggle');
+        
+        // 事件监听
+        startBtn.addEventListener('click', startGameSelection);
+        playAgainBtn.addEventListener('click', restartGame);
+        backToHomeBtn.addEventListener('click', goToHome);
+        helpBtn.addEventListener('click', toggleHelpModal);
+        closeHelpBtn.addEventListener('click', toggleHelpModal);
+        soundToggleBtn.addEventListener('click', toggleSound);
+        
+        // 防止页面刷新或关闭（禁止中途退出）
+        window.addEventListener('beforeunload', function(e) {
+            // 游戏进行中才阻止
+            if (gameScreen.classList.contains('hidden') === false) {
+                e.preventDefault();
+                e.returnValue = '游戏正在进行中，确定要离开吗？';
+                return e.returnValue;
+            }
+        });
+        
+        // 随机选择4个不同的游戏
+        function selectRandomGames() {
+            // 复制游戏列表并打乱顺序
+            const shuffledGames = [...games].sort(() => Math.random() - 0.5);
+            // 选择前4个游戏
+            return shuffledGames.slice(0, 4);
+        }
+        
+        // 创建倒计时动画
+        function createCountdown(callback) {
+            // 清除可能存在的旧倒计时
+            const oldCountdown = document.querySelector('.countdown');
+            if (oldCountdown) oldCountdown.remove();
+            
+            let count = 3;
+            
+            function showNumber(num) {
+                const countdown = document.createElement('div');
+                countdown.className = 'countdown countdown-animate';
+                countdown.textContent = num;
+                document.body.appendChild(countdown);
+                
+                // 播放音效（如果需要）
+                if (num === 1) {
+                    setTimeout(() => {
+                        countdown.remove();
+                        if (callback) callback();
+                    }, 1000);
+                } else {
+                    setTimeout(() => {
+                        countdown.remove();
+                        showNumber(num - 1);
+                    }, 1000);
+                }
+            }
+            
+            showNumber(count);
+        }
+        
+        // 开始游戏选择
+        function startGameSelection() {
+            startScreen.classList.add('hidden');
+            levelSelectScreen.classList.remove('hidden');
+            
+            // 随机选择游戏
+            gameState.selectedGames = selectRandomGames();
+            
+            // 显示选中的游戏
+            setTimeout(() => {
+                selectedLevelsContainer.innerHTML = '';
+                gameState.selectedGames.forEach((game, index) => {
+                    setTimeout(() => {
+                        const gameEl = document.createElement('div');
+                        gameEl.className = `bg-white rounded-xl p-4 h-24 flex flex-col items-center justify-center shadow-md game-transition`;
+                        gameEl.innerHTML = `
+                            <div class="w-12 h-12 rounded-full bg-${game.color}/10 flex items-center justify-center mb-2">
+                                <i class="fa ${game.icon} text-${game.color}"></i>
+                            </div>
+                            <span class="font-bold text-sm">${game.name}</span>
+                        `;
+                        selectedLevelsContainer.appendChild(gameEl);
+                    }, index * 300);
+                });
+                
+                // 显示关卡加载动画和倒计时
+                setTimeout(() => {
+                    createCountdown(startFirstGame);
+                }, 1500);
+            }, 1000);
+        }
+        
+        // 开始第一个游戏
+        function startFirstGame() {
+            gameState.currentGameIndex = 0;
+            gameState.totalScore = 0;
+            gameState.gameScores = [];
+            
+            levelSelectScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            
+            loadCurrentGame();
+        }
+        
+        // 加载当前游戏
+        function loadCurrentGame() {
+            const currentGame = gameState.selectedGames[gameState.currentGameIndex];
+            
+            // 更新进度
+            currentLevelEl.textContent = gameState.currentGameIndex + 1;
+            progressBar.style.width = `${((gameState.currentGameIndex + 1) / 4) * 100}%`;
+            totalScoreEl.textContent = gameState.totalScore;
+            
+            // 重置时间
+            gameState.timeLeft = currentGame.timeLimit;
+            levelTimeEl.textContent = gameState.timeLeft;
+            
+            // 清空游戏容器并添加进入动画
+            gameContainer.innerHTML = '';
+            gameContainer.classList.remove('level-transition', 'level-transition-in');
+            
+            // 根据游戏ID加载不同游戏
+            switch(currentGame.id) {
+                case 'color-game':
+                    loadColorGame();
+                    break;
+                case '24-game':
+                    load24Game();
+                    break;
+                case 'word-game':
+                    loadWordGame();
+                    break;
+                case 'parkour-game':
+                    loadParkourGame();
+                    break;
+                case 'music-game':
+                    loadMusicGame();
+                    break;
+                case 'memory-game':
+                    loadMemoryGame();
+                    break;
+                case 'reaction-game':
+                    loadReactionGame();
+                    break;
+                case 'typing-game':
+                    loadTypingGame();
+                    break;
+                case 'click-game':
+                    loadClickGame();
+                    break;
+                case 'color-word-game':
+                    loadColorWordGame();
+                    break;
+                case 'number-puzzle':
+                    loadNumberPuzzle();
+                    break;
+                case 'fruit-ninja':
+                    loadFruitNinja();
+                    break;
+                case 'hangman-game':
+                    loadHangmanGame();
+                    break;
+                case 'slider-puzzle':
+                    loadSliderPuzzle();
+                    break;
+                default:
+                    gameContainer.innerHTML = `<p class="text-center">加载${currentGame.name}中...</p>`;
+                    setTimeout(() => {
+                        startGameTimer();
+                    }, 1000);
+            }
+        }
+        
+        // 1. 色盲派对游戏
+        function loadColorGame() {
+            // 重置游戏状态
+            gameState.colorGame.currentLevel = 0;
+            
+            const gameEl = document.createElement('div');
+            gameEl.id = 'color-game';
+            gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+            
+            // 添加关卡指示器
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">色盲派对</h3>
+                <p class="text-gray-600 mb-6 text-center">找出颜色不同的方块，共3关</p>
+                <div class="color-level-indicator">
+                    <div class="color-level-dot"></div>
+                    <div class="color-level-dot"></div>
+                    <div class="color-level-dot"></div>
+                </div>
+                <div id="color-grid" class="grid grid-cols-5 gap-4 my-6"></div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            // 开始第一小关
+            startColorGameLevel();
+            
+            // 开始计时器
+            startGameTimer();
+        }
+        
+        function startColorGameLevel() {
+            const grid = document.getElementById('color-grid');
+            grid.innerHTML = '';
+            
+            // 更新关卡指示器
+            const dots = document.querySelectorAll('.color-level-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('completed', index < gameState.colorGame.currentLevel);
+            });
+            
+            // 生成基础颜色
+            const hue = Math.floor(Math.random() * 360);
+            const baseColor = `hsl(${hue}, 70%, 60%)`;
+            
+            // 生成略有不同的目标颜色
+            const targetOffset = 20 + Math.random() * 40;
+            const targetColor = `hsl(${(hue + targetOffset) % 360}, 70%, 60%)`;
+            
+            // 随机选择目标位置
+            const targetPosition = Math.floor(Math.random() * 25);
+            
+            // 创建25个方块
+            for (let i = 0; i < 25; i++) {
+                const square = document.createElement('div');
+                square.className = 'w-16 h-16 rounded-lg cursor-pointer transition-transform hover:scale-105';
+                square.style.backgroundColor = i === targetPosition ? targetColor : baseColor;
+                square.dataset.isTarget = i === targetPosition;
+                
+                square.addEventListener('click', function() {
+                    if (this.dataset.isTarget === 'true') {
+                        // 正确点击
+                        this.classList.add('scale-0');
+                        
+                        // 显示得分动画
+                        showScorePopup(this, 100);
+                        
+                        gameState.colorGame.currentLevel++;
+                        
+                        // 检查是否完成所有小关
+                        if (gameState.colorGame.currentLevel >= gameState.colorGame.requiredCorrect) {
+                            // 完成所有小关，进入下一关
+                            const totalLevelScore = 300 + (gameState.timeLeft * 5);
+                            completeCurrentGame(totalLevelScore);
+                        } else {
+                            // 进入下一小关
+                            setTimeout(startColorGameLevel, 500);
+                        }
+                    } else {
+                        // 错误点击，游戏结束
+                        gameOver();
+                    }
+                });
+                
+                grid.appendChild(square);
+            }
+        }
+        
+        // 2. 24点游戏
+        function load24Game() {
+            const gameEl = document.createElement('div');
+            gameEl.id = '24-game';
+            gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+            
+            // 生成4个1-10的随机数
+            const numbers = [];
+            for (let i = 0; i < 4; i++) {
+                numbers.push(Math.floor(Math.random() * 10) + 1);
+            }
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">24点游戏</h3>
+                <p class="text-gray-600 mb-6 text-center">使用下方4个数字，通过加减乘除计算出24</p>
+                
+                <div class="flex gap-4 mb-8">
+                    ${numbers.map(num => `
+                        <div class="w-16 h-16 bg-secondary/20 rounded-xl flex items-center justify-center text-2xl font-bold text-secondary">
+                            ${num}
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="w-full max-w-md">
+                    <input type="text" id="24-solution" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg mb-4"
+                        placeholder="例如: 3*4+5+5" />
+                    <button id="24-submit" class="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg font-bold">
+                        提交答案
+                    </button>
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            // 添加事件监听
+            const solutionInput = document.getElementById('24-solution');
+            const submitBtn = document.getElementById('24-submit');
+            
+            // 提交答案处理
+            function handleSubmit() {
+                const solution = solutionInput.value.trim();
+                
+                // 简单验证答案中是否只包含给定数字和运算符
+                const numberStrs = numbers.map(n => n.toString());
+                let isValid = true;
+                
+                // 检查是否使用了正确的数字
+                for (let i = 0; i < solution.length; i++) {
+                    const char = solution[i];
+                    if (!['+', '-', '*', '/', '(', ')', ' '].includes(char) && 
+                        !numberStrs.some(num => solution.startsWith(num, i))) {
+                        isValid = false;
+                        break;
+                    }
+                }
+                
+                if (!isValid) {
+                    alert('请只使用提供的数字和运算符！');
+                    return;
+                }
+                
+                try {
+                    // 计算表达式结果
+                    const result = eval(solution.replace(/×/g, '*').replace(/÷/g, '/'));
+                    
+                    if (Math.abs(result - 24) < 0.001) {
+                        // 答案正确
+                        const score = 300 + (gameState.timeLeft * 5);
+                        completeCurrentGame(score);
+                    } else {
+                        alert('答案不正确，请再试一次！');
+                    }
+                } catch (e) {
+                    alert('表达式格式错误，请检查！');
+                }
+            }
+            
+            submitBtn.addEventListener('click', handleSubmit);
+            solutionInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleSubmit();
+                }
+            });
+            
+            // 开始计时器
+            startGameTimer();
+        }
+        
+        // 3. 单词消消乐
+        function loadWordGame() {
+            // 单词库
+            const words = [
+                "apple", "banana", "cherry", "date", "elderberry",
+                "friend", "family", "school", "teacher", "student",
+                "ocean", "mountain", "forest", "river", "desert"
+            ];
+            
+            // 随机选择一个单词
+            const selectedWord = words[Math.floor(Math.random() * words.length)];
+            
+            // 打乱字母顺序
+            const shuffledLetters = selectedWord.split('').sort(() => Math.random() - 0.5);
+            
+            const gameEl = document.createElement('div');
+            gameEl.id = 'word-game';
+            gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">单词消消乐</h3>
+                <p class="text-gray-600 mb-6 text-center">用下方的字母拼出一个正确的单词</p>
+                
+                <div class="solution">
+                    ${selectedWord.split('').map(() => '<div class="solution-letter"></div>').join('')}
+                </div>
+                
+                <div class="letters-container">
+                    ${shuffledLetters.map(letter => `
+                        <div class="letter" data-letter="${letter}">${letter.toUpperCase()}</div>
+                    `).join('')}
+                </div>
+                
+                <button id="word-submit" class="mt-6 bg-primary hover:bg-primary/90 text-white py-2 px-6 rounded-lg font-bold">
+                    提交答案
+                </button>
+                <button id="word-reset" class="mt-2 text-gray-500 hover:text-gray-700">
+                    重新排列
+                </button>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const letters = document.querySelectorAll('.letter');
+            const solutionLetters = document.querySelectorAll('.solution-letter');
+            const submitBtn = document.getElementById('word-submit');
+            const resetBtn = document.getElementById('word-reset');
+            let currentPosition = 0;
+            let selectedLetters = [];
+            
+            // 字母点击事件
+            letters.forEach(letter => {
+                letter.addEventListener('click', () => {
+                    if (currentPosition < selectedWord.length && !letter.classList.contains('selected')) {
+                        letter.classList.add('selected');
+                        solutionLetters[currentPosition].textContent = letter.dataset.letter.toUpperCase();
+                        selectedLetters.push(letter);
+                        currentPosition++;
+                    }
+                });
+            });
+            
+            // 重置按钮事件
+            resetBtn.addEventListener('click', () => {
+                letters.forEach(letter => letter.classList.remove('selected'));
+                solutionLetters.forEach(letter => letter.textContent = '');
+                currentPosition = 0;
+                selectedLetters = [];
+                
+                // 重新打乱字母
+                const container = document.querySelector('.letters-container');
+                const shuffled = Array.from(letters).sort(() => Math.random() - 0.5);
+                shuffled.forEach(letter => container.appendChild(letter));
+            });
+            
+            // 提交按钮事件
+            submitBtn.addEventListener('click', () => {
+                if (currentPosition !== selectedWord.length) {
+                    alert('请使用所有字母拼出一个单词');
+                    return;
+                }
+                
+                const userWord = Array.from(solutionLetters)
+                    .map(el => el.textContent.toLowerCase())
+                    .join('');
+                
+                if (userWord === selectedWord) {
+                    // 正确
+                    const score = 300 + (gameState.timeLeft * 5);
+                    completeCurrentGame(score);
+                } else {
+                    alert('这不是一个正确的单词，请再试一次');
+                }
+            });
+            
+            // 开始计时器
+            startGameTimer();
+        }
+        
+        // 4. 障碍跑酷（完善版）
+        function loadParkourGame() {
+            const gameEl = document.createElement('div');
+            gameEl.id = 'parkour-game';
+            gameEl.className = 'w-full h-full relative';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">障碍跑酷</h3>
+                <p class="text-gray-600 mb-6 text-center">按空格键或点击屏幕让角色跳跃，躲避障碍物</p>
+                
+                <div class="ground"></div>
+                <div class="player"></div>
+                
+                <div class="absolute top-4 left-4 bg-dark/70 text-white px-3 py-1 rounded-full text-sm">
+                    得分: <span id="parkour-score">0</span>
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const player = document.querySelector('.player');
+            const parkourScoreEl = document.getElementById('parkour-score');
+            let isJumping = false;
+            let jumpHeight = 0;
+            let score = 0;
+            let obstacles = [];
+            
+            // 跳跃功能
+            function jump() {
+                if (!isJumping) {
+                    isJumping = true;
+                    jumpHeight = 150; // 跳跃高度
+                    
+                    const jumpInterval = setInterval(() => {
+                        jumpHeight -= 10;
+                        player.style.bottom = `${jumpHeight}px`;
+                        
+                        if (jumpHeight <= 0) {
+                            player.style.bottom = '0px';
+                            isJumping = false;
+                            clearInterval(jumpInterval);
+                        }
+                    }, 20);
+                }
+            }
+            
+            // 创建障碍物
+            function createObstacle() {
+                if (gameState.timer === null) return; // 游戏已结束
+                
+                const obstacle = document.createElement('div');
+                obstacle.className = 'obstacle';
+                
+                // 随机高度
+                const height = 40 + Math.random() * 100;
+                obstacle.style.height = `${height}px`;
+                obstacle.style.right = '0px';
+                
+                gameEl.appendChild(obstacle);
+                obstacles.push(obstacle);
+                
+                // 障碍物移动
+                const moveInterval = setInterval(() => {
+                    if (!obstacle.parentNode) {
+                        clearInterval(moveInterval);
+                        return;
+                    }
+                    
+                    const currentRight = parseFloat(obstacle.style.right);
+                    obstacle.style.right = `${currentRight + 5}px`;
+                    
+                    // 检查是否超出屏幕
+                    if (currentRight > gameEl.clientWidth) {
+                        obstacle.remove();
+                        obstacles = obstacles.filter(o => o !== obstacle);
+                        clearInterval(moveInterval);
+                        
+                        // 成功躲避障碍物，加分
+                        score += 50;
+                        parkourScoreEl.textContent = score;
+                        showScorePopup(obstacle, 50);
+                    }
+                    
+                    // 碰撞检测
+                    if (checkCollision(player, obstacle)) {
+                        clearInterval(moveInterval);
+                        gameOver();
+                    }
+                }, 20);
+            }
+            
+            // 碰撞检测
+            function checkCollision(player, obstacle) {
+                const pRect = player.getBoundingClientRect();
+                const oRect = obstacle.getBoundingClientRect();
+                
+                return (
+                    pRect.right > oRect.left &&
+                    pRect.left < oRect.right &&
+                    pRect.bottom > oRect.top &&
+                    pRect.top < oRect.bottom
+                );
+            }
+            
+            // 控制事件
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    jump();
+                }
+            });
+            
+            gameEl.addEventListener('click', jump);
+            
+            // 定时生成障碍物
+            const obstacleInterval = setInterval(createObstacle, 1500);
+            
+            // 开始计时器
+            startGameTimer(() => {
+                clearInterval(obstacleInterval);
+                // 时间结束，完成本关
+                completeCurrentGame(score + 200);
+            });
+        }
+        
+        // 5. 节奏大师
+        function loadMusicGame() {
+            const gameEl = document.createElement('div');
+            gameEl.id = 'music-game';
+            gameEl.className = 'w-full h-full relative';
+            
+            // 创建4个判定区域
+            const keys = ['A', 'S', 'D', 'F'];
+            const hitAreasHtml = keys.map((key, index) => `
+                <div class="hit-area" style="left: ${25 + index * 15}%">
+                    ${key}
+                </div>
+            `).join('');
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">节奏大师</h3>
+                <p class="text-gray-600 mb-6 text-center">当音符到达对应区域时，按键盘上的A/S/D/F键或点击音符</p>
+                ${hitAreasHtml}
+                <div id="note-container" class="w-full h-full absolute top-0 left-0"></div>
+                <div class="mt-4 text-center">
+                    <span class="text-sm bg-gray-100 px-3 py-1 rounded-full">得分: <span id="music-score">0</span></span>
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const noteContainer = document.getElementById('note-container');
+            const musicScoreEl = document.getElementById('music-score');
+            let currentScore = 0;
+            
+            // 生成音符的函数
+            function spawnNote() {
+                if (gameState.timer === null) return; // 游戏已结束
+                
+                const note = document.createElement('div');
+                const lane = Math.floor(Math.random() * 4);
+                const lanePosition = 25 + lane * 15; // 与判定区域位置对应
+                const color = ['#FF6B6B', '#4ECDC4', '#FFD166', '#9B6AFA'][lane];
+                
+                note.className = 'note';
+                note.style.left = `${lanePosition}%`;
+                note.style.top = '-50px';
+                note.style.backgroundColor = color;
+                note.style.transform = 'translateX(-50%)';
+                note.dataset.lane = lane;
+                note.textContent = keys[lane];
+                
+                noteContainer.appendChild(note);
+                
+                // 音符下落动画
+                const fallSpeed = 3 + Math.random() * 2; // 下落速度
+                const noteInterval = setInterval(() => {
+                    if (!note.parentNode) {
+                        clearInterval(noteInterval);
+                        return;
+                    }
+                    
+                    const currentTop = parseFloat(note.style.top);
+                    note.style.top = `${currentTop + fallSpeed}px`;
+                    
+                    // 检查是否到达底部（未点击）
+                    if (currentTop > gameContainer.clientHeight) {
+                        clearInterval(noteInterval);
+                        note.remove();
+                        // 未点击音符，游戏结束
+                        gameOver();
+                    }
+                }, 20);
+                
+                // 点击音符判定
+                note.addEventListener('click', () => {
+                    const hitArea = document.querySelector(`.hit-area:nth-child(${lane + 1})`);
+                    const hitAreaRect = hitArea.getBoundingClientRect();
+                    const noteRect = note.getBoundingClientRect();
+                    
+                    // 计算距离
+                    const distance = Math.abs(noteRect.top + noteRect.height/2 - hitAreaRect.top - hitAreaRect.height/2);
+                    
+                    // 判定得分
+                    let hitScore = 0;
+                    if (distance < 30) {
+                        hitScore = 100;
+                        note.textContent = 'PERFECT';
+                    } else if (distance < 60) {
+                        hitScore = 50;
+                        note.textContent = 'GOOD';
+                    }
+                    
+                    if (hitScore > 0) {
+                        currentScore += hitScore;
+                        musicScoreEl.textContent = currentScore;
+                        showScorePopup(note, hitScore);
+                        
+                        // 播放命中动画
+                        hitArea.classList.add('active');
+                        setTimeout(() => hitArea.classList.remove('active'), 500);
+                        
+                        // 移除音符和计时器
+                        clearInterval(noteInterval);
+                        note.style.backgroundColor = '#4CAF50';
+                        setTimeout(() => note.remove(), 300);
+                    }
+                });
+            }
+            
+            // 键盘控制
+            document.addEventListener('keydown', (e) => {
+                const keyIndex = keys.indexOf(e.key.toUpperCase());
+                if (keyIndex !== -1) {
+                    const notesInLane = document.querySelectorAll(`.note[data-lane="${keyIndex}"]`);
+                    if (notesInLane.length > 0) {
+                        // 触发第一个音符的点击事件
+                        notesInLane[0].click();
+                    }
+                }
+            });
+            
+            // 定时生成音符
+            const spawnInterval = setInterval(spawnNote, 1000);
+            
+            // 开始计时器
+            startGameTimer(() => {
+                clearInterval(spawnInterval);
+                // 时间结束，完成本关
+                completeCurrentGame(currentScore);
+            });
+        }
+        
+        // 6. 记忆翻牌
+        function loadMemoryGame() {
+            // 卡片图标集
+            const icons = ['fa-heart', 'fa-star', 'fa-diamond', 'fa-bolt', 'fa-leaf', 'fa-car', 'fa-plane', 'fa-rocket'];
+            // 复制一份使每个图标有两个
+            const allIcons = [...icons, ...icons];
+            // 打乱顺序
+            const shuffledIcons = allIcons.sort(() => Math.random() - 0.5);
+            
+            // 重置游戏状态
+            gameState.memoryGame = {
+                flippedCards: [],
+                matchedPairs: 0,
+                totalPairs: icons.length,
+                isProcessing: false
+            };
+            
+            const gameEl = document.createElement('div');
+            gameEl.id = 'memory-game';
+            gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">记忆翻牌</h3>
+                <p class="text-gray-600 mb-6 text-center">找出所有配对的卡片</p>
+                
+                <div class="grid grid-cols-4 gap-4 w-full max-w-md">
+                    ${shuffledIcons.map((icon, index) => `
+                        <div class="memory-card" data-index="${index}">
+                            <div class="memory-card-inner">
+                                <div class="memory-card-front">
+                                    <i class="fa fa-question"></i>
+                                </div>
+                                <div class="memory-card-back">
+                                    <i class="fa ${icon}"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="mt-6 text-sm bg-gray-100 px-3 py-1 rounded-full">
+                    已匹配: <span id="matched-pairs">0</span>/${gameState.memoryGame.totalPairs}
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const cards = document.querySelectorAll('.memory-card');
+            const matchedPairsEl = document.getElementById('matched-pairs');
+            
+            // 卡片点击事件
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    // 如果正在处理中、已经翻开或已经匹配，则不处理
+                    if (gameState.memoryGame.isProcessing || 
+                        card.classList.contains('flipped') || 
+                        card.classList.contains('matched')) {
+                        return;
+                    }
+                    
+                    // 翻牌
+                    card.classList.add('flipped');
+                    gameState.memoryGame.flippedCards.push(card);
+                    
+                    // 如果翻了两张牌，检查是否匹配
+                    if (gameState.memoryGame.flippedCards.length === 2) {
+                        checkForMatch();
+                    }
+                });
+            });
+            
+            // 检查是否匹配
+            function checkForMatch() {
+                gameState.memoryGame.isProcessing = true;
+                
+                const [card1, card2] = gameState.memoryGame.flippedCards;
+                const icon1 = card1.querySelector('.memory-card-back i').className;
+                const icon2 = card2.querySelector('.memory-card-back i').className;
+                
+                if (icon1 === icon2) {
+                    // 匹配成功
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    
+                    gameState.memoryGame.matchedPairs++;
+                    matchedPairsEl.textContent = gameState.memoryGame.matchedPairs;
+                    
+                    // 显示得分动画
+                    showScorePopup(card1, 50);
+                    
+                    // 检查是否所有卡片都已匹配
+                    if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
+                        const score = 300 + (gameState.timeLeft * 5);
+                        completeCurrentGame(score);
+                        return;
+                    }
+                } else {
+                    // 不匹配，翻回去
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                    }, 1000);
+                }
+                
+                // 重置翻牌状态
+                setTimeout(() => {
+                    gameState.memoryGame.flippedCards = [];
+                    gameState.memoryGame.isProcessing = false;
+                }, 1000);
+            }
+            
+            // 开始计时器
+            startGameTimer();
+        }
+        
+        // 7. 反应测试（完善版）
+        function loadReactionGame() {
+            const gameEl = document.createElement('div');
+            gameEl.id = 'reaction-game';
+            gameEl.className = 'w-full h-full relative bg-light rounded-xl';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">反应测试</h3>
+                <p class="text-gray-600 mb-6 text-center">看到目标出现时，尽快点击它</p>
+                
+                <div class="absolute top-4 left-4 bg-dark/70 text-white px-3 py-1 rounded-full text-sm">
+                    得分: <span id="reaction-score">0</span> | 错过: <span id="reaction-misses">0</span>
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const scoreEl = document.getElementById('reaction-score');
+            const missesEl = document.getElementById('reaction-misses');
+            let score = 0;
+            let misses = 0;
+            let currentTarget = null;
+            let spawnInterval;
+            
+            // 创建目标
+            function spawnTarget() {
+                if (gameState.timer === null) return; // 游戏已结束
+                
+                // 如果已有目标，计算为未击中
+                if (currentTarget) {
+                    currentTarget.remove();
+                    misses++;
+                    missesEl.textContent = misses;
+                    
+                    // 超过3次未击中，游戏结束
+                    if (misses >= 3) {
+                        clearInterval(spawnInterval);
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                // 创建新目标
+                currentTarget = document.createElement('div');
+                currentTarget.className = 'reaction-target';
+                
+                // 随机大小、颜色和位置
+                const size = 30 + Math.random() * 50;
+                const colors = ['#FF6B6B', '#4ECDC4', '#FFD166', '#9B6AFA', '#4CAF50'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const left = 10 + Math.random() * 80; // 10%-90%
+                const top = 10 + Math.random() * 70; // 10%-80%
+                
+                currentTarget.style.width = `${size}px`;
+                currentTarget.style.height = `${size}px`;
+                currentTarget.style.backgroundColor = color;
+                currentTarget.style.left = `${left}%`;
+                currentTarget.style.top = `${top}%`;
+                currentTarget.style.transform = 'translate(-50%, -50%)';
+                
+                // 随机字符
+                const chars = ['A', 'B', 'C', '1', '2', '3', '!', '?'];
+                currentTarget.textContent = chars[Math.floor(Math.random() * chars.length)];
+                
+                gameEl.appendChild(currentTarget);
+                
+                // 目标点击事件
+                currentTarget.addEventListener('click', () => {
+                    currentTarget.classList.add('hit');
+                    
+                    // 增加分数
+                    score += 100;
+                    scoreEl.textContent = score;
+                    showScorePopup(currentTarget, 100);
+                    
+                    // 移除目标
+                    setTimeout(() => {
+                        currentTarget.remove();
+                        currentTarget = null;
+                    }, 300);
+                });
+            }
+            
+            // 定时生成目标
+            spawnInterval = setInterval(spawnTarget, 1500);
+            
+            // 开始计时器
+            startGameTimer(() => {
+                clearInterval(spawnInterval);
+                // 时间结束，完成本关
+                completeCurrentGame(score);
+            });
+        }
+        
+        // 8. 打字比赛
+        function loadTypingGame() {
+            const gameEl = document.createElement('div');
+            gameEl.id = 'typing-game';
+            gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+            
+            // 选择一些单字组成的内容
+            const typingContent = "你好世界这是一个打字游戏请依次输入每个汉字";
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">打字比赛</h3>
+                <p class="text-gray-600 mb-6 text-center text-sm">请依次输入每个汉字，完成所有单个汉字输入即为成功</p>
+                
+                <div class="w-full max-w-md bg-light rounded-xl p-6 mb-6">
+                    <div id="typing-display" class="text-xl mb-4 min-h-[60px]">
+                        ${typingContent.split('').map((char, index) => 
+                            index === 0 
+                                ? `<span class="current-char">${char}</span>` 
+                                : `<span>${char}</span>`
+                        ).join('')}
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div id="typing-progress" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p class="text-sm text-gray-500">
+                        进度: <span id="typing-percentage">0%</span>
+                    </p>
+                </div>
+                
+                <p class="text-gray-600 text-sm">请开始 typing... (不需要按回车)</p>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const typingDisplay = document.getElementById('typing-display');
+            const typingProgress = document.getElementById('typing-progress');
+            const typingPercentage = document.getElementById('typing-percentage');
+            let currentPosition = 0;
+            const totalChars = typingContent.length;
+            
+            // 键盘输入处理
+            document.addEventListener('keydown', handleKeyPress);
+            
+            function handleKeyPress(e) {
+                // 只处理字符键
+                if (e.key.length !== 1) return;
+                
+                // 检查是否是当前需要输入的字符
+                if (e.key === typingContent[currentPosition]) {
+                    // 正确输入
+                    const spans = typingDisplay.querySelectorAll('span');
+                    spans[currentPosition].classList.remove('current-char');
+                    spans[currentPosition].classList.add('correct');
+                    
+                    currentPosition++;
+                    
+                    // 更新进度
+                    const progress = (currentPosition / totalChars) * 100;
+                    typingProgress.style.width = `${progress}%`;
+                    typingPercentage.textContent = `${Math.round(progress)}%`;
+                    
+                    // 检查是否完成
+                    if (currentPosition >= totalChars) {
+                        // 移除事件监听
+                        document.removeEventListener('keydown', handleKeyPress);
+                        
+                        // 计算得分
+                        const score = 300 + (gameState.timeLeft * 5);
+                        completeCurrentGame(score);
+                        return;
+                    }
+                    
+                    // 设置下一个字符为当前字符
+                    spans[currentPosition].classList.add('current-char');
+                } else {
+                    // 错误输入，游戏结束
+                    document.removeEventListener('keydown', handleKeyPress);
+                    gameOver();
+                }
+            }
+            
+            // 开始计时器
+            startGameTimer();
+        }
+        
+        // 9. 快速点击
+        function loadClickGame() {
+            const gameEl = document.createElement('div');
+            gameEl.id = 'click-game';
+            gameEl.className = 'w-full h-full relative bg-light rounded-xl';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">快速点击</h3>
+                <p class="text-gray-600 mb-6 text-center">在时间结束前，尽可能多地点击出现的目标</p>
+                
+                <div class="absolute top-4 left-4 bg-dark/70 text-white px-3 py-1 rounded-full text-sm">
+                    点击数: <span id="click-count">0</span>
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const clickCountEl = document.getElementById('click-count');
+            let clickCount = 0;
+            let currentTarget = null;
+            let spawnInterval;
+            
+            // 创建目标
+            function spawnTarget() {
+                if (gameState.timer === null) return; // 游戏已结束
+                
+                // 移除当前目标
+                if (currentTarget) {
+                    currentTarget.remove();
+                }
+                
+                // 创建新目标
+                currentTarget = document.createElement('div');
+                currentTarget.className = 'click-target popped';
+                
+                // 随机大小、颜色和位置
+                const size = 40 + Math.random() * 60;
+                const colors = ['#FF6B6B', '#4ECDC4', '#FFD166', '#9B6AFA', '#4CAF50'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const left = 10 + Math.random() * 80; // 10%-90%
+                const top = 10 + Math.random() * 70; // 10%-80%
+                
+                currentTarget.style.width = `${size}px`;
+                currentTarget.style.height = `${size}px`;
+                currentTarget.style.backgroundColor = color;
+                currentTarget.style.left = `${left}%`;
+                currentTarget.style.top = `${top}%`;
+                currentTarget.style.transform = 'translate(-50%, -50%)';
+                
+                gameEl.appendChild(currentTarget);
+                
+                // 目标点击事件
+                currentTarget.addEventListener('click', () => {
+                    currentTarget.classList.add('clicked');
+                    
+                    // 增加点击数
+                    clickCount++;
+                    clickCountEl.textContent = clickCount;
+                    showScorePopup(currentTarget, 10);
+                    
+                    // 移除目标，立即生成新目标
+                    setTimeout(() => {
+                        currentTarget.remove();
+                        currentTarget = null;
+                        spawnTarget();
+                    }, 200);
+                });
+            }
+            
+            // 定时生成目标
+            spawnInterval = setInterval(spawnTarget, 1000);
+            // 立即生成第一个目标
+            spawnTarget();
+            
+            // 开始计时器
+            startGameTimer(() => {
+                clearInterval(spawnInterval);
+                // 时间结束，完成本关
+                const score = clickCount * 10 + 100; // 基础分100，每点击10分
+                completeCurrentGame(score);
+            });
+        }
+        
+        // 10. 颜色单词
+        function loadColorWordGame() {
+            // 颜色词库
+            const colorWords = [
+                { word: "红色", color: "#FF6B6B" },
+                { word: "蓝色", color: "#4ECDC4" },
+                { word: "黄色", color: "#FFD166" },
+                { word: "紫色", color: "#9B6AFA" },
+                { word: "绿色", color: "#4CAF50" },
+                { word: "橙色", color: "#FF9800" },
+                { word: "黑色", color: "#2A2D34" },
+                { word: "粉色", color: "#E91E63" }
+            ];
+            
+            // 当前关卡
+            let currentLevel = 0;
+            const totalLevels = 5;
+            
+            const gameEl = document.createElement('div');
+            gameEl.id = 'color-word-game';
+            gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">颜色单词</h3>
+                <p class="text-gray-600 mb-6 text-center">选择单词所描述的颜色，而非单词本身的颜色</p>
+                
+                <div class="color-level-indicator">
+                    ${Array(totalLevels).fill().map(() => '<div class="color-level-dot"></div>').join('')}
+                </div>
+                
+                <div class="my-8">
+                    <div class="color-word" id="current-word"></div>
+                </div>
+                
+                <div class="color-options" id="color-options"></div>
+                
+                <div class="mt-6 text-sm bg-gray-100 px-3 py-1 rounded-full">
+                    进度: <span id="color-progress">0</span>/${totalLevels}
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const currentWordEl = document.getElementById('current-word');
+            const colorOptionsEl = document.getElementById('color-options');
+            const colorProgressEl = document.getElementById('color-progress');
+            const levelDots = document.querySelectorAll('.color-level-dot');
+            
+            // 生成当前关卡
+            function generateLevel() {
+                // 随机选择一个颜色词作为目标
+                const targetColor = colorWords[Math.floor(Math.random() * colorWords.length)];
+                
+                // 随机选择单词显示的颜色（可能与单词描述的颜色不同）
+                const displayColor = colorWords[Math.floor(Math.random() * colorWords.length)].color;
+                
+                // 显示单词
+                currentWordEl.textContent = targetColor.word;
+                currentWordEl.style.color = displayColor;
+                
+                // 生成选项（包括正确答案和3个干扰项）
+                colorOptionsEl.innerHTML = '';
+                
+                // 复制颜色数组并打乱
+                const shuffledColors = [...colorWords]
+                    .sort(() => Math.random() - 0.5)
+                    .filter(c => c.color !== targetColor.color)
+                    .slice(0, 3);
+                
+                // 添加正确答案并再次打乱
+                const allOptions = [...shuffledColors, targetColor]
+                    .sort(() => Math.random() - 0.5);
+                
+                // 创建选项元素
+                allOptions.forEach(color => {
+                    const option = document.createElement('div');
+                    option.className = 'color-option';
+                    option.style.backgroundColor = color.color;
+                    option.dataset.color = color.color;
+                    
+                    option.addEventListener('click', () => {
+                        if (option.dataset.color === targetColor.color) {
+                            // 正确选择
+                            option.classList.add('correct');
+                            currentLevel++;
+                            
+                            // 更新进度
+                            colorProgressEl.textContent = currentLevel;
+                            levelDots[currentLevel - 1].classList.add('completed');
+                            
+                            // 显示得分动画
+                            showScorePopup(option, 100);
+                            
+                            // 检查是否完成所有关卡
+                            if (currentLevel >= totalLevels) {
+                                const score = 300 + (gameState.timeLeft * 5);
+                                completeCurrentGame(score);
+                            } else {
+                                // 进入下一关
+                                setTimeout(generateLevel, 1000);
+                            }
+                        } else {
+                            // 错误选择
+                            option.classList.add('incorrect');
+                            gameOver();
+                        }
+                    });
+                    
+                    colorOptionsEl.appendChild(option);
+                });
+            }
+            
+            // 开始第一关
+            generateLevel();
+            
+            // 开始计时器
+            startGameTimer();
+        }
+        
+        // 11. 数字拼图（新增游戏）
+        function loadNumberPuzzle() {
+            // 初始化游戏状态
+            gameState.numberPuzzle = {
+                board: [],
+                emptyCell: {row: 2, col: 2}
+            };
+            
+            // 创建初始棋盘并打乱
+            function initializeBoard() {
+                // 创建1-8的数字和一个空格
+                const numbers = [1, 2, 3, 4, 5, 6, 7, 8, null];
+                
+                // 打乱数字
+                let shuffled;
+                do {
+                    shuffled = [...numbers].sort(() => Math.random() - 0.5);
+                } while (!isSolvable(shuffled)); // 确保拼图可解
+                
+                // 构建3x3的棋盘
+                const board = [];
+                for (let i = 0; i < 3; i++) {
+                    board.push(shuffled.slice(i * 3, (i + 1) * 3));
+                    
+                    // 找到空格位置
+                    const emptyIndex = board[i].indexOf(null);
+                    if (emptyIndex !== -1) {
+                        gameState.numberPuzzle.emptyCell = {row: i, col: emptyIndex};
+                    }
+                }
+                
+                gameState.numberPuzzle.board = board;
+            }
+            
+            // 检查拼图是否可解
+            function isSolvable(puzzle) {
+                let inversions = 0;
+                const flat = puzzle.filter(n => n !== null);
+                
+                for (let i = 0; i < flat.length; i++) {
+                    for (let j = i + 1; j < flat.length; j++) {
+                        if (flat[i] > flat[j]) {
+                            inversions++;
+                        }
+                    }
+                }
+                
+                return inversions % 2 === 0;
+            }
+            
+            // 检查是否完成拼图
+            function checkCompletion() {
+                const target = [
+                    [1, 2, 3],
+                    [4, 5, 6],
+                    [7, 8, null]
+                ];
+                
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (gameState.numberPuzzle.board[i][j] !== target[i][j]) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            // 移动拼图
+            function moveCell(row, col) {
+                const empty = gameState.numberPuzzle.emptyCell;
+                
+                // 检查是否相邻
+                const isAdjacent = 
+                    (Math.abs(row - empty.row) === 1 && col === empty.col) ||
+                    (Math.abs(col - empty.col) === 1 && row === empty.row);
+                
+                if (isAdjacent) {
+                    // 交换位置
+                    gameState.numberPuzzle.board[empty.row][empty.col] = gameState.numberPuzzle.board[row][col];
+                    gameState.numberPuzzle.board[row][col] = null;
+                    gameState.numberPuzzle.emptyCell = {row, col};
+                    
+                    // 更新界面
+                    renderBoard();
+                    
+                    // 检查是否完成
+                    if (checkCompletion()) {
+                        const score = 300 + (gameState.timeLeft * 5);
+                        completeCurrentGame(score);
+                    }
+                }
+            }
+            
+            // 渲染棋盘
+            function renderBoard() {
+                const grid = document.querySelector('.puzzle-grid');
+                grid.innerHTML = '';
+                
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = `puzzle-cell ${gameState.numberPuzzle.board[i][j] === null ? 'empty' : ''}`;
+                        
+                        if (gameState.numberPuzzle.board[i][j] !== null) {
+                            cell.textContent = gameState.numberPuzzle.board[i][j];
+                            cell.addEventListener('click', () => moveCell(i, j));
+                        }
+                        
+                        grid.appendChild(cell);
+                    }
+                }
+            }
+            
+            const gameEl = document.createElement('div');
+            gameEl.id = 'number-puzzle';
+            gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">数字拼图</h3>
+                <p class="text-gray-600 mb-6 text-center">将数字按1-8的顺序排列，空白格在右下角</p>
+                
+                <div class="puzzle-grid"></div>
+                
+                <div class="mt-6 text-sm bg-gray-100 px-3 py-1 rounded-full">
+                    提示: 点击数字移动到空白位置
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            // 初始化并渲染棋盘
+            initializeBoard();
+            renderBoard();
+            
+            // 键盘控制
+            document.addEventListener('keydown', (e) => {
+                const {row, col} = gameState.numberPuzzle.emptyCell;
+                
+                switch(e.key) {
+                    case 'ArrowUp': // 向下移动（空白格上移）
+                        if (row < 2) moveCell(row + 1, col);
+                        break;
+                    case 'ArrowDown': // 向上移动（空白格下移）
+                        if (row > 0) moveCell(row - 1, col);
+                        break;
+                    case 'ArrowLeft': // 向右移动（空白格左移）
+                        if (col < 2) moveCell(row, col + 1);
+                        break;
+                    case 'ArrowRight': // 向左移动（空白格右移）
+                        if (col > 0) moveCell(row, col - 1);
+                        break;
+                }
+            });
+            
+            // 开始计时器
+            startGameTimer();
+        }
+        
+        // 12. 水果忍者（新增游戏）
+        function loadFruitNinja() {
+            // 重置游戏状态
+            gameState.fruitNinja = {
+                score: 0,
+                spawnInterval: null
+            };
+            
+            const gameEl = document.createElement('div');
+            gameEl.id = 'fruit-ninja';
+            gameEl.className = 'w-full h-full relative';
+            
+            gameEl.innerHTML = `
+                <h3 class="text-xl font-bold mb-4 text-white">水果忍者</h3>
+                <p class="text-gray-100 mb-6 text-center">点击切开飞来的水果，避开炸弹</p>
+                
+                <div class="absolute top-4 left-4 bg-dark/70 text-white px-3 py-1 rounded-full text-sm">
+                    得分: <span id="fruit-score">0</span>
+                </div>
+            `;
+            
+            gameContainer.appendChild(gameEl);
+            
+            const scoreEl = document.getElementById('fruit-score');
+            
+            // 水果数据
+            const fruits = [
+                { name: '苹果', color: '#FF6B6B', score: 10 },
+                { name: '香蕉', color: '#FFD166', score: 10 },
+                { name: '橙子', color: '#FF9800', score: 10 },
+                { name: '西瓜', color: '#4CAF50', score: 15 },
+                { name: '葡萄', color: '#9B6AFA', score: 15 }
+            ];
+            
+            // 生成水果
+            function spawnFruit() {
+                if (gameState.timer === null) return; // 游戏已结束
+                
+                // 随机决定是水果还是炸弹（80%概率是水果）
+                const isFruit = Math.random() < 0.8;
+                
+                if (isFruit) {
+                    // 生成水果
+                    const fruitData = fruits[Math.floor(Math.random() * fruits.length)];
+                    const fruit = document.createElement('div');
+                    fruit.className = 'fruit';
+                    fruit.style.backgroundColor = fruitData.color;
+                    fruit.textContent = fruitData.name.charAt(0); // 首字母
+                    fruit.dataset.score = fruitData.score;
+                    
+                    // 随机位置和初始速度
+                    const startX = 5 + Math.random() * 90; // 5%-95%
+                    const speedX = (Math.random() - 0.5) * 3; // -1.5 到 1.5
+                    const speedY = -5 - Math.random() * 3; // -5 到 -8
+                    const gravity = 0.15;
+                    
+                    fruit.style.left = `${startX}%`;
+                    fruit.style.bottom = '0px';
+                    
+                    gameEl.appendChild(fruit);
+                    
+                    // 水果移动动画
+                    const moveInterval = setInterval(() => {
+                        if (!fruit.parentNode) {
+                            clearInterval(moveInterval);
+                            return;
+                        }
+                        
+                        const currentLeft = parseFloat(fruit.style.left);
+                        const currentBottom = parseFloat(fruit.style.bottom);
+                        
+                        // 更新位置
+                        fruit.style.left = `${currentLeft + speedX}%`;
+                        fruit.style.bottom = `${currentBottom + speedY}px`;
+                        
+                        // 应用重力
+                        speedY += gravity;
+                        
+                        // 检查是否超出屏幕
+                        if (currentBottom > gameEl.clientHeight + 50 || 
+                            currentLeft < -10 || currentLeft > 110) {
+                            clearInterval(moveInterval);
+                            fruit.remove();
+                        }
+                    }, 30);
+                    
+                    // 点击水果
+                    fruit.addEventListener('click', () => {
+                        clearInterval(moveInterval);
+                        fruit.classList.add('sliced');
+                        
+                        // 加分
+                        const fruitScore = parseInt(fruit.dataset.score);
+                        gameState.fruitNinja.score += fruitScore;
+                        scoreEl.textContent = gameState.fruitNinja.score;
+                        showScorePopup(fruit, fruitScore);
+                        
+                        // 移除水果
+                        setTimeout(() => fruit.remove(), 500);
+                    });
+                } else {
+                        // 生成炸弹
+                        const bomb = document.createElement('div');
+                        bomb.className = 'bomb';
+                        bomb.textContent = '💣';
+                        
+                        // 随机位置和初始速度
+                        const startX = 5 + Math.random() * 90; // 5%-95%
+                        const speedX = (Math.random() - 0.5) * 2; // -1 到 1
+                        const speedY = -4 - Math.random() * 2; // -4 到 -6
+                        const gravity = 0.15;
+                        
+                        bomb.style.left = `${startX}%`;
+                        bomb.style.bottom = '0px';
+                        
+                        gameEl.appendChild(bomb);
+                        
+                        // 炸弹移动动画
+                        const moveInterval = setInterval(() => {
+                            if (!bomb.parentNode) {
+                                clearInterval(moveInterval);
+                                return;
+                            }
+                            
+                            const currentLeft = parseFloat(bomb.style.left);
+                            const currentBottom = parseFloat(bomb.style.bottom);
+                            
+                            // 更新位置
+                            bomb.style.left = `${currentLeft + speedX}%`;
+                            bomb.style.bottom = `${currentBottom + speedY}px`;
+                            
+                            // 应用重力
+                            speedY += gravity;
+                            
+                            // 检查是否超出屏幕
+                            if (currentBottom > gameEl.clientHeight + 50 || 
+                                currentLeft < -10 || currentLeft > 110) {
+                                clearInterval(moveInterval);
+                                bomb.remove();
+                            }
+                        }, 30);
+                        
+                        // 点击炸弹（游戏结束）
+                        bomb.addEventListener('click', () => {
+                            clearInterval(moveInterval);
+                            bomb.classList.add('hit');
+                            gameOver();
+                        });
+                    }
+                }
+                
+                // 定时生成水果/炸弹
+                gameState.fruitNinja.spawnInterval = setInterval(spawnFruit, 800);
+                
+                // 开始计时器
+                startGameTimer(() => {
+                    clearInterval(gameState.fruitNinja.spawnInterval);
+                    // 时间结束，完成本关
+                    completeCurrentGame(gameState.fruitNinja.score);
+                });
+            }
+            
+            // 13. 猜单词（新增游戏）
+            function loadHangmanGame() {
+                // 单词库
+                const words = [
+                    "苹果", "香蕉", "橙子", "西瓜", "草莓",
+                    "足球", "篮球", "排球", "网球", "棒球",
+                    "春天", "夏天", "秋天", "冬天", "季节",
+                    "红色", "蓝色", "绿色", "黄色", "紫色"
+                ];
+                
+                // 随机选择一个单词
+                const selectedWord = words[Math.floor(Math.random() * words.length)];
+                
+                // 重置游戏状态
+                gameState.hangman = {
+                    word: selectedWord,
+                    guessedLetters: [],
+                    incorrectGuesses: 0,
+                    maxIncorrect: 6
+                };
+                
+                const gameEl = document.createElement('div');
+                gameEl.id = 'hangman-game';
+                gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+                
+                gameEl.innerHTML = `
+                    <h3 class="text-xl font-bold mb-4">猜单词</h3>
+                    <p class="text-gray-600 mb-6 text-center">猜出隐藏的单词，你有6次错误机会</p>
+                    
+                    <div class="hangman-drawing" id="hangman-drawing">
+                        <!-- 刽子手图形将动态生成 -->
+                    </div>
+                    
+                    <div class="word-display" id="hangman-word-display">
+                        ${selectedWord.split('').map(() => '<div class="letter-box"></div>').join('')}
+                    </div>
+                    
+                    <div class="keyboard" id="hangman-keyboard">
+                        <!-- 键盘将动态生成 -->
+                    </div>
+                `;
+                
+                gameContainer.appendChild(gameEl);
+                
+                const drawingEl = document.getElementById('hangman-drawing');
+                const wordDisplayEl = document.getElementById('hangman-word-display');
+                const keyboardEl = document.getElementById('hangman-keyboard');
+                const letterBoxes = wordDisplayEl.querySelectorAll('.letter-box');
+                
+                // 生成键盘
+                function generateKeyboard() {
+                    // 常用汉字键盘（简化版）
+                    const letters = [
+                        '一', '二', '三', '四', '五', '六', '七', '八', '九',
+                        '十', '大', '小', '上', '下', '左', '右', '人', '口',
+                        '手', '足', '日', '月', '水', '火', '风', '雨', '花',
+                        '草', '山', '石', '田', '土', '木', '金', '水', '火'
+                    ];
+                    
+                    // 去重并随机排序
+                    const uniqueLetters = [...new Set(letters)].sort(() => Math.random() - 0.5);
+                    
+                    // 添加到键盘
+                    uniqueLetters.forEach(letter => {
+                        const key = document.createElement('div');
+                        key.className = 'key';
+                        key.textContent = letter;
+                        key.dataset.letter = letter;
+                        
+                        key.addEventListener('click', () => {
+                            if (!key.classList.contains('used')) {
+                                key.classList.add('used');
+                                guessLetter(letter);
+                            }
+                        });
+                        
+                        keyboardEl.appendChild(key);
+                    });
+                }
+                
+                // 绘制刽子手
+                function drawHangman() {
+                    drawingEl.innerHTML = '';
+                    
+                    //  gallows 架子
+                    const gallows = document.createElement('div');
+                    gallows.innerHTML = `
+                        <svg width="100" height="150" viewBox="0 0 100 150">
+                            <!-- 底座 -->
+                            <line x1="20" y1="150" x2="80" y2="150" stroke="#333" stroke-width="3"/>
+                            <!-- 支柱 -->
+                            <line x1="50" y1="150" x2="50" y2="30" stroke="#333" stroke-width="3"/>
+                            <!-- 横梁 -->
+                            <line x1="50" y1="30" x2="80" y2="30" stroke="#333" stroke-width="3"/>
+                            <!-- 绳子 -->
+                            <line x1="80" y1="30" x2="80" y2="50" stroke="#333" stroke-width="2"/>
+                            
+                            <!-- 头 -->
+                            ${gameState.hangman.incorrectGuesses > 0 ? 
+                                '<circle cx="80" cy="65" r="15" stroke="#333" stroke-width="2" fill="none"/>' : ''}
+                            
+                            <!-- 身体 -->
+                            ${gameState.hangman.incorrectGuesses > 1 ? 
+                                '<line x1="80" y1="80" x2="80" y2="110" stroke="#333" stroke-width="2"/>' : ''}
+                            
+                            <!-- 左臂 -->
+                            ${gameState.hangman.incorrectGuesses > 2 ? 
+                                '<line x1="80" y1="90" x2="60" y2="75" stroke="#333" stroke-width="2"/>' : ''}
+                            
+                            <!-- 右臂 -->
+                            ${gameState.hangman.incorrectGuesses > 3 ? 
+                                '<line x1="80" y1="90" x2="100" y2="75" stroke="#333" stroke-width="2"/>' : ''}
+                            
+                            <!-- 左腿 -->
+                            ${gameState.hangman.incorrectGuesses > 4 ? 
+                                '<line x1="80" y1="110" x2="60" y2="130" stroke="#333" stroke-width="2"/>' : ''}
+                            
+                            <!-- 右腿 -->
+                            ${gameState.hangman.incorrectGuesses > 5 ? 
+                                '<line x1="80" y1="110" x2="100" y2="130" stroke="#333" stroke-width="2"/>' : ''}
+                        </svg>
+                    `;
+                    
+                    drawingEl.appendChild(gallows);
+                }
+                
+                // 猜字母
+                function guessLetter(letter) {
+                    gameState.hangman.guessedLetters.push(letter);
+                    
+                    let isCorrect = false;
+                    const wordChars = gameState.hangman.word.split('');
+                    
+                    // 检查是否猜对
+                    wordChars.forEach((char, index) => {
+                        if (char === letter) {
+                            letterBoxes[index].textContent = char;
+                            isCorrect = true;
+                        }
+                    });
+                    
+                    // 更新按键样式
+                    const key = keyboardEl.querySelector(`[data-letter="${letter}"]`);
+                    if (key) {
+                        key.classList.add(isCorrect ? 'correct' : 'incorrect');
+                    }
+                    
+                    if (!isCorrect) {
+                        // 猜错了
+                        gameState.hangman.incorrectGuesses++;
+                        drawHangman();
+                        
+                        // 检查是否超过最大错误次数
+                        if (gameState.hangman.incorrectGuesses >= gameState.hangman.maxIncorrect) {
+                            gameOver();
+                            return;
+                        }
+                    } else {
+                        // 显示得分动画
+                        showScorePopup(key, 50);
+                        
+                        // 检查是否猜对所有字母
+                        const allGuessed = wordChars.every(char => 
+                            gameState.hangman.guessedLetters.includes(char)
+                        );
+                        
+                        if (allGuessed) {
+                            const score = 300 + (gameState.timeLeft * 5);
+                            completeCurrentGame(score);
+                            return;
+                        }
+                    }
+                }
+                
+                // 初始化游戏
+                drawHangman();
+                generateKeyboard();
+                
+                // 开始计时器
+                startGameTimer();
+            }
+            
+            // 14. 滑块拼图（新增游戏）
+            function loadSliderPuzzle() {
+                // 初始化游戏状态
+                gameState.sliderPuzzle = {
+                    board: [],
+                    emptyCell: {row: 3, col: 3},
+                    moves: 0
+                };
+                
+                // 创建初始棋盘并打乱
+                function initializeBoard() {
+                    // 创建1-15的数字和一个空格
+                    const numbers = Array.from({length: 15}, (_, i) => i + 1).concat(null);
+                    
+                    // 打乱数字
+                    let shuffled;
+                    do {
+                        shuffled = [...numbers].sort(() => Math.random() - 0.5);
+                    } while (!isSolvable(shuffled)); // 确保拼图可解
+                    
+                    // 构建4x4的棋盘
+                    const board = [];
+                    for (let i = 0; i < 4; i++) {
+                        board.push(shuffled.slice(i * 4, (i + 1) * 4));
+                        
+                        // 找到空格位置
+                        const emptyIndex = board[i].indexOf(null);
+                        if (emptyIndex !== -1) {
+                            gameState.sliderPuzzle.emptyCell = {row: i, col: emptyIndex};
+                        }
+                    }
+                    
+                    gameState.sliderPuzzle.board = board;
+                }
+                
+                // 检查拼图是否可解
+                function isSolvable(puzzle) {
+                    let inversions = 0;
+                    const flat = puzzle.filter(n => n !== null);
+                    
+                    for (let i = 0; i < flat.length; i++) {
+                        for (let j = i + 1; j < flat.length; j++) {
+                            if (flat[i] > flat[j]) {
+                                inversions++;
+                            }
+                        }
+                    }
+                    
+                    // 对于4x4的拼图，空格所在行数（从底部数）加上逆序数为偶数则可解
+                    const emptyRowFromBottom = 4 - gameState.sliderPuzzle.emptyCell.row;
+                    return (inversions + emptyRowFromBottom) % 2 === 0;
+                }
+                
+                // 检查是否完成拼图
+                function checkCompletion() {
+                    const target = [
+                        [1, 2, 3, 4],
+                        [5, 6, 7, 8],
+                        [9, 10, 11, 12],
+                        [13, 14, 15, null]
+                    ];
+                    
+                    for (let i = 0; i < 4; i++) {
+                        for (let j = 0; j < 4; j++) {
+                            if (gameState.sliderPuzzle.board[i][j] !== target[i][j]) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
+                
+                // 移动拼图
+                function moveCell(row, col) {
+                    const empty = gameState.sliderPuzzle.emptyCell;
+                    
+                    // 检查是否相邻
+                    const isAdjacent = 
+                        (Math.abs(row - empty.row) === 1 && col === empty.col) ||
+                        (Math.abs(col - empty.col) === 1 && row === empty.row);
+                    
+                    if (isAdjacent) {
+                        // 交换位置
+                        gameState.sliderPuzzle.board[empty.row][empty.col] = gameState.sliderPuzzle.board[row][col];
+                        gameState.sliderPuzzle.board[row][col] = null;
+                        gameState.sliderPuzzle.emptyCell = {row, col};
+                        gameState.sliderPuzzle.moves++;
+                        
+                        // 更新界面
+                        renderBoard();
+                        
+                        // 检查是否完成
+                        if (checkCompletion()) {
+                            // 移动次数越少得分越高
+                            const moveBonus = Math.max(0, 300 - gameState.sliderPuzzle.moves * 2);
+                            const score = moveBonus + (gameState.timeLeft * 3);
+                            completeCurrentGame(score);
+                        }
+                    }
+                }
+                
+                // 渲染棋盘
+                function renderBoard() {
+                    const grid = document.querySelector('.slider-grid');
+                    grid.innerHTML = '';
+                    
+                    for (let i = 0; i < 4; i++) {
+                        for (let j = 0; j < 4; j++) {
+                            const cell = document.createElement('div');
+                            cell.className = `slider-tile ${gameState.sliderPuzzle.board[i][j] === null ? 'empty' : ''}`;
+                            
+                            if (gameState.sliderPuzzle.board[i][j] !== null) {
+                                cell.textContent = gameState.sliderPuzzle.board[i][j];
+                                cell.addEventListener('click', () => moveCell(i, j));
+                            }
+                            
+                            grid.appendChild(cell);
+                        }
+                    }
+                    
+                    // 更新移动次数
+                    document.getElementById('slider-moves').textContent = gameState.sliderPuzzle.moves;
+                }
+                
+                const gameEl = document.createElement('div');
+                gameEl.id = 'slider-puzzle';
+                gameEl.className = 'w-full h-full flex flex-col items-center justify-center';
+                
+                gameEl.innerHTML = `
+                    <h3 class="text-xl font-bold mb-4">滑块拼图</h3>
+                    <p class="text-gray-600 mb-6 text-center">将数字按1-15的顺序排列，空白格在右下角</p>
+                    
+                    <div class="slider-grid"></div>
+                    
+                    <div class="mt-6 text-sm bg-gray-100 px-3 py-1 rounded-full">
+                        移动次数: <span id="slider-moves">0</span>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500">
+                        提示: 点击数字移动到空白位置，或使用方向键
+                    </div>
+                `;
+                
+                gameContainer.appendChild(gameEl);
+                
+                // 初始化并渲染棋盘
+                initializeBoard();
+                renderBoard();
+                
+                // 键盘控制
+                document.addEventListener('keydown', (e) => {
+                    const {row, col} = gameState.sliderPuzzle.emptyCell;
+                    
+                    switch(e.key) {
+                        case 'ArrowUp': // 向下移动（空白格上移）
+                            if (row < 3) moveCell(row + 1, col);
+                            break;
+                        case 'ArrowDown': // 向上移动（空白格下移）
+                            if (row > 0) moveCell(row - 1, col);
+                            break;
+                        case 'ArrowLeft': // 向右移动（空白格左移）
+                            if (col < 3) moveCell(row, col + 1);
+                            break;
+                        case 'ArrowRight': // 向左移动（空白格右移）
+                            if (col > 0) moveCell(row, col - 1);
+                            break;
+                    }
+                });
+                
+                // 开始计时器
+                startGameTimer();
+            }
+            
+            // 开始游戏计时器
+            function startGameTimer(onComplete) {
+                // 清除之前的计时器
+                if (gameState.timer) {
+                    clearInterval(gameState.timer);
+                }
+                
+                // 更新时间显示
+                levelTimeEl.textContent = gameState.timeLeft;
+                
+                // 设置新计时器
+                gameState.timer = setInterval(() => {
+                    gameState.timeLeft--;
+                    levelTimeEl.textContent = gameState.timeLeft;
+                    
+                    // 时间小于5秒时添加视觉提示
+                    if (gameState.timeLeft <= 5) {
+                        levelTimeEl.classList.add('text-primary', 'animate-pulse');
+                    } else {
+                        levelTimeEl.classList.remove('text-primary', 'animate-pulse');
+                    }
+                    
+                    // 时间到
+                    if (gameState.timeLeft <= 0) {
+                        clearInterval(gameState.timer);
+                        gameState.timer = null;
+                        
+                        if (onComplete) {
+                            onComplete();
+                        } else {
+                            gameOver();
+                        }
+                    }
+                }, 1000);
+            }
+            
+            // 显示得分动画
+            function showScorePopup(element, score) {
+                const popup = document.createElement('div');
+                popup.className = 'score-popup';
+                popup.textContent = `+${score}`;
+                
+                // 定位到元素上方
+                const rect = element.getBoundingClientRect();
+                const containerRect = gameContainer.getBoundingClientRect();
+                
+                popup.style.left = `${rect.left + rect.width/2 - containerRect.left}px`;
+                popup.style.top = `${rect.top - containerRect.top}px`;
+                
+                gameContainer.appendChild(popup);
+                
+                // 动画结束后移除
+                setTimeout(() => {
+                    popup.remove();
+                }, 800);
+            }
+            
+            // 完成当前游戏
+            function completeCurrentGame(score) {
+                // 清除计时器
+                if (gameState.timer) {
+                    clearInterval(gameState.timer);
+                    gameState.timer = null;
+                }
+                
+                // 添加得分
+                gameState.totalScore += score;
+                gameState.gameScores.push({
+                    game: gameState.selectedGames[gameState.currentGameIndex],
+                    score: score
+                });
+                
+                // 显示关卡完成动画
+                const completeEl = document.createElement('div');
+                completeEl.className = 'level-complete';
+                completeEl.textContent = '完成!';
+                gameContainer.appendChild(completeEl);
+                
+                // 检查是否还有下一关
+                if (gameState.currentGameIndex < gameState.selectedGames.length - 1) {
+                    // 进入下一关
+                    setTimeout(() => {
+                        gameState.currentGameIndex++;
+                        loadCurrentGame();
+                    }, 1500);
+                } else {
+                    // 所有关卡完成，显示结果
+                    setTimeout(showResultScreen, 1500);
+                }
+            }
+            
+            // 游戏结束
+            function gameOver() {
+                // 清除计时器
+                if (gameState.timer) {
+                    clearInterval(gameState.timer);
+                    gameState.timer = null;
+                }
+                
+                // 显示游戏结束动画
+                const gameOverEl = document.createElement('div');
+                gameOverEl.className = 'level-complete';
+                gameOverEl.textContent = '游戏结束';
+                gameOverEl.style.color = '#F44336';
+                gameContainer.appendChild(gameOverEl);
+                
+                // 显示结果
+                setTimeout(showResultScreen, 1500);
+            }
+            
+            // 显示结果界面
+            function showResultScreen() {
+                gameScreen.classList.add('hidden');
+                resultScreen.classList.remove('hidden');
+                
+                // 更新结果数据
+                finalScoreEl.textContent = gameState.totalScore;
+                completedLevelsEl.textContent = `${gameState.gameScores.length}/${gameState.selectedGames.length}`;
+                
+                // 计算评级
+                const totalPossible = gameState.selectedGames.reduce((sum, game) => sum + 300 + game.timeLimit * 5, 0);
+                const percentage = gameState.totalScore / totalPossible;
+                
+                let rating;
+                if (percentage >= 0.9) rating = 'S级';
+                else if (percentage >= 0.8) rating = 'A级';
+                else if (percentage >= 0.7) rating = 'B级';
+                else if (percentage >= 0.6) rating = 'C级';
+                else if (percentage >= 0.5) rating = 'D级';
+                else rating = 'E级';
+                
+                finalRatingEl.textContent = rating;
+                
+                // 显示关卡详情
+                levelsDetailsContainer.innerHTML = '';
+                gameState.selectedGames.forEach((game, index) => {
+                    const scoreData = gameState.gameScores.find(s => s.game.id === game.id);
+                    
+                    const detailEl = document.createElement('div');
+                    detailEl.className = `flex justify-between items-center p-3 rounded-lg ${scoreData ? 'bg-light' : 'bg-gray-50'}`;
+                    
+                    detailEl.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-${game.color}/10 flex items-center justify-center mr-3">
+                                <i class="fa ${game.icon} text-${game.color}"></i>
+                            </div>
+                            <span>${game.name}</span>
+                        </div>
+                        <span class="${scoreData ? 'text-primary font-bold' : 'text-gray-400'}">
+                            ${scoreData ? scoreData.score : '未完成'}
+                        </span>
+                    `;
+                    
+                    levelsDetailsContainer.appendChild(detailEl);
+                });
+            }
+            
+            // 重新开始游戏
+            function restartGame() {
+                resultScreen.classList.add('hidden');
+                startGameSelection();
+            }
+            
+            // 返回主页
+            function goToHome() {
+                resultScreen.classList.add('hidden');
+                gameScreen.classList.add('hidden');
+                levelSelectScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+            }
+            
+            // 切换帮助模态框
+            function toggleHelpModal() {
+                helpModal.classList.toggle('hidden');
+            }
+            
+            // 切换声音
+            function toggleSound() {
+                const icon = soundToggleBtn.querySelector('i');
+                if (icon.classList.contains('fa-volume-up')) {
+                    icon.classList.remove('fa-volume-up');
+                    icon.classList.add('fa-volume-off');
+                    // 这里可以添加关闭声音的逻辑
+                } else {
+                    icon.classList.remove('fa-volume-off');
+                    icon.classList.add('fa-volume-up');
+                    // 这里可以添加开启声音的逻辑
+                }
+            }
+        </script>
+    </body>
+</html>

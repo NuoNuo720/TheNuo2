@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>派对游戏合集</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B6B', // 派对红
+                        secondary: '#4ECDC4', // 派对蓝
+                        accent: '#FFD166', // 派对黄
+                        dark: '#2A2D34',
+                        light: '#F7FFF7'
+                    },
+                    fontFamily: {
+                        party: ['"Comic Sans MS"', '"Marker Felt"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .party-shadow {
+                box-shadow: 0 6px 0 rgba(0,0,0,0.1), 0 8px 10px rgba(0,0,0,0.05);
+            }
+            .party-hover {
+                transition: all 0.2s ease;
+            }
+            .party-hover:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 0 rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.07);
+            }
+            .bounce-light {
+                animation: bounce-light 2s infinite;
+            }
+            @keyframes bounce-light {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+            }
+            .pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+        }
+    </style>
+    
+    <style>
+        /* 全局动画和基础样式 */
+        body {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFF0E6 100%);
+            background-image: 
+                radial-gradient(#FFD16615 0.5px, transparent 0.5px),
+                radial-gradient(#4ECDC415 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 动态背景元素 */
+        .bg-element {
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        /* 游戏卡片效果 */
+        .game-card {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .game-card:hover {
+            transform: scale(1.03) rotate(1deg);
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f7f7f7;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #FFD166;
+            border-radius: 10px;
+            border: 3px solid #f7f7f7;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FFC533;
+        }
+        
+        /* 通用过渡动画 */
+        .game-transition {
+            animation: game-transition 0.5s ease-out;
+        }
+        
+        @keyframes game-transition {
+            0% { transform: scale(0.8) opacity(0); }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1) opacity(1); }
+        }
+        
+        /* 关卡转场动画 */
+        .level-transition {
+            animation: level-transition 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes level-transition {
+            0% { transform: translateX(0) scale(1); opacity(1); }
+            50% { transform: translateX(-50px) scale(0.8); opacity(0.5); }
+            100% { transform: translateX(-100vw) scale(0.5); opacity(0); }
+        }
+        
+        .level-transition-in {
+            animation: level-transition-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes level-transition-in {
+            0% { transform: translateX(100vw) scale(0.5); opacity(0); }
+            50% { transform: translateX(50px) scale(0.8); opacity(0.5); }
+            100% { transform: translateX(0) scale(1); opacity(1); }
+        }
+        
+        /* 得分动画 */
+        .score-popup {
+            animation: score-popup 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            position: absolute;
+            color: #FF6B6B;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        
+        @keyframes score-popup {
+            0% { transform: translateY(0); opacity(1); }
+            100% { transform: translateY(-30px); opacity(0); }
+        }
+        
+        /* 加载动画 */
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #FFF;
+            border-bottom-color: #FF6B6B;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+        
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 关卡完成动画 */
+        .level-complete {
+            animation: level-complete 1s ease-out;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFD166;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 100;
+            opacity: 0;
+        }
+        
+        @keyframes level-complete {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+        
+        /* 倒计时动画 */
+        .countdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8rem;
+            font-weight: bold;
+            color: rgba(255, 107, 107, 0.8);
+            z-index: 1000;
+            opacity: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .countdown-animate {
+            animation: countdown 1s ease-out forwards;
+        }
+        
+        @keyframes countdown {
+            0% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+        }
+        
+        /* 通用动画元素 */
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .hit {
+            animation: hit 0.3s ease-out;
+        }
+        
+        @keyframes hit {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        .pop {
+            animation: pop 0.3s ease-out forwards;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .click {
+            animation: click 0.2s ease-out forwards;
+        }
+        
+        @keyframes click {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.8); }
+            100% { transform: scale(0); }
+        }
+        
+        .correct {
+            animation: correct 0.5s ease-in-out;
+        }
+        
+        @keyframes correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); box-shadow: 0 0 10px green; }
+            100% { transform: scale(1); }
+        }
+        
+        .incorrect {
+            animation: incorrect 0.5s ease-in-out;
+        }
+        
+        @keyframes incorrect {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9); box-shadow: 0 0 10px red; }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="font-party text-dark">
+    <!-- 动态背景元素 -->
+    <div class="bg-element" style="width: 300px; height: 300px; background: #FF6B6B; top: -150px; left: -150px;"></div>
+    <div class="bg-element" style="width: 200px; height: 200px; background: #4ECDC4; bottom: 100px; right: -100px;"></div>
+    <div class="bg-element" style="width: 150px; height: 150px; background: #FFD166; top: 30%; right: 10%;"></div>
+    
+    <!-- 顶部导航 -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xl">
+                    <i class="fa fa-gamepad"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">派对游戏合集</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="sound-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-volume-up text-xl"></i>
+                </button>
+                <button id="help-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-question text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 开始界面 -->
+        <section id="start-screen" class="py-8 text-center">
+            <div class="max-w-3xl mx-auto">
+                <div class="relative inline-block mb-8">
+                    <img src="https://picsum.photos/400/200" alt="派对游戏合集封面" class="rounded-3xl shadow shadow-xl">
+                    <div class="absolute -bottom-4 -right-4 bg-accent text-dark px-4 py-2 rounded-full font-bold shadow-lg bounce-light">
+                        15款游戏!
+                    </div>
+                </div>
+                
+                <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4 text-primary">随机闯关挑战</h2>
+                <p class="text-lg mb-8 max-w-xl mx-auto">从多个趣味关卡中随机抽取4个进行挑战，完成所有关卡获得最终奖励！</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
+                    <!-- 基础关卡展示 -->
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-paint-brush text-4xl text-primary"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">色盲派对</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-secondary/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-calculator text-4xl text-secondary"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">24点游戏</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-accent/10 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-font text-4xl text-accent"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">单词消消乐</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-green-100 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-running text-4xl text-green-500"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">障碍跑酷</h3>
+                    </div>
+                    
+                    <div class="game-card bg-white rounded-2xl p-4 shadow-lg party-shadow">
+                        <div class="h-24 bg-purple-100 rounded-xl flex items-center justify-center mb-2">
+                            <i class="fa fa-music text-4xl text-purple-500"></i>
+                        </div>
+                        <h3 class="font-bold text-sm">节奏大师</h3>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap justify-center gap-4 mb-10">
+                    <span class="bg-primary/10 text-primary px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-check-circle mr-1"></i> 随机4个关卡
+                    </span>
+                    <span class="bg-secondary/10 text-secondary px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-clock-o mr-1"></i> 限时挑战
+                    </span>
+                    <span class="bg-accent/10 text-accent px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-trophy mr-1"></i> 闯关奖励
+                    </span>
+                    <span class="bg-dark/10 text-dark px-4 py-2 rounded-full text-sm">
+                        <i class="fa fa-plus-circle mr-1"></i> 15种关卡
+                    </span>
+                </div>
+                
+                <button id="start-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg party-hover mb-6">
+                    开始闯关 <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+                
+                <p class="text-sm text-gray-500">包含15种不同类型的游戏关卡</p>
+            </div>
+        </section>
+        
+        <!-- 关卡选择/加载界面 -->
+        <section id="level-select" class="py-8 hidden">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-2xl font-bold mb-8 text-primary">正在随机选择关卡...</h2>
+                
+                <div class="flex justify-center mb-8">
+                    <div class="loader"></div>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-4 mb-8" id="selected-levels">
+                    <!-- 这里会动态显示选中的4个关卡 -->
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.2s"></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.4s"></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 animate-pulse" style="animation-delay: 0.6s"></div>
+                    </div>
+                </div>
+                
+                <p class="text-gray-600">准备好迎接挑战了吗？</p>
+            </div>
+        </section>
+        
+        <!-- 游戏进行界面 -->
+        <section id="game-screen" class="py-8 hidden">
+            <div class="max-w-3xl mx-auto">
+                <!-- 游戏进度 -->
+                <div class="bg-white rounded-xl p-4 shadow-md mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold">闯关进度</h3>
+                        <div class="text-sm text-gray-600">
+                            <span id="current-level">1</span>/4 关卡
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="progress-bar" class="bg-primary h-3 rounded-full" style="width: 25%"></div>
+                    </div>
+                    <div class="flex justify-between mt-4 text-sm">
+                        <div>
+                            <span class="font-bold text-accent">总分: </span>
+                            <span id="total-score">0</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-secondary">剩余时间: </span>
+                            <span id="level-time" class="font-bold"></span>秒
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 游戏容器 -->
+                <div id="game-container" class="bg-white rounded-2xl shadow-lg p-6 min-h-[400px] flex flex-col items-center justify-center">
+                    <!-- 游戏内容容器 -->
+                </div>
+            </div>
+        </section>
+        
+        <!-- 游戏结束界面 -->
+        <section id="result-screen" class="py-8 text-center hidden">
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-2xl p-8 shadow-xl mb-8">
+                    <div class="inline-block p-4 rounded-full bg-accent/20 mb-6">
+                        <i class="fa fa-trophy text-5xl text-accent"></i>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold mb-2">闯关完成！</h2>
+                    <p class="text-gray-600 mb-6">恭喜你完成了所有挑战</p>
+                    
+                    <div class="bg-light rounded-xl p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-gray-600">最终得分</span>
+                            <span id="final-score" class="text-3xl font-bold text-primary">0</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-gray-600">完成关卡</span>
+                            <span id="completed-levels" class="font-bold">4/4</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">获得评级</span>
+                            <span id="final-rating" class="font-bold text-accent">S级</span>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-bold mb-3">关卡详情</h3>
+                    <div id="levels-details" class="space-y-3 mb-8">
+                        <!-- 关卡详情会动态加载到这里 -->
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="play-again-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-full shadow-lg party-hover">
+                        再玩一次 <i class="fa fa-refresh ml-1"></i>
+                    </button>
+                    <button id="back-to-home-btn" class="bg-white hover:bg-gray-50 text-dark font-bold py-3 px-8 rounded-full shadow-lg party-hover border border-gray-200">
+                        返回主页 <i class="fa fa-home ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 帮助模态框 -->
+        <div id="help-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">游戏帮助</h3>
+                    <button id="close-help-btn" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <h4 class="font-bold text-primary mb-1">游戏规则</h4>
+                        <p>系统会从所有关卡中随机选择4个不同的游戏，你需要依次完成这些关卡。每个关卡都有时间限制，完成越快，得分越高！如果有一关时间耗尽或者中途失误，游戏将直接结束并结算。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

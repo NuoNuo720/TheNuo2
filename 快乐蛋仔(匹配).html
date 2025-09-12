@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>派对游戏 - 单人经典</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B6B', // 主色调-红
+                        secondary: '#4ECDC4', // 辅助色-蓝
+                        accent: '#FFD166', // 强调色-黄
+                        dark: '#2A2D34',
+                        light: '#F7FFF7'
+                    },
+                    fontFamily: {
+                        game: ['"Comic Sans MS"', '"Marker Felt"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .game-shadow {
+                box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
+            }
+            .bounce-slow {
+                animation: bounce 2s infinite;
+            }
+            .float {
+                animation: float 3s ease-in-out infinite;
+            }
+            .pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .spin-slow {
+                animation: spin 8s linear infinite;
+            }
+            .level-appear {
+                animation: levelAppear 0.5s ease-out forwards;
+            }
+            .shuffle-animation {
+                animation: shuffle 0.8s ease-in-out;
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes levelAppear {
+            from { 
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        @keyframes shuffle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg) scale(0.95); }
+            75% { transform: rotate(5deg) scale(0.95); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-light to-blue-50 min-h-screen font-game text-dark overflow-x-hidden">
+    <!-- 顶部导航 -->
+    <header class="bg-white/80 backdrop-blur-md shadow-md fixed w-full z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-full bg-primary float flex items-center justify-center">
+                    <i class="fa fa-gamepad text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">派对游戏</h1>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex items-center gap-4">
+                    <a href="#" class="hover:text-primary transition-colors">首页</a>
+                    <a href="#" class="hover:text-primary transition-colors">游戏模式</a>
+                    <a href="#" class="hover:text-primary transition-colors">排行榜</a>
+                    <a href="#" class="hover:text-primary transition-colors">社区</a>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <img src="https://picsum.photos/id/64/200" alt="玩家头像" class="w-10 h-10 rounded-full border-2 border-accent">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                    </div>
+                    <span class="hidden md:inline font-medium">快乐玩家</span>
+                    <button class="md:hidden text-xl">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 pt-24 pb-16">
+        <!-- 页面标题 -->
+        <div class="text-center mb-12">
+            <h2 class="text-[clamp(2rem,5vw,3.5rem)] font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">单人经典玩法</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">系统将为你随机选择4个关卡进行挑战，完成所有关卡获得最终胜利！</p>
+        </div>
+        
+        <!-- 游戏模式选择 -->
+        <section class="mb-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                <!-- 单人经典玩法（唯一可用模式） -->
+                <div class="game-mode bg-white rounded-2xl p-6 game-shadow cursor-pointer hover:scale-105 transition-all duration-300 border-2 border-primary relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 bg-primary text-white text-xs py-1 px-3 rounded-bl-lg rounded-tr-lg">
+                        已开放
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-user text-primary text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-lg mb-2">单人经典</h4>
+                        <p class="text-sm text-gray-500 mb-4">随机关卡挑战</p>
+                        <div class="text-xs bg-green-100 text-green-700 rounded-full px-3 py-1 inline-block">
+                            立即开始
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 其他未开放模式 -->
+                <div class="game-mode bg-white rounded-2xl p-6 game-shadow relative overflow-hidden group cursor-not-allowed">
+                    <div class="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
+                        <div class="text-center p-4">
+                            <i class="fa fa-lock text-white text-2xl mb-2"></i>
+                            <p class="text-white text-sm">即将开放</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-trophy text-secondary text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-lg mb-2">排位玩法</h4>
+                        <p class="text-sm text-gray-500 mb-4">竞技排位</p>
+                    </div>
+                </div>
+                
+                <div class="game-mode bg-white rounded-2xl p-6 game-shadow relative overflow-hidden group cursor-not-allowed">
+                    <div class="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
+                        <div class="text-center p-4">
+                            <i class="fa fa-lock text-white text-2xl mb-2"></i>
+                            <p class="text-white text-sm">即将开放</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-users text-accent text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-lg mb-2">团队赛</h4>
+                        <p class="text-sm text-gray-500 mb-4">4v4对抗</p>
+                    </div>
+                </div>
+                
+                <div class="game-mode bg-white rounded-2xl p-6 game-shadow relative overflow-hidden group cursor-not-allowed">
+                    <div class="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
+                        <div class="text-center p-4">
+                            <i class="fa fa-lock text-white text-2xl mb-2"></i>
+                            <p class="text-white text-sm">即将开放</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-star text-purple-500 text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-lg mb-2">特殊模式</h4>
+                        <p class="text-sm text-gray-500 mb-4">限时活动</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 单人模式设置 -->
+        <section id="game-settings" class="max-w-3xl mx-auto mb-16">
+            <div class="bg-white rounded-2xl p-8 game-shadow">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">游戏设置</h3>
+                        <p class="text-gray-500 text-sm">选择难度和关卡类型偏好</p>
+                    </div>
+                    
+                    <div>
+                        <button id="generate-levels" class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-bold transition-all duration-300 hover:shadow-lg flex items-center gap-2">
+                            <i class="fa fa-random"></i> 随机生成关卡
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 游戏设置选项 -->
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <h4 class="font-bold mb-4">游戏偏好</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-sm block mb-2">难度选择</label>
+                            <div class="relative">
+                                <select id="difficulty" class="block w-full bg-gray-100 border-none rounded-lg py-2 px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="easy">简单 - 适合新手</option>
+                                    <option value="normal" selected>普通 - 平衡体验</option>
+                                    <option value="hard">困难 - 挑战自我</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                    <i class="fa fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm block mb-2">关卡类型偏好</label>
+                            <div class="relative">
+                                <select id="level-type" class="block w-full bg-gray-100 border-none rounded-lg py-2 px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="random" selected>完全随机</option>
+                                    <option value="speed">偏向竞速</option>
+                                    <option value="puzzle">偏向解谜</option>
+                                    <option value="survival">偏向生存</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                    <i class="fa fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <label class="text-sm flex-1">音效开启</label>
+                            <div class="relative inline-block w-10 h-6">
+                                <input type="checkbox" id="sound-effects" class="opacity-0 w-0 h-0" checked>
+                                <span class="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-colors before:absolute before:content-[''] before:h-5 before:w-5 before:left-0.5 before:bottom-0.5 before:bg-white before:rounded-full before:transition-all checked:bg-primary checked:before:translate-x-4"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <label class="text-sm flex-1">背景音乐</label>
+                            <div class="relative inline-block w-10 h-6">
+                                <input type="checkbox" id="background-music" class="opacity-0 w-0 h-0" checked>
+                                <span class="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-colors before:absolute before:content-[''] before:h-5 before:w-5 before:left-0.5 before:bottom-0.5 before:bg-white before:rounded-full before:transition-all checked:bg-primary checked:before:translate-x-4"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 随机关卡展示区 (默认隐藏) -->
+        <section id="random-levels" class="max-w-4xl mx-auto mb-16 hidden">
+            <div class="bg-white rounded-2xl p-8 game-shadow">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold mb-2">你的挑战关卡</h3>
+                    <p class="text-gray-500">系统为你随机选择了以下4个关卡，准备好迎接挑战吧！</p>
+                </div>
+                
+                <!-- 关卡列表 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="levels-container">
+                    <!-- 关卡会通过JS动态生成 -->
+                </div>
+                
+                <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="regenerate-levels" class="bg-gray-100 hover:bg-gray-200 px-6 py-2 rounded-full text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="fa fa-refresh"></i> 重新生成关卡
+                    </button>
+                    <button id="start-challenge" class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-bold transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa fa-play"></i> 开始挑战
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 加载界面 (默认隐藏) -->
+        <section id="loading-screen" class="max-w-3xl mx-auto hidden">
+            <div class="bg-white rounded-2xl p-8 game-shadow relative overflow-hidden">
+                <!-- 装饰元素 -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full"></div>
+                <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary/10 rounded-full"></div>
+                
+                <div class="relative z-10 text-center">
+                    <div class="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center spin-slow">
+                        <div class="w-20 h-20 rounded-full bg-white flex items-center justify-center">
+                            <i class="fa fa-gamepad text-primary text-3xl"></i>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-2xl font-bold mb-4">游戏加载中...</h3>
+                    <p class="text-gray-500 mb-8" id="loading-message">正在准备关卡资源</p>
+                    
+                    <!-- 加载进度条 -->
+                    <div class="mb-8">
+                        <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="loading-progress" class="h-full bg-gradient-to-r from-primary to-secondary w-0 transition-all duration-500"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-500">
+                            <span>准备中</span>
+                            <span id="loading-percentage">0%</span>
+                            <span>加载完成</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 当前加载关卡 -->
+                    <div class="text-sm text-gray-500">
+                        <p>当前加载: <span id="current-loading-level" class="font-medium">第1关</span></p>
+                        <p class="mt-1">预计剩余时间: <span id="loading-time" class="font-medium">15秒</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 游戏开始弹窗 (默认隐藏) -->
+        <div id="game-start" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center game-shadow transform transition-all duration-300 scale-95 opacity-0" id="start-modal">
+                <div class="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-6 float">
+                    <i class="fa fa-flag-checkered text-accent text-3xl"></i>
+                </div>
+                
+                <h3 class="text-2xl font-bold mb-2">游戏即将开始！</h3>
+                <p class="text-gray-500 mb-6">准备好迎接第一个挑战了吗？</p>
+                
+                <div class="mb-6">
+                    <p class="text-sm text-gray-500 mb-2">开始倒计时</p>
+                    <p class="font-bold text-4xl text-primary" id="start-countdown">3</p>
+                </div>
+                
+                <button id="start-now" class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-bold transition-all duration-300 w-full">
+                    立即开始
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center gap-2 justify-center md:justify-start">
+                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                            <i class="fa fa-gamepad text-white"></i>
+                        </div>
+                        <h2 class="text-xl font-bold">派对游戏</h2>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2 text-center md:text-left">欢乐无限，派对不停</p>
+                </div>
+                
+                <div class="flex gap-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-weibo text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-wechat text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-qq text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-youtube-play text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                <p>© 2023 派对游戏 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 所有可用关卡数据
+        const allLevels = [
+            {
+                id: 1,
+                name: "快速反应",
+                type: "speed",
+                description: "在一堆汉字中找到正确的那个",
+                icon: "fa-bolt",
+                color: "text-yellow-500",
+                bgColor: "bg-yellow-100"
+            },
+            {
+                id: 2,
+                name: "知识竞赛",
+                type: "puzzle",
+                description: "回答问题,
+                icon: "fa-map-signs",
+                color: "text-blue-500",
+                bgColor: "bg-blue-100"
+            },
+            {
+                id: 3,
+                name: "数字世界",
+                type: "survival",
+                description: "按提示收集散落在地图中的数字，生存下去",
+                icon: "fa-shield",
+                color: "text-green-500",
+                bgColor: "bg-green-100"
+            },
+            {
+                id: 4,
+                name: "记忆挑战",
+                type: "puzzle",
+                description: "记住图案顺序，按正确顺序点击",
+                icon: "fa-brain",
+                color: "text-purple-500",
+                bgColor: "bg-purple-100"
+            },
+            {
+                id: 5,
+                name: "跳跃大师",
+                type: "speed",
+                description: "精准跳跃，跨越各种平台",
+                icon: "fa-mountain",
+                color: "text-orange-500",
+                bgColor: "bg-orange-100"
+            },
+            {
+                id: 6,
+                name: "幽暗古堡",
+                type: "survival",
+                description: "躲避盔甲人发射的冲击波",
+                icon: "fa-clock-o",
+                color: "text-red-500",
+                bgColor: "bg-red-100"
+            },
+            {
+                id: 7,
+                name: "平衡行走",
+                type: "survival",
+                description: "坚持存活在不稳定的平台上",
+                icon: "fa-balance-scale",
+                color: "text-teal-500",
+                bgColor: "bg-teal-100"
+            },
+            {
+                id: 8,
+                name: "密码破解",
+                type: "puzzle",
+                description: "解开一系列谜题，获取密码",
+                icon: "fa-key",
+                color: "text-indigo-500",
+                bgColor: "bg-indigo-100"
+            },
+        ];
+        
+        // DOM元素
+        const generateLevelsBtn = document.getElementById('generate-levels');
+        const regenerateLevelsBtn = document.getElementById('regenerate-levels');
+        const startChallengeBtn = document.getElementById('start-challenge');
+        const gameSettings = document.getElementById('game-settings');
+        const randomLevels = document.getElementById('random-levels');
+        const levelsContainer = document.getElementById('levels-container');
+        const difficultySelect = document.getElementById('difficulty');
+        const levelTypeSelect = document.getElementById('level-type');
+        const loadingScreen = document.getElementById('loading-screen');
+        const gameStartModal = document.getElementById('game-start');
+        const startModal = document.getElementById('start-modal');
+        const loadingProgress = document.getElementById('loading-progress');
+        const loadingPercentage = document.getElementById('loading-percentage');
+        const loadingMessage = document.getElementById('loading-message');
+        const currentLoadingLevel = document.getElementById('current-loading-level');
+        const loadingTime = document.getElementById('loading-time');
+        const startCountdown = document.getElementById('start-countdown');
+        const startNowBtn = document.getElementById('start-now');
+        
+        // 变量
+        let selectedLevels = [];
+        let loadingInterval;
+        let countdownInterval;
+        
+        // 生成随机关卡
+        function generateRandomLevels() {
+            // 根据偏好筛选关卡
+            let filteredLevels = [...allLevels];
+            const levelType = levelTypeSelect.value;
+            
+            // 如果选择了特定类型偏好，提高该类型关卡的选中概率
+            if (levelType !== 'random') {
+                // 创建一个加权数组，目标类型权重更高
+                const weightedLevels = [];
+                filteredLevels.forEach(level => {
+                    // 目标类型关卡添加3次，其他类型添加1次
+                    const weight = level.type === levelType ? 3 : 1;
+                    for (let i = 0; i < weight; i++) {
+                        weightedLevels.push(level);
+                    }
+                });
+                filteredLevels = weightedLevels;
+            }
+            
+            // 随机选择4个不重复的关卡
+            selectedLevels = [];
+            while (selectedLevels.length < 4 && filteredLevels.length > 0) {
+                const randomIndex = Math.floor(Math.random() * filteredLevels.length);
+                const selectedLevel = filteredLevels[randomIndex];
+                
+                // 确保不重复选择同一关卡
+                if (!selectedLevels.some(level => level.id === selectedLevel.id)) {
+                    selectedLevels.push(selectedLevel);
+                }
+                
+                // 从数组中移除已选择的关卡
+                filteredLevels.splice(randomIndex, 1);
+            }
+            
+            // 显示选中的关卡
+            displaySelectedLevels();
+            
+            // 显示关卡区域，隐藏设置区域
+            gameSettings.classList.add('hidden');
+            randomLevels.classList.remove('hidden');
+            
+            // 滚动到关卡区域
+            randomLevels.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // 显示选中的关卡
+        function displaySelectedLevels() {
+            levelsContainer.innerHTML = '';
+            
+            selectedLevels.forEach((level, index) => {
+                // 添加延迟动画效果
+                setTimeout(() => {
+                    const levelElement = document.createElement('div');
+                    levelElement.className = 'bg-gray-50 rounded-xl p-5 game-shadow level-appear';
+                    levelElement.innerHTML = `
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full ${level.bgColor} flex items-center justify-center flex-shrink-0">
+                                <i class="fa ${level.icon} ${level.color} text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="font-bold">第${index + 1}关: ${level.name}</h4>
+                                    <span class="text-xs bg-gray-200 rounded-full px-2 py-0.5 capitalize">${getTypeName(level.type)}</span>
+                                </div>
+                                <p class="text-sm text-gray-500">${level.description}</p>
+                                <div class="mt-3 flex items-center gap-2">
+                                    <span class="text-xs text-gray-500">难度:</span>
+                                    <div class="flex">
+                                        ${getDifficultyStars(index)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    levelsContainer.appendChild(levelElement);
+                }, index * 200); // 每个关卡延迟200ms出现
+            });
+        }
+        
+        // 获取关卡类型名称
+        function getTypeName(type) {
+            const typeMap = {
+                'speed': '竞速',
+                'puzzle': '解谜',
+                'survival': '生存'
+            };
+            return typeMap[type] || type;
+        }
+        
+        // 根据难度设置和关卡顺序生成星级
+        function getDifficultyStars(index) {
+            const difficulty = difficultySelect.value;
+            let stars = '';
+            // 总星级根据难度变化
+            const totalStars = difficulty === 'easy' ? 3 : difficulty === 'normal' ? 5 : 7;
+            // 关卡难度递增，最后一关最难
+            const starCount = Math.min(3, Math.floor((index + 1) / 4 * totalStars) + 1);
+            
+            for (let i = 1; i <= 3; i++) {
+                if (i <= starCount) {
+                    stars += '<i class="fa fa-star text-accent text-xs"></i>';
+                } else {
+                    stars += '<i class="fa fa-star-o text-gray-300 text-xs"></i>';
+                }
+            }
+            return stars;
+        }
+        
+        // 开始挑战 - 加载游戏
+        function startChallenge() {
+            // 隐藏关卡区域，显示加载界面
+            randomLevels.classList.add('hidden');
+            loadingScreen.classList.remove('hidden');
+            
+            // 重置加载进度
+            let progress = 0;
+            let secondsLeft = 15;
+            let currentLevel = 1;
+            
+            // 开始加载进度
+            clearInterval(loadingInterval);
+            loadingInterval = setInterval(() => {
+                // 随机增加进度，模拟真实加载过程
+                const progressIncrement = Math.random() * 3 + 0.5;
+                progress += progressIncrement;
+                
+                // 更新当前加载的关卡
+                const levelProgress = Math.floor(progress / 25) + 1;
+                if (levelProgress !== currentLevel && levelProgress <= 4) {
+                    currentLevel = levelProgress;
+                    currentLoadingLevel.textContent = `第${currentLevel}关`;
+                }
+                
+                // 减少剩余时间
+                secondsLeft -= 0.1;
+                loadingTime.textContent = `${Math.ceil(secondsLeft)}秒`;
+                
+                // 限制最大进度为95%
+                if (progress > 95) progress = 95;
+                
+                // 更新进度条和百分比
+                loadingProgress.style.width = `${progress}%`;
+                loadingPercentage.textContent = `${Math.floor(progress)}%`;
+                
+                // 更新加载消息
+                const messages = [
+                    "正在准备关卡资源...",
+                    "加载游戏场景...",
+                    "初始化物理引擎...",
+                    "加载角色模型...",
+                    "准备音效和音乐..."
+                ];
+                loadingMessage.textContent = messages[Math.floor(Math.random() * messages.length)];
+                
+                // 当进度达到95%，完成加载
+                if (progress >= 95) {
+                    completeLoading();
+                }
+            }, 100);
+        }
+        
+        // 完成加载
+        function completeLoading() {
+            clearInterval(loadingInterval);
+            
+            // 进度达到100%
+            loadingProgress.style.width = '100%';
+            loadingPercentage.textContent = '100%';
+            loadingMessage.textContent = '加载完成，准备进入游戏...';
+            loadingTime.textContent = '0秒';
+            currentLoadingLevel.textContent = '全部关卡';
+            
+            // 显示游戏开始弹窗
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                gameStartModal.classList.remove('hidden');
+                
+                // 触发动画
+                setTimeout(() => {
+                    startModal.classList.remove('scale-95', 'opacity-0');
+                    startModal.classList.add('scale-100', 'opacity-100');
+                }, 10);
+                
+                // 开始倒计时
+                let countdown = 3;
+                startCountdown.textContent = countdown;
+                
+                clearInterval(countdownInterval);
+                countdownInterval = setInterval(() => {
+                    countdown--;
+                    startCountdown.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                        enterGame();
+                    }
+                }, 1000);
+            }, 1000);
+        }
+        
+        // 进入游戏
+        function enterGame() {
+            clearInterval(countdownInterval);
+            
+            // 模拟进入游戏
+            alert('进入游戏挑战！准备开始第一关：' + selectedLevels[0].name);
+            
+            // 重置界面
+            gameStartModal.classList.add('hidden');
+            startModal.classList.remove('scale-100', 'opacity-100');
+            startModal.classList.add('scale-95', 'opacity-0');
+            randomLevels.classList.remove('hidden');
+        }
+        
+        // 事件监听器
+        generateLevelsBtn.addEventListener('click', generateRandomLevels);
+        regenerateLevelsBtn.addEventListener('click', function() {
+            // 添加洗牌动画
+            this.classList.add('shuffle-animation');
+            setTimeout(() => {
+                this.classList.remove('shuffle-animation');
+                generateRandomLevels();
+            }, 800);
+        });
+        startChallengeBtn.addEventListener('click', startChallenge);
+        startNowBtn.addEventListener('click', enterGame);
+        
+        // 点击单人经典模式卡片滚动到设置
+        document.querySelector('.game-mode:first-child').addEventListener('click', () => {
+            gameSettings.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // 滚动时改变导航栏样式
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('py-2', 'shadow-lg');
+                header.classList.remove('py-3', 'shadow-md');
+            } else {
+                header.classList.add('py-3', 'shadow-md');
+                header.classList.remove('py-2', 'shadow-lg');
+            }
+        });
+    </script>
+</body>
+</html>

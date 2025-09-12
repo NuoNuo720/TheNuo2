@@ -169,6 +169,41 @@
             line-height: 1.5;
         }
 
+        /* 热门游戏标识 */
+        .hot-tag {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #e74c3c;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        
+        /* 热门游戏卡片特殊样式 */
+        .nav-card.hot-game {
+            border-color: #e74c3c;
+        }
+        
+        .nav-card.hot-game .card-icon {
+            color: #e74c3c;
+        }
+        
+        .nav-card.hot-game:hover .card-title {
+            color: #e74c3c;
+        }
+        
+        .nav-card.hot-game::before {
+            background: linear-gradient(90deg, #e74c3c, #f39c12);
+        }
+
         footer {
             text-align: center;
             margin-top: 60px;
@@ -287,7 +322,7 @@
             padding: 30px;
             border-radius: 10px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             position: relative;
             transform: translateY(20px);
@@ -318,6 +353,43 @@
             margin-bottom: 25px;
             color: #2c3e50;
             font-size: 1.5rem;
+        }
+
+        /* 系列选择模态框特殊样式 */
+        .series-select-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .series-select-item {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .series-select-item:hover {
+            background-color: #f0f4f8;
+            border-color: #3498db;
+            transform: translateY(-3px);
+        }
+        
+        .series-select-item .card-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .series-select-item .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .series-select-item .card-desc {
+            font-size: 0.85rem;
         }
 
         .profile-section {
@@ -640,143 +712,237 @@
     <div class="success-message" id="successMsg"></div>
 
     <div class="container">
-        <div class="card-grid">
-            <!-- 现有功能卡片 -->
-            <div class="nav-card" onclick="navigateTo('HelpAndGuide.html')">
-                <div class="card-icon">
-                    <i class="fas fa-poll"></i>
+        <!-- 游戏娱乐分类 -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-gamepad"></i> 游戏娱乐
+            </h2>
+            <div class="card-grid">
+                <div class="nav-card" onclick="navigateTo('24gameinformation.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h2 class="card-title">小游戏合集</h2>
+                    <p class="card-desc">Interesting Games</p>
                 </div>
-                <h2 class="card-title">帮助中心</h2>
-                <p class="card-desc">Help</p>
+                
+                <!-- 自由电子系列模块入口 -->
+                <div class="nav-card hot-game" onclick="openFreeElectronSeries()">
+                    <div class="hot-tag">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h2 class="card-title">自由电子冒险</h2>
+                    <p class="card-desc">自由电子冒险系列！</p>
+                </div>
+                
+                <!-- 派对游戏 -->
+                <div class="nav-card hot-game" onclick="navigateTo('简易蛋仔.html')">
+                    <div class="hot-tag">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fas fa-users-gear"></i>
+                    </div>
+                    <h2 class="card-title">派对游戏</h2>
+                    <p class="card-desc">随机游戏，挑战全能</p>
+                </div>
             </div>
+        </div>
 
-            <div class="nav-card" onclick="navigateTo('knowledge.html')">
-                <div class="card-icon">
-                    <i class="fas fa-book"></i>
+        <!-- 学习系列分类 -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-graduation-cap"></i> 学习系列
+            </h2>
+            <div class="card-grid">
+                <!-- 学习系列模块入口 -->
+                <div class="nav-card" onclick="openLearningSeries()">
+                    <div class="card-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h2 class="card-title">English words</h2>
+                    <p class="card-desc">英语单词学习工具</p>
                 </div>
-                <h2 class="card-title">百宝箱</h2>
-                <p class="card-desc">半猫小知识丷</p>
+               <div class="nav-card" onclick="navigateTo('Exam.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h2 class="card-title">学业水平考试</h2>
+                    <p class="card-desc">半猫试卷</p>
+                </div>
             </div>
+        </div>
 
-            <div class="nav-card" onclick="navigateTo('diaochawenjuan.html')">
-                <div class="card-icon">
-                    <i class="fas fa-poll"></i>
+        <!-- 实用工具分类 -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-tools"></i> 实用工具
+            </h2>
+            <div class="card-grid">
+                <div class="nav-card" onclick="navigateTo('knowledge.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h2 class="card-title">百宝箱</h2>
+                    <p class="card-desc">半猫小知识丷</p>
                 </div>
-                <h2 class="card-title">调查问卷</h2>
-                <p class="card-desc">提交实时反馈，有机会获取限定称号</p>
-            </div>
 
-            <div class="nav-card" onclick="navigateTo('words.html')">
-                <div class="card-icon">
-                    <i class="fas fa-spell-check"></i>
+                <div class="nav-card" onclick="navigateTo('diaochawenjuan.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-poll"></i>
+                    </div>
+                    <h2 class="card-title">调查问卷</h2>
+                    <p class="card-desc">提交实时反馈，有机会获取限定称号</p>
                 </div>
-                <h2 class="card-title">English words</h2>
-                <p class="card-desc">检验和提升你的英文单词储备量</p>
             </div>
-            
-            <div class="nav-card" onclick="navigateTo('words2.html')">
-                <div class="card-icon">
-                    <i class="fas fa-spell-check"></i>
-                </div>
-                <h2 class="card-title">English words 2nd</h2>
-                <p class="card-desc">高二选修一专属模式[限定]</p>
-            </div>
+        </div>
 
-            <div class="nav-card" onclick="navigateTo('versions.html')">
-                <div class="card-icon">
-                    <i class="fas fa-newspaper"></i>
+        <!-- 用户中心分类 -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-user-circle"></i> 用户中心
+            </h2>
+            <div class="card-grid">
+                <div class="nav-card" onclick="navigateTo('friends(old2).html')">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h2 class="card-title">好友列表</h2>
+                    <p class="card-desc">管理你的好友和联系人，一起互动(目前有bug 等待修复中...)</p>
                 </div>
-                <h2 class="card-title">更新公告</h2>
-                <p class="card-desc">查看最新版本更新内容和功能预告</p>
-            </div>
-        
-            <div class="nav-card" onclick="navigateTo('24gameinformation.html')">
-                <div class="card-icon">
-                    <i class="fas fa-gamepad"></i>
-                </div>
-                <h2 class="card-title">小游戏合集</h2>
-                <p class="card-desc">Interesting Games</p>
-            </div>
-            
-            <div class="nav-card" onclick="navigateTo('friends(old2).html')">
-                <div class="card-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h2 class="card-title">好友列表</h2>
-                <p class="card-desc">管理你的好友和联系人，一起互动(目前有bug 等待修复中...)</p>
-            </div>
 
-            <div class="nav-card" onclick="navigateTo('e(finally).html')">
-                <div class="card-icon">
-                    <i class="fas fa-gamepad"></i>
+                <div class="nav-card" onclick="openEventsModal()">
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h2 class="card-title">活动中心</h2>
+                    <p class="card-desc">参与限时活动，赢取丰厚奖励</p>
                 </div>
-                <h2 class="card-title">自由电子冒险</h2>
-                <p class="card-desc">自由电子冒险之旅！</p>
-            </div>
 
-            <div class="nav-card" onclick="navigateTo('freee2.html')">
-                <div class="card-icon">
-                    <i class="fas fa-gamepad"></i>
+                <div class="nav-card" onclick="openShopModal()">
+                    <div class="card-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <h2 class="card-title">积分商城</h2>
+                    <p class="card-desc">使用积分兑换各种精美道具</p>
                 </div>
-                <h2 class="card-title">自由电子冒险2</h2>
-                <p class="card-desc">自由电子冒险之旅！</p>
-            </div>
-            
-            <div class="nav-card" onclick="navigateTo('freee3.html')">
-                <div class="card-icon">
-                    <i class="fas fa-gamepad"></i>
-                </div>
-                <h2 class="card-title">自由电子冒险3</h2>
-                <p class="card-desc">自由电子自由电子冒险之旅！</p>
-            </div>
-            
-            <div class="nav-card" onclick="showDisabledNotice('自由电子冒险4')">
-                <div class="card-icon">
-                    <i class="fas fa-gamepad"></i>
-                </div>
-                <h2 class="card-title">自由电子电子冒险4</h2>
-                <p class="card-desc">自由自由电子冒险之旅！</p>
-            </div>
-            
-            <div class="nav-card" onclick="showComingSoonNotice()">
-                <div class="card-icon">
-                    <i class="fas fa-cogs"></i>
-                </div>
-                <h2 class="card-title">更多功能</h2>
-                <p class="card-desc">持续更新中，即将上线即将上线更多实用工具</p>
-            </div>
-            
-            <div class="nav-card" onclick="gotoAdminLogin()">
-                <div class="card-icon">
-                    <i class="fas fa fa-cogs"></i>
-                </div>
-                <h2 class="card-title">我是管理员?</h2>
-                <p class="card-desc">管理员特殊功能登录页面...</p>
-            </div>
 
-            <!-- 新增功能卡片 -->
-            <div class="nav-card" onclick="openEventsModal()">
-                <div class="card-icon">
-                    <i class="fas fa-calendar-alt"></i>
+                <div class="nav-card" onclick="openTasksModal()">
+                    <div class="card-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h2 class="card-title">每日任务</h2>
+                    <p class="card-desc">完成任务获取积分和特殊奖励</p>
                 </div>
-                <h2 class="card-title">活动中心</h2>
-                <p class="card-desc">参与限时活动，赢取丰厚奖励</p>
             </div>
+        </div>
 
-            <div class="nav-card" onclick="openShopModal()">
-                <div class="card-icon">
-                    <i class="fas fa-shopping-bag"></i>
+        <!-- 系统功能分类 -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-cog"></i> 系统功能
+            </h2>
+            <div class="card-grid">
+                <div class="nav-card" onclick="navigateTo('HelpAndGuide.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-poll"></i>
+                    </div>
+                    <h2 class="card-title">帮助中心</h2>
+                    <p class="card-desc">Help</p>
                 </div>
-                <h2 class="card-title">积分商城</h2>
-                <p class="card-desc">使用积分兑换各种精美道具</p>
+
+                <div class="nav-card" onclick="navigateTo('versions.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h2 class="card-title">更新公告</h2>
+                    <p class="card-desc">查看最新版本更新内容和功能预告</p>
+                </div>
+                
+                <div class="nav-card" onclick="showComingSoonNotice()">
+                    <div class="card-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h2 class="card-title">更多功能</h2>
+                    <p class="card-desc">持续更新中，即将上线更多实用工具</p>
+                </div>
+                
+                <div class="nav-card" onclick="gotoAdminLogin()">
+                    <div class="card-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h2 class="card-title">我是管理员?</h2>
+                    <p class="card-desc">管理员特殊功能登录页面...</p>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div class="nav-card" onclick="openTasksModal()">
-                <div class="card-icon">
-                    <i class="fas fa-tasks"></i>
+    <!-- 自由电子系列选择模态框 -->
+    <div class="modal" id="freeElectronModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeFreeElectronModal()">&times;</span>
+            <h2 class="profile-title">自由电子系列 - 选择游戏</h2>
+            <div class="series-select-grid">
+                <div class="series-select-item" onclick="navigateTo('e(finally).html')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3 class="card-title">自由电子冒险</h3>
+                    <p class="card-desc">自由电子冒险之旅！</p>
                 </div>
-                <h2 class="card-title">每日任务</h2>
-                <p class="card-desc">完成任务获取积分和特殊奖励</p>
+                
+                <div class="series-select-item" onclick="navigateTo('freee2.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3 class="card-title">自由电子冒险2</h3>
+                    <p class="card-desc">自由电子冒险之旅！</p>
+                </div>
+                
+                <div class="series-select-item" onclick="navigateTo('freee3.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3 class="card-title">自由电子冒险3</h3>
+                    <p class="card-desc">自由电子冒险之旅！</p>
+                </div>
+                
+                <div class="series-select-item" onclick="showDisabledNotice('自由电子冒险4')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3 class="card-title">自由电子冒险4</h3>
+                    <p class="card-desc">即将上线，敬请期待！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学习系列选择模态框 -->
+    <div class="modal" id="learningModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeLearningModal()">&times;</span>
+            <h2 class="profile-title">学习系列 - 选择工具</h2>
+            <div class="series-select-grid">
+                <div class="series-select-item" onclick="navigateTo('words.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-spell-check"></i>
+                    </div>
+                    <h3 class="card-title">English words</h3>
+                    <p class="card-desc">检验和提升你的英文单词储备量</p>
+                </div>
+                
+                <div class="series-select-item" onclick="navigateTo('words2.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-spell-check"></i>
+                    </div>
+                    <h3 class="card-title">English words 2nd</h3>
+                    <p class="card-desc">高二选修一专属模式[限定]</p>
+                </div>
             </div>
         </div>
     </div>
@@ -834,7 +1000,7 @@
         </div>
     </div>
 
-    <!-- 公告模态框 -->
+    <!-- 其他模态框保持不变 -->
     <div class="modal" id="announcementModal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close-modal" onclick="closeAnnouncementModal()">&times;</span>
@@ -849,13 +1015,14 @@
                 <div class="announcement-item">
                     <h3 style="color: #9b59b6;">【限时活动】</h3>
                     <p>1. 参与问卷调查有机会获得游戏道具</p>
-                    <small>发布时间：2025-08-29</small>
+                    <small>发布时间：2025-08-30</small>
                 </div>
                 <div class="announcement-item">
                     <h3 style="color: #f39c12;">【BUG注意】</h3>
                     <p>1. "称号与头衔"、「好友列表」功能目前仍存在bug，正在修复中...</p>
                     <p>2. 移动端可能出现卡顿问题</p>
-                    <small>发布时间：2025-08-29</small>
+                    <p>2. 「自由电子冒险3」游戏中1-5关卡尚未完善</p>
+                    <small>发布时间：2025-09-01</small>
                 </div>
                 
                 <div class="announcement-item">
@@ -870,9 +1037,15 @@
                 </div>
                 
             </div>
-            <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                <input type="checkbox" id="dontShowAgain" style="margin-right: 10px;">
-                <label for="dontShowAgain">24小时内不再显示</label>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center;">
+                    <input type="checkbox" id="dontShow30Min" style="margin-right: 10px;">
+                    <label for="dontShow30Min">30分钟内不再显示</label>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <input type="checkbox" id="dontShowAgain" style="margin-right: 10px;">
+                    <label for="dontShowAgain">1天内不再显示</label>
+                </div>
             </div>
             <button class="save-btn" onclick="closeAnnouncementModal()">
                 <i class="fas fa-check"></i> 我知道了
@@ -880,7 +1053,6 @@
         </div>
     </div>
 
-    <!-- 活动模态框 -->
     <div class="modal" id="eventsModal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close-modal" onclick="closeEventsModal()">&times;</span>
@@ -894,7 +1066,6 @@
         </div>
     </div>
 
-    <!-- 商城模态框 -->
     <div class="modal" id="shopModal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close-modal" onclick="closeShopModal()">&times;</span>
@@ -947,13 +1118,12 @@
         </div>
     </div>
 
-    <!-- 任务模态框 -->
     <div class="modal" id="tasksModal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close-modal" onclick="closeTasksModal()">&times;</span>
             <h2 class="profile-title">每日任务</h2>
             <div class="announcement-content">
-                <!-- 任务内容将通过JavaScript动态加载 -->
+                <!-- 任务内容 -->
             </div>
             <button class="save-btn" onclick="closeTasksModal()">
                 <i class="fas fa-check"></i> 关闭
@@ -961,607 +1131,183 @@
         </div>
     </div>
 
-    <!-- 通知组件 -->
-    <div class="notification" id="notification">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificationText"></span>
-    </div>
-
-    <footer>
-        <p>多功能导航中心 &copy; 2025 | 持续更新中</p>
-    </footer>
-
     <script>
-        // 页面加载时初始化
-        window.onload = function() {
-            checkLoginStatus();
-            initCardAnimations();
-            checkLoginParams();
-            loadUserPoints();
-            loadPlatformActivities(); // 加载平台活动
-            loadPlatformTasks(); // 加载平台任务
-        };
-
-        // 检查登录参数
-        function checkLoginParams() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('loginSuccess')) {
-                showNotification('欢迎回来！登录成功', 'success');
-            }
-        }
-
-        // 检查登录状态
-        function checkLoginStatus() {
-            const userInfoStr = localStorage.getItem('mainUserInfo');
-            
-            if (!userInfoStr) {
-                handleUnauthorizedAccess();
-                return;
-            }
-            
-            try {
-                let userInfo = JSON.parse(userInfoStr);
-        
-                const requiredFields = ['username', 'loginTime'];
-                const missingFields = requiredFields.filter(field => !userInfo[field]);
-        
-                if (missingFields.length > 0) {
-                    if (missingFields.includes('username')) {
-                        throw new Error("用户身份信息不完整，缺少用户名，请重新登录");
-                    } else {
-                        throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}，请重新登录`);
-                    }
-                }
-        
-                const loginTime = new Date(userInfo.loginTime);
-                if (isNaN(loginTime.getTime())) {
-                    throw new Error("登录时间格式无效，请重新登录");
-                }
-        
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 1);
-                if (loginTime < sevenDaysAgo) {
-                    throw new Error("登录已超过1天，请重新登录");
-                }
-        
-                updateUserDisplay(userInfo);
-                loadUserTitles(userInfo);
-                checkUserValidity(userInfo);
-                
-                // 登录成功后检查是否需要显示公告
-                setTimeout(() => {
-                    checkAndShowAnnouncement();
-                }, 1000);
-                
-            } catch (err) {
-                console.error("用户信息解析失败：", err);
-                localStorage.removeItem('mainUserInfo');
-                handleUnauthorizedAccess(err.message);
-            }
-        }
-
-        // 检查用户有效性
-        async function checkUserValidity(userInfo) {
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            if (isLocalDev) {
-                console.log('本地开发模式，跳过用户验证');
-                return;
-            }
-            
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-                const response = await fetch('/.netlify/functions/verifyUser', {
-                    method: 'POST',
-                    headers: {
-                        'X-Username': userInfo.username,
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
-        
-                clearTimeout(timeoutId);
-        
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error('用户身份已失效，请重新登录');
-                    }
-                    throw new Error(`验证失败: ${response.statusText}`);
-                }
-        
-                const result = await response.json();
-                if (result.valid) {
-                    userInfo.loginTime = new Date().toISOString();
-                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-                }
-            } catch (error) {
-                console.error('用户验证失败:', error);
-                if (error.name !== 'AbortError') {
-                    showNotification(error.message, 'error');
-                    setTimeout(() => {
-                        if (confirm('登录状态已失效，是否重新登录？')) {
-                            localStorage.removeItem('mainUserInfo');
-                            window.location.href = 'indexlo.html?sessionExpired=true';
-                        }
-                    }, 3000);
-                }
-            }
-        }
-
-        // 更新用户显示信息
-        function updateUserDisplay(userInfo) {
-            const userAreaEl = document.getElementById('userArea');
-            const avatarUrl = userInfo.avatar || 'https://picsum.photos/200';
-            
-            const loginTime = new Date(userInfo.loginTime);
-            const formattedTime = loginTime.toLocaleString();
-            
-            let titleBadge = '';
-            if (userInfo.currentTitle) {
-                titleBadge = `<span class="title-badge">
-                    <i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i>
-                    ${userInfo.currentTitle.name}
-                </span>`;
-            }
-            
-            userAreaEl.innerHTML = `
-                <span class="username">${decodeURIComponent(userInfo.username)}</span>
-                ${titleBadge}
-                <img src="${avatarUrl}" alt="用户头像" class="user-avatar" onclick="openProfileModal()">
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> 退出
-                </button>
-            `;
-            
-            document.getElementById('modalAvatar').src = avatarUrl;
-            document.getElementById('usernameDisplay').textContent = decodeURIComponent(userInfo.username);
-            document.getElementById('loginTimeDisplay').textContent = formattedTime;
-            
-            const titleDisplay = document.getElementById('titleDisplay');
-            if (userInfo.currentTitle) {
-                titleDisplay.innerHTML = `<i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i> ${userInfo.currentTitle.name}`;
-            } else {
-                titleDisplay.textContent = '暂无称号';
-            }
-        }
-
-        // 初始化卡片动画
-        function initCardAnimations() {
+        // 页面加载时显示卡片动画
+        window.addEventListener('load', () => {
             const cards = document.querySelectorAll('.nav-card');
             cards.forEach((card, index) => {
                 setTimeout(() => {
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
-                }, 50 * index);
+                }, 100 * index);
             });
+        });
+
+        // 导航功能
+        function navigateTo(url) {
+            window.location.href = url;
         }
 
-        // 退出登录
-        function logout() {
-            if (confirm('确定要退出登录吗？')) {
-                localStorage.removeItem('mainUserInfo');
-                window.location.href = 'indexlo.html';
-            }
+        // 系列模态框控制
+        function openFreeElectronSeries() {
+            document.getElementById('freeElectronModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('freeElectronModal').classList.add('active');
+            }, 10);
         }
 
-        // 个人信息模态框控制
-        function toggleModal(show) {
-            const modal = document.getElementById('profileModal');
-            if (show) {
-                modal.style.display = 'flex';
-                setTimeout(() => modal.classList.add('active'), 10);
-            } else {
-                modal.classList.remove('active');
-                setTimeout(() => modal.style.display = 'none', 300);
-            }
+        function closeFreeElectronModal() {
+            document.getElementById('freeElectronModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('freeElectronModal').style.display = 'none';
+            }, 300);
         }
 
+        function openLearningSeries() {
+            document.getElementById('learningModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('learningModal').classList.add('active');
+            }, 10);
+        }
+
+        function closeLearningModal() {
+            document.getElementById('learningModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('learningModal').style.display = 'none';
+            }, 300);
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // 显示即将上线通知
+        function showComingSoonNotice() {
+            showNotification('该功能即将上线，敬请期待！', 'info');
+        }
+
+        // 显示功能已禁用通知
+        function showDisabledNotice(featureName) {
+            showNotification(`${featureName} 目前暂未开放，敬请期待！`, 'error');
+        }
+
+        // 管理员登录
+        function gotoAdminLogin() {
+            navigateTo('admin_login.html');
+        }
+
+        // 其他模态框控制函数
         function openProfileModal() {
-            toggleModal(true);
+            document.getElementById('profileModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('profileModal').classList.add('active');
+            }, 10);
         }
 
         function closeProfileModal() {
-            toggleModal(false);
+            document.getElementById('profileModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('profileModal').style.display = 'none';
+            }, 300);
+        }
+
+        function openAnnouncementModal() {
+            document.getElementById('announcementModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('announcementModal').classList.add('active');
+            }, 10);
+        }
+
+        function closeAnnouncementModal() {
+            document.getElementById('announcementModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('announcementModal').style.display = 'none';
+            }, 300);
+        }
+
+        function openEventsModal() {
+            document.getElementById('eventsModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('eventsModal').classList.add('active');
+            }, 10);
+        }
+
+        function closeEventsModal() {
+            document.getElementById('eventsModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('eventsModal').style.display = 'none';
+            }, 300);
+        }
+
+        function openShopModal() {
+            document.getElementById('shopModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('shopModal').classList.add('active');
+            }, 10);
+        }
+
+        function closeShopModal() {
+            document.getElementById('shopModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('shopModal').style.display = 'none';
+            }, 300);
+        }
+
+        function openTasksModal() {
+            document.getElementById('tasksModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('tasksModal').classList.add('active');
+            }, 10);
+        }
+
+        function closeTasksModal() {
+            document.getElementById('tasksModal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('tasksModal').style.display = 'none';
+            }, 300);
         }
 
         // 头像上传处理
         function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('图片大小不能超过5MB', 'error');
-                    return;
-                }
-                
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!allowedTypes.includes(file.type)) {
-                    showNotification('只支持JPG、PNG和GIF格式的图片', 'error');
-                    return;
-                }
-                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('modalAvatar').src = e.target.result;
-                    showNotification('图片已预览，点击保存生效', 'success');
-                    event.target.value = '';
                 }
                 reader.readAsDataURL(file);
             }
         }
-    
+
         // 保存头像
         function saveAvatar() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('用户信息不完整，请重新登录', 'error');
-                return;
-            }
-            
-            const newAvatar = document.getElementById('modalAvatar').src;
-    
-            userInfo.avatar = newAvatar;
-            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-    
-            document.querySelector('.user-avatar').src = newAvatar;
-    
-            saveUserInfoToServer(userInfo);
-    
-            showNotification('头像已更新成功！', 'success');
-            closeProfileModal();
-        }
-
-        // 保存用户信息到服务器
-        async function saveUserInfoToServer(userData) {
-            if (!userData.username) {
-                console.error('保存失败：缺少用户名');
-                return;
-            }
-            
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (isLocalDev) {
-                console.log('本地开发模式，跳过服务器保存');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/.netlify/functions/saveUserInfo', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(userData)
-                });
-        
-                if (!response.ok) {
-                    throw new Error('保存失败');
-                }
-        
-                console.log('用户信息已同步到服务器');
-            } catch (error) {
-                console.error('保存用户信息失败:', error);
-                showNotification('信息同步失败', 'error');
-            }
-        }
-
-        // 点击模态框外部关闭
-        window.onclick = function(event) {
-            const modals = [
-                document.getElementById('profileModal'),
-                document.getElementById('announcementModal'),
-                document.getElementById('eventsModal'),
-                document.getElementById('shopModal'),
-                document.getElementById('tasksModal')
-            ];
-            
-            modals.forEach(modal => {
-                if (event.target === modal) {
-                    if (modal.id === 'profileModal') closeProfileModal();
-                    if (modal.id === 'announcementModal') closeAnnouncementModal();
-                    if (modal.id === 'eventsModal') closeEventsModal();
-                    if (modal.id === 'shopModal') closeShopModal();
-                    if (modal.id === 'tasksModal') closeTasksModal();
-                }
-            });
-        };
-
-        // 页面导航
-        function navigateTo(url, requiredRole = 'user') {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                return;
-            }
-            
-            // 管理员权限检查
-            if (requiredRole === 'admin' && url !== 'admin-login.html' && 
-                (!userInfo.role || userInfo.role !== 'admin')) {
-                showNotification('您没有管理员权限限', 'error');
-                return;
-            }
-            
-            window.location.href = url;
-        }
-
-        // 显示通知
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            const textElement = document.getElementById('notificationText');
-            
-            notification.className = 'notification';
-            notification.classList.add(type);
-            textElement.textContent = message;
-            
-            notification.classList.add('show');
-            
+            showNotification('头像保存成功！', 'success');
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // 显示即将上线通知
-        function showComingSoonNotice() {
-            showNotification('更多功能正在开发中，敬请期待！', 'info');
-        }
-
-        function showDisabledNotice(featureName) {
-            showNotification(`${featureName} 功能暂未开放，敬请期待！`, 'info');
-        }
-
-        // 未授权访问处理
-        function handleUnauthorizedAccess(message = '请先登录以使用全部功能') {
-            document.getElementById('errorMsg').textContent = message;
-            document.getElementById('errorMsg').style.display = 'block';
-            
-            setTimeout(() => {
-                document.getElementById('errorMsg').style.display = 'none';
-            }, 3000);
-        }
-
-        // 公告相关
-        function checkAndShowAnnouncement() {
-            const lastShown = localStorage.getItem('lastAnnouncementShown');
-            const now = new Date().getTime();
-            
-            if (!lastShown || now - lastShown > 24 * 60 * 60 * 1000) {
-                openAnnouncementModal();
-            }
-        }
-
-        function openAnnouncementModal() {
-            const modal = document.getElementById('announcementModal');
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-
-        function closeAnnouncementModal() {
-            const modal = document.getElementById('announcementModal');
-            modal.classList.remove('active');
-            
-            if (document.getElementById('dontShowAgain').checked) {
-                localStorage.setItem('lastAnnouncementShown', new Date().getTime().toString());
-            }
-            
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
-        // 加载用户称号
-        function loadUserTitles(userInfo) {
-            console.log('加载用户称号', userInfo.titles || '暂无称号');
-        }
-
-        // 活动相关函数
-        function openEventsModal() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                return;
-            }
-            
-            const modal = document.getElementById('eventsModal');
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-
-        function closeEventsModal() {
-            const modal = document.getElementById('eventsModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
-        // 加载管理员发布的活动
-        function loadPlatformActivities() {
-            const activities = JSON.parse(localStorage.getItem('platformActivities') || '[]');
-            const eventsContainer = document.querySelector('#eventsModal .announcement-content');
-            
-            eventsContainer.innerHTML = '';
-            
-            if (activities.length === 0) {
-                eventsContainer.innerHTML = '<p>暂无活动，敬请期待</p>';
-                return;
-            }
-            
-            // 按开始日期排序
-            activities.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-            
-            activities.forEach(activity => {
-                const statusClass = activity.status === 'active' ? 'status-active' : 
-                                  activity.status === 'upcoming' ? 'status-inactive' : 'status-inactive';
-                const statusText = activity.status === 'active' ? '进行中' : 
-                                  activity.status === 'upcoming' ? '即将开始' : '已结束';
-                
-                const eventItem = document.createElement('div');
-                eventItem.className = 'event-item';
-                eventItem.innerHTML = `
-                    <div class="event-date">${activity.startDate} 至 ${activity.endDate} 
-                        <span class="status-badge ${statusClass}">${statusText}</span>
-                    </div>
-                    <h3>${activity.title}</h3>
-                    <p>${activity.description}</p>
-                    <p class="task-reward">奖励：${activity.reward}</p>
-                    <button class="redeem-btn" 
-                            onclick="joinEvent('${activity.id}', '${activity.title}')"
-                            ${activity.status === 'ended' ? 'disabled' : ''}>
-                        ${activity.status === 'ended' ? '已结束' : '立即参与'}
-                    </button>
-                `;
-                eventsContainer.appendChild(eventItem);
-            });
-        }
-
-        // 参与活动
-        function joinEvent(eventId, eventName) {
-            let userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                return;
-            }
-            
-            userInfo.joinedEvents = userInfo.joinedEvents || [];
-            
-            if (userInfo.joinedEvents.includes(eventId)) {
-                showNotification('您已参与该活动', 'info');
-                return;
-            }
-            
-            userInfo.joinedEvents.push(eventId);
-            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-            
-            showNotification(`成功参与${eventName}！`, 'success');
-            loadPlatformActivities();
-        }
-
-        // 商城相关函数
-        function openShopModal() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                return;
-            }
-            
-            const modal = document.getElementById('shopModal');
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-
-        function closeShopModal() {
-            const modal = document.getElementById('shopModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
+                closeProfileModal();
+            }, 1000);
         }
 
         // 兑换物品
         function redeemItem(itemName, points) {
-            let userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            userInfo.points = userInfo.points || 0;
-            
-            if (userInfo.points >= points) {
-                userInfo.points -= points;
-                localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-                showNotification(`成功兑换${itemName}！`, 'success');
-                loadUserPoints();
-            } else {
-                showNotification('积分不足，无法兑换', 'error');
-            }
-        }
-
-        // 任务相关函数
-        function openTasksModal() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                return;
-            }
-            
-            const modal = document.getElementById('tasksModal');
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-
-        function closeTasksModal() {
-            const modal = document.getElementById('tasksModal');
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
-        // 加载管理员发布的任务
-        function loadPlatformTasks() {
-            const tasks = JSON.parse(localStorage.getItem('platformTasks') || '[]');
-            const tasksContainer = document.querySelector('#tasksModal .announcement-content');
-            
-            tasksContainer.innerHTML = '';
-            
-            if (tasks.length === 0) {
-                tasksContainer.innerHTML = '<p>暂无任务，敬请期待</p>';
-                return;
-            }
-            
-            // 只显示启用的任务
-            const activeTasks = tasks.filter(task => task.status === 'active');
-            
-            if (activeTasks.length === 0) {
-                tasksContainer.innerHTML = '<p>暂无可用任务</p>';
-                return;
-            }
-            
-            activeTasks.forEach(task => {
-                const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-                const isCompleted = userInfo.completedTasks && userInfo.completedTasks.includes(task.id);
-                
-                const taskItem = document.createElement('div');
-                taskItem.className = 'task-item';
-                taskItem.innerHTML = `
-                    <div>
-                        <div class="task-difficulty">难度：${task.difficulty} | 类型：${task.type === 'daily' ? '每日任务' : task.type === 'weekly' ? '每周任务' : '一次性任务'}</div>
-                        <h3>${task.title}</h3>
-                        <p>${task.description}</p>
-                        <p class="task-reward">奖励：${task.reward}积分</p>
-                    </div>
-                    <button class="complete-btn" 
-                            onclick="completeTask('${task.id}', '${task.title}', ${task.reward})"
-                            ${isCompleted ? 'disabled' : ''}>
-                        ${isCompleted ? '已完成' : '完成'}
-                    </button>
-                `;
-                tasksContainer.appendChild(taskItem);
-            });
-        }
-
-        // 完成任务
-        function completeTask(taskId, taskName, points) {
-            let userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                return;
-            }
-            
-            userInfo.points = userInfo.points || 0;
-            userInfo.completedTasks = userInfo.completedTasks || [];
-            
-            if (userInfo.completedTasks.includes(taskId)) {
-                showNotification('该任务已完成，无法重复领取奖励', 'error');
-                return;
-            }
-            
-            userInfo.points += points;
-            userInfo.completedTasks.push(taskId);
-            
-            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-            showNotification(`成功完成${taskName}，获得${points}积分！`, 'success');
-            loadUserPoints();
-            loadPlatformTasks();
-        }
-
-        // 加载并显示用户积分
-        function loadUserPoints() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            const points = userInfo.points || 0;
-            document.getElementById('userPoints').textContent = points;
-        }
-        function gotoAdminLogin() {
-            // 无论是否登录，直接跳转到管理员登录页面
-            window.location.href = 'admin-login.html';
+            showNotification(`成功兑换 ${itemName}！`, 'success');
         }
     </script>
 </body>

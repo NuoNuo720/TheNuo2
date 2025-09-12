@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高二开学第一周学业水平测试（物化生）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        danger: '#ef4444',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .question-card {
+                @apply bg-white rounded-xl shadow-md p-6 mb-6 transition-all duration-300 hover:shadow-lg;
+            }
+            .option-item {
+                @apply border border-gray-200 rounded-lg p-4 mb-3 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-blue-50;
+            }
+            .option-selected {
+                @apply border-primary bg-blue-50;
+            }
+            .option-correct {
+                @apply border-secondary bg-green-50;
+            }
+            .option-incorrect {
+                @apply border-danger bg-red-50;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-dark">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <!-- 返回按钮 -->
+                <button id="back-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
+                    <i class="fa fa-arrow-left text-primary text-xl"></i>
+                </button>
+                <i class="fa fa-flask text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-dark">高二学业水平测试</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="hidden md:inline-flex items-center text-sm text-gray-600">
+                    <i class="fa fa-clock-o mr-1"></i> 建议用时: 30分钟
+                </span>
+                <span id="question-count" class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                    已完成: 0/15
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 测试介绍 -->
+        <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 mb-8 shadow-sm">
+            <h2 class="text-xl font-bold mb-3 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i>测试说明
+            </h2>
+            <p class="text-gray-700 mb-4">本次测试包含15道选择题，涵盖物理、化学、生物三个学科，旨在检测开学第一周的学习成果。请认真作答，完成后点击"提交答案"按钮查看结果。</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="flex items-center bg-white/70 rounded-lg p-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-primary mr-2">
+                        <i class="fa fa-bolt"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium">物理</div>
+                        <div class="text-gray-500">5道题</div>
+                    </div>
+                </div>
+                <div class="flex items-center bg-white/70 rounded-lg p-3">
+                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500 mr-2">
+                        <i class="fa fa-flask"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium">化学</div>
+                        <div class="text-gray-500">5道题</div>
+                    </div>
+                </div>
+                <div class="flex items-center bg-white/70 rounded-lg p-3">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-500 mr-2">
+                        <i class="fa fa-leaf"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium">生物</div>
+                        <div class="text-gray-500">5道题</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试题目区域 -->
+        <div id="test-container" class="mb-10">
+            <!-- 题目将通过JavaScript动态生成 -->
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="flex justify-center mb-16">
+            <button id="submit-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-8 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa fa-paper-plane mr-2"></i> 提交答案
+            </button>
+        </div>
+
+        <!-- 结果显示区域 -->
+        <div id="result-container" class="hidden bg-white rounded-2xl shadow-md p-6 mb-10">
+            <h2 class="text-2xl font-bold mb-6 text-center">测试结果</h2>
+            <div class="flex flex-col md:flex-row justify-center items-center gap-8 mb-8">
+                <div class="text-center">
+                    <div id="score-display" class="text-5xl font-bold text-primary mb-1">0</div>
+                    <div class="text-gray-600">得分</div>
+                </div>
+                <div class="h-16 border-l border-gray-200 hidden md:block"></div>
+                <div class="text-center">
+                    <div id="correct-display" class="text-5xl font-bold text-secondary mb-1">0</div>
+                    <div class="text-gray-600">正确题数</div>
+                </div>
+                <div class="h-16 border-l border-gray-200 hidden md:block"></div>
+                <div class="text-center">
+                    <div id="incorrect-display" class="text-5xl font-bold text-danger mb-1">0</div>
+                    <div class="text-gray-600">错误题数</div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button id="retry-btn" class="bg-accent hover:bg-accent/90 text-white font-medium py-2 px-6 rounded-full shadow-sm transition-all duration-300">
+                    <i class="fa fa-refresh mr-1"></i> 重新测试
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6">
+        <div class="container mx-auto px-4 text-center text-sm text-gray-400">
+            <p>© 2023 高二学业水平测试系统 | 物化生综合测试</p>
+        </div>
+    </footer>
+
+    <script>
+        // 测试题目数据
+        const questions = [
+            {
+                id: 1,
+                subject: "物理",
+                subjectIcon: "fa-bolt",
+                subjectColor: "text-blue-500",
+                question: "下列关于匀速圆周运动的说法中，正确的是（ ）",
+                options: [
+                    { id: "q1a", text: "线速度不变" },
+                    { id: "q1b", text: "角速度不变" },
+                    { id: "q1c", text: "加速度不变" },
+                    { id: "q1d", text: "周期变化" }
+                ],
+                correctAnswer: "q1b",
+                explanation: "匀速圆周运动中，线速度方向不断变化，加速度方向也不断变化，周期保持不变，只有角速度是恒定的。"
+            },
+            {
+                id: 2,
+                subject: "物理",
+                subjectIcon: "fa-bolt",
+                subjectColor: "text-blue-500",
+                question: "一辆汽车在平直公路上以10m/s的速度匀速行驶，刹车后加速度大小为2m/s²，则刹车后6s内的位移为（ ）",
+                options: [
+                    { id: "q2a", text: "25m" },
+                    { id: "q2b", text: "30m" },
+                    { id: "q2c", text: "15m" },
+                    { id: "q2d", text: "24m" }
+                ],
+                correctAnswer: "q2a",
+                explanation: "汽车刹车到停止所需时间t=v/a=10/2=5s，因此6s内的位移实际上是5s内的位移，s=vt-½at²=10×5-½×2×5²=25m。"
+            },
+            {
+                id: 3,
+                subject: "物理",
+                subjectIcon: "fa-bolt",
+                subjectColor: "text-blue-500",
+                question: "关于电场强度，下列说法正确的是（ ）",
+                options: [
+                    { id: "q3a", text: "电场中某点的场强与试探电荷的电荷量成反比" },
+                    { id: "q3b", text: "电场中某点的场强与试探电荷所受的电场力成正比" },
+                    { id: "q3c", text: "电场中某点的场强方向就是试探电荷在该点所受电场力的方向" },
+                    { id: "q3d", text: "电场中某点的场强与试探电荷无关" }
+                ],
+                correctAnswer: "q3d",
+                explanation: "电场强度是电场本身的属性，只与场源电荷有关，与试探电荷的电荷量、受力大小无关。正电荷所受电场力方向与场强方向相同，负电荷则相反。"
+            },
+            {
+                id: 4,
+                subject: "物理",
+                subjectIcon: "fa-bolt",
+                subjectColor: "text-blue-500",
+                question: "下列关于楞次定律的说法中，正确的是（ ）",
+                options: [
+                    { id: "q4a", text: "感应电流的磁场总是阻碍引起感应电流的磁通量" },
+                    { id: "q4b", text: "感应电流的磁场总是与引起感应电流的磁场方向相反" },
+                    { id: "q4c", text: "感应电流的磁场总是与引起感应电流的磁场方向相同" },
+                    { id: "q4d", text: "感应电流的磁场总是阻碍引起感应电流的磁通量的变化" }
+                ],
+                correctAnswer: "q4d",
+                explanation: "楞次定律的核心是：感应电流的磁场总是要阻碍引起感应电流的磁通量的变化，而不是阻碍磁通量本身。感应电流的磁场方向可能与原磁场方向相同或相反，取决于磁通量是增加还是减少。"
+            },
+            {
+                id: 5,
+                subject: "物理",
+                subjectIcon: "fa-bolt",
+                subjectColor: "text-blue-500",
+                question: "质量为m的物体，在水平力F的作用下，在粗糙水平面上运动，下列说法正确的是（ ）",
+                options: [
+                    { id: "q5a", text: "如果物体做匀速直线运动，F一定对物体做正功" },
+                    { id: "q5b", text: "如果物体做加速直线运动，F一定对物体做正功" },
+                    { id: "q5c", text: "如果物体做减速直线运动，F一定对物体做负功" },
+                    { id: "q5d", text: "如果物体做减速直线运动，F可能对物体做正功" }
+                ],
+                correctAnswer: "q5d",
+                explanation: "力对物体做功的正负取决于力和位移的夹角。当物体减速运动时，可能是F方向与位移方向相同但小于摩擦力，此时F做正功但总功为负，物体减速。因此选项D正确。"
+            },
+            {
+                id: 6,
+                subject: "化学",
+                subjectIcon: "fa-flask",
+                subjectColor: "text-red-500",
+                question: "下列物质中，属于电解质的是（ ）",
+                options: [
+                    { id: "q6a", text: "铜" },
+                    { id: "q6b", text: "蔗糖" },
+                    { id: "q6c", text: "氯化钠溶液" },
+                    { id: "q6d", text: "氢氧化钠" }
+                ],
+                correctAnswer: "q6d",
+                explanation: "电解质是在水溶液中或熔融状态下能导电的化合物。铜是单质，蔗糖是非电解质，氯化钠溶液是混合物，只有氢氧化钠是电解质。"
+            },
+            {
+                id: 7,
+                subject: "化学",
+                subjectIcon: "fa-flask",
+                subjectColor: "text-red-500",
+                question: "下列反应中，属于氧化还原反应的是（ ）",
+                options: [
+                    { id: "q7a", text: "CaCO₃ + 2HCl = CaCl₂ + CO₂↑ + H₂O" },
+                    { id: "q7b", text: "Na₂O + H₂O = 2NaOH" },
+                    { id: "q7c", text: "2KMnO₄ △ K₂MnO₄ + MnO₂ + O₂↑" },
+                    { id: "q7d", text: "BaCl₂ + Na₂SO₄ = BaSO₄↓ + 2NaCl" }
+                ],
+                correctAnswer: "q7c",
+                explanation: "氧化还原反应的特征是有元素化合价的升降。选项C中高锰酸钾分解反应，Mn元素化合价降低，O元素化合价升高，属于氧化还原反应。"
+            },
+            {
+                id: 8,
+                subject: "化学",
+                subjectIcon: "fa-flask",
+                subjectColor: "text-red-500",
+                question: "关于元素周期表的说法正确的是（ ）",
+                options: [
+                    { id: "q8a", text: "同周期元素从左到右，金属性逐渐增强" },
+                    { id: "q8b", text: "同主族元素从上到下，非金属性逐渐增强" },
+                    { id: "q8c", text: "元素周期表有7个周期，18个族" },
+                    { id: "q8d", text: "短周期是指第1、2、3周期" }
+                ],
+                correctAnswer: "q8d",
+                explanation: "同周期元素从左到右金属性减弱，同主族元素从上到下非金属性减弱，元素周期表有16个族（7主7副1零1Ⅷ族），短周期确实是指1、2、3周期。"
+            },
+            {
+                id: 9,
+                subject: "化学",
+                subjectIcon: "fa-flask",
+                subjectColor: "text-red-500",
+                question: "在2L密闭容器中，发生3A(g) + B(g) ⇌ 2C(g)的反应，若最初加入的A和B都是4mol，10s后，测得υ(A)=0.12mol/(L·s)，则此时容器中B的物质的量是（ ）",
+                options: [
+                    { id: "q9a", text: "3.6mol" },
+                    { id: "q9b", text: "3.2mol" },
+                    { id: "q9c", text: "2.8mol" },
+                    { id: "q9d", text: "1.6mol" }
+                ],
+                correctAnswer: "q9b",
+                explanation: "根据化学反应速率之比等于化学计量数之比，v(B)=v(A)/3=0.04mol/(L·s)。10s内B的浓度变化为0.04×10=0.4mol/L，物质的量变化为0.4×2=0.8mol，剩余B的物质的量为4-0.8=3.2mol。"
+            },
+            {
+                id: 10,
+                subject: "化学",
+                subjectIcon: "fa-flask",
+                subjectColor: "text-red-500",
+                question: "下列关于有机物的说法正确的是（ ）",
+                options: [
+                    { id: "q10a", text: "甲烷是最简单的有机物，能使酸性高锰酸钾溶液褪色" },
+                    { id: "q10b", text: "乙醇能与水以任意比例互溶，是因为乙醇与水形成了氢键" },
+                    { id: "q10c", text: "苯分子中含有碳碳双键，能发生加成反应" },
+                    { id: "q10d", text: "乙酸的酸性比碳酸弱" }
+                ],
+                correctAnswer: "q10b",
+                explanation: "甲烷不能使酸性高锰酸钾褪色；苯分子中没有碳碳双键，而是特殊的大π键；乙酸的酸性比碳酸强；乙醇与水能形成氢键，因此可与水任意比例互溶。"
+            },
+            {
+                id: 11,
+                subject: "生物",
+                subjectIcon: "fa-leaf",
+                subjectColor: "text-green-500",
+                question: "下列关于细胞结构和功能的叙述，正确的是（ ）",
+                options: [
+                    { id: "q11a", text: "细胞核是细胞代谢和遗传的控制中心" },
+                    { id: "q11b", text: "所有细胞都具有细胞核" },
+                    { id: "q11c", text: "核糖体是蛋白质合成和加工的场所" },
+                    { id: "q11d", text: "高尔基体是细胞内脂质合成的车间" }
+                ],
+                correctAnswer: "q11a",
+                explanation: "细胞核是细胞代谢和遗传的控制中心；原核细胞没有细胞核；核糖体只是蛋白质合成的场所，加工在内质网和高尔基体；内质网是脂质合成的车间。"
+            },
+            {
+                id: 12,
+                subject: "生物",
+                subjectIcon: "fa-leaf",
+                subjectColor: "text-green-500",
+                question: "下列关于光合作用的叙述，错误的是（ ）",
+                options: [
+                    { id: "q12a", text: "光反应阶段需要光，暗反应阶段不需要光" },
+                    { id: "q12b", text: "光反应阶段产生的ATP用于暗反应" },
+                    { id: "q12c", text: "光合作用的产物是葡萄糖和氧气" },
+                    { id: "q12d", text: "光合作用的场所是叶绿体" }
+                ],
+                correctAnswer: "q12a",
+                explanation: "光反应需要光，暗反应虽然不需要光直接参与，但需要光反应提供的ATP和[H]，因此在没有光的情况下，暗反应也不能持续进行。"
+            },
+            {
+                id: 13,
+                subject: "生物",
+                subjectIcon: "fa-leaf",
+                subjectColor: "text-green-500",
+                question: "下列关于细胞呼吸的叙述，正确的是（ ）",
+                options: [
+                    { id: "q13a", text: "有氧呼吸和无氧呼吸都能产生ATP" },
+                    { id: "q13b", text: "有氧呼吸和无氧呼吸的场所完全相同" },
+                    { id: "q13c", text: "有氧呼吸产生的能量全部储存在ATP中" },
+                    { id: "q13d", text: "无氧呼吸的产物只有乳酸" }
+                ],
+                correctAnswer: "q13a",
+                explanation: "有氧呼吸和无氧呼吸都能产生ATP，只是产生量不同；有氧呼吸主要在线粒体进行，无氧呼吸在细胞质基质；有氧呼吸产生的能量大部分以热能散失；无氧呼吸产物可以是乳酸或酒精和二氧化碳。"
+            },
+            {
+                id: 14,
+                subject: "生物",
+                subjectIcon: "fa-leaf",
+                subjectColor: "text-green-500",
+                question: "下列关于DNA分子结构的叙述，正确的是（ ）",
+                options: [
+                    { id: "q14a", text: "DNA分子由两条反向平行的核糖核苷酸链组成" },
+                    { id: "q14b", text: "DNA分子中嘌呤数不等于嘧啶数" },
+                    { id: "q14c", text: "DNA分子的基本骨架由磷酸和脱氧核糖交替连接构成" },
+                    { id: "q14d", text: "DNA分子中每个脱氧核糖都与两个磷酸相连" }
+                ],
+                correctAnswer: "q14c",
+                explanation: "DNA由两条反向平行的脱氧核苷酸链组成；遵循碱基互补配对原则，嘌呤数等于嘧啶数；基本骨架由磷酸和脱氧核糖交替连接构成；两端的脱氧核糖只与一个磷酸相连。"
+            },
+            {
+                id: 15,
+                subject: "生物",
+                subjectIcon: "fa-leaf",
+                subjectColor: "text-green-500",
+                question: "下列关于基因表达的叙述，正确的是（ ）",
+                options: [
+                    { id: "q15a", text: "转录过程发生在核糖体上" },
+                    { id: "q15b", text: "翻译过程以DNA的一条链为模板" },
+                    { id: "q15c", text: "转录和翻译都遵循碱基互补配对原则" },
+                    { id: "q15d", text: "一种氨基酸只能由一种密码子编码" }
+                ],
+                correctAnswer: "q15c",
+                explanation: "转录发生在细胞核，以DNA一条链为模板；翻译发生在核糖体，以mRNA为模板；转录和翻译都遵循碱基互补配对；一种氨基酸可由多种密码子编码（密码子的简并性）。"
+            }
+        ];
+
+        // 全局变量存储用户答案
+        const userAnswers = {};
+        let completedCount = 0;
+
+        // DOM元素
+        const testContainer = document.getElementById('test-container');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultContainer = document.getElementById('result-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const correctDisplay = document.getElementById('correct-display');
+        const incorrectDisplay = document.getElementById('incorrect-display');
+        const retryBtn = document.getElementById('retry-btn');
+        const questionCountEl = document.getElementById('question-count');
+        const backBtn = document.getElementById('back-btn');  // 新增返回按钮
+
+        // 返回上一页功能
+        backBtn.addEventListener('click', () => {
+            // 使用history.back()返回上一页
+            window.history.back();
+            
+            // 如果没有历史记录，也可以设置一个默认的返回URL
+            // setTimeout(() => {
+            //     window.location.href = '/previous-page'; // 替换为实际的上一页URL
+            // }, 100);
+        });
+
+        // 初始化测试页面
+        function initTest() {
+            // 清空容器
+            testContainer.innerHTML = '';
+            
+            // 生成题目
+            questions.forEach(question => {
+                const questionEl = document.createElement('div');
+                questionEl.className = 'question-card';
+                questionEl.dataset.id = question.id;
+                
+                // 构建题目HTML
+                questionEl.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-sm font-medium mr-3">${question.id}</span>
+                        <span class="inline-flex items-center text-sm px-2 py-1 rounded-full bg-gray-100 mr-3">
+                            <i class="fa ${question.subjectIcon} ${question.subjectColor} mr-1"></i>${question.subject}
+                        </span>
+                        <h3 class="text-lg font-medium">${question.question}</h3>
+                    </div>
+                    <div class="options-container pl-11">
+                        ${question.options.map(option => `
+                            <div class="option-item" data-question="${question.id}" data-option="${option.id}">
+                                <div class="flex items-center">
+                                    <span class="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center mr-3 text-sm font-medium">${option.id.charAt(2).toUpperCase()}</span>
+                                    <span>${option.text}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation mt-4 hidden pl-11">
+                        <div class="text-sm text-gray-600 italic">
+                            <i class="fa fa-info-circle text-primary mr-1"></i>解析: ${question.explanation}
+                        </div>
+                    </div>
+                `;
+                
+                testContainer.appendChild(questionEl);
+                
+                // 为选项添加点击事件
+                const options = questionEl.querySelectorAll('.option-item');
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        // 移除同题目的其他选项的选中状态
+                        options.forEach(opt => opt.classList.remove('option-selected'));
+                        
+                        // 添加当前选项的选中状态
+                        option.classList.add('option-selected');
+                        
+                        // 记录用户答案
+                        const questionId = question.id;
+                        const optionId = option.dataset.option;
+                        
+                        // 检查是否是新选择的答案
+                        if (!userAnswers[questionId] || userAnswers[questionId] !== optionId) {
+                            userAnswers[questionId] = optionId;
+                            
+                            // 更新已完成题目数量
+                            if (!userAnswers[questionId]) {
+                                completedCount++;
+                            }
+                            updateCompletedCount();
+                        }
+                    });
+                });
+            });
+            
+            // 初始化完成题目计数
+            updateCompletedCount();
+        }
+
+        // 更新已完成题目数量
+        function updateCompletedCount() {
+            completedCount = Object.keys(userAnswers).length;
+            questionCountEl.textContent = `已完成: ${completedCount}/15`;
+            
+            // 只有所有题目都完成才能提交
+            submitBtn.disabled = completedCount < 15;
+        }
+
+        // 提交答案并显示结果
+        function submitAnswers() {
+            let correctCount = 0;
+            
+            // 检查每个答案
+            questions.forEach(question => {
+                const questionEl = testContainer.querySelector(`.question-card[data-id="${question.id}"]`);
+                const userAnswer = userAnswers[question.id];
+                const isCorrect = userAnswer === question.correctAnswer;
+                
+                if (isCorrect) {
+                    correctCount++;
+                }
+                
+                // 显示正确和错误的选项
+                const options = questionEl.querySelectorAll('.option-item');
+                options.forEach(option => {
+                    option.classList.remove('option-selected');
+                    
+                    if (option.dataset.option === question.correctAnswer) {
+                        option.classList.add('option-correct');
+                    } else if (option.dataset.option === userAnswer) {
+                        option.classList.add('option-incorrect');
+                    }
+                });
+                
+                // 显示解析
+                const explanation = questionEl.querySelector('.explanation');
+                explanation.classList.remove('hidden');
+            });
+            
+            // 计算分数并显示结果
+            const score = Math.round((correctCount / questions.length) * 100);
+            scoreDisplay.textContent = score;
+            correctDisplay.textContent = correctCount;
+            incorrectDisplay.textContent = questions.length - correctCount;
+            
+            // 显示结果区域并滚动到顶部
+            resultContainer.classList.remove('hidden');
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+            
+            // 禁用所有选项
+            document.querySelectorAll('.option-item').forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+            
+            // 隐藏提交按钮
+            submitBtn.classList.add('hidden');
+        }
+
+        // 重新测试
+        function retryTest() {
+            // 重置用户答案
+            for (let key in userAnswers) {
+                delete userAnswers[key];
+            }
+            
+            // 隐藏结果区域
+            resultContainer.classList.add('hidden');
+            
+            // 重新初始化测试
+            initTest();
+            
+            // 显示提交按钮
+            submitBtn.classList.remove('hidden');
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 事件监听
+        submitBtn.addEventListener('click', submitAnswers);
+        retryBtn.addEventListener('click', retryTest);
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', initTest);
+    </script>
+</body>
+</html>
