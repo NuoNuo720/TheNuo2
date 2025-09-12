@@ -1539,6 +1539,20 @@
                     const requests = await response.json();
                     document.getElementById('requestCount').textContent = requests.length;
                 }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const count = data.count || 0;
+                document.getElementById('requestCount').textContent = count;
+        
+                // 显示或隐藏小红点
+                const badge = document.getElementById('requestBadge');
+                if (count > 0) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
             } catch (error) {
                 console.error("加载好友请求数量失败:", error);
             }
@@ -1706,9 +1720,9 @@
                         'Authorization': `Bearer ${currentUser.token}`
                     },
                     body: JSON.stringify({
-                        action: 'send',
-                        recipient: recipient,
-                        message: message
+                        fromUsername: currentUser.username,
+                        toUsername: toUsername,
+                        message:message                                                                                                            
                     })
                 });
                 
