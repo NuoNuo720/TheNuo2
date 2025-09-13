@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开门大吉 - 网页版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // Tailwind 配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#E63946',
+                        secondary: '#1D3557',
+                        accent: '#F1FAEE',
+                        highlight: '#A8DADC',
+                        dark: '#1D3557',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'door-open': 'doorOpen 1.5s ease-out forwards',
+                        'door-close': 'doorClose 1.5s ease-in forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    },
+                    keyframes: {
+                        doorOpen: {
+                            '0%': { transform: 'rotateY(0deg)' },
+                            '100%': { transform: 'rotateY(-90deg)' }
+                        },
+                        doorClose: {
+                            '0%': { transform: 'rotateY(-90deg)' },
+                            '100%': { transform: 'rotateY(0deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .door-container {
+                perspective: 1000px;
+            }
+            .door {
+                transform-style: preserve-3d;
+                position: relative;
+                height: 100%;
+                width: 50%;
+                transition: transform 1s;
+            }
+            .door-front {
+                backface-visibility: hidden;
+                position: absolute;
+                width: 100%;
+                height: 100%;
+            }
+            .door-back {
+                transform: rotateY(180deg);
+                position: absolute;
+                width: 100%;
+                height: 100%;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .text-shadow-lg {
+                text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+            .bg-gradient-game {
+                background: linear-gradient(135deg, #1D3557 0%, #457B9D 100%);
+            }
+            .audio-visualizer {
+                height: 40px;
+                display: flex;
+                align-items: center;
+                gap: 3px;
+            }
+            .audio-visualizer span {
+                width: 3px;
+                background-color: #E63946;
+                border-radius: 3px;
+                animation: sound 0ms -800ms linear infinite alternate;
+            }
+            @keyframes sound {
+                0% { height: 10px; }
+                100% { height: 40px; }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-game min-h-screen text-accent overflow-x-hidden">
+    <!-- 顶部导航 -->
+    <header class="bg-secondary/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa fa-key text-primary text-2xl"></i>
+                <h1 class="text-[clamp(1.2rem,3vw,1.8rem)] font-bold text-shadow-lg">开门大吉</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center gap-2">
+                    <i class="fa fa-trophy text-yellow-400"></i>
+                    <span id="score" class="font-bold">0</span>
+                </div>
+                <button id="helpBtn" class="bg-primary/90 hover:bg-primary transition-colors px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                    <i class="fa fa-question-circle"></i>
+                    <span class="hidden sm:inline">帮助</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 游戏容器 -->
+    <main class="container mx-auto px-4 pt-20 pb-16 min-h-screen flex flex-col items-center justify-center">
+        <!-- 开始界面 -->
+        <section id="startScreen" class="text-center py-10 max-w-2xl w-full">
+            <h2 class="text-[clamp(1.5rem,5vw,2.5rem)] font-bold mb-6 text-shadow-lg">欢迎来到开门大吉</h2>
+            <p class="text-highlight mb-8 text-lg">通过聆听歌曲前奏，猜出正确的歌曲名称，挑战你的音乐知识！</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-dark/50 p-4 rounded-xl backdrop-blur-sm border border-highlight/20">
+                    <i class="fa fa-music text-3xl text-primary mb-2"></i>
+                    <h3 class="font-bold mb-1">听前奏猜歌</h3>
+                    <p class="text-sm text-highlight/80">根据歌曲前奏，选择正确答案</p>
+                </div>
+                <div class="bg-dark/50 p-4 rounded-xl backdrop-blur-sm border border-highlight/20">
+                    <i class="fa fa-unlock-alt text-3xl text-primary mb-2"></i>
+                    <h3 class="font-bold mb-1">开门闯关</h3>
+                    <p class="text-sm text-highlight/80">猜对歌曲，开启下一扇门</p>
+                </div>
+                <div class="bg-dark/50 p-4 rounded-xl backdrop-blur-sm border border-highlight/20">
+                    <i class="fa fa-star text-3xl text-primary mb-2"></i>
+                    <h3 class="font-bold mb-1">赢取积分</h3>
+                    <p class="text-sm text-highlight/80">正确答题，积累更多积分</p>
+                </div>
+            </div>
+            
+            <button id="startBtn" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 mx-auto">
+                <i class="fa fa-play-circle"></i>
+                <span>开始游戏</span>
+            </button>
+        </section>
+
+        <!-- 游戏界面 -->
+        <section id="gameScreen" class="w-full max-w-4xl hidden">
+            <!-- 当前关卡信息 -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="bg-dark/60 backdrop-blur-sm px-4 py-2 rounded-full text-sm flex items-center gap-2">
+                    <i class="fa fa-signal text-primary"></i>
+                    <span>关卡: <span id="currentLevel">1</span>/<span id="totalLevels">5</span></span>
+                </div>
+                <div class="bg-dark/60 backdrop-blur-sm px-4 py-2 rounded-full text-sm flex items-center gap-2">
+                    <i class="fa fa-trophy text-yellow-400"></i>
+                    <span>积分: <span id="gameScore">0</span></span>
+                </div>
+            </div>
+
+            <!-- 门容器 -->
+            <div class="door-container relative w-full aspect-[3/4] max-w-md mx-auto mb-8 bg-dark/30 rounded-lg overflow-hidden border-4 border-secondary shadow-2xl">
+                <!-- 左门 -->
+                <div id="leftDoor" class="door absolute left-0 top-0 bg-secondary">
+                    <div class="door-front flex items-center justify-center bg-gradient-to-r from-secondary to-dark border-r-2 border-highlight/30">
+                        <div class="text-center p-4">
+                            <div class="text-6xl font-bold text-primary mb-2" id="doorNumber">1</div>
+                            <div class="animate-pulse-slow text-sm bg-primary/20 px-3 py-1 rounded-full">点击开门</div>
+                        </div>
+                    </div>
+                    <div class="door-back bg-dark p-6 flex flex-col items-center justify-center">
+                        <h3 class="text-xl font-bold mb-4">第 <span id="backDoorNumber">1</span> 关</h3>
+                        <div class="w-full">
+                            <!-- 音频播放区域 -->
+                            <div class="bg-secondary/50 p-4 rounded-lg mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-highlight/80">正在播放前奏...</span>
+                                    <span id="timer" class="text-primary font-bold">30</span>
+                                </div>
+                                <div class="audio-visualizer mb-3">
+                                    <span style="animation-duration: 474ms"></span>
+                                    <span style="animation-duration: 433ms"></span>
+                                    <span style="animation-duration: 407ms"></span>
+                                    <span style="animation-duration: 458ms"></span>
+                                    <span style="animation-duration: 400ms"></span>
+                                    <span style="animation-duration: 427ms"></span>
+                                    <span style="animation-duration: 441ms"></span>
+                                    <span style="animation-duration: 419ms"></span>
+                                    <span style="animation-duration: 487ms"></span>
+                                    <span style="animation-duration: 442ms"></span>
+                                    <span style="animation-duration: 420ms"></span>
+                                    <span style="animation-duration: 474ms"></span>
+                                    <span style="animation-duration: 456ms"></span>
+                                    <span style="animation-duration: 410ms"></span>
+                                    <span style="animation-duration: 426ms"></span>
+                                    <span style="animation-duration: 448ms"></span>
+                                    <span style="animation-duration: 449ms"></span>
+                                    <span style="animation-duration: 470ms"></span>
+                                    <span style="animation-duration: 434ms"></span>
+                                    <span style="animation-duration: 456ms"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="playBtn" class="flex-1 bg-primary hover:bg-primary/80 transition-colors py-2 rounded flex items-center justify-center gap-1">
+                                        <i class="fa fa-play"></i>
+                                        <span>播放</span>
+                                    </button>
+                                    <button id="pauseBtn" class="flex-1 bg-dark hover:bg-dark/80 transition-colors py-2 rounded flex items-center justify-center gap-1">
+                                        <i class="fa fa-pause"></i>
+                                        <span>暂停</span>
+                                    </button>
+                                    <button id="replayBtn" class="flex-1 bg-secondary hover:bg-secondary/80 transition-colors py-2 rounded flex items-center justify-center gap-1">
+                                        <i class="fa fa-repeat"></i>
+                                        <span>重放</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 答案选项 -->
+                            <div class="space-y-2" id="answersContainer">
+                                <!-- 答案选项将通过JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右门 -->
+                <div id="rightDoor" class="door absolute right-0 top-0 bg-secondary">
+                    <div class="door-front flex items-center justify-center bg-gradient-to-l from-secondary to-dark border-l-2 border-highlight/30">
+                        <div class="text-center p-4">
+                            <div class="text-6xl font-bold text-primary mb-2" id="rightDoorNumber">1</div>
+                            <div class="animate-pulse-slow text-sm bg-primary/20 px-3 py-1 rounded-full">点击开门</div>
+                        </div>
+                    </div>
+                    <div class="door-back bg-dark p-6 flex flex-col items-center justify-center">
+                        <h3 class="text-xl font-bold mb-4">第 <span id="rightBackDoorNumber">1</span> 关</h3>
+                        <div class="w-full">
+                            <!-- 音频播放区域 - 与左门相同 -->
+                            <div class="bg-secondary/50 p-4 rounded-lg mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-highlight/80">正在播放前奏...</span>
+                                    <span id="rightTimer" class="text-primary font-bold">30</span>
+                                </div>
+                                <div class="audio-visualizer mb-3">
+                                    <span style="animation-duration: 474ms"></span>
+                                    <span style="animation-duration: 433ms"></span>
+                                    <span style="animation-duration: 407ms"></span>
+                                    <span style="animation-duration: 458ms"></span>
+                                    <span style="animation-duration: 400ms"></span>
+                                    <span style="animation-duration: 427ms"></span>
+                                    <span style="animation-duration: 441ms"></span>
+                                    <span style="animation-duration: 419ms"></span>
+                                    <span style="animation-duration: 487ms"></span>
+                                    <span style="animation-duration: 442ms"></span>
+                                    <span style="animation-duration: 420ms"></span>
+                                    <span style="animation-duration: 474ms"></span>
+                                    <span style="animation-duration: 456ms"></span>
+                                    <span style="animation-duration: 410ms"></span>
+                                    <span style="animation-duration: 426ms"></span>
+                                    <span style="animation-duration: 448ms"></span>
+                                    <span style="animation-duration: 449ms"></span>
+                                    <span style="animation-duration: 470ms"></span>
+                                    <span style="animation-duration: 434ms"></span>
+                                    <span style="animation-duration: 456ms"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="rightPlayBtn" class="flex-1 bg-primary hover:bg-primary/80 transition-colors py-2 rounded flex items-center justify-center gap-1">
+                                        <i class="fa fa-play"></i>
+                                        <span>播放</span>
+                                    </button>
+                                    <button id="rightPauseBtn" class="flex-1 bg-dark hover:bg-dark/80 transition-colors py-2 rounded flex items-center justify-center gap-1">
+                                        <i class="fa fa-pause"></i>
+                                        <span>暂停</span>
+                                    </button>
+                                    <button id="rightReplayBtn" class="flex-1 bg-secondary hover:bg-secondary/80 transition-colors py-2 rounded flex items-center justify-center gap-1">
+                                        <i class="fa fa-repeat"></i>
+                                        <span>重放</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 答案选项 -->
+                            <div class="space-y-2" id="rightAnswersContainer">
+                                <!-- 答案选项将通过JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 门缝 -->
+                <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-highlight/20 transform -translate-x-1/2 z-10"></div>
+            </div>
+
+            <!-- 提示和帮助 -->
+            <div class="flex gap-3 justify-center flex-wrap">
+                <button id="hintBtn" class="bg-secondary hover:bg-secondary/80 transition-colors px-4 py-2 rounded-full text-sm flex items-center gap-1">
+                    <i class="fa fa-lightbulb-o text-yellow-400"></i>
+                    <span>提示 (50积分)</span>
+                </button>
+                <button id="skipBtn" class="bg-dark hover:bg-dark/80 transition-colors px-4 py-2 rounded-full text-sm flex items-center gap-1">
+                    <i class="fa fa-forward text-primary"></i>
+                    <span>跳过 (100积分)</span>
+                </button>
+                <button id="quitBtn" class="bg-gray-700 hover:bg-gray-600 transition-colors px-4 py-2 rounded-full text-sm flex items-center gap-1">
+                    <i class="fa fa-sign-out"></i>
+                    <span>退出游戏</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 结果界面 -->
+        <section id="resultScreen" class="text-center max-w-2xl w-full hidden">
+            <div id="successResult" class="hidden">
+                <div class="text-6xl text-primary mb-4 animate-bounce-slow">
+                    <i class="fa fa-check-circle"></i>
+                </div>
+                <h2 class="text-[clamp(1.5rem,4vw,2rem)] font-bold mb-2 text-shadow-lg">恭喜你！</h2>
+                <p class="text-highlight mb-6">你猜对了这首歌！</p>
+                <div class="bg-dark/50 backdrop-blur-sm p-4 rounded-xl mb-8">
+                    <p class="text-sm text-highlight/80 mb-1">歌曲名称</p>
+                    <p id="correctSongName" class="text-xl font-bold text-primary">歌曲名称</p>
+                    <p class="text-sm text-highlight/80 mt-3 mb-1">歌手</p>
+                    <p id="correctSinger" class="text-lg">歌手名称</p>
+                </div>
+                <div class="mb-8">
+                    <p class="text-sm text-highlight/80 mb-1">获得积分</p>
+                    <p id="earnedScore" class="text-3xl font-bold text-yellow-400">100</p>
+                </div>
+                <button id="nextLevelBtn" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    下一关
+                </button>
+            </div>
+
+            <div id="failResult" class="hidden">
+                <div class="text-6xl text-red-500 mb-4">
+                    <i class="fa fa-times-circle"></i>
+                </div>
+                <h2 class="text-[clamp(1.5rem,4vw,2rem)] font-bold mb-2 text-shadow-lg">答错了</h2>
+                <p class="text-highlight mb-6">再试一次吧！</p>
+                <div class="bg-dark/50 backdrop-blur-sm p-4 rounded-xl mb-8">
+                    <p class="text-sm text-highlight/80 mb-1">正确答案</p>
+                    <p id="wrongSongName" class="text-xl font-bold text-primary">歌曲名称</p>
+                    <p class="text-sm text-highlight/80 mt-3 mb-1">歌手</p>
+                    <p id="wrongSinger" class="text-lg">歌手名称</p>
+                </div>
+                <button id="tryAgainBtn" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    再试一次
+                </button>
+            </div>
+
+            <div id="completeResult" class="hidden">
+                <div class="text-6xl text-yellow-400 mb-4 animate-bounce-slow">
+                    <i class="fa fa-trophy"></i>
+                </div>
+                <h2 class="text-[clamp(1.5rem,4vw,2rem)] font-bold mb-2 text-shadow-lg">恭喜完成所有关卡！</h2>
+                <p class="text-highlight mb-6">你太厉害了！</p>
+                <div class="bg-dark/50 backdrop-blur-sm p-6 rounded-xl mb-8">
+                    <p class="text-sm text-highlight/80 mb-1">总积分</p>
+                    <p id="totalScore" class="text-3xl font-bold text-yellow-400">500</p>
+                    <p class="text-sm text-highlight/80 mt-4 mb-1">完成时间</p>
+                    <p id="completionTime" class="text-lg">01:30</p>
+                </div>
+                <button id="restartBtn" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    重新开始
+                </button>
+            </div>
+        </section>
+
+        <!-- 帮助模态框 -->
+        <div id="helpModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-secondary rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">游戏帮助</h3>
+                    <button id="closeHelpBtn" class="text-highlight/70 hover:text-highlight">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="space-y-4 text-highlight/90">
+                    <div>
+                        <h4 class="font-bold text-primary mb-1">游戏规则</h4>
+                        <p>1. 点击大门打开当前关卡</p>
+                        <p>2. 聆听歌曲前奏，从选项中选择正确的歌曲名称</p>
+                        <p>3. 每关有30秒的时间限制</p>
+                        <p>4. 猜对歌曲可获得积分并解锁下一关</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-primary mb-1">积分规则</h4>
+                        <p>• 正确回答：100积分</p>
+                        <p>• 使用提示：-50积分</p>
+                        <p>• 跳过关卡：-100积分</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-primary mb-1">游戏功能</h4>
+                        <p>• 播放/暂停：控制前奏播放</p>
+                        <p>• 重放：重新播放当前前奏</p>
+                        <p>• 提示：移除一个错误选项</p>
+                        <p>• 跳过：直接进入下一关（会扣分）</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-secondary/80 backdrop-blur-md py-4">
+        <div class="container mx-auto px-4 text-center text-sm text-highlight/70">
+            <p>开门大吉 网页版 &copy; 2023</p>
+            <p class="mt-1">本游戏仅作娱乐用途，所有音乐版权归原作者所有</p>
+        </div>
+    </footer>
+
+    <!-- 音频元素 (隐藏) -->
+    <audio id="gameAudio" preload="auto"></audio>
+    <audio id="correctSound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
+    <audio id="wrongSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
+    <audio id="doorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wooden-door-creak-open-2540.mp3" preload="auto"></audio>
+
+    <script>
+        // 游戏数据 - 歌曲库
+        const songLibrary = [
+            {
+                id: 1,
+                name: "告白气球",
+                singer: "周杰伦",
+                preview: "https://example.com/previews/balloon.mp3", // 实际使用时替换为真实音频URL
+                options: ["告白气球", "七里香", "晴天", "青花瓷"]
+            },
+            {
+                id: 2,
+                name: "演员",
+                singer: "薛之谦",
+                preview: "https://example.com/previews/actor.mp3",
+                options: ["演员", "认真的雪", "丑八怪", "绅士"]
+            },
+            {
+                id: 3,
+                name: "小苹果",
+                singer: "筷子兄弟",
+                preview: "https://example.com/previews/apple.mp3",
+                options: ["小苹果", "最炫民族风", "江南Style", "倍儿爽"]
+            },
+            {
+                id: 4,
+                name: "夜空中最亮的星",
+                singer: "逃跑计划",
+                preview: "https://example.com/previews/star.mp3",
+                options: ["夜空中最亮的星", "平凡之路", "曾经的你", "蓝莲花"]
+            },
+            {
+                id: 5,
+                name: "成都",
+                singer: "赵雷",
+                preview: "https://example.com/previews/chengdu.mp3",
+                options: ["成都", "南方姑娘", "理想", "少年锦时"]
+            },
+            {
+                id: 6,
+                name: "后来",
+                singer: "刘若英",
+                preview: "https://example.com/previews/later.mp3",
+                options: ["后来", "很爱很爱你", "原来你也在这里", "为爱痴狂"]
+            },
+            {
+                id: 7,
+                name: "青花瓷",
+                singer: "周杰伦",
+                preview: "https://example.com/previews/bluechina.mp3",
+                options: ["青花瓷", "东风破", "发如雪", "千里之外"]
+            },
+            {
+                id: 8,
+                name: "平凡之路",
+                singer: "朴树",
+                preview: "https://example.com/previews/ordinary.mp3",
+                options: ["平凡之路", "那些花儿", "白桦林", "生如夏花"]
+            },
+            {
+                id: 9,
+                name: "勇气",
+                singer: "梁静茹",
+                preview: "https://example.com/previews/courage.mp3",
+                options: ["勇气", "可惜不是你", "会呼吸的痛", "宁夏"]
+            },
+            {
+                id: 10,
+                name: "海阔天空",
+                singer: "Beyond",
+                preview: "https://example.com/previews/sky.mp3",
+                options: ["海阔天空", "光辉岁月", "真的爱你", "不再犹豫"]
+            }
+        ];
+
+        // 游戏状态
+        const gameState = {
+            currentLevel: 1,
+            totalLevels: 5,
+            score: 0,
+            isDoorOpen: false,
+            isPlaying: false,
+            timer: 30,
+            timerInterval: null,
+            currentSong: null,
+            usedHints: false,
+            startTime: null,
+            endTime: null
+        };
+
+        // DOM 元素
+        const elements = {
+            // 界面容器
+            startScreen: document.getElementById('startScreen'),
+            gameScreen: document.getElementById('gameScreen'),
+            resultScreen: document.getElementById('resultScreen'),
+            
+            // 开始界面元素
+            startBtn: document.getElementById('startBtn'),
+            
+            // 游戏界面元素
+            leftDoor: document.getElementById('leftDoor'),
+            rightDoor: document.getElementById('rightDoor'),
+            doorNumber: document.getElementById('doorNumber'),
+            backDoorNumber: document.getElementById('backDoorNumber'),
+            rightDoorNumber: document.getElementById('rightDoorNumber'),
+            rightBackDoorNumber: document.getElementById('rightBackDoorNumber'),
+            currentLevel: document.getElementById('currentLevel'),
+            totalLevels: document.getElementById('totalLevels'),
+            gameScore: document.getElementById('gameScore'),
+            score: document.getElementById('score'),
+            timer: document.getElementById('timer'),
+            rightTimer: document.getElementById('rightTimer'),
+            answersContainer: document.getElementById('answersContainer'),
+            rightAnswersContainer: document.getElementById('rightAnswersContainer'),
+            playBtn: document.getElementById('playBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            replayBtn: document.getElementById('replayBtn'),
+            rightPlayBtn: document.getElementById('rightPlayBtn'),
+            rightPauseBtn: document.getElementById('rightPauseBtn'),
+            rightReplayBtn: document.getElementById('rightReplayBtn'),
+            hintBtn: document.getElementById('hintBtn'),
+            skipBtn: document.getElementById('skipBtn'),
+            quitBtn: document.getElementById('quitBtn'),
+            
+            // 结果界面元素
+            successResult: document.getElementById('successResult'),
+            failResult: document.getElementById('failResult'),
+            completeResult: document.getElementById('completeResult'),
+            correctSongName: document.getElementById('correctSongName'),
+            correctSinger: document.getElementById('correctSinger'),
+            wrongSongName: document.getElementById('wrongSongName'),
+            wrongSinger: document.getElementById('wrongSinger'),
+            earnedScore: document.getElementById('earnedScore'),
+            totalScore: document.getElementById('totalScore'),
+            completionTime: document.getElementById('completionTime'),
+            nextLevelBtn: document.getElementById('nextLevelBtn'),
+            tryAgainBtn: document.getElementById('tryAgainBtn'),
+            restartBtn: document.getElementById('restartBtn'),
+            
+            // 帮助模态框
+            helpBtn: document.getElementById('helpBtn'),
+            helpModal: document.getElementById('helpModal'),
+            closeHelpBtn: document.getElementById('closeHelpBtn'),
+            
+            // 音频元素
+            gameAudio: document.getElementById('gameAudio'),
+            correctSound: document.getElementById('correctSound'),
+            wrongSound: document.getElementById('wrongSound'),
+            doorSound: document.getElementById('doorSound')
+        };
+
+        // 初始化游戏
+        function initGame() {
+            // 重置游戏状态
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.isDoorOpen = false;
+            gameState.isPlaying = false;
+            gameState.timer = 30;
+            gameState.usedHints = false;
+            
+            // 更新UI
+            updateLevelDisplay();
+            updateScoreDisplay();
+            
+            // 选择当前关卡的歌曲
+            selectCurrentSong();
+            
+            // 生成答案选项
+            generateAnswers();
+            
+            // 事件监听
+            setupEventListeners();
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 开始界面
+            elements.startBtn.addEventListener('click', startGame);
+            
+            // 门点击事件
+            elements.leftDoor.addEventListener('click', toggleDoor);
+            elements.rightDoor.addEventListener('click', toggleDoor);
+            
+            // 音频控制
+            elements.playBtn.addEventListener('click', playAudio);
+            elements.pauseBtn.addEventListener('click', pauseAudio);
+            elements.replayBtn.addEventListener('click', replayAudio);
+            elements.rightPlayBtn.addEventListener('click', playAudio);
+            elements.rightPauseBtn.addEventListener('click', pauseAudio);
+            elements.rightReplayBtn.addEventListener('click', replayAudio);
+            
+            // 游戏控制
+            elements.hintBtn.addEventListener('click', useHint);
+            elements.skipBtn.addEventListener('click', skipLevel);
+            elements.quitBtn.addEventListener('click', quitGame);
+            
+            // 结果界面
+            elements.nextLevelBtn.addEventListener('click', goToNextLevel);
+            elements.tryAgainBtn.addEventListener('click', retryLevel);
+            elements.restartBtn.addEventListener('click', restartGame);
+            
+            // 帮助模态框
+            elements.helpBtn.addEventListener('click', () => {
+                elements.helpModal.classList.remove('hidden');
+            });
+            
+            elements.closeHelpBtn.addEventListener('click', () => {
+                elements.helpModal.classList.add('hidden');
+            });
+            
+            // 点击模态框外部关闭
+            elements.helpModal.addEventListener('click', (e) => {
+                if (e.target === elements.helpModal) {
+                    elements.helpModal.classList.add('hidden');
+                }
+            });
+        }
+
+        // 开始游戏
+        function startGame() {
+            elements.startScreen.classList.add('hidden');
+            elements.gameScreen.classList.remove('hidden');
+            gameState.startTime = new Date();
+        }
+
+        // 切换门的状态（开/关）
+        function toggleDoor() {
+            if (!gameState.isDoorOpen) {
+                // 开门
+                elements.leftDoor.classList.add('animate-door-open');
+                elements.rightDoor.classList.add('animate-door-open');
+                elements.doorSound.play();
+                gameState.isDoorOpen = true;
+                
+                // 开始计时
+                startTimer();
+            } else {
+                // 关门
+                elements.leftDoor.classList.remove('animate-door-open');
+                elements.rightDoor.classList.remove('animate-door-open');
+                elements.leftDoor.classList.add('animate-door-close');
+                elements.rightDoor.classList.add('animate-door-close');
+                gameState.isDoorOpen = false;
+                
+                // 暂停计时和音频
+                pauseTimer();
+                pauseAudio();
+            }
+        }
+
+        // 选择当前关卡的歌曲
+        function selectCurrentSong() {
+            // 确保有足够的歌曲
+            if (gameState.currentLevel <= songLibrary.length) {
+                gameState.currentSong = songLibrary[gameState.currentLevel - 1];
+                elements.gameAudio.src = gameState.currentSong.preview;
+            }
+        }
+
+        // 生成答案选项
+        function generateAnswers() {
+            if (!gameState.currentSong) return;
+            
+            // 清空现有选项
+            elements.answersContainer.innerHTML = '';
+            elements.rightAnswersContainer.innerHTML = '';
+            
+            // 复制选项并打乱顺序
+            const shuffledOptions = [...gameState.currentSong.options].sort(() => Math.random() - 0.5);
+            
+            // 创建选项按钮
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'w-full bg-secondary/70 hover:bg-secondary transition-colors py-3 px-4 rounded-lg text-left';
+                button.textContent = option;
+                button.addEventListener('click', () => checkAnswer(option));
+                
+                // 同时添加到左右门的答案容器
+                elements.answersContainer.appendChild(button.cloneNode(true));
+                elements.rightAnswersContainer.appendChild(button);
+            });
+        }
+
+        // 检查答案
+        function checkAnswer(selectedOption) {
+            if (!gameState.currentSong) return;
+            
+            // 停止计时和音频
+            pauseTimer();
+            pauseAudio();
+            
+            if (selectedOption === gameState.currentSong.name) {
+                // 答案正确
+                elements.correctSound.play();
+                const pointsEarned = 100;
+                gameState.score += pointsEarned;
+                
+                // 更新结果界面
+                elements.correctSongName.textContent = gameState.currentSong.name;
+                elements.correctSinger.textContent = gameState.currentSong.singer;
+                elements.earnedScore.textContent = pointsEarned;
+                
+                // 显示成功结果
+                elements.gameScreen.classList.add('hidden');
+                elements.resultScreen.classList.remove('hidden');
+                elements.successResult.classList.remove('hidden');
+                elements.failResult.classList.add('hidden');
+                elements.completeResult.classList.add('hidden');
+                
+                // 更新分数显示
+                updateScoreDisplay();
+            } else {
+                // 答案错误
+                elements.wrongSound.play();
+                
+                // 更新结果界面
+                elements.wrongSongName.textContent = gameState.currentSong.name;
+                elements.wrongSinger.textContent = gameState.currentSong.singer;
+                
+                // 显示失败结果
+                elements.gameScreen.classList.add('hidden');
+                elements.resultScreen.classList.remove('hidden');
+                elements.successResult.classList.add('hidden');
+                elements.failResult.classList.remove('hidden');
+                elements.completeResult.classList.add('hidden');
+            }
+        }
+
+        // 播放音频
+        function playAudio() {
+            if (gameState.currentSong) {
+                elements.gameAudio.play();
+                gameState.isPlaying = true;
+                
+                // 如果计时已停止，重新开始
+                if (gameState.timerInterval === null && gameState.timer > 0) {
+                    startTimer();
+                }
+            }
+        }
+
+        // 暂停音频
+        function pauseAudio() {
+            elements.gameAudio.pause();
+            gameState.isPlaying = false;
+            pauseTimer();
+        }
+
+        // 重放音频
+        function replayAudio() {
+            if (gameState.currentSong) {
+                elements.gameAudio.currentTime = 0;
+                elements.gameAudio.play();
+                gameState.isPlaying = true;
+                
+                // 如果计时已停止，重新开始
+                if (gameState.timerInterval === null && gameState.timer > 0) {
+                    startTimer();
+                }
+            }
+        }
+
+        // 开始计时器
+        function startTimer() {
+            if (gameState.timerInterval) return;
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timer--;
+                elements.timer.textContent = gameState.timer;
+                elements.rightTimer.textContent = gameState.timer;
+                
+                // 时间到
+                if (gameState.timer <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    gameState.timerInterval = null;
+                    pauseAudio();
+                    
+                    // 显示失败结果
+                    elements.wrongSongName.textContent = gameState.currentSong.name;
+                    elements.wrongSinger.textContent = gameState.currentSong.singer;
+                    
+                    elements.gameScreen.classList.add('hidden');
+                    elements.resultScreen.classList.remove('hidden');
+                    elements.successResult.classList.add('hidden');
+                    elements.failResult.classList.remove('hidden');
+                    elements.completeResult.classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        // 暂停计时器
+        function pauseTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+
+        // 使用提示
+        function useHint() {
+            if (gameState.usedHints) return;
+            
+            // 扣50分
+            if (gameState.score >= 50) {
+                gameState.score -= 50;
+                updateScoreDisplay();
+                gameState.usedHints = true;
+                
+                // 禁用一个错误选项
+                const buttons = elements.answersContainer.querySelectorAll('button');
+                const rightButtons = elements.rightAnswersContainer.querySelectorAll('button');
+                
+                let wrongButtons = [];
+                let rightWrongButtons = [];
+                
+                buttons.forEach((btn, index) => {
+                    if (btn.textContent !== gameState.currentSong.name) {
+                        wrongButtons.push(btn);
+                        rightWrongButtons.push(rightButtons[index]);
+                    }
+                });
+                
+                // 随机禁用一个错误选项
+                if (wrongButtons.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * wrongButtons.length);
+                    wrongButtons[randomIndex].disabled = true;
+                    wrongButtons[randomIndex].classList.add('opacity-50', 'cursor-not-allowed');
+                    wrongButtons[randomIndex].classList.remove('hover:bg-secondary');
+                    
+                    rightWrongButtons[randomIndex].disabled = true;
+                    rightWrongButtons[randomIndex].classList.add('opacity-50', 'cursor-not-allowed');
+                    rightWrongButtons[randomIndex].classList.remove('hover:bg-secondary');
+                }
+                
+                // 提示按钮状态更新
+                elements.hintBtn.disabled = true;
+                elements.hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                alert('积分不足，无法使用提示！');
+            }
+        }
+
+        // 跳过关卡
+        function skipLevel() {
+            // 扣100分
+            if (gameState.score >= 100) {
+                gameState.score -= 100;
+                updateScoreDisplay();
+                goToNextLevel();
+            } else {
+                alert('积分不足，无法跳过！');
+            }
+        }
+
+        // 进入下一关
+        function goToNextLevel() {
+            gameState.currentLevel++;
+            
+            // 检查是否完成所有关卡
+            if (gameState.currentLevel > gameState.totalLevels) {
+                completeGame();
+                return;
+            }
+            
+            // 重置关卡状态
+            resetLevelState();
+            
+            // 更新UI
+            updateLevelDisplay();
+            selectCurrentSong();
+            generateAnswers();
+            
+            // 显示游戏界面
+            elements.resultScreen.classList.add('hidden');
+            elements.gameScreen.classList.remove('hidden');
+        }
+
+        // 重试当前关卡
+        function retryLevel() {
+            // 重置关卡状态
+            resetLevelState();
+            
+            // 更新UI
+            generateAnswers();
+            
+            // 显示游戏界面
+            elements.resultScreen.classList.add('hidden');
+            elements.gameScreen.classList.remove('hidden');
+        }
+
+        // 完成游戏
+        function completeGame() {
+            gameState.endTime = new Date();
+            const timeTaken = Math.floor((gameState.endTime - gameState.startTime) / 1000);
+            const minutes = Math.floor(timeTaken / 60).toString().padStart(2, '0');
+            const seconds = (timeTaken % 60).toString().padStart(2, '0');
+            
+            // 更新完成界面
+            elements.totalScore.textContent = gameState.score;
+            elements.completionTime.textContent = `${minutes}:${seconds}`;
+            
+            // 显示完成结果
+            elements.successResult.classList.add('hidden');
+            elements.failResult.classList.add('hidden');
+            elements.completeResult.classList.remove('hidden');
+        }
+
+        // 重置关卡状态
+        function resetLevelState() {
+            gameState.timer = 30;
+            gameState.isPlaying = false;
+            gameState.usedHints = false;
+            pauseTimer();
+            elements.timer.textContent = gameState.timer;
+            elements.rightTimer.textContent = gameState.timer;
+            elements.gameAudio.pause();
+            elements.gameAudio.currentTime = 0;
+            
+            // 重置门状态
+            elements.leftDoor.classList.remove('animate-door-open', 'animate-door-close');
+            elements.rightDoor.classList.remove('animate-door-open', 'animate-door-close');
+            gameState.isDoorOpen = false;
+            
+            // 重置提示按钮
+            elements.hintBtn.disabled = false;
+            elements.hintBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        // 更新关卡显示
+        function updateLevelDisplay() {
+            elements.currentLevel.textContent = gameState.currentLevel;
+            elements.doorNumber.textContent = gameState.currentLevel;
+            elements.backDoorNumber.textContent = gameState.currentLevel;
+            elements.rightDoorNumber.textContent = gameState.currentLevel;
+            elements.rightBackDoorNumber.textContent = gameState.currentLevel;
+        }
+
+        // 更新分数显示
+        function updateScoreDisplay() {
+            elements.gameScore.textContent = gameState.score;
+            elements.score.textContent = gameState.score;
+        }
+
+        // 退出游戏
+        function quitGame() {
+            if (confirm('确定要退出游戏吗？当前进度将会丢失。')) {
+                // 重置游戏状态
+                resetLevelState();
+                
+                // 返回开始界面
+                elements.gameScreen.classList.add('hidden');
+                elements.resultScreen.classList.add('hidden');
+                elements.startScreen.classList.remove('hidden');
+                
+                // 重新初始化游戏
+                initGame();
+            }
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            // 重置游戏状态
+            initGame();
+            
+            // 返回开始界面
+            elements.resultScreen.classList.add('hidden');
+            elements.startScreen.classList.remove('hidden');
+        }
+
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

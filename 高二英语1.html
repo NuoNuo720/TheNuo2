@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高二英语学业水平测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8b5cf6', // 紫色作为英语主题色
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        danger: '#ef4444',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Georgia', 'Cambria', 'serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .question-card {
+                @apply bg-white rounded-xl shadow-md p-6 mb-6 transition-all duration-300 hover:shadow-lg;
+            }
+            .option-item {
+                @apply border border-gray-200 rounded-lg p-4 mb-3 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-purple-50;
+            }
+            .option-selected {
+                @apply border-primary bg-purple-50;
+            }
+            .option-correct {
+                @apply border-secondary bg-green-50;
+            }
+            .option-incorrect {
+                @apply border-danger bg-red-50;
+            }
+            .passage-text {
+                @apply text-gray-700 leading-relaxed mb-6;
+            }
+            .vocab-highlight {
+                @apply font-semibold text-primary underline decoration-dotted underline-offset-4;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-dark">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <!-- 返回按钮 -->
+                <button id="back-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
+                    <i class="fa fa-arrow-left text-primary text-xl"></i>
+                </button>
+                <i class="fa fa-book text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-dark">高二英语学业水平测试</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="hidden md:inline-flex items-center text-sm text-gray-600">
+                    <i class="fa fa-clock-o mr-1"></i> 建议用时: 60分钟
+                </span>
+                <span id="question-count" class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                    已完成: 0/50
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 测试介绍 -->
+        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 mb-8 shadow-sm">
+            <h2 class="text-xl font-bold mb-3 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i>测试说明
+            </h2>
+            <p class="text-gray-700 mb-4">本次测试包含50道高难度选择题，涵盖词汇、语法、阅读理解和完形填空等内容，旨在全面检测英语学业水平。请认真作答，完成后点击"提交答案"按钮查看结果。</p>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                <div class="flex items-center bg-white/70 rounded-lg p-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-primary mr-2">
+                        <i class="fa fa-language"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium">词汇</div>
+                        <div class="text-gray-500">10道题</div>
+                    </div>
+                </div>
+                <div class="flex items-center bg-white/70 rounded-lg p-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-primary mr-2">
+                        <i class="fa fa-code"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium">语法</div>
+                        <div class="text-gray-500">15道题</div>
+                    </div>
+                </div>
+                <div class="flex items-center bg-white/70 rounded-lg p-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-primary mr-2">
+                        <i class="fa fa-file-text-o"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium">完形填空</div>
+                        <div class="text-gray-500">10道题</div>
+                    </div>
+                </div>
+                <div class="flex items-center bg-white/70 rounded-lg p-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-primary mr-2">
+                        <i class="fa fa-newspaper-o"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium">阅读理解</div>
+                        <div class="text-gray-500">15道题</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试题目区域 -->
+        <div id="test-container" class="mb-10">
+            <!-- 题目将通过JavaScript动态生成 -->
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="flex justify-center mb-16">
+            <button id="submit-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-8 rounded-full shadow-md transition-all duration-300 transform hover:scale-105 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa fa-paper-plane mr-2"></i> 提交答案
+            </button>
+        </div>
+
+        <!-- 结果显示区域 -->
+        <div id="result-container" class="hidden bg-white rounded-2xl shadow-md p-6 mb-10">
+            <h2 class="text-2xl font-bold mb-6 text-center">测试结果</h2>
+            <div class="flex flex-col md:flex-row justify-center items-center gap-8 mb-8">
+                <div class="text-center">
+                    <div id="score-display" class="text-5xl font-bold text-primary mb-1">0</div>
+                    <div class="text-gray-600">得分</div>
+                </div>
+                <div class="h-16 border-l border-gray-200 hidden md:block"></div>
+                <div class="text-center">
+                    <div id="correct-display" class="text-5xl font-bold text-secondary mb-1">0</div>
+                    <div class="text-gray-600">正确题数</div>
+                </div>
+                <div class="h-16 border-l border-gray-200 hidden md:block"></div>
+                <div class="text-center">
+                    <div id="incorrect-display" class="text-5xl font-bold text-danger mb-1">0</div>
+                    <div class="text-gray-600">错误题数</div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button id="retry-btn" class="bg-accent hover:bg-accent/90 text-white font-medium py-2 px-6 rounded-full shadow-sm transition-all duration-300">
+                    <i class="fa fa-refresh mr-1"></i> 重新测试
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6">
+        <div class="container mx-auto px-4 text-center text-sm text-gray-400">
+            <p>© 2023 高二学业水平测试系统 | 英语综合测试</p>
+        </div>
+    </footer>
+
+    <script>
+        // 测试题目数据 - 50道高难度英语选择题
+        const questions = [
+            // 第一部分：词汇 (10题)
+            {
+                id: 1,
+                type: "词汇",
+                question: "The politician's _________ response to the scandal failed to mollify the public's anger.",
+                options: [
+                    { id: "q1a", text: "equivocal" },
+                    { id: "q1b", text: "luminous" },
+                    { id: "q1c", text: "pertinent" },
+                    { id: "q1d", text: "succinct" }
+                ],
+                correctAnswer: "q1a",
+                explanation: "equivocal: 模棱两可的；luminous: 发光的；pertinent: 相关的；succinct: 简洁的。句意为：政治家对丑闻的模棱两可的回应未能平息公众的愤怒。"
+            },
+            {
+                id: 2,
+                type: "词汇",
+                question: "The _________ beauty of the ancient temple was enhanced by the soft morning light.",
+                options: [
+                    { id: "q2a", text: "ephemeral" },
+                    { id: "q2b", text: "serene" },
+                    { id: "q2c", text: "transient" },
+                    { id: "q2d", text: "turbulent" }
+                ],
+                correctAnswer: "q2b",
+                explanation: "ephemeral: 短暂的；serene: 宁静的；transient: 暂时的；turbulent: 动荡的。句意为：柔和的晨光增强了古寺宁静的美。"
+            },
+            {
+                id: 3,
+                type: "词汇",
+                question: "The professor's _________ lecture on quantum physics left most students confused.",
+                options: [
+                    { id: "q3a", text: "lucid" },
+                    { id: "q3b", text: "obscure" },
+                    { id: "q3c", text: "perspicuous" },
+                    { id: "q3d", text: "tangible" }
+                ],
+                correctAnswer: "q3b",
+                explanation: "lucid: 清晰的；obscure: 晦涩的；perspicuous: 明白的；tangible: 有形的。句意为：教授关于量子物理学的晦涩讲座让大多数学生感到困惑。"
+            },
+            {
+                id: 4,
+                type: "词汇",
+                question: "Despite facing numerous obstacles, she remained _________ in her pursuit of a college degree.",
+                options: [
+                    { id: "q4a", text: "fickle" },
+                    { id: "q4b", text: "vacillating" },
+                    { id: "q4c", text: "steadfast" },
+                    { id: "q4d", text: "capricious" }
+                ],
+                correctAnswer: "q4c",
+                explanation: "fickle: 易变的；vacillating: 犹豫的；steadfast: 坚定的；capricious: 反复无常的。句意为：尽管面临诸多障碍，她仍坚定不移地追求大学学位。"
+            },
+            {
+                id: 5,
+                type: "词汇",
+                question: "The _________ between the two neighboring countries终于结束了多年的冲突。",
+                options: [
+                    { id: "q5a", text: "pact" },
+                    { id: "q5b", text: "ruse" },
+                    { id: "q5c", text: "travesty" },
+                    { id: "q5d", text: "nadir" }
+                ],
+                correctAnswer: "q5a",
+                explanation: "pact: 条约；ruse: 策略；travesty: 歪曲；nadir: 最低点。句意为：两国之间的条约终于结束了多年的冲突。"
+            },
+            {
+                id: 6,
+                type: "词汇",
+                question: "The _________ of the artist's early works contrasts sharply with the boldness of his later paintings.",
+                options: [
+                    { id: "q6a", text: "audacity" },
+                    { id: "q6b", text: "timidity" },
+                    { id: "q6c", text: "vehemence" },
+                    { id: "q6d", text: "vigor" }
+                ],
+                correctAnswer: "q6b",
+                explanation: "audacity: 大胆；timidity: 胆怯；vehemence: 激烈；vigor: 活力。句意为：这位艺术家早期作品的胆怯与他后期绘画的大胆形成鲜明对比。"
+            },
+            {
+                id: 7,
+                type: "词汇",
+                question: "The _________ evidence presented in court convinced the jury of the defendant's guilt.",
+                options: [
+                    { id: "q7a", text: "circumstantial" },
+                    { id: "q7b", text: "flimsy" },
+                    { id: "q7c", text: "irrefutable" },
+                    { id: "q7d", text: "spurious" }
+                ],
+                correctAnswer: "q7c",
+                explanation: "circumstantial: 间接的；flimsy: 脆弱的；irrefutable: 无可辩驳的；spurious: 虚假的。句意为：法庭上提出的无可辩驳的证据使陪审团相信被告有罪。"
+            },
+            {
+                id: 8,
+                type: "词汇",
+                question: "The CEO's _________ decision-making style often led to impulsive actions that regretted later.",
+                options: [
+                    { id: "q8a", text: "deliberate" },
+                    { id: "q8b", text: "impetuous" },
+                    { id: "q8c", text: "methodical" },
+                    { id: "q8d", text: "prudent" }
+                ],
+                correctAnswer: "q8b",
+                explanation: "deliberate: 深思熟虑的；impetuous: 冲动的；methodical: 有条理的；prudent: 谨慎的。句意为：首席执行官冲动的决策风格常常导致后来后悔的冲动行为。"
+            },
+            {
+                id: 9,
+                type: "词汇",
+                question: "The _________ of the mountain landscape took the hikers by surprise.",
+                options: [
+                    { id: "q9a", text: "mediocrity" },
+                    { id: "q9b", text: "mundanity" },
+                    { id: "q9c", text: "splendor" },
+                    { id: "q9d", text: "triviality" }
+                ],
+                correctAnswer: "q9c",
+                explanation: "mediocrity: 平庸；mundanity: 平凡；splendor: 壮丽；triviality: 琐碎。句意为：山景的壮丽令徒步旅行者感到惊讶。"
+            },
+            {
+                id: 10,
+                type: "词汇",
+                question: "Her _________ nature made it difficult for her to adapt to new environments.",
+                options: [
+                    { id: "q10a", text: "adaptable" },
+                    { id: "q10b", text: "malleable" },
+                    { id: "q10c", text: "pliant" },
+                    { id: "q10d", text: "intransigent" }
+                ],
+                correctAnswer: "q10d",
+                explanation: "adaptable: 适应性强的；malleable: 可塑的；pliant: 易受影响的；intransigent: 固执的。句意为：她固执的性格使她难以适应新环境。"
+            },
+
+            // 第二部分：语法 (15题)
+            {
+                id: 11,
+                type: "语法",
+                question: "_________ the storm, we would have arrived at the destination on time.",
+                options: [
+                    { id: "q11a", text: "But for" },
+                    { id: "q11b", text: "In case of" },
+                    { id: "q11c", text: "Despite" },
+                    { id: "q11d", text: "Regarding" }
+                ],
+                correctAnswer: "q11a",
+                explanation: "But for 表示“要不是”，用于虚拟语气。句意为：要不是这场暴风雨，我们本来会准时到达目的地的。"
+            },
+            {
+                id: 12,
+                type: "语法",
+                question: "The research team, _________ is composed of scientists from three different countries, has made a groundbreaking discovery.",
+                options: [
+                    { id: "q12a", text: "which" },
+                    { id: "q12b", text: "who" },
+                    { id: "q12c", text: "whom" },
+                    { id: "q12d", text: "what" }
+                ],
+                correctAnswer: "q12a",
+                explanation: "此处为非限制性定语从句，先行词是the research team（物），故用which引导。"
+            },
+            {
+                id: 13,
+                type: "语法",
+                question: "Little _________ about the potential consequences of his decision when he made it.",
+                options: [
+                    { id: "q13a", text: "he knew" },
+                    { id: "q13b", text: "knew he" },
+                    { id: "q13c", text: "did he know" },
+                    { id: "q13d", text: "he did know" }
+                ],
+                correctAnswer: "q13c",
+                explanation: "否定词little置于句首时，句子要用部分倒装。句意为：当他做出决定时，他几乎不知道其潜在后果。"
+            },
+            {
+                id: 14,
+                type: "语法",
+                question: "By the time we arrive at the conference center, the keynote speaker _________ his presentation.",
+                options: [
+                    { id: "q14a", text: "will deliver" },
+                    { id: "q14b", text: "will have delivered" },
+                    { id: "q14c", text: "has delivered" },
+                    { id: "q14d", text: "is delivering" }
+                ],
+                correctAnswer: "q14b",
+                explanation: "By the time 引导时间状语从句，从句用一般现在时表将来，主句用将来完成时，表示在将来某一时间之前已经完成的动作。"
+            },
+            {
+                id: 15,
+                type: "语法",
+                question: "The company is considering _________ its operations to Southeast Asia to reduce manufacturing costs.",
+                options: [
+                    { id: "q15a", text: "to expand" },
+                    { id: "q15b", text: "expanding" },
+                    { id: "q15c", text: "expand" },
+                    { id: "q15d", text: "expanded" }
+                ],
+                correctAnswer: "q15b",
+                explanation: "consider后接动名词作宾语，即consider doing sth. 表示“考虑做某事”。"
+            },
+            {
+                id: 16,
+                type: "语法",
+                question: "_________ hard she tries, she cannot seem to master the intricacies of quantum mechanics.",
+                options: [
+                    { id: "q16a", text: "However" },
+                    { id: "q16b", text: "Whatever" },
+                    { id: "q16c", text: "Whoever" },
+                    { id: "q16d", text: "Whenever" }
+                ],
+                correctAnswer: "q16a",
+                explanation: "However 修饰形容词或副词，表示“无论多么”。句意为：无论她多么努力，似乎都无法掌握量子力学的复杂性。"
+            },
+            {
+                id: 17,
+                type: "语法",
+                question: "The experiment _________ last month would have yielded significant results if the equipment had been calibrated properly.",
+                options: [
+                    { id: "q17a", text: "conducting" },
+                    { id: "q17b", text: "conducted" },
+                    { id: "q17c", text: "to conduct" },
+                    { id: "q17d", text: "being conducted" }
+                ],
+                correctAnswer: "q17b",
+                explanation: "过去分词短语作定语，修饰the experiment，表示被动和完成。句意为：如果设备校准得当，上个月进行的实验本会产生重大结果。"
+            },
+            {
+                id: 18,
+                type: "语法",
+                question: "Not until the early 20th century _________ to realize the importance of environmental conservation.",
+                options: [
+                    { id: "q18a", text: "people began" },
+                    { id: "q18b", text: "began people" },
+                    { id: "q18c", text: "did people begin" },
+                    { id: "q18d", text: "people did begin" }
+                ],
+                correctAnswer: "q18c",
+                explanation: "Not until 置于句首时，主句要用部分倒装。句意为：直到20世纪初，人们才开始意识到环境保护的重要性。"
+            },
+            {
+                id: 19,
+                type: "语法",
+                question: "The committee recommends that the new policy _________ implemented immediately to address the pressing issue.",
+                options: [
+                    { id: "q19a", text: "is" },
+                    { id: "q19b", text: "be" },
+                    { id: "q19c", text: "will be" },
+                    { id: "q19d", text: "would be" }
+                ],
+                correctAnswer: "q19b",
+                explanation: "在表示建议、要求、命令等动词后的宾语从句中，谓语动词用“should + 动词原形”，should 可以省略。"
+            },
+            {
+                id: 20,
+                type: "语法",
+                question: "The number of students applying for the scholarship _________ increased dramatically over the past five years.",
+                options: [
+                    { id: "q20a", text: "have" },
+                    { id: "q20b", text: "has" },
+                    { id: "q20c", text: "are" },
+                    { id: "q20d", text: "is" }
+                ],
+                correctAnswer: "q20b",
+                explanation: "The number of 作主语时，谓语动词用单数形式；over the past five years 表示一段时间，与现在完成时连用。"
+            },
+            {
+                id: 21,
+                type: "语法",
+                question: "_________ the fact that she has no prior experience, she performed exceptionally well in the interview.",
+                options: [
+                    { id: "q21a", text: "Although" },
+                    { id: "q21b", text: "Despite" },
+                    { id: "q21c", text: "Whereas" },
+                    { id: "q21d", text: "Unless" }
+                ],
+                correctAnswer: "q21b",
+                explanation: "Despite 是介词，后接名词或名词短语；although 和 whereas 是连词，后接从句；unless 表示“除非”。句意为：尽管她没有任何经验，但她在面试中表现出色。"
+            },
+            {
+                id: 22,
+                type: "语法",
+                question: "The professor required that all papers _________ by the end of the week without exception.",
+                options: [
+                    { id: "q22a", text: "be submitted" },
+                    { id: "q22b", text: "are submitted" },
+                    { id: "q22c", text: "will be submitted" },
+                    { id: "q22d", text: "would be submitted" }
+                ],
+                correctAnswer: "q22a",
+                explanation: "在表示要求、命令、建议等动词后的宾语从句中，谓语动词用虚拟语气，即“should + 动词原形”，should 可以省略；此处为被动语态。"
+            },
+            {
+                id: 23,
+                type: "语法",
+                question: "The novel is said _________ into several languages since it was first published in 2010.",
+                options: [
+                    { id: "q23a", text: "to translate" },
+                    { id: "q23b", text: "to be translated" },
+                    { id: "q23c", text: "to have been translated" },
+                    { id: "q23d", text: "being translated" }
+                ],
+                correctAnswer: "q23c",
+                explanation: "be said to do sth. 表示“据说……”；根据since引导的时间状语从句，此处应用完成时；小说是被翻译的，故用被动语态。"
+            },
+            {
+                id: 24,
+                type: "语法",
+                question: "She is _________ intelligent _________ she can solve complex mathematical problems in minutes.",
+                options: [
+                    { id: "q24a", text: "so; that" },
+                    { id: "q24b", text: "such; that" },
+                    { id: "q24c", text: "too; to" },
+                    { id: "q24d", text: "as; as" }
+                ],
+                correctAnswer: "q24a",
+                explanation: "so + 形容词/副词 + that 从句，表示“如此……以至于……”。句意为：她非常聪明，能在几分钟内解决复杂的数学问题。"
+            },
+            {
+                id: 25,
+                type: "语法",
+                question: "_________ you have finished your homework, you may watch television for an hour.",
+                options: [
+                    { id: "q25a", text: "While" },
+                    { id: "q25b", text: "Once" },
+                    { id: "q25c", text: "As long as" },
+                    { id: "q25d", text: "In case" }
+                ],
+                correctAnswer: "q25b",
+                explanation: "Once 表示“一旦”，引导时间状语从句。句意为：一旦你完成作业，就可以看一小时电视。"
+            },
+
+            // 第三部分：完形填空 (10题) - 共用一篇短文
+            {
+                id: 26,
+                type: "完形填空",
+                passage: `
+                    <p class="passage-text">
+                        The concept of time has perplexed philosophers and scientists for centuries. Our perception of time is often <span class="vocab-highlight">subjective</span>, influenced by our emotions and circumstances. When we are engaged in enjoyable activities, time seems to fly by, whereas during moments of boredom or discomfort, it <span class="vocab-highlight">drags</span> interminably.
+                    </p>
+                    <p class="passage-text">
+                        From a scientific perspective, time is considered a fundamental dimension, interwoven with space to form the fabric of the universe. Einstein's theory of relativity <span class="vocab-highlight">revolutionized</span> our understanding, demonstrating that time is not absolute but rather <span class="vocab-highlight">relative</span> to the observer's frame of reference. This means that time can <span class="vocab-highlight">dilate</span> or contract depending on factors such as velocity and gravitational pull.
+                    </p>
+                `,
+                question: "The word 'subjective' in the passage is closest in meaning to _________.",
+                options: [
+                    { id: "q26a", text: "objective" },
+                    { id: "q26b", text: "personal" },
+                    { id: "q26c", text: "universal" },
+                    { id: "q26d", text: "scientific" }
+                ],
+                correctAnswer: "q26b",
+                explanation: "subjective 意为“主观的”，与personal（个人的）意思最接近；objective 客观的；universal 普遍的；scientific 科学的。"
+            },
+            {
+                id: 27,
+                type: "完形填空",
+                question: "The word 'drags' in the passage is used to describe time that _________.",
+                options: [
+                    { id: "q27a", text: "moves quickly" },
+                    { id: "q27b", text: "seems to pass slowly" },
+                    { id: "q27c", text: "stops completely" },
+                    { id: "q27d", text: "changes unpredictably" }
+                ],
+                correctAnswer: "q27b",
+                explanation: "drags 在此处表示时间“过得很慢”，与前文的fly by（飞逝）形成对比。"
+            },
+            {
+                id: 28,
+                type: "完形填空",
+                question: "The word 'revolutionized' in the passage is closest in meaning to _________.",
+                options: [
+                    { id: "q28a", text: "transformed" },
+                    { id: "q28b", text: "confirmed" },
+                    { id: "q28c", text: "complicated" },
+                    { id: "q28d", text: "preserved" }
+                ],
+                correctAnswer: "q28a",
+                explanation: "revolutionized 意为“彻底改变”，与transformed（转变）意思最接近；confirmed 确认；complicated 使复杂化；preserved 保存。"
+            },
+            {
+                id: 29,
+                type: "完形填空",
+                question: "The word 'relative' in the passage is used to mean _________.",
+                options: [
+                    { id: "q29a", text: "fixed" },
+                    { id: "q29b", text: "unrelated" },
+                    { id: "q29c", text: "dependent on context" },
+                    { id: "q29d", text: "mathematically precise" }
+                ],
+                correctAnswer: "q29c",
+                explanation: "relative 在此处表示“相对的”，即取决于观察者的参照系，与dependent on context（取决于语境/情境）意思相符。"
+            },
+            {
+                id: 30,
+                type: "完形填空",
+                question: "The word 'dilate' in the passage is closest in meaning to _________.",
+                options: [
+                    { id: "q30a", text: "expand" },
+                    { id: "q30b", text: "disappear" },
+                    { id: "q30c", text: "accelerate" },
+                    { id: "q30d", text: "stabilize" }
+                ],
+                correctAnswer: "q30a",
+                explanation: "dilate 在此处表示时间“膨胀”，与expand（扩张）意思最接近；disappear 消失；accelerate 加速；stabilize 稳定。"
+            },
+
+            // 完形填空第二段
+            {
+                id: 31,
+                type: "完形填空",
+                passage: `
+                    <p class="passage-text">
+                        Despite these scientific insights, our daily experience of time remains deeply <span class="vocab-highlight">entrenched</span> in linear perception. We divide time into seconds, minutes, and hours, creating a structured framework that helps us navigate our lives. This artificial <span class="vocab-highlight">demarcation</span> allows for coordination and planning, essential aspects of social organization.
+                    </p>
+                    <p class="passage-text">
+                        Yet, there are moments when we <span class="vocab-highlight">transcend</span> this linear experience. During periods of intense focus or meditation, individuals often report a <span class="vocab-highlight">dissolution</span> of time awareness. Similarly, in creative states, artists and inventors may become so absorbed in their work that hours pass unnoticed. These experiences suggest that our relationship with time is more <span class="vocab-highlight">nuanced</span> than our everyday routines might imply.
+                    </p>
+                `,
+                question: "The word 'entrenched' in the passage is closest in meaning to _________.",
+                options: [
+                    { id: "q31a", text: "weakened" },
+                    { id: "q31b", text: "established" },
+                    { id: "q31c", text: "forgotten" },
+                    { id: "q31d", text: "questioned" }
+                ],
+                correctAnswer: "q31b",
+                explanation: "entrenched 意为“根深蒂固的”，与established（确立的）意思最接近；weakened 削弱的；forgotten 被遗忘的；questioned 被质疑的。"
+            },
+            {
+                id: 32,
+                type: "完形填空",
+                question: "The word 'demarcation' in the passage refers to _________.",
+                options: [
+                    { id: "q32a", text: "measurement" },
+                    { id: "q32b", text: "confusion" },
+                    { id: "q32c", text: "division" },
+                    { id: "q32d", text: "waste" }
+                ],
+                correctAnswer: "q32c",
+                explanation: "demarcation 意为“划分”，此处指我们将时间划分为秒、分、小时，与division（分割）意思相符。"
+            },
+            {
+                id: 33,
+                type: "完形填空",
+                question: "The word 'transcend' in the passage is closest in meaning to _________.",
+                options: [
+                    { id: "q33a", text: "go beyond" },
+                    { id: "q33b", text: "conform to" },
+                    { id: "q33c", text: "struggle with" },
+                    { id: "q33d", text: "ignore" }
+                ],
+                correctAnswer: "q33a",
+                explanation: "transcend 意为“超越”，与go beyond（超出）意思最接近；conform to 符合；struggle with 与……斗争；ignore 忽视。"
+            },
+            {
+                id: 34,
+                type: "完形填空",
+                question: "The word 'dissolution' in the passage is used to describe _________.",
+                options: [
+                    { id: "q34a", text: "an increase" },
+                    { id: "q34b", text: "a disappearance" },
+                    { id: "q34c", text: "an improvement" },
+                    { id: "q34d", text: "a reinforcement" }
+                ],
+                correctAnswer: "q34b",
+                explanation: "dissolution 意为“消失”，此处指在高度专注或冥想时，时间意识的消失，与disappearance（消失）意思相符。"
+            },
+            {
+                id: 35,
+                type: "完形填空",
+                question: "The word 'nuanced' in the passage is closest in meaning to _________.",
+                options: [
+                    { id: "q35a", text: "simple" },
+                    { id: "q35b", text: "complex" },
+                    { id: "q35c", text: "unimportant" },
+                    { id: "q35d", text: "obvious" }
+                ],
+                correctAnswer: "q35b",
+                explanation: "nuanced 意为“微妙的，有细微差别的”，暗示复杂性，与complex（复杂的）意思最接近；simple 简单的；unimportant 不重要的；obvious 明显的。"
+            },
+
+            // 第四部分：阅读理解 (15题) - 3篇短文，每篇5题
+            // 第一篇阅读理解
+            {
+                id: 36,
+                type: "阅读理解",
+                passage: `
+                    <p class="passage-text">
+                        Artificial intelligence (AI) has made significant strides in recent years, transforming various aspects of human life. From virtual assistants that respond to voice commands to sophisticated algorithms that predict weather patterns, AI applications continue to expand across industries. One of the most promising areas is healthcare, where AI systems are being developed to assist in medical diagnosis and treatment planning.
+                    </p>
+                    <p class="passage-text">
+                        Machine learning, a subset of AI, enables computers to learn from data without explicit programming. This capability has proven particularly valuable in analyzing medical images such as X-rays and MRIs, where AI algorithms can detect patterns that might escape human observation. Studies have shown that in some cases, AI systems can match or even exceed the accuracy of trained radiologists in identifying early signs of diseases like cancer.
+                    </p>
+                    <p class="passage-text">
+                        Despite these advancements, concerns remain about the integration of AI into healthcare. Issues of privacy and data security are paramount, as AI systems rely on large amounts of patient data to function effectively. There are also questions about liability in cases where AI recommendations lead to incorrect diagnoses or treatment plans. Additionally, some healthcare professionals express apprehension about the potential dehumanization of medical care, emphasizing the importance of maintaining the doctor-patient relationship.
+                    </p>
+                    <p class="passage-text">
+                        As research continues, many experts believe that the future of healthcare lies in a collaborative approach, where AI augments rather than replaces human expertise. By handling routine tasks and analyzing large datasets, AI can free up medical professionals to focus on patient care and complex decision-making, ultimately improving healthcare outcomes.
+                    </p>
+                `,
+                question: "What is the main idea of the passage?",
+                options: [
+                    { id: "q36a", text: "AI has completely replaced human doctors in many healthcare settings." },
+                    { id: "q36b", text: "AI is transforming healthcare but raises important concerns that need to be addressed." },
+                    { id: "q36c", text: "Machine learning is not useful for analyzing medical images." },
+                    { id: "q36d", text: "Privacy concerns make AI inappropriate for healthcare applications." }
+                ],
+                correctAnswer: "q36b",
+                explanation: "文章主要讨论了人工智能正在改变医疗保健领域，但同时也带来了隐私、责任等方面的重要问题，需要加以解决。"
+            },
+            {
+                id: 37,
+                type: "阅读理解",
+                question: "According to the passage, what is machine learning?",
+                options: [
+                    { id: "q37a", text: "A type of medical imaging technology." },
+                    { id: "q37b", text: "A subset of AI that allows computers to learn from data without explicit programming." },
+                    { id: "q37c", text: "A method for protecting patient privacy." },
+                    { id: "q37d", text: "A technique used by radiologists to detect cancer." }
+                ],
+                correctAnswer: "q37b",
+                explanation: "文章第二段明确指出：Machine learning, a subset of AI, enables computers to learn from data without explicit programming."
+            },
+            {
+                id: 38,
+                type: "阅读理解",
+                question: "What is mentioned as a potential benefit of AI in healthcare?",
+                options: [
+                    { id: "q38a", text: "AI can eliminate the need for doctor-patient relationships." },
+                    { id: "q38b", text: "AI can detect patterns in medical images that humans might miss." },
+                    { id: "q38c", text: "AI systems require very little data to function effectively." },
+                    { id: "q38d", text: "AI has resolved all privacy concerns in healthcare." }
+                ],
+                correctAnswer: "q38b",
+                explanation: "文章第二段提到：AI algorithms can detect patterns that might escape human observation."
+            },
+            {
+                id: 39,
+                type: "阅读理解",
+                question: "What concern about AI in healthcare is NOT mentioned in the passage?",
+                options: [
+                    { id: "q39a", text: "Issues of privacy and data security." },
+                    { id: "q39b", text: "Questions about liability for incorrect diagnoses." },
+                    { id: "q39c", text: "The high cost of AI systems compared to human doctors." },
+                    { id: "q39d", text: "Potential dehumanization of medical care." }
+                ],
+                correctAnswer: "q39c",
+                explanation: "文章第三段提到了隐私、责任和医疗人性化问题，但没有提到AI系统与人类医生相比的高成本问题。"
+            },
+            {
+                id: 40,
+                type: "阅读理解",
+                question: "What do many experts believe about the future of AI in healthcare?",
+                options: [
+                    { id: "q40a", text: "AI will eventually replace all human healthcare professionals." },
+                    { id: "q40b", text: "AI should be completely excluded from healthcare settings." },
+                    { id: "q40c", text: "AI and human expertise should work together to improve healthcare." },
+                    { id: "q40d", text: "AI is most useful for handling patient complaints." }
+                ],
+                correctAnswer: "q40c",
+                explanation: "文章最后一段提到：many experts believe that the future of healthcare lies in a collaborative approach, where AI augments rather than replaces human expertise."
+            },
+
+            // 第二篇阅读理解
+            {
+                id: 41,
+                type: "阅读理解",
+                passage: `
+                    <p class="passage-text">
+                        The concept of emotional intelligence (EI) has gained significant attention in psychological research and organizational management over the past few decades. Coined by psychologists Peter Salovey and John Mayer, and popularized by Daniel Goleman's 1995 book, emotional intelligence refers to the ability to recognize, understand, and manage our own emotions, as well as recognize, understand, and influence the emotions of others.
+                    </p>
+                    <p class="passage-text">
+                        Research suggests that EI consists of several key components: self-awareness, the ability to recognize and understand one's own emotions; self-regulation, the capacity to manage and control one's emotional responses; motivation, the drive to achieve goals despite setbacks; empathy, the ability to understand and share the feelings of others; and social skills, the proficiency in managing relationships and building networks.
+                    </p>
+                    <p class="passage-text">
+                        Studies have demonstrated that emotional intelligence can be a better predictor of success in both personal and professional contexts than traditional measures of intelligence, such as IQ. In the workplace, employees with high EI tend to be more effective leaders, better team players, and more resilient in the face of stress. They are also generally more satisfied with their jobs and have higher rates of career advancement.
+                    </p>
+                    <p class="passage-text">
+                        Unlike IQ, which remains relatively stable throughout life, emotional intelligence can be developed and enhanced through intentional practice and training. Techniques such as mindfulness meditation, journaling for self-reflection, and active listening can improve various aspects of EI. Many organizations now incorporate emotional intelligence training into their employee development programs, recognizing its value in fostering a positive work environment and improving overall productivity.
+                    </p>
+                `,
+                question: "What is the best definition of emotional intelligence according to the passage?",
+                options: [
+                    { id: "q41a", text: "The ability to score high on traditional intelligence tests." },
+                    { id: "q41b", text: "The capacity to recognize, understand, and manage emotions in oneself and others." },
+                    { id: "q41c", text: "The skill of manipulating others' emotions for personal gain." },
+                    { id: "q41d", text: "The talent for suppressing one's emotions in social situations." }
+                ],
+                correctAnswer: "q41b",
+                explanation: "文章第一段明确指出：emotional intelligence refers to the ability to recognize, understand, and manage our own emotions, as well as recognize, understand, and influence the emotions of others."
+            },
+            {
+                id: 42,
+                type: "阅读理解",
+                question: "Which of the following is NOT mentioned as a component of emotional intelligence?",
+                options: [
+                    { id: "q42a", text: "Self-awareness" },
+                    { id: "q42b", text: "Creativity" },
+                    { id: "q42c", text: "Empathy" },
+                    { id: "q42d", text: "Social skills" }
+                ],
+                correctAnswer: "q42b",
+                explanation: "文章第二段提到了自我意识、自我调节、动机、同理心和社交技能，但没有提到创造力。"
+            },
+            {
+                id: 43,
+                type: "阅读理解",
+                question: "According to the passage, how does emotional intelligence compare to IQ?",
+                options: [
+                    { id: "q43a", text: "EI is less important than IQ for success in life." },
+                    { id: "q43b", text: "EI is a better predictor of success than IQ in some contexts." },
+                    { id: "q43c", text: "EI and IQ are essentially the same concept." },
+                    { id: "q43d", text: "EI can be measured with the same tests used for IQ." }
+                ],
+                correctAnswer: "q43b",
+                explanation: "文章第三段提到：Studies have demonstrated that emotional intelligence can be a better predictor of success in both personal and professional contexts than traditional measures of intelligence, such as IQ."
+            },
+            {
+                id: 44,
+                type: "阅读理解",
+                question: "What is suggested about developing emotional intelligence?",
+                options: [
+                    { id: "q44a", text: "EI cannot be changed after childhood." },
+                    { id: "q44b", text: "EI development requires expensive technology." },
+                    { id: "q44c", text: "EI can be improved through practice and training." },
+                    { id: "q44d", text: "EI is determined solely by genetic factors." }
+                ],
+                correctAnswer: "q44c",
+                explanation: "文章最后一段提到：Unlike IQ, which remains relatively stable throughout life, emotional intelligence can be developed and enhanced through intentional practice and training."
+            },
+            {
+                id: 45,
+                type: "阅读理解",
+                question: "Why do many organizations offer emotional intelligence training?",
+                options: [
+                    { id: "q45a", text: "To reduce the need for employee interaction." },
+                    { id: "q45b", text: "To help create a positive work environment and improve productivity." },
+                    { id: "q45c", text: "To replace traditional intelligence tests in hiring." },
+                    { id: "q45d", text: "To ensure all employees have the same emotional responses." }
+                ],
+                correctAnswer: "q45b",
+                explanation: "文章最后一段提到：Many organizations now incorporate emotional intelligence training into their employee development programs, recognizing its value in fostering a positive work environment and improving overall productivity."
+            },
+
+            // 第三篇阅读理解
+            {
+                id: 46,
+                type: "阅读理解",
+                passage: `
+                    <p class="passage-text">
+                        Urban green spaces, such as parks, gardens, and community forests, play a crucial role in maintaining the ecological balance of cities while providing numerous benefits to residents. These natural oases offer respite from the concrete jungle, contributing to both physical and mental well-being.
+                    </p>
+                    <p class="passage-text">
+                        Environmentally, urban green spaces help mitigate the "heat island" effect, where cities are significantly warmer than surrounding rural areas due to human activities and infrastructure. Vegetation absorbs solar radiation, provides shade, and releases moisture through transpiration, cooling the air and reducing energy consumption for air conditioning. Green spaces also improve air quality by absorbing pollutants and carbon dioxide while releasing oxygen.
+                    </p>
+                    <p class="passage-text">
+                        From a public health perspective, access to green spaces encourages physical activity such as walking, jogging, and cycling, which can reduce the risk of obesity and related diseases. Studies have also linked exposure to natural environments with reduced stress levels, improved mood, and enhanced cognitive function. For children, playing in green spaces has been associated with better motor skills development and reduced symptoms of attention deficit disorders.
+                    </p>
+                    <p class="passage-text">
+                        Despite these benefits, many urban areas face challenges in preserving and expanding green spaces due to competing land uses, budget constraints, and urbanization pressures. Community-led initiatives, innovative design solutions like rooftop gardens, and policy interventions that prioritize green infrastructure are becoming increasingly important in ensuring that urban residents continue to benefit from these vital natural resources.
+                    </p>
+                `,
+                question: "What is the main topic of the passage?",
+                options: [
+                    { id: "q46a", text: "The history of urban planning." },
+                    { id: "q46b", text: "The benefits and challenges of urban green spaces." },
+                    { id: "q46c", text: "The best types of exercise for city residents." },
+                    { id: "q46d", text: "The problems with urbanization." }
+                ],
+                correctAnswer: "q46b",
+                explanation: "文章主要讨论了城市绿地的多种好处（环境、健康等方面）以及面临的挑战（土地使用竞争、预算限制等）。"
+            },
+            {
+                id: 47,
+                type: "阅读理解",
+                question: "According to the passage, how do urban green spaces help with the 'heat island' effect?",
+                options: [
+                    { id: "q47a", text: "They increase energy consumption for air conditioning." },
+                    { id: "q47b", text: "They absorb solar radiation, provide shade, and release moisture." },
+                    { id: "q47c", text: "They reflect sunlight off concrete surfaces." },
+                    { id: "q47d", text: "They create wind tunnels that cool the city." }
+                ],
+                correctAnswer: "q47b",
+                explanation: "文章第二段提到：Vegetation absorbs solar radiation, provides shade, and releases moisture through transpiration, cooling the air and reducing energy consumption for air conditioning."
+            },
+            {
+                id: 48,
+                type: "阅读理解",
+                question: "What health benefit of urban green spaces is NOT mentioned in the passage?",
+                options: [
+                    { id: "q48a", text: "Reduced risk of obesity." },
+                    { id: "q48b", text: "Improved motor skills in children." },
+                    { id: "q48c", text: "Cure for chronic diseases." },
+                    { id: "q48d", text: "Reduced stress levels." }
+                ],
+                correctAnswer: "q48c",
+                explanation: "文章第三段提到了减少肥胖风险、改善儿童运动技能和减轻压力，但没有提到治愈慢性病。"
+            },
+            {
+                id: 49,
+                type: "阅读理解",
+                question: "What challenges to urban green spaces are mentioned in the passage?",
+                options: [
+                    { id: "q49a", text: "Lack of interest from city residents." },
+                    { id: "q49b", text: "Competition for land, budget issues, and urbanization." },
+                    { id: "q49c", text: "Climate change making it impossible to grow plants in cities." },
+                    { id: "q49d", text: "Government regulations prohibiting green spaces." }
+                ],
+                correctAnswer: "q49b",
+                explanation: "文章最后一段提到：many urban areas face challenges in preserving and expanding green spaces due to competing land uses, budget constraints, and urbanization pressures."
+            },
+            {
+                id: 50,
+                type: "阅读理解",
+                question: "What solutions to preserve urban green spaces are suggested?",
+                options: [
+                    { id: "q50a", text: "Removing all existing buildings to create more parks." },
+                    { id: "q50b", text: "Community initiatives, rooftop gardens, and policy support." },
+                    { id: "q50c", text: "Importing more water to keep plants alive in cities." },
+                    { id: "q50d", text: "Relocating residents to rural areas." }
+                ],
+                correctAnswer: "q50b",
+                explanation: "文章最后一段提到：Community-led initiatives, innovative design solutions like rooftop gardens, and policy interventions that prioritize green infrastructure are becoming increasingly important."
+            }
+        ];
+
+        // 全局变量存储用户答案
+        const userAnswers = {};
+        let completedCount = 0;
+        let currentPassage = ""; // 用于跟踪当前显示的文章
+
+        // DOM元素
+        const testContainer = document.getElementById('test-container');
+        const submitBtn = document.getElementById('submit-btn');
+        const resultContainer = document.getElementById('result-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const correctDisplay = document.getElementById('correct-display');
+        const incorrectDisplay = document.getElementById('incorrect-display');
+        const retryBtn = document.getElementById('retry-btn');
+        const questionCountEl = document.getElementById('question-count');
+        const backBtn = document.getElementById('back-btn');
+
+        // 返回上一页功能
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+        // 初始化测试页面
+        function initTest() {
+            // 清空容器
+            testContainer.innerHTML = '';
+            currentPassage = "";
+            
+            // 生成题目
+            questions.forEach(question => {
+                const questionEl = document.createElement('div');
+                questionEl.className = 'question-card';
+                questionEl.dataset.id = question.id;
+                
+                // 构建题目HTML
+                let passageHtml = "";
+                // 只有当文章内容变化时才显示新文章
+                if (question.passage && question.passage !== currentPassage) {
+                    passageHtml = `<div class="passage mb-6">${question.passage}</div>`;
+                    currentPassage = question.passage;
+                }
+                
+                questionEl.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-sm font-medium mr-3">${question.id}</span>
+                        <span class="inline-flex items-center text-sm px-2 py-1 rounded-full bg-gray-100 mr-3">
+                            <i class="fa fa-tag text-primary mr-1"></i>${question.type}
+                        </span>
+                    </div>
+                    ${passageHtml}
+                    <div class="question-text pl-11 mb-4 text-lg font-medium">${question.question}</div>
+                    <div class="options-container pl-11">
+                        ${question.options.map(option => `
+                            <div class="option-item" data-question="${question.id}" data-option="${option.id}">
+                                <div class="flex items-center">
+                                    <span class="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center mr-3 text-sm font-medium">${option.id.charAt(2).toUpperCase()}</span>
+                                    <span>${option.text}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation mt-4 hidden pl-11">
+                        <div class="text-sm text-gray-600 italic">
+                            <i class="fa fa-info-circle text-primary mr-1"></i>解析: ${question.explanation}
+                        </div>
+                    </div>
+                `;
+                
+                testContainer.appendChild(questionEl);
+                
+                // 为选项添加点击事件
+                const options = questionEl.querySelectorAll('.option-item');
+                options.forEach(option => {
+                    option.addEventListener('click', () => {
+                        // 移除同题目的其他选项的选中状态
+                        options.forEach(opt => opt.classList.remove('option-selected'));
+                        
+                        // 添加当前选项的选中状态
+                        option.classList.add('option-selected');
+                        
+                        // 记录用户答案
+                        const questionId = question.id;
+                        const optionId = option.dataset.option;
+                        
+                        // 更新用户答案
+                        userAnswers[questionId] = optionId;
+                        updateCompletedCount();
+                    });
+                });
+            });
+            
+            // 初始化完成题目计数
+            updateCompletedCount();
+        }
+
+        // 更新已完成题目数量
+        function updateCompletedCount() {
+            completedCount = Object.keys(userAnswers).length;
+            questionCountEl.textContent = `已完成: ${completedCount}/50`;
+            
+            // 只有所有题目都完成才能提交
+            submitBtn.disabled = completedCount < 50;
+        }
+
+        // 提交答案并显示结果
+        function submitAnswers() {
+            let correctCount = 0;
+            
+            // 检查每个答案
+            questions.forEach(question => {
+                const questionEl = testContainer.querySelector(`.question-card[data-id="${question.id}"]`);
+                const userAnswer = userAnswers[question.id];
+                const isCorrect = userAnswer === question.correctAnswer;
+                
+                if (isCorrect) {
+                    correctCount++;
+                }
+                
+                // 显示正确和错误的选项
+                const options = questionEl.querySelectorAll('.option-item');
+                options.forEach(option => {
+                    option.classList.remove('option-selected');
+                    
+                    if (option.dataset.option === question.correctAnswer) {
+                        option.classList.add('option-correct');
+                    } else if (option.dataset.option === userAnswer) {
+                        option.classList.add('option-incorrect');
+                    }
+                });
+                
+                // 显示解析
+                const explanation = questionEl.querySelector('.explanation');
+                explanation.classList.remove('hidden');
+            });
+            
+            // 计算分数并显示结果
+            const score = Math.round((correctCount / questions.length) * 100);
+            scoreDisplay.textContent = score;
+            correctDisplay.textContent = correctCount;
+            incorrectDisplay.textContent = questions.length - correctCount;
+            
+            // 显示结果区域并滚动到顶部
+            resultContainer.classList.remove('hidden');
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+            
+            // 禁用所有选项
+            document.querySelectorAll('.option-item').forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+            
+            // 隐藏提交按钮
+            submitBtn.classList.add('hidden');
+        }
+
+        // 重新测试
+        function retryTest() {
+            // 重置用户答案
+            for (let key in userAnswers) {
+                delete userAnswers[key];
+            }
+            
+            // 隐藏结果区域
+            resultContainer.classList.add('hidden');
+            
+            // 重新初始化测试
+            initTest();
+            
+            // 显示提交按钮
+            submitBtn.classList.remove('hidden');
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 事件监听
+        submitBtn.addEventListener('click', submitAnswers);
+        retryBtn.addEventListener('click', retryTest);
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', initTest);
+    </script>
+</body>
+</html>
