@@ -1,79 +1,81 @@
-const dataStore = require('./dataStore');
+const { MongoClient } = require('mongodb');
+
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB = process.env.MONGODB_DB;
+
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    return cachedDb;
+  }
+
+  const client = await MongoClient.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+
+  const db = client.db(MONGODB_DB);
+  cachedDb = db;
+  return db;
+}
 
 exports.handler = async (event, context) => {
-    // 添加跨域支持（与其他接口保持一致）
-    const headers = {
-        'Access-Control-Allow-Origin': process.env.CLIENT_ORIGIN || '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  // 关键：配置跨域和允许的方法
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS' // 明确允许GET方法
+  };
+
+  // 处理预检请求
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
     };
+  }
 
-    // 处理预检请求
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
+  // 确保只处理GET请求
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: '只允许GET请求' })
+    };
+  }
+
+  try {
+    const username = event.queryStringParameters.username;
+    
+    if (!username) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '缺少用户名参数' })
+      };
     }
 
-    if (event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            headers,
-            body: JSON.stringify({ error: '只允许POST请求' })
-        };
-    }
+    const db = await connectToDatabase();
+    
+    // 查询该用户收到的好友请求
+    const requests = await db.collection('friendRequests').find({
+      recipient: username,
+      status: 'pending'
+    }).toArray();
 
-    try {
-        // 容错处理：防止解析空请求体报错
-        let requestBody = {};
-        if (event.body) {
-            requestBody = JSON.parse(event.body);
-        }
-        
-        const { username } = requestBody;
-        
-        // 优化错误信息，保持与参数名一致
-        if (!username) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: '缺少username参数' })
-            };
-        }
-
-        // 验证用户名格式（可选，根据你的业务规则）
-        const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
-        if (!usernameRegex.test(username)) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: '用户名格式无效' })
-            };
-        }
-        
-        // 获取好友列表                                                                                                      
-        const friends = dataStore.getFriends(username);
-        
-        // 确保返回数组（即使没有好友也返回空数组，避免前端处理null/undefined）
-        const result = Array.isArray(friends) ? friends : [];
-        
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(result)
-        };
-    } catch (error) {
-        console.error('获取好友列表错误:', error);
-        // 区分错误类型
-        if (error.name === 'SyntaxError') {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: '请求体格式错误，应为JSON' })
-            };
-        }
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: '获取好友列表失败' })
-        };
-    }
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ requests })
+    };
+  } catch (error) {
+    console.error('获取好友请求失败:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: '获取好友请求失败' })
+    };
+  }
 };

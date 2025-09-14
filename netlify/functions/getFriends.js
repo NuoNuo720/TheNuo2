@@ -1,13 +1,10 @@
-// 从MongoDB获取用户的好友列表
 const { MongoClient } = require('mongodb');
 
-// MongoDB连接字符串（建议存储在Netlify环境变量中）
 const MONGODB_URI = process.env.MONGODB_URI;
 const MONGODB_DB = process.env.MONGODB_DB;
 
 let cachedDb = null;
 
-// 连接到MongoDB
 async function connectToDatabase() {
   if (cachedDb) {
     return cachedDb;
@@ -23,35 +20,26 @@ async function connectToDatabase() {
   return db;
 }
 
-// 主函数
 exports.handler = async (event, context) => {
-  // 允许跨域请求
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
   };
 
-  // 处理预检请求
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    };
+    return { statusCode: 200, headers, body: '' };
   }
 
-  // 验证请求方法
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ error: '方法不允许' })
+      body: JSON.stringify({ error: '只允许GET请求' })
     };
   }
 
   try {
-    // 获取查询参数
     const username = event.queryStringParameters.username;
     
     if (!username) {
@@ -62,48 +50,37 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // 连接数据库
     const db = await connectToDatabase();
     
-    // 查询用户的好友列表
-    const user = await db.collection('users').findOne(
-      { username: username },
-      { projection: { friends: 1, _id: 0 } }
-    );
-
-    if (!user) {
+    // 获取用户的好友列表
+    const user = await db.collection('users').findOne({ username });
+    
+    if (!user || !user.friends) {
       return {
-        statusCode: 404,
+        statusCode: 200,
         headers,
-        body: JSON.stringify({ error: '用户不存在' })
+        body: JSON.stringify({ friends: [] })
       };
     }
 
-    // 获取好友详细信息
-    const friends = user.friends || [];
-    const friendDetails = [];
-    
-    for (const friend of friends) {
-      const friendUser = await db.collection('users').findOne(
-        { username: friend.username },
-        { projection: { username: 1, avatar: 1, status: 1, lastActive: 1, _id: 0 } }
-      );
-      
-      if (friendUser) {
-        friendDetails.push({
-          ...friendUser,
-          unreadCount: friend.unreadCount || 0,
-          lastMessage: friend.lastMessage || '',
-          lastMessageTime: friend.lastMessageTime || null
-        });
-      }
-    }
+    // 获取好友的详细信息
+    const friendUsernames = user.friends.map(f => f.username);
+    const friends = await db.collection('users').find({
+      username: { $in: friendUsernames }
+    }, { 
+      projection: { 
+        username: 1, 
+        avatar: 1, 
+        status: 1,
+        lastActive: 1,
+        _id: 0 
+      } 
+    }).toArray();
 
-    // 返回好友列表
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(friendDetails)
+      body: JSON.stringify({ friends })
     };
   } catch (error) {
     console.error('获取好友列表失败:', error);
