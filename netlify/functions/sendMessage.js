@@ -1,153 +1,144 @@
+// 发送消息到MongoDB
 const { MongoClient } = require('mongodb');
-const jwt = require('jsonwebtoken');
 
-// 数据库连接函数
+// MongoDB连接字符串
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB = process.env.MONGODB_DB;
+
+let cachedDb = null;
+
+// 连接到MongoDB
 async function connectToDatabase() {
-    const client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
-    return client.db(process.env.DB_NAME || 'socialApp');
+  if (cachedDb) {
+    return cachedDb;
+  }
+
+  const client = await MongoClient.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+
+  const db = client.db(MONGODB_DB);
+  cachedDb = db;
+  return db;
 }
 
+// 主函数
 exports.handler = async (event, context) => {
-    // 允许跨域请求
-    const headers = {
-        'Access-Control-Allow-Origin': process.env.CLIENT_ORIGIN || '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  // 允许跨域请求
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+  };
+
+  // 处理预检请求
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
+    };
+  }
+
+  // 验证请求方法
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: '方法不允许' })
+    };
+  }
+
+  try {
+    // 解析请求体
+    const data = JSON.parse(event.body);
+    
+    // 验证必要参数
+    if (!data.sender || !data.recipient || !data.content || !data.timestamp) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: '缺少必要参数' })
+      };
+    }
+
+    // 连接数据库
+    const db = await connectToDatabase();
+    
+    // 验证发送者和接收者是否为好友
+    const senderUser = await db.collection('users').findOne({
+      username: data.sender,
+      'friends.username': data.recipient
+    });
+    
+    if (!senderUser) {
+      return {
+        statusCode: 403,
+        headers,
+        body: JSON.stringify({ error: '你们不是好友，无法发送消息' })
+      };
+    }
+
+    // 创建消息对象
+    const message = {
+      id: Date.now().toString() + Math.floor(Math.random() * 1000).toString(),
+      sender: data.sender,
+      recipient: data.recipient,
+      content: data.content,
+      timestamp: data.timestamp,
+      status: 'sent'
     };
 
-    // 处理预检请求
-    if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers
-        };
-    }
+    // 保存消息到数据库
+    await db.collection('messages').insertOne(message);
 
-    try {
-        // 仅允许POST请求
-        if (event.httpMethod !== 'POST') {
-            return {
-                statusCode: 405,
-                headers,
-                body: JSON.stringify({ error: '只允许POST请求' })
-            };
+    // 更新发送者的好友最后消息
+    await db.collection('users').updateOne(
+      { 
+        username: data.sender,
+        'friends.username': data.recipient
+      },
+      { 
+        $set: {
+          'friends.$.lastMessage': data.content,
+          'friends.$.lastMessageTime': data.timestamp
         }
+      }
+    );
 
-        // 解析请求体
-        const body = JSON.parse(event.body);
-        const { sender, recipient, content, timestamp } = body;
-
-        // 验证必要参数
-        if (!sender || !recipient || !content) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: '缺少必要参数' })
-            };
+    // 更新接收者的好友最后消息和未读计数
+    await db.collection('users').updateOne(
+      { 
+        username: data.recipient,
+        'friends.username': data.sender
+      },
+      { 
+        $set: {
+          'friends.$.lastMessage': data.content,
+          'friends.$.lastMessageTime': data.timestamp
+        },
+        $inc: {
+          'friends.$.unreadCount': 1
         }
+      }
+    );
 
-        // 验证token
-        const authHeader = event.headers.authorization || '';
-        if (!authHeader.startsWith('Bearer ')) {
-            return {
-                statusCode: 401,
-                headers,
-                body: JSON.stringify({ error: '未授权访问' })
-            };
-        }
-
-        // 验证token有效性
-        const token = authHeader.split(' ')[1];
-        let decoded;
-        try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET);
-            // 确保token中的用户名与发送者一致
-            if (decoded.username !== sender) {
-                return {
-                    statusCode: 403,
-                    headers,
-                    body: JSON.stringify({ error: '权限不足' })
-                };
-            }
-        } catch (error) {
-            return {
-                statusCode: 401,
-                headers,
-                body: JSON.stringify({ 
-                    error: error.name === 'TokenExpiredError' ? '令牌已过期' : '无效的令牌' 
-                })
-            };
-        }
-
-        // 连接数据库
-        const db = await connectToDatabase();
-        
-        // 检查接收者是否存在
-        const recipientExists = await db.collection('users').findOne(
-            { username: recipient },
-            { projection: { _id: 1 } }
-        );
-        
-        if (!recipientExists) {
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ error: '接收者不存在' })
-            };
-        }
-        
-        // 检查是否为好友
-        const isFriend = await db.collection('friends').findOne({
-            $or: [
-                { user1: sender, user2: recipient },
-                { user1: recipient, user2: sender }
-            ]
-        });
-        
-        if (!isFriend) {
-            return {
-                statusCode: 403,
-                headers,
-                body: JSON.stringify({ error: '只能向好友发送消息' })
-            };
-        }
-
-        // 保存消息
-        const message = {
-            sender,
-            recipient,
-            content,
-            timestamp: timestamp ? new Date(timestamp) : new Date(),
-            status: 'sent', // 消息状态：sent, delivered, read
-            createdAt: new Date()
-        };
-
-        const result = await db.collection('messages').insertOne(message);
-        
-        // 更新发送者最后活跃时间
-        await db.collection('users').updateOne(
-            { username: sender },
-            { $set: { lastActive: new Date(), status: 'online' } }
-        );
-
-        return {
-            statusCode: 200,
-            headers: {
-                ...headers,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                success: true,
-                messageId: result.insertedId.toString()
-            })
-        };
-    } catch (error) {
-        console.error('发送消息时出错:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: '服务器内部错误' })
-        };
-    }
+    // 返回成功响应
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        id: message.id
+      })
+    };
+  } catch (error) {
+    console.error('发送消息失败:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: '发送消息失败' })
+    };
+  }
 };
