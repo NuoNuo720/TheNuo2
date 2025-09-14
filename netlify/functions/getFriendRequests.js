@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
             };
         }
         
-        // 获取好友列表
+        // 获取好友列表                                                                                                      
         const friends = dataStore.getFriends(username);
         
         // 确保返回数组（即使没有好友也返回空数组，避免前端处理null/undefined）

@@ -13,3 +13,6 @@
   to = "/.netlify/functions/api/:splat"  # 转发到api函数处理
   status = 200                    # 使用200状态码进行代理
   force = true                    # 强制重定向
+[build.environment]
+  MONGODB_URI = "mongodb+srv://3668417644:nuonuo001@cluster0.u1nuqn9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"  # 添加数据库环境变量
+  MONGODB_DB = "Cluster0"
