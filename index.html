@@ -3,8 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome.</title>
+  <title>Welcome</title>
+  <!-- 预加载关键资源 -->
+  <link rel="preload" href="indexlo.html" as="document">
+  
   <style>
+    :root {
+      /* 定义CSS变量，便于主题维护 */
+      --primary-color: #00004d;
+      --secondary-color: purple;
+      --accent-color: yellow;
+      --hover-color: blue;
+      --bg-color: #f5f5f5;
+      --transition-speed: 0.3s;
+      --btn-padding: 15px 40px;
+      --btn-font-size: 24px;
+    }
+
     /* 重置默认样式 */
     * {
       margin: 0;
@@ -16,147 +31,335 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 封面容器样式 - 优化背景兜底和兼容性 */
+    /* 页面加载动画 */
+    .page-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    .loader-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid var(--bg-color);
+      border-top: 5px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 封面容器样式 */
     .cover-container {
       width: 100%;
       height: 100vh;
-      background: #f5f5f5 url('333.jpg') no-repeat center center; /* 背景色兜底 */
-      background-size: cover;
+      background: var(--bg-color);
       display: flex;
       justify-content: center;
       align-items: center;
       position: relative;
+      opacity: 0;
+      transition: opacity 1s ease-in;
+    }
+    
+    /* 背景图懒加载样式 */
+    .cover-container.has-background {
+      background: var(--bg-color) url('333.jpg') no-repeat center center;
+      background-size: cover;
     }
 
-    /* 按钮样式 - 增强视觉反馈 */
+    /* 按钮样式 */
     .enter-btn {
-      padding: 15px 40px;
-      font-size: 24px;
-      color: #00004d;
+      padding: var(--btn-padding);
+      font-size: var(--btn-font-size);
+      color: var(--primary-color);
       background: transparent;
-      border: 2px solid #00004d; /* 添加边框 */
-      border-radius: 8px; /* 圆角 */
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
       cursor: pointer;
       position: relative;
       z-index: 3;
-      transition: all 0.3s ease; /* 统一过渡 */
+      transition: all var(--transition-speed) ease;
+      overflow: hidden;
+      font-weight: 500;
+    }
+    
+    /* 按钮波纹效果 */
+    .enter-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(0, 0, 68, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease, height 0.6s ease;
+    }
+    
+    .enter-btn:active::after {
+      width: 300px;
+      height: 300px;
+      opacity: 0;
     }
 
     .enter-btn:hover {
       transform: scale(1.05);
-      background-color: rgba(0, 0, 68, 0.1); /* 淡蓝背景 */
+      background-color: rgba(0, 0, 68, 0.1);
+    }
+    
+    .enter-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .enter-btn:focus {
+      outline: 3px solid rgba(0, 0, 68, 0.3);
+      outline-offset: 2px;
     }
 
-    /* 菜单样式 - 修复居中问题 */
-    .cover-container ul {
+    /* 菜单样式 */
+    .menu {
       position: absolute;
       top: 70px;
-      left: 50%; /* 正确居中 */
+      left: 50%;
       transform: translateX(-50%);
       z-index: 2;
       list-style: none;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
     }
 
-    .cover-container li {
-      color: yellow;
+    .menu li {
+      color: var(--accent-color);
       font-size: 16px;
-      margin-bottom: 15px; /* 增大间距 */
+      margin-bottom: 15px;
       cursor: pointer;
-      transition: color 0.3s ease; /* 颜色过渡更流畅 */
+      transition: color var(--transition-speed) ease;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    
+    .menu li:last-child {
+      margin-bottom: 0;
+    }
+    
+    .menu li:focus {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
     }
 
     /* 动态标题样式 */
     h1 {
       position: relative;
-      color: rgba(0, 0, 0, 0.3); /* 优化透明色写法（原#0000004d） */
+      color: rgba(0, 0, 0, 0.3);
       font-size: 60px;
-      margin-bottom: 40px; /* 与按钮拉开距离 */
+      margin-bottom: 40px;
+      font-weight: 300;
     }
 
     h1::before {
       content: attr(data-text);
       position: absolute;
       overflow: hidden;
-      max-width: 7em;
+      max-width: 0;
       white-space: nowrap;
-      color: purple;
-      animation: loading 10s linear;
+      color: var(--secondary-color);
+      animation: loading 3s forwards;
+      animation-delay: 0.5s;
     }
 
     @keyframes loading {
       0% { max-width: 0; }
-      100% { max-width: 7em; } /* 明确结束状态，避免兼容性问题 */
+      100% { max-width: 100%; }
     }
 
     /* 菜单hover效果 */
-    li:hover {
-      color: blue;
+    .menu li:hover {
+      color: var(--hover-color);
+      background: rgba(255, 255, 255, 0.1);
     }
 
-    li:hover:first-child::after {
+    .menu li:hover:first-child::after {
       content: "半猫诺丷";
       margin-left: 20px;
     }
 
-    li:hover:nth-child(2)::after {
+    .menu li:hover:nth-child(2)::after {
       content: "2025/8/1 at 5:30 P.M.";
       margin-left: 20px;
     }
 
-    li:hover:nth-child(3)::after {
+    .menu li:hover:nth-child(3)::after {
       content: "你干嘛~诶哟~";
       margin-left: 20px;
     }
 
-    li:hover:nth-child(4)::after {
+    .menu li:hover:nth-child(4)::after {
       content: "正在开发中...";
       margin-left: 20px;
     }
 
-    /* 移动端适配 */
+    /* 响应式设计 - 多断点适配 */
+    @media (max-width: 1024px) {
+      h1 {
+        font-size: 50px;
+      }
+    }
+    
     @media (max-width: 768px) {
+      :root {
+        --btn-padding: 12px 30px;
+        --btn-font-size: 18px;
+      }
+      
       h1 {
         font-size: 36px;
       }
-      .enter-btn {
-        font-size: 18px;
-        padding: 12px 30px;
+      
+      .menu {
+        top: 30px;
+        padding: 15px;
       }
-      .cover-container li {
+      
+      .menu li {
         font-size: 14px;
+        margin-bottom: 10px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+      }
+      
+      .menu {
+        width: 90%;
+        text-align: center;
+      }
+      
+      .menu li:hover::after {
+        display: block;
+        margin-left: 0;
+        margin-top: 5px;
+        font-size: 12px;
       }
     }
   </style>
 </head>
 <body>
+  <!-- 页面加载动画 -->
+  <div class="page-loader" role="status">
+    <div class="loader-spinner" aria-label="页面加载中"></div>
+  </div>
+
   <!-- 封面容器 -->
-  <div class="cover-container">
+  <div class="cover-container" role="main">
     <!-- 顶部交互菜单 -->
-    <ul>
-      <li>开发者</li>
-      <li class="second">首次发布时间</li>
-      <li>篮球</li>
-      <li>更多</li>
+    <ul class="menu" role="navigation" aria-label="网站导航">
+      <li tabindex="0" role="menuitem" aria-label="查看开发者信息">开发者</li>
+      <li tabindex="0" role="menuitem" aria-label="查看首次发布时间" class="second">首次发布时间</li>
+      <li tabindex="0" role="menuitem" aria-label="查看篮球相关内容">篮球</li>
+      <li tabindex="0" role="menuitem" aria-label="查看更多内容">更多</li>
     </ul>
 
-    <!-- 动态加载标题 - 修复闭合标签 -->
-    <h1 data-text="Loading...">Loading...</h1>
+    <!-- 动态加载标题 -->
+    <h1 data-text="Loading..." aria-label="加载中">Loading...</h1>
 
     <!-- 进入按钮 -->
-    <button class="enter-btn" onclick="goToWebsite()">[Come Here]</button>
+    <button class="enter-btn" onclick="goToWebsite()" aria-label="进入网站">
+      [Come Here]
+    </button>
   </div>
 
   <script>
-    // 跳转函数 - 可添加加载提示优化体验
-    function goToWebsite() {
-      // 可选：添加“跳转中”提示
-      const btn = document.querySelector('.enter-btn');
-      btn.textContent = "Jumping...";
-      btn.disabled = true; // 防止重复点击
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      // 移除加载动画
+      setTimeout(() => {
+        const loader = document.querySelector('.page-loader');
+        loader.style.opacity = '0';
+        
+        setTimeout(() => {
+          loader.style.display = 'none';
+          // 显示主内容
+          document.querySelector('.cover-container').style.opacity = '1';
+        }, 500);
+      }, 800);
       
-      // 延迟跳转（模拟加载效果），也可直接跳转
+      // 背景图懒加载
+      lazyLoadBackground();
+      
+      // 为菜单项添加键盘支持
+      initMenuKeyboardSupport();
+    });
+    
+    // 背景图懒加载函数
+    function lazyLoadBackground() {
+      const container = document.querySelector('.cover-container');
+      const img = new Image();
+      img.src = '333.jpg';
+      
+      img.onload = function() {
+        // 图片加载完成后再显示
+        container.classList.add('has-background');
+      };
+    }
+    
+    // 菜单键盘支持
+    function initMenuKeyboardSupport() {
+      const menuItems = document.querySelectorAll('.menu li');
+      
+      menuItems.forEach(item => {
+        item.addEventListener('keydown', function(e) {
+          // 回车键或空格键触发hover效果
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.classList.add('hover');
+            
+            // 模拟鼠标离开效果
+            setTimeout(() => {
+              this.classList.remove('hover');
+            }, 1000);
+          }
+        });
+      });
+    }
+
+    // 跳转函数
+    function goToWebsite() {
+      const btn = document.querySelector('.enter-btn');
+      
+      // 防止重复点击
+      if (btn.disabled) return;
+      
+      // 更新按钮状态
+      btn.textContent = "Jumping...";
+      btn.disabled = true;
+      
+      // 添加页面过渡效果
+      const container = document.querySelector('.cover-container');
+      container.style.opacity = '0';
+      
+      // 延迟跳转
       setTimeout(() => {
         window.location.href = "indexlo.html"; 
       }, 500);
