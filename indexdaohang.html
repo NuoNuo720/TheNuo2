@@ -12,10 +12,51 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* 深色模式切换 */
+        :root {
+            --bg-color: #f0f4f8;
+            --text-color: #333;
+            --card-bg: white;
+            --navbar-bg: #333;
+            --primary-color: #3498db;
+            --primary-dark: #2980b9;
+            --accent-color: #9b59b6;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --border-color: #ddd;
+            --light-bg: #f9f9f9;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        body.dark-mode {
+            --bg-color: #1a1a2e;
+            --text-color: #f0f4f8;
+            --card-bg: #252a41;
+            --navbar-bg: #16213e;
+            --border-color: #4a5568;
+            --light-bg: #323851;
+            --shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            transform: rotate(30deg);
         }
         
         .title-badge {
-            background: linear-gradient(135deg, #3498db, #9b59b6);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             color: white;
             padding: 3px 10px;
             border-radius: 12px;
@@ -35,25 +76,26 @@
         }
 
         .title-item {
-            background-color: #f0f4f8;
-            border: 1px solid #3498db;
+            background-color: var(--light-bg);
+            border: 1px solid var(--primary-color);
             border-radius: 4px;
             padding: 5px 10px;
             font-size: 0.9rem;
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            color: var(--text-color);
         }
 
         .title-item.equipped {
-            background-color: #e8f4fd;
-            border-color: #2980b9;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-color: var(--primary-dark);
             font-weight: 500;
         }
         
         body {
-            background-color: #f0f4f8;
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             min-height: 100vh;
             padding: 0;
             line-height: 1.6;
@@ -66,7 +108,7 @@
         }
 
         h1 {
-            color: #2c3e50;
+            color: var(--text-color);
             margin-bottom: 10px;
             font-size: 2.2rem;
             position: relative;
@@ -80,7 +122,7 @@
             left: 10%;
             width: 80%;
             height: 3px;
-            background-color: #3498db;
+            background-color: var(--primary-color);
             border-radius: 3px;
         }
 
@@ -105,11 +147,11 @@
         }
 
         .nav-card {
-            background-color: white;
+            background-color: var(--card-bg);
             border-radius: 12px;
             padding: 30px 20px;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow);
             transition: all 0.3s ease;
             cursor: pointer;
             border: 2px solid transparent;
@@ -117,6 +159,15 @@
             transform: translateY(20px);
             position: relative;
             overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+        }
+        
+        /* 触摸反馈效果 */
+        .nav-card:active, .series-select-item:active, 
+        .btn:active, .redeem-btn:active, .complete-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
         }
 
         .nav-card::before {
@@ -126,7 +177,7 @@
             left: 0;
             width: 100%;
             height: 4px;
-            background: linear-gradient(90deg, #3498db, #2ecc71);
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
             transform: scaleX(0);
             transition: transform 0.3s ease;
         }
@@ -134,7 +185,7 @@
         .nav-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            border-color: #3498db;
+            border-color: var(--primary-color);
         }
 
         .nav-card:hover::before {
@@ -144,7 +195,7 @@
         .card-icon {
             font-size: 48px;
             margin-bottom: 20px;
-            color: #3498db;
+            color: var(--primary-color);
             transition: transform 0.3s ease;
         }
 
@@ -155,12 +206,12 @@
         .card-title {
             font-size: 1.4rem;
             margin-bottom: 10px;
-            color: #2c3e50;
+            color: var(--text-color);
             transition: color 0.3s ease;
         }
 
         .nav-card:hover .card-title {
-            color: #3498db;
+            color: var(--primary-color);
         }
 
         .card-desc {
@@ -174,7 +225,7 @@
             position: absolute;
             top: -10px;
             right: -10px;
-            background-color: #e74c3c;
+            background-color: var(--danger-color);
             color: white;
             width: 40px;
             height: 40px;
@@ -189,19 +240,19 @@
         
         /* 热门游戏卡片特殊样式 */
         .nav-card.hot-game {
-            border-color: #e74c3c;
+            border-color: var(--danger-color);
         }
         
         .nav-card.hot-game .card-icon {
-            color: #e74c3c;
+            color: var(--danger-color);
         }
         
         .nav-card.hot-game:hover .card-title {
-            color: #e74c3c;
+            color: var(--danger-color);
         }
         
         .nav-card.hot-game::before {
-            background: linear-gradient(90deg, #e74c3c, #f39c12);
+            background: linear-gradient(90deg, var(--danger-color), var(--warning-color));
         }
 
         footer {
@@ -210,12 +261,12 @@
             color: #95a5a6;
             font-size: 0.9rem;
             padding: 20px 0;
-            border-top: 1px solid #e1e8ed;
+            border-top: 1px solid var(--border-color);
         }
 
         .navbar {
             width: 100%;
-            background-color: #333;
+            background-color: var(--navbar-bg);
             padding: 15px 20px;
             box-sizing: border-box;
             display: flex;
@@ -268,7 +319,7 @@
             font-weight: 500;
         }
 
-        .logout-btn {
+        .logout-btn, .btn {
             background: #555;
             border: none;
             color: white;
@@ -281,7 +332,7 @@
             gap: 5px;
         }
 
-        .logout-btn:hover {
+        .logout-btn:hover, .btn:hover {
             background: #777;
             transform: translateY(-2px);
         }
@@ -294,7 +345,7 @@
 
         .login-link:hover {
             text-decoration: underline;
-            color: #3498db;
+            color: var(--primary-color);
         }
 
         /* 模态框样式 */
@@ -311,6 +362,8 @@
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s ease;
+            overflow-y: auto;
+            padding: 20px 0;
         }
 
         .modal.active {
@@ -318,7 +371,7 @@
         }
 
         .modal-content {
-            background-color: white;
+            background-color: var(--card-bg);
             padding: 30px;
             border-radius: 10px;
             width: 90%;
@@ -327,6 +380,7 @@
             position: relative;
             transform: translateY(20px);
             transition: transform 0.3s ease;
+            color: var(--text-color);
         }
 
         .modal.active .modal-content {
@@ -344,14 +398,14 @@
         }
 
         .close-modal:hover {
-            color: #e74c3c;
+            color: var(--danger-color);
             transform: rotate(90deg);
         }
 
         .profile-title {
             text-align: center;
             margin-bottom: 25px;
-            color: #2c3e50;
+            color: var(--text-color);
             font-size: 1.5rem;
         }
 
@@ -366,15 +420,18 @@
         .series-select-item {
             padding: 15px;
             border-radius: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            background-color: var(--light-bg);
+            user-select: none;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
         }
         
         .series-select-item:hover {
-            background-color: #f0f4f8;
-            border-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-color: var(--primary-color);
             transform: translateY(-3px);
         }
         
@@ -400,17 +457,18 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #3498db;
+            color: var(--primary-color);
         }
 
         .profile-value {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 5px;
             font-size: 1rem;
-            background-color: #f9f9f9;
+            background-color: var(--light-bg);
             word-break: break-all;
+            color: var(--text-color);
         }
 
         .avatar-upload-section {
@@ -425,7 +483,7 @@
             object-fit: cover;
             margin: 0 auto 15px;
             display: block;
-            border: 3px solid #3498db;
+            border: 3px solid var(--primary-color);
             transition: box-shadow 0.3s ease;
             cursor: pointer;
         }
@@ -435,7 +493,7 @@
         }
 
         .upload-btn {
-            background-color: #3498db;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 8px 15px;
@@ -448,12 +506,12 @@
         }
 
         .upload-btn:hover {
-            background-color: #2980b9;
+            background-color: var(--primary-dark);
             transform: translateY(-2px);
         }
 
         .save-btn {
-            background-color: #2ecc71;
+            background-color: var(--success-color);
             color: white;
             border: none;
             padding: 10px 20px;
@@ -483,7 +541,7 @@
             text-align: center;
             padding: 10px;
             margin: 10px 0;
-            background-color: #f8d7da;
+            background-color: rgba(220, 53, 69, 0.1);
             border-radius: 5px;
             display: none;
             animation: fadeIn 0.3s ease;
@@ -494,7 +552,7 @@
             text-align: center;
             padding: 10px;
             margin: 10px 0;
-            background-color: #d4edda;
+            background-color: rgba(21, 87, 36, 0.1);
             border-radius: 5px;
             display: none;
             animation: fadeIn 0.3s ease;
@@ -510,7 +568,7 @@
             bottom: 20px;
             right: 20px;
             padding: 15px 20px;
-            background-color: #3498db;
+            background-color: var(--primary-color);
             color: white;
             border-radius: 5px;
             box-shadow: 0 3px 10px rgba(0,0,0,0.2);
@@ -527,11 +585,11 @@
         }
 
         .notification.success {
-            background-color: #2ecc71;
+            background-color: var(--success-color);
         }
 
         .notification.error {
-            background-color: #e74c3c;
+            background-color: var(--danger-color);
         }
 
         /* 公告模态框样式 */
@@ -544,7 +602,7 @@
         .announcement-item {
             margin-bottom: 15px;
             padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .announcement-item:last-child {
@@ -564,8 +622,9 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
-            border: 1px solid #eee;
+            border: 1px solid var(--border-color);
             transition: all 0.3s ease;
+            background-color: var(--light-bg);
         }
         
         .event-item:hover, .shop-item:hover, .task-item:hover {
@@ -574,18 +633,18 @@
         }
         
         .event-item {
-            border-left: 4px solid #e74c3c;
+            border-left: 4px solid var(--danger-color);
         }
         
         .shop-item {
-            border-left: 4px solid #f39c12;
+            border-left: 4px solid var(--warning-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .task-item {
-            border-left: 4px solid #3498db;
+            border-left: 4px solid var(--primary-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -598,12 +657,12 @@
         }
         
         .shop-price {
-            color: #e74c3c;
+            color: var(--danger-color);
             font-weight: bold;
         }
         
         .redeem-btn, .complete-btn {
-            background-color: #3498db;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 5px 10px;
@@ -613,11 +672,11 @@
         }
         
         .redeem-btn:hover, .complete-btn:hover {
-            background-color: #2980b9;
+            background-color: var(--primary-dark);
         }
         
         .task-reward {
-            color: #2ecc71;
+            color: var(--success-color);
             font-weight: 500;
         }
         
@@ -631,13 +690,111 @@
         }
         
         .status-active {
-            background-color: #d5f5e3;
-            color: #27ae60;
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success-color);
         }
         
         .status-inactive {
-            background-color: #fadbd8;
-            color: #c0392b;
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger-color);
+        }
+        
+        /* 加载状态指示器 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 确认对话框 */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .confirm-modal.active {
+            opacity: 1;
+        }
+        
+        .confirm-content {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .confirm-btn {
+            flex: 1;
+            padding: 8px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .confirm-cancel {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .confirm-cancel:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .confirm-ok {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .confirm-ok:hover {
+            background-color: #c0392b;
         }
 
         @media (max-width: 768px) {
@@ -665,6 +822,22 @@
             .title-badge {
                 display: none;
             }
+            
+            /* 优化小屏幕模态框 */
+            .modal-content {
+                padding: 20px 15px;
+                margin: 20px auto;
+                max-height: calc(100vh - 40px);
+                overflow-y: auto;
+            }
+            
+            .announcement-content, .series-select-grid {
+                max-height: 300px;
+            }
+            
+            .series-select-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         @media (max-width: 480px) {
@@ -688,10 +861,61 @@
             .card-title {
                 font-size: 1.2rem;
             }
+            
+            .series-select-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .shop-item, .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .shop-item > div:last-child, .task-item > div:last-child {
+                align-self: flex-end;
+            }
+        }
+        
+        /* 页面过渡动画 */
+        .page-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            transform: translateY(100%);
+            transition: transform 0.5s ease;
+        }
+        
+        .page-transition.active {
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
+    <!-- 页面过渡动画层 -->
+    <div class="page-transition" id="pageTransition"></div>
+    
+    <!-- 加载状态指示器 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- 确认对话框 -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-content">
+            <h3 id="confirmTitle">确认操作？</h3>
+            <p id="confirmMessage"></p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-cancel" onclick="closeConfirmModal()">取消</button>
+                <button class="confirm-btn confirm-ok" onclick="executeConfirmedAction()">确认</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 导航栏（含用户信息区域） -->
     <div class="navbar">
         <div class="navbar-title">
@@ -699,6 +923,9 @@
             多功能导航中心
         </div>
         <div class="user-area" id="userArea">
+            <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式">
+                <i class="fas fa-moon"></i>
+            </button>
             <a href="indexlo.html" class="login-link">登录/注册</a>
         </div>
     </div>
@@ -870,7 +1097,7 @@
                     <p class="card-desc">持续更新中，即将上线更多实用工具</p>
                 </div>
                 
-                <div class="nav-card" onclick="gotoAdminLogin()">
+                <div class="nav-card" onclick="confirmAction('确定要进入管理员页面吗？', 'gotoAdminLogin')">
                     <div class="card-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
@@ -1007,18 +1234,18 @@
             <h2 class="profile-title">最新公告</h2>
             <div class="announcement-content">
                 <div class="announcement-item">
-                    <h3 style="color: #e74c3c;">【重磅更新】最新版本内容</h3>
+                    <h3 style="color: var(--danger-color);">【重磅更新】最新版本内容</h3>
                     <p>1. 新增多项功能，提升用户体验</p>
                     <p>2. 优化系统性能，修复已知问题</p>
                     <small>发布时间：2025-08-29</small>
                 </div>
                 <div class="announcement-item">
-                    <h3 style="color: #9b59b6;">【限时活动】</h3>
+                    <h3 style="color: var(--accent-color);">【限时活动】</h3>
                     <p>1. 参与问卷调查有机会获得游戏道具</p>
                     <small>发布时间：2025-08-30</small>
                 </div>
                 <div class="announcement-item">
-                    <h3 style="color: #f39c12;">【BUG注意】</h3>
+                    <h3 style="color: var(--warning-color);">【BUG注意】</h3>
                     <p>1. "称号与头衔"、「好友列表」功能目前仍存在bug，正在修复中...</p>
                     <p>2. 移动端可能出现卡顿问题</p>
                     <p>2. 「自由电子冒险3」游戏中1-5关卡尚未完善</p>
@@ -1026,7 +1253,7 @@
                 </div>
                 
                 <div class="announcement-item">
-                    <h3 style="color: #3498db;">【即将上线】</h3>
+                    <h3 style="color: var(--primary-color);">【即将上线】</h3>
                     <p>1. 新模式开发中，敬请期待</p>
                     <p>2. 国庆节期间登录即可领取限定称号</p>
                     <p>3. 即将推出用户等级系统</p>
@@ -1078,7 +1305,7 @@
                     </div>
                     <div>
                         <span class="shop-price">50积分</span>
-                        <button class="redeem-btn" onclick="redeemItem('初级称号礼盒', 50)">兑换</button>
+                        <button class="redeem-btn" onclick="confirmAction('确定要兑换初级称号礼盒吗？', 'redeemItem', ['初级称号礼盒', 50])">兑换</button>
                     </div>
                 </div>
                 <div class="shop-item">
@@ -1088,7 +1315,7 @@
                     </div>
                     <div>
                         <span class="shop-price">150积分</span>
-                        <button class="redeem-btn" onclick="redeemItem('中级称号礼盒', 150)">兑换</button>
+                        <button class="redeem-btn" onclick="confirmAction('确定要兑换中级称号礼盒吗？', 'redeemItem', ['中级称号礼盒', 150])">兑换</button>
                     </div>
                 </div>
                 <div class="shop-item">
@@ -1098,17 +1325,7 @@
                     </div>
                     <div>
                         <span class="shop-price">300积分</span>
-                        <button class="redeem-btn" onclick="redeemItem('高级称号礼盒', 300)">兑换</button>
-                    </div>
-                </div>
-                <div class="shop-item">
-                    <div>
-                        <h3>特殊道具：双倍积分卡</h3>
-                        <p>24小时内任务积分翻倍</p>
-                    </div>
-                    <div>
-                        <span class="shop-price">200积分</span>
-                        <button class="redeem-btn" onclick="redeemItem('双倍积分卡', 200)">兑换</button>
+                        <button class="redeem-btn" onclick="confirmAction('确定要兑换高级称号礼盒吗？', 'redeemItem', ['高级称号礼盒', 300])">兑换</button>
                     </div>
                 </div>
             </div>
@@ -1123,7 +1340,33 @@
             <span class="close-modal" onclick="closeTasksModal()">&times;</span>
             <h2 class="profile-title">每日任务</h2>
             <div class="announcement-content">
-                <!-- 任务内容 -->
+                <div class="task-item">
+                    <div>
+                        <h3>每日登录</h3>
+                        <p class="task-difficulty">难度：简单</p>
+                        <p>每天登录一次系统</p>
+                        <p class="task-reward">奖励：10积分</p>
+                    </div>
+                    <button class="complete-btn" onclick="confirmAction('确定要领取每日登录奖励吗？', 'completeTask', ['每日登录', 10])">领取</button>
+                </div>
+                <div class="task-item">
+                    <div>
+                        <h3>完成一次问卷调查</h3>
+                        <p class="task-difficulty">难度：中等</p>
+                        <p>提交一份有效的调查问卷</p>
+                        <p class="task-reward">奖励：50积分 + 限定称号</p>
+                    </div>
+                    <button class="complete-btn" onclick="confirmAction('确定要标记此任务为完成吗？', 'completeTask', ['完成一次问卷调查', 50])">完成</button>
+                </div>
+                <div class="task-item">
+                    <div>
+                        <h3>游玩任意小游戏</h3>
+                        <p class="task-difficulty">难度：简单</p>
+                        <p>从游戏合集选择并游玩一款游戏</p>
+                        <p class="task-reward">奖励：20积分</p>
+                    </div>
+                    <button class="complete-btn" onclick="confirmAction('确定要标记此任务为完成吗？', 'completeTask', ['游玩任意小游戏', 20])">完成</button>
+                </div>
             </div>
             <button class="save-btn" onclick="closeTasksModal()">
                 <i class="fas fa-check"></i> 关闭
@@ -1131,576 +1374,369 @@
         </div>
     </div>
 
-    <script>
-        // 页面加载时显示卡片动画
-        function initCardAnimations() {
-            const cards = document.querySelectorAll('.nav-card');
-            cards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 100 * index);
-            });
-        }
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span id="notificationText"></span>
+    </div>
 
-        // 导航功能
-        function navigateTo(url, requiredRole = 'user') {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                setTimeout(() => {
-                    window.location.href = 'indexlo.html';
-                }, 1000);
-                return;
+    <footer>
+        <p>© 2025 多功能导航中心 | 持续更新中</p>
+    </footer>
+
+    <script>
+        // 全局变量控制重复点击
+        let isProcessing = false;
+        let confirmedAction = null;
+        let confirmedParams = [];
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化卡片动画
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.nav-card');
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100 * index);
+                });
+            }, 100);
+            
+            // 检查深色模式偏好
+            if (localStorage.getItem('darkMode') === 'true' || 
+                (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
             }
             
-            if (url.includes('admin-login.html') && !(userInfo.isAdmin || userInfo.role === 'admin')) {
-                showNotification('无管理员权限，无法访问', 'error');
-                return;
+            // 初始化公告模态框显示逻辑
+            initAnnouncementDisplay();
+        });
+        
+        // 深色模式切换
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            if (document.body.classList.contains('dark-mode')) {
+                disableDarkMode();
+            } else {
+                enableDarkMode();
             }
+        });
+        
+        function enableDarkMode() {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('darkMode', 'true');
+        }
+        
+        function disableDarkMode() {
+            document.body.classList.remove('dark-mode');
+            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('darkMode', 'false');
+        }
+        
+        // 导航跳转功能 - 添加加载状态和过渡动画
+        function navigateTo(url) {
+            if (isProcessing) return;
+            isProcessing = true;
             
-            showNotification('正在跳转...', 'info');
+            // 显示加载状态
+            document.getElementById('loadingOverlay').classList.add('active');
             
+            // 页面过渡动画
+            const transition = document.getElementById('pageTransition');
+            transition.classList.add('active');
+            
+            // 延迟跳转，确保动画效果可见
             setTimeout(() => {
                 window.location.href = url;
             }, 300);
         }
-
-        // 系列模态框控制
+        
+        // 打开自由电子系列模态框
         function openFreeElectronSeries() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                setTimeout(() => {
-                    window.location.href = 'indexlo.html';
-                }, 1000);
-                return;
-            }
-            
+            if (isProcessing) return;
             document.getElementById('freeElectronModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('freeElectronModal').classList.add('active');
             }, 10);
         }
-
+        
+        // 关闭自由电子系列模态框
         function closeFreeElectronModal() {
-            document.getElementById('freeElectronModal').classList.remove('active');
+            const modal = document.getElementById('freeElectronModal');
+            modal.classList.remove('active');
             setTimeout(() => {
-                document.getElementById('freeElectronModal').style.display = 'none';
+                modal.style.display = 'none';
             }, 300);
         }
-
+        
+        // 打开学习系列模态框
         function openLearningSeries() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                setTimeout(() => {
-                    window.location.href = 'indexlo.html';
-                }, 1000);
-                return;
-            }
-            
+            if (isProcessing) return;
             document.getElementById('learningModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('learningModal').classList.add('active');
             }, 10);
         }
-
+        
+        // 关闭学习系列模态框
         function closeLearningModal() {
-            document.getElementById('learningModal').classList.remove('active');
+            const modal = document.getElementById('learningModal');
+            modal.classList.remove('active');
             setTimeout(() => {
-                document.getElementById('learningModal').style.display = 'none';
+                modal.style.display = 'none';
             }, 300);
         }
-
-        // 显示通知
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 100);
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 3000);
-        }
-
-        // 显示即将上线通知
-        function showComingSoonNotice() {
-            showNotification('该功能即将上线，敬请期待！', 'info');
-        }
-
-        // 显示功能已禁用通知
-        function showDisabledNotice(featureName) {
-            showNotification(`${featureName} 目前暂未开放，敬请期待！`, 'error');
-        }
-
-        // 管理员登录
-        function gotoAdminLogin() {
-            navigateTo('admin_login.html', 'admin');
-        }
-
-        // 其他模态框控制函数
-        function openProfileModal() {
-            document.getElementById('profileModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('profileModal').classList.add('active');
-            }, 10);
-        }
-
-        function closeProfileModal() {
-            document.getElementById('profileModal').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('profileModal').style.display = 'none';
-            }, 300);
-        }
-
-        function openAnnouncementModal() {
-            document.getElementById('announcementModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('announcementModal').classList.add('active');
-            }, 10);
-        }
-
-        function closeAnnouncementModal() {
-            document.getElementById('announcementModal').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('announcementModal').style.display = 'none';
-            }, 300);
-        }
-
+        
+        // 打开活动模态框
         function openEventsModal() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                setTimeout(() => {
-                    window.location.href = 'indexlo.html';
-                }, 1000);
-                return;
-            }
-            
+            if (isProcessing) return;
             document.getElementById('eventsModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('eventsModal').classList.add('active');
             }, 10);
         }
-
+        
+        // 关闭活动模态框
         function closeEventsModal() {
-            document.getElementById('eventsModal').classList.remove('active');
+            const modal = document.getElementById('eventsModal');
+            modal.classList.remove('active');
             setTimeout(() => {
-                document.getElementById('eventsModal').style.display = 'none';
+                modal.style.display = 'none';
             }, 300);
         }
-
+        
+        // 打开商城模态框
         function openShopModal() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                setTimeout(() => {
-                    window.location.href = 'indexlo.html';
-                }, 1000);
-                return;
-            }
-            
+            if (isProcessing) return;
             document.getElementById('shopModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('shopModal').classList.add('active');
             }, 10);
         }
-
+        
+        // 关闭商城模态框
         function closeShopModal() {
-            document.getElementById('shopModal').classList.remove('active');
+            const modal = document.getElementById('shopModal');
+            modal.classList.remove('active');
             setTimeout(() => {
-                document.getElementById('shopModal').style.display = 'none';
+                modal.style.display = 'none';
             }, 300);
         }
-
+        
+        // 打开任务模态框
         function openTasksModal() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('请先登录', 'error');
-                setTimeout(() => {
-                    window.location.href = 'indexlo.html';
-                }, 1000);
-                return;
-            }
-            
+            if (isProcessing) return;
             document.getElementById('tasksModal').style.display = 'flex';
             setTimeout(() => {
                 document.getElementById('tasksModal').classList.add('active');
             }, 10);
         }
-
+        
+        // 关闭任务模态框
         function closeTasksModal() {
-            document.getElementById('tasksModal').classList.remove('active');
+            const modal = document.getElementById('tasksModal');
+            modal.classList.remove('active');
             setTimeout(() => {
-                document.getElementById('tasksModal').style.display = 'none';
+                modal.style.display = 'none';
             }, 300);
         }
-
+        
+        // 打开公告模态框
+        function openAnnouncementModal() {
+            if (isProcessing) return;
+            document.getElementById('announcementModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('announcementModal').classList.add('active');
+            }, 10);
+        }
+        
+        // 关闭公告模态框
+        function closeAnnouncementModal() {
+            const modal = document.getElementById('announcementModal');
+            modal.classList.remove('active');
+            
+            // 处理不再显示选项
+            if (document.getElementById('dontShow30Min').checked) {
+                localStorage.setItem('announcementLastShown', Date.now().toString());
+                localStorage.setItem('announcementHideUntil', (Date.now() + 30 * 60 * 1000).toString()); // 30分钟
+            } else if (document.getElementById('dontShowAgain').checked) {
+                localStorage.setItem('announcementLastShown', Date.now().toString());
+                localStorage.setItem('announcementHideUntil', (Date.now() + 24 * 60 * 60 * 1000).toString()); // 1天
+            }
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+        
+        // 初始化公告显示逻辑
+        function initAnnouncementDisplay() {
+            const lastShown = localStorage.getItem('announcementLastShown');
+            const hideUntil = localStorage.getItem('announcementHideUntil');
+            const now = Date.now();
+            
+            // 如果从未显示过，或者已经过了隐藏时间，则显示公告
+            if (!lastShown || (hideUntil && now > parseInt(hideUntil))) {
+                setTimeout(openAnnouncementModal, 1000);
+            }
+        }
+        
+        // 显示即将上线通知
+        function showComingSoonNotice() {
+            showNotification('该功能即将上线，敬请期待！', 'info');
+        }
+        
+        // 显示功能未开放通知
+        function showDisabledNotice(featureName) {
+            showNotification(`${featureName} 尚未开放，敬请期待！`, 'info');
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            // 移除之前的类型类
+            notification.classList.remove('success', 'error');
+            
+            // 添加新类型类和图标
+            if (type === 'success') {
+                notification.classList.add('success');
+                notification.innerHTML = `<i class="fas fa-check-circle"></i><span id="notificationText">${message}</span>`;
+            } else if (type === 'error') {
+                notification.classList.add('error');
+                notification.innerHTML = `<i class="fas fa-exclamation-circle"></i><span id="notificationText">${message}</span>`;
+            } else {
+                notification.innerHTML = `<i class="fas fa-info-circle"></i><span id="notificationText">${message}</span>`;
+            }
+            
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 管理员登录
+        function gotoAdminLogin() {
+            navigateTo('adminlogin.html');
+        }
+        
         // 头像上传处理
         function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                // 检查文件大小，限制在5MB以内
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('图片大小不能超过5MB', 'error');
-                    return;
-                }
-                
-                // 检查文件类型
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!allowedTypes.includes(file.type)) {
-                    showNotification('请上传JPG、PNG或GIF格式的图片', 'error');
-                    return;
-                }
-                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('modalAvatar').src = e.target.result;
+                    showNotification('头像预览已更新，点击保存按钮生效', 'info');
                 }
                 reader.readAsDataURL(file);
             }
         }
-
+        
         // 保存头像
         function saveAvatar() {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            if (!userInfo.username) {
-                showNotification('用户信息不完整，请重新登录', 'error');
-                return;
-            }
-            
-            const newAvatar = document.getElementById('modalAvatar').src;
-
-            userInfo.avatar = newAvatar;
-            localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-
-            document.querySelector('.user-avatar').src = newAvatar;
-
-            saveUserInfoToServer(userInfo);
-
-            showNotification('头像已更新成功！', 'success');
-            closeProfileModal();
+            // 模拟保存操作
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showNotification('头像更新成功！', 'success');
+                closeProfileModal();
+            }, 1000);
         }
-
+        
+        // 显示加载状态
+        function showLoading() {
+            isProcessing = true;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            isProcessing = false;
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+        
         // 兑换物品
         function redeemItem(itemName, points) {
-            const userInfo = JSON.parse(localStorage.getItem('mainUserInfo') || '{}');
-            
-            // 初始化用户积分
-            if (!userInfo.points) {
-                userInfo.points = 0;
-            }
-            
-            if (userInfo.points >= points) {
-                userInfo.points -= points;
-                localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-                document.getElementById('userPoints').textContent = userInfo.points;
-                showNotification(`成功兑换 ${itemName}！`, 'success');
-            } else {
-                showNotification('积分不足，无法兑换', 'error');
-            }
+            showLoading();
+            // 模拟兑换操作
+            setTimeout(() => {
+                hideLoading();
+                showNotification(`成功兑换 ${itemName}，消耗 ${points} 积分`, 'success');
+                // 这里可以添加更新积分的逻辑
+            }, 1000);
         }
-
-        // 检查登录状态并验证用户信息
-        function checkLoginStatus() {
-            const userInfoStr = localStorage.getItem('mainUserInfo');
+        
+        // 完成任务
+        function completeTask(taskName, points) {
+            showLoading();
+            // 模拟完成任务操作
+            setTimeout(() => {
+                hideLoading();
+                showNotification(`成功完成 ${taskName}，获得 ${points} 积分`, 'success');
+                // 这里可以添加更新积分和任务状态的逻辑
+            }, 1000);
+        }
+        
+        // 打开确认对话框
+        function confirmAction(title, action, params = []) {
+            if (isProcessing) return;
             
-            if (!userInfoStr) {
-                handleUnauthorizedAccess(false);
-                return;
-            }
+            document.getElementById('confirmTitle').textContent = title;
+            confirmedAction = action;
+            confirmedParams = params;
             
-            try {
-                let userInfo;
-                try {
-                    userInfo = JSON.parse(userInfoStr);
-                } catch (parseError) {
-                    console.error("用户信息解析失败：", parseError);
-                    throw new Error("用户信息格式错误，请重新登录");
-                }
-
-                // 验证必要字段
-                const requiredFields = ['username', 'loginTime'];
-                const missingFields = requiredFields.filter(field => !userInfo[field]);
-
-                if (missingFields.length > 0) {
-                    if (missingFields.includes('username')) {
-                        throw new Error("用户身份信息不完整，缺少用户名，请重新登录");
-                    } else {
-                        throw new Error(`用户信息不完整，缺少: ${missingFields.join(', ')}，请重新登录`);
-                    }
-                }
-
-                // 验证登录时间有效性
-                const loginTime = new Date(userInfo.loginTime);
-                if (isNaN(loginTime.getTime())) {
-                    throw new Error("登录时间格式无效，请重新登录");
-                }
-
-                // 7天会话有效期检查
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                if (loginTime < sevenDaysAgo) {
-                    throw new Error("登录已超过7天，请重新登录");
-                }
-
-                // 更新用户显示信息
-                updateUserDisplay(userInfo);
-                loadUserTitles(userInfo);
-                checkUserValidity(userInfo);
+            document.getElementById('confirmModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('confirmModal').classList.add('active');
+            }, 10);
+        }
+        
+        // 关闭确认对话框
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                confirmedAction = null;
+                confirmedParams = [];
+            }, 300);
+        }
+        
+        // 执行确认的操作
+        function executeConfirmedAction() {
+            if (confirmedAction && typeof window[confirmedAction] === 'function') {
+                // 关闭确认框
+                closeConfirmModal();
                 
-            } catch (err) {
-                console.error("用户信息验证失败：", err);
-                localStorage.removeItem('mainUserInfo');
-                handleUnauthorizedAccess(true, err.message);
+                // 执行相应操作
+                window[confirmedAction](...confirmedParams);
             }
         }
-
-        // 处理未授权访问
-        function handleUnauthorizedAccess(showError = true, errorMessage = "请先登录") {
-            if (window.location.pathname.includes('indexlo.html')) {
-                if (showError) showNotification(errorMessage, 'error');
-                return;
-            }
-
-            // 非登录页面且需要显示错误信息
-            if (showError) {
-                localStorage.setItem('redirectUrl', window.location.href);
-                showNotification(errorMessage + '，即将跳转到登录页', 'error');
+        
+        // 关闭所有模态框的通用方法
+        function closeAllModals() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.classList.remove('active');
                 setTimeout(() => {
-                    window.location.href = 'indexlo.html?needLogin=true';
-                }, 2000);
+                    modal.style.display = 'none';
+                }, 300);
+            });
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeAllModals();
             }
         }
-
-        // 验证用户有效性（与服务器同步）
-        async function checkUserValidity(userInfo) {
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            if (isLocalDev) {
-                console.log('本地开发模式，跳过用户验证');
-                return;
-            }
-            
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                const response = await fetch('/.netlify/functions/verifyUser', {
-                    method: 'POST',
-                    headers: {
-                        'X-Username': userInfo.username,
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error('用户身份已失效，请重新登录');
-                    }
-                    throw new Error(`验证失败: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                if (result.valid) {
-                    // 更新登录时间
-                    userInfo.loginTime = new Date().toISOString();
-                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-                }
-            } catch (error) {
-                console.error('用户验证失败:', error);
-                if (error.name !== 'AbortError') {
-                    showNotification(error.message, 'error');
-                    setTimeout(() => {
-                        if (confirm('登录状态已失效，是否重新登录？')) {
-                            localStorage.removeItem('mainUserInfo');
-                            window.location.href = 'indexlo.html?sessionExpired=true';
-                        }
-                    }, 3000);
-                }
-            }
-        }
-
-        // 加载用户称号
-        function loadUserTitles(userInfo) {
-            const uniqueKey = `userTitles_${userInfo.username}`;
-            const userTitles = JSON.parse(localStorage.getItem(uniqueKey) || '[]');
-            
-            if (userTitles.length === 0) {
-                fetchUserTitlesFromServer(userInfo);
-            } else {
-                if (userTitles.length > 0 && !userInfo.currentTitle) {
-                    userInfo.currentTitle = userTitles[0];
-                    localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-                    updateUserDisplay(userInfo);
-                }
-            }
-        }
-
-        // 从服务器获取用户称号
-        async function fetchUserTitlesFromServer(userInfo) {
-            if (!userInfo.username) {
-                console.error('获取称号失败：缺少用户名');
-                return;
-            }
-            
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (isLocalDev) {
-                console.log('本地开发模式，使用默认称号数据');
-                const defaultTitles = [
-                    { name: '探索者', icon: 'compass' }
-                ];
-                const uniqueKey = `userTitles_${userInfo.username}`;
-                localStorage.setItem(uniqueKey, JSON.stringify(defaultTitles));
-                
-                if (defaultTitles.length > 0) {
-                    const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
-                    userData.currentTitle = defaultTitles[0];
-                    localStorage.setItem('mainUserInfo', JSON.stringify(userData));
-                    updateUserDisplay(userData);
-                }
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/.netlify/functions/titles?username=${encodeURIComponent(userInfo.username)}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-Username': userInfo.username,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const titles = await response.json();
-                    const uniqueKey = `userTitles_${userInfo.username}`;
-                    localStorage.setItem(uniqueKey, JSON.stringify(titles));
-    
-                    if (titles.length > 0) {
-                        const userData = JSON.parse(localStorage.getItem('mainUserInfo'));
-                        userData.currentTitle = titles[0];
-                        localStorage.setItem('mainUserInfo', JSON.stringify(userData));
-                        updateUserDisplay(userData);
-                    }
-                }
-            } catch (error) {
-                console.error('获取称号失败:', error);
-            }
-        }
-
-        // 更新用户显示信息
-        function updateUserDisplay(userInfo) {
-            const userAreaEl = document.getElementById('userArea');
-            const avatarUrl = userInfo.avatar || 'https://picsum.photos/200';
-            
-            const loginTime = new Date(userInfo.loginTime);
-            const formattedTime = loginTime.toLocaleString();
-            
-            let titleBadge = '';
-            if (userInfo.currentTitle) {
-                titleBadge = `<span class="title-badge">
-                    <i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i>
-                    ${userInfo.currentTitle.name}
-                </span>`;
-            }
-            
-            // 初始化用户积分
-            if (!userInfo.points) {
-                userInfo.points = 0;
-                localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
-            }
-            
-            userAreaEl.innerHTML = `
-                <span class="username">${decodeURIComponent(userInfo.username)}</span>
-                ${titleBadge}
-                <img src="${avatarUrl}" alt="用户头像" class="user-avatar" onclick="openProfileModal()">
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> 退出
-                </button>
-            `;
-            
-            document.getElementById('modalAvatar').src = avatarUrl;
-            document.getElementById('usernameDisplay').textContent = decodeURIComponent(userInfo.username);
-            document.getElementById('loginTimeDisplay').textContent = formattedTime;
-            document.getElementById('userPoints').textContent = userInfo.points;
-            
-            const titleDisplay = document.getElementById('titleDisplay');
-            if (userInfo.currentTitle) {
-                titleDisplay.innerHTML = `<i class="fas fa-${userInfo.currentTitle.icon || 'medal'}"></i> ${userInfo.currentTitle.name}`;
-            } else {
-                titleDisplay.textContent = '暂无称号';
-            }
-        }
-
-        // 退出登录
-        function logout() {
-            if (confirm('确定要退出登录吗？')) {
-                localStorage.removeItem('mainUserInfo');
-                window.location.href = 'indexlo.html';
-            }
-        }
-
-        // 保存用户信息到服务器
-        async function saveUserInfoToServer(userData) {
-            if (!userData.username) {
-                console.error('保存失败：缺少用户名');
-                return;
-            }
-            
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (isLocalDev) {
-                console.log('本地开发模式，跳过服务器保存');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/.netlify/functions/saveUserInfo', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(userData)
-                });
-
-                if (!response.ok) {
-                    throw new Error('保存失败');
-                }
-
-                console.log('用户信息已同步到服务器');
-            } catch (error) {
-                console.error('保存用户信息失败:', error);
-                showNotification('信息同步失败', 'error');
-            }
-        }
-
-        function checkLoginParams() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('loginSuccess')) {
-                showNotification('欢迎回来！登录成功', 'success');
-            }
-        }
-
-        // 页面加载时初始化
-        window.onload = function() {
-            checkLoginStatus();
-            initCardAnimations();
-            checkLoginParams();
-        };
     </script>
 </body>
 </html>

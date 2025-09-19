@@ -3,11 +3,11 @@
     <head>
         <title>登录界面</title>
         <meta charset="utf-8" />
-        <!-- 优化移动端视图设置 -->
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
         <meta name="format-detection" content="telephone=no" />
+        <!-- 关键CSS内联 -->
         <style>
-            /* 保持原有样式不变 */
+            /* 基础样式 */
             * {
                 margin: 0;
                 padding: 0;
@@ -26,6 +26,7 @@
                 overflow: hidden;
             }
 
+            /* 加载动画 */
             #loader-wrapper {
                 position: fixed;
                 top: 0;
@@ -74,6 +75,7 @@
                 pointer-events: none;
             }
 
+            /* 主容器 */
             .container {
                 width:300px;
                 box-shadow: 0 0 15px rgba(0,0,0,0.08);
@@ -83,6 +85,7 @@
                 transition: transform 0.3s ease, box-shadow 0.3s ease;
                 position: relative;
                 z-index: 10;
+                transform: translateY(0);
             }
 
             .container:hover {
@@ -98,6 +101,11 @@
                 font-weight: 600;
             }
 
+            /* 表单样式 */
+            .form-group {
+                margin-bottom:18px;
+            }
+
             label {
                 display:block;
                 margin-bottom:6px;
@@ -108,7 +116,6 @@
 
             .input-group {
                 position: relative;
-                margin-bottom:15px;
             }
 
             input[type="text"],
@@ -128,6 +135,24 @@
                 border-width: 1px;
             }
 
+            /* 新增：输入框聚焦动画 */
+            input:focus + .focus-indicator {
+                transform: scaleX(1);
+            }
+
+            .focus-indicator {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                background-color: #007bff;
+                transform: scaleX(0);
+                transition: transform 0.3s ease;
+                transform-origin: left center;
+            }
+
+            /* 密码可见性切换 */
             .toggle-password {
                 position: absolute;
                 right: 12px;
@@ -148,6 +173,7 @@
                 background: transparent;
             }
 
+            /* 记住我选项 */
             .checkbox {
                 margin-bottom:18px;
                 color:#666;
@@ -163,6 +189,7 @@
                 cursor: pointer;
             }
 
+            /* 按钮样式 */
             button {
                 width:100%;
                 padding:12px;
@@ -189,6 +216,7 @@
                 cursor:not-allowed;
             }
 
+            /* 链接区域 */
             .links{
                 text-align:center;
                 margin-top:20px;
@@ -208,8 +236,8 @@
                 color:#0056b3;
             }
 
-            .error-message,
-            .success-message {
+            /* 消息提示 */
+            .global-message {
                 text-align: center;
                 margin: 0 0 15px 0;
                 padding: 9px;
@@ -230,6 +258,15 @@
                 background-color: #d4edda;
             }
 
+            /* 字段错误提示 */
+            .field-error {
+                color: #dc3545;
+                font-size: 0.85rem;
+                margin-top: 4px;
+                display: none;
+            }
+
+            /* 加载指示器 */
             .spinner {
                 width: 16px;
                 height: 16px;
@@ -242,6 +279,68 @@
                 margin-right: 8px;
             }
 
+            /* 密码强度指示器 */
+            .password-strength {
+                height: 4px;
+                width: 100%;
+                background-color: #eee;
+                border-radius: 2px;
+                margin-top: 4px;
+                overflow: hidden;
+                display: none;
+            }
+
+            .password-strength-bar {
+                height: 100%;
+                width: 0%;
+                transition: width 0.3s ease;
+            }
+
+            .strength-weak {
+                background-color: #dc3545;
+                width: 33%;
+            }
+
+            .strength-medium {
+                background-color: #ffc107;
+                width: 66%;
+            }
+
+            .strength-strong {
+                background-color: #28a745;
+                width: 100%;
+            }
+
+            .password-strength-text {
+                font-size: 0.85rem;
+                margin-top: 4px;
+                color: #666;
+                display: none;
+            }
+
+            /* 辅助按钮 */
+            .helper-buttons {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 10px;
+            }
+
+            .helper-btn {
+                background: none;
+                border: none;
+                color: #007bff;
+                padding: 5px 0;
+                font-size: 0.85rem;
+                width: auto;
+            }
+
+            .helper-btn:hover {
+                background: none;
+                color: #0056b3;
+                text-decoration: underline;
+            }
+
+            /* 响应式设计 */
             @media (max-width: 340px) {
                 .container {
                     width: 90%;
@@ -252,6 +351,9 @@
                 }
             }
         </style>
+        <!-- 异步加载非关键CSS -->
+        <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     </head>
     <body>
         <div id="loader-wrapper">
@@ -260,22 +362,37 @@
         </div>
 
         <div class="container">
-            <div class="error-message" id="errorMsg"></div>
-            <div class="success-message" id="successMsg"></div>
+            <div class="global-message error-message" id="globalErrorMsg"></div>
+            <div class="global-message success-message" id="globalSuccessMsg"></div>
             
             <form id="loginForm">
                 <h2>账号登录</h2>
-                <label for="username">用户名</label>
-                <div class="input-group">
-                    <input type="text" name="username" placeholder="请输入用户名/昵称" id="username" required>
+                
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <div class="input-group">
+                        <input type="text" name="username" placeholder="请输入用户名/昵称" id="username" required 
+                               aria-describedby="usernameError">
+                        <div class="focus-indicator"></div>
+                    </div>
+                    <div class="field-error" id="usernameError"></div>
                 </div>
                 
-                <label for="password">密码</label>
-                <div class="input-group">
-                    <input type="password" name="password" placeholder="请输入密码" id="password" required>
-                    <button type="button" class="toggle-password" id="togglePassword">
-                        <i class="fas fa-eye-slash"></i>
-                    </button>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <div class="input-group">
+                        <input type="password" name="password" placeholder="请输入密码" id="password" required
+                               aria-describedby="passwordError">
+                        <button type="button" class="toggle-password" id="togglePassword" aria-label="显示密码">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                        <div class="focus-indicator"></div>
+                    </div>
+                    <div class="field-error" id="passwordError"></div>
+                    <div class="password-strength" id="passwordStrength">
+                        <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                    </div>
+                    <div class="password-strength-text" id="passwordStrengthText"></div>
                 </div>
                 
                 <div class="checkbox">
@@ -284,27 +401,67 @@
                 </div>
                 
                 <button type="submit" id="loginBtn">登录</button>
+                
+                <div class="helper-buttons">
+                    <button type="button" class="helper-btn" id="resetBtn">重置</button>
+                    <button type="button" class="helper-btn" id="forgotPasswordBtn">忘记密码？</button>
+                </div>
             </form>
             
             <div class='links'>
                 <a href="REGISTER.html" id="registerLink">没有账号？注册新账号</a >
-                <a href="#" id="forgotPasswordLink">忘记密码？</a >
             </div>
         </div>
 
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
         <script>
+            // 安全相关配置
+            const SECURITY_CONFIG = {
+                maxLoginAttempts: 5,        // 最大登录尝试次数
+                lockoutDuration: 5 * 60 * 1000, // 锁定时间（5分钟）
+                passwordMinLength: 8,        // 密码最小长度
+                requestTimeout: 15000,       // 请求超时时间（毫秒）
+                maxRetries: 2                // 最大重试次数
+            };
+
+            // 工具函数：创建超时信号
             function createTimeoutSignal(ms) {
                 const controller = new AbortController();
                 setTimeout(() => controller.abort(new Error('请求超时')), ms);
                 return controller.signal;
             }
+
+            // 工具函数：显示错误信息
+            function showError(element, message) {
+                if (element) {
+                    element.textContent = message;
+                    element.style.display = 'block';
+                    // 自动隐藏字段错误，全局错误保持显示直到用户操作
+                    if (!element.classList.contains('global-message')) {
+                        setTimeout(() => {
+                            element.style.display = 'none';
+                        }, 3000);
+                    }
+                }
+            }
+
+            // 工具函数：隐藏所有错误
+            function hideAllErrors() {
+                document.querySelectorAll('.error-message, .field-error').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+
             // 1. 加载动画控制
             window.addEventListener('load', function() {
+                // 检查是否是HTTPS
+                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                    showError(document.getElementById('globalErrorMsg'), 
+                             '警告：您正在使用非安全连接，建议切换到HTTPS以保护您的账号安全');
+                }
+                
                 setTimeout(function() {
                     document.body.classList.add('loaded');
-                }, 1000);
+                }, 800); // 稍微缩短加载时间提升体验
             });
 
             // 2. 密码可见/隐藏切换功能
@@ -316,19 +473,150 @@
                 passwordInput.type = isPassword ? 'text' : 'password';
                 const icon = togglePasswordBtn.querySelector('i');
                 icon.className = isPassword ? 'fas fa-eye' : 'fas fa-eye-slash';
+                togglePasswordBtn.setAttribute('aria-label', isPassword ? '隐藏密码' : '显示密码');
             });
 
-            // 3. 页面初始化
+            // 3. 密码强度检测
+            function checkPasswordStrength(password) {
+                const strengthBar = document.getElementById('passwordStrengthBar');
+                const strengthText = document.getElementById('passwordStrengthText');
+                const strengthContainer = document.getElementById('passwordStrength');
+                
+                if (!password) {
+                    strengthContainer.style.display = 'none';
+                    strengthText.style.display = 'none';
+                    return;
+                }
+                
+                // 显示强度指示器
+                strengthContainer.style.display = 'block';
+                strengthText.style.display = 'block';
+                
+                // 基础强度评分
+                let strength = 0;
+                let feedback = '';
+                
+                // 长度检查
+                if (password.length >= SECURITY_CONFIG.passwordMinLength) {
+                    strength += 1;
+                }
+                
+                // 复杂度检查
+                if (/[A-Z]/.test(password)) strength += 1; // 包含大写字母
+                if (/[a-z]/.test(password)) strength += 1; // 包含小写字母
+                if (/[0-9]/.test(password)) strength += 1; // 包含数字
+                if (/[^A-Za-z0-9]/.test(password)) strength += 1; // 包含特殊字符
+                
+                // 更新UI
+                strengthBar.className = 'password-strength-bar';
+                if (strength < 3) {
+                    strengthBar.classList.add('strength-weak');
+                    feedback = '弱：建议增加密码长度和复杂度';
+                } else if (strength < 5) {
+                    strengthBar.classList.add('strength-medium');
+                    feedback = '中：可以再增加一些特殊字符';
+                } else {
+                    strengthBar.classList.add('strength-strong');
+                    feedback = '强：很好的密码强度';
+                }
+                
+                strengthText.textContent = feedback;
+            }
+
+            // 4. 表单验证
+            function validateUsername(username) {
+                const usernameError = document.getElementById('usernameError');
+                
+                if (!username) {
+                    showError(usernameError, '请输入用户名');
+                    return false;
+                }
+                
+                // 用户名格式验证（仅允许字母、数字、下划线，长度3-20）
+                const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+                if (!usernameRegex.test(username)) {
+                    showError(usernameError, '用户名只能包含字母、数字和下划线，长度3-20');
+                    return false;
+                }
+                
+                usernameError.style.display = 'none';
+                return true;
+            }
+
+            function validatePassword(password) {
+                const passwordError = document.getElementById('passwordError');
+                
+                if (!password) {
+                    showError(passwordError, '请输入密码');
+                    return false;
+                }
+                
+                if (password.length < SECURITY_CONFIG.passwordMinLength) {
+                    showError(passwordError, `密码长度不能少于${SECURITY_CONFIG.passwordMinLength}个字符`);
+                    return false;
+                }
+                
+                passwordError.style.display = 'none';
+                return true;
+            }
+
+            // 5. 登录尝试限制
+            function getLoginAttempts() {
+                const attempts = localStorage.getItem('loginAttempts');
+                return attempts ? parseInt(attempts, 10) : 0;
+            }
+
+            function incrementLoginAttempts() {
+                const attempts = getLoginAttempts() + 1;
+                localStorage.setItem('loginAttempts', attempts.toString());
+                
+                // 设置过期时间
+                if (attempts >= SECURITY_CONFIG.maxLoginAttempts) {
+                    localStorage.setItem('loginLockedUntil', (Date.now() + SECURITY_CONFIG.lockoutDuration).toString());
+                }
+            }
+
+            function resetLoginAttempts() {
+                localStorage.removeItem('loginAttempts');
+                localStorage.removeItem('loginLockedUntil');
+            }
+
+            function isAccountLocked() {
+                const lockedUntil = localStorage.getItem('loginLockedUntil');
+                if (!lockedUntil) return false;
+                
+                const now = Date.now();
+                if (now < parseInt(lockedUntil, 10)) {
+                    const minutesLeft = Math.ceil((parseInt(lockedUntil, 10) - now) / (60 * 1000));
+                    return `账号已临时锁定，请${minutesLeft}分钟后再试`;
+                }
+                
+                // 锁定时间已过，重置状态
+                resetLoginAttempts();
+                return false;
+            }
+
+            // 6. 页面初始化
             window.addEventListener('DOMContentLoaded', function() {
                 const usernameInput = document.getElementById('username');
+                const passwordInput = document.getElementById('password');
                 const rememberMeCheckbox = document.getElementById('rememberMe');
                 
+                // 检查登录锁定状态
+                const lockMessage = isAccountLocked();
+                if (lockMessage) {
+                    showError(document.getElementById('globalErrorMsg'), lockMessage);
+                    document.getElementById('loginBtn').disabled = true;
+                }
+                
+                // 填充记住的用户名
                 const rememberedUsername = localStorage.getItem('rememberedUsername');
                 if (rememberedUsername) {
                     usernameInput.value = rememberedUsername;
                     rememberMeCheckbox.checked = true;
                 }
 
+                // 处理从注册页面跳转过来的情况
                 const urlParams = new URLSearchParams(window.location.search);
                 const fromRegister = urlParams.get('from') === 'register';
                 const prefillUsername = urlParams.get('username');
@@ -336,13 +624,26 @@
                 if (fromRegister && prefillUsername) {
                     usernameInput.value = prefillUsername;
                     passwordInput.focus();
-                    const successMsg = document.getElementById('successMsg');
-                    successMsg.textContent = '请输入密码登录';
+                    const successMsg = document.getElementById('globalSuccessMsg');
+                    successMsg.textContent = '注册成功，请输入密码登录';
                     successMsg.style.display = 'block';
                 }
+
+                // 添加实时验证
+                usernameInput.addEventListener('blur', function() {
+                    validateUsername(this.value.trim());
+                });
+
+                passwordInput.addEventListener('input', function() {
+                    checkPasswordStrength(this.value);
+                });
+
+                passwordInput.addEventListener('blur', function() {
+                    validatePassword(this.value);
+                });
             });
 
-            // 4. 链接跳转逻辑
+            // 7. 链接跳转逻辑
             document.getElementById('registerLink').addEventListener('click', function(event) {
                 event.preventDefault();
                 const username = document.getElementById('username').value.trim();
@@ -352,32 +653,57 @@
                 window.location.href = targetUrl;
             });
             
-            document.getElementById('forgotPasswordLink').addEventListener('click', function(event) {
+            document.getElementById('forgotPasswordBtn').addEventListener('click', function(event) {
                 event.preventDefault();
-                alert('找回密码功能开发中，暂不支持～\n请联系管理员重置密码');
+                // 更友好的忘记密码流程
+                const username = document.getElementById('username').value.trim();
+                const resetUrl = username 
+                    ? `forgot-password.html?username=${encodeURIComponent(username)}` 
+                    : 'forgot-password.html';
+                window.location.href = resetUrl;
             });
 
-            // 5. 登录表单提交逻辑 - 移动端适配版
+            // 8. 重置按钮功能
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                document.getElementById('loginForm').reset();
+                hideAllErrors();
+                document.getElementById('passwordStrength').style.display = 'none';
+                document.getElementById('passwordStrengthText').style.display = 'none';
+                document.getElementById('username').focus();
+            });
+
+            // 9. 登录表单提交逻辑
             document.getElementById('loginForm').addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value;
                 const rememberMe = document.getElementById('rememberMe').checked;
-                const errorMsg = document.getElementById('errorMsg');
-                const successMsg = document.getElementById('successMsg');
+                const globalErrorMsg = document.getElementById('globalErrorMsg');
+                const globalSuccessMsg = document.getElementById('globalSuccessMsg');
                 const loginBtn = document.getElementById('loginBtn');
                 
-                errorMsg.style.display = 'none';
-                successMsg.style.display = 'none';
+                // 清除之前的消息
+                hideAllErrors();
+                globalSuccessMsg.style.display = 'none';
                 
-                if (!username) {
-                    showError(errorMsg, '请输入用户名');
-                    document.getElementById('username').focus();
+                // 客户端验证
+                const isUsernameValid = validateUsername(username);
+                const isPasswordValid = validatePassword(password);
+                
+                if (!isUsernameValid || !isPasswordValid) {
+                    // 聚焦到第一个无效字段
+                    if (!isUsernameValid) {
+                        document.getElementById('username').focus();
+                    } else {
+                        document.getElementById('password').focus();
+                    }
                     return;
                 }
-                if (!password) {
-                    showError(errorMsg, '请输入密码');
-                    passwordInput.focus();
+
+                // 检查账号锁定状态
+                const lockMessage = isAccountLocked();
+                if (lockMessage) {
+                    showError(globalErrorMsg, lockMessage);
                     return;
                 }
 
@@ -385,31 +711,62 @@
                     loginBtn.disabled = true;
                     loginBtn.innerHTML = '<span class="spinner"></span> 登录中...';
                     
-                    // 关键修改：使用完整URL而非相对路径，解决移动端路径解析问题
-                    const baseUrl = window.location.origin; // 获取当前域名
+                    // 构建请求URL
+                    const baseUrl = window.location.origin;
                     const loginUrl = `${baseUrl}/.netlify/functions/login`;
                     
-                    // 增加重试机制，适应移动网络不稳定
-                    const maxRetries = 2;
+                    // 获取CSRF令牌（假设后端提供此接口）
+                    let csrfToken = '';
+                    try {
+                        const csrfResponse = await fetch(`${baseUrl}/.netlify/functions/csrf-token`, {
+                            method: 'GET',
+                            credentials: 'include',
+                            signal: createTimeoutSignal(5000)
+                        });
+                        if (csrfResponse.ok) {
+                            const csrfData = await csrfResponse.json();
+                            csrfToken = csrfData.token || '';
+                        }
+                    } catch (error) {
+                        console.warn('获取CSRF令牌失败，继续尝试登录', error);
+                    }
+                    
+                    // 密码加密传输（示例使用简单Base64，实际应使用RSA等加密方式）
+                    const encryptedPassword = btoa(password); // 仅作示例，实际需使用更安全的加密
+                    
+                    // 带重试机制的请求
+                    const maxRetries = SECURITY_CONFIG.maxRetries;
                     let response;
                     
                     for (let i = 0; i <= maxRetries; i++) {
                         try {
+                            const headers = {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            };
+                            
+                            // 添加CSRF令牌
+                            if (csrfToken) {
+                                headers['X-CSRF-Token'] = csrfToken;
+                            }
+                            
                             response = await fetch(loginUrl, {
                                 method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify({ username, password }),
+                                headers: headers,
+                                body: JSON.stringify({ 
+                                    username, 
+                                    password: encryptedPassword,
+                                    rememberMe 
+                                }),
                                 credentials: 'include',
-                                mode: 'cors', // 明确指定跨域模式
-                                signal: createTimeoutSignal(15000) // 延长超时到15秒
+                                mode: 'cors',
+                                signal: createTimeoutSignal(SECURITY_CONFIG.requestTimeout)
                             });
                             break; // 成功获取响应则跳出重试循环
                         } catch (error) {
                             if (i === maxRetries) throw error; // 最后一次失败则抛出错误
-                            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // 重试前等待
+                            // 指数退避重试
+                            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
                         }
                     }
 
@@ -419,46 +776,61 @@
                     loginBtn.innerHTML = '登录';
 
                     if (response.ok) {
+                        // 登录成功，重置尝试次数
+                        resetLoginAttempts();
+                        
+                        // 保存用户信息
                         if (rememberMe) {
                             localStorage.setItem('rememberedUsername', username);
                             result.tokenExpire = new Date().getTime() + 7 * 24 * 60 * 60 * 1000;
                         } else {
                             localStorage.removeItem('rememberedUsername');
                         }
+                        
                         loginSuccess(result);
                     } else {
+                        // 登录失败，增加尝试次数
+                        incrementLoginAttempts();
+                        
                         const errorText = result.message || '登录失败，请重试';
                         if (response.status === 401) {
-                            showError(errorMsg, '用户名或密码不正确，请检查');
-                            passwordInput.value = '';
-                            passwordInput.focus();
+                            showError(globalErrorMsg, '用户名或密码不正确，请检查');
+                            document.getElementById('password').value = '';
+                            document.getElementById('password').focus();
+                            
+                            // 显示剩余尝试次数
+                            const remainingAttempts = SECURITY_CONFIG.maxLoginAttempts - getLoginAttempts();
+                            if (remainingAttempts > 0) {
+                                showError(globalErrorMsg, 
+                                    `用户名或密码不正确，还有${remainingAttempts}次尝试机会`);
+                            }
                         } else if (response.status === 403) {
-                            showError(errorMsg, '账号已被限制登录，请联系管理员');
+                            showError(globalErrorMsg, '账号已被限制登录，请联系管理员');
                         } else if (response.status === 500) {
-                            showError(errorMsg, '服务器暂时繁忙，请稍后再试');
+                            showError(globalErrorMsg, '服务器暂时繁忙，请稍后再试');
                         } else {
-                            showError(errorMsg, errorText);
+                            showError(globalErrorMsg, errorText);
                         }
                     }
                 } catch (error) {
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '登录';
                     
-                    // 更详细的移动端错误提示
+                    // 详细错误提示
                     if (error.message.includes('请求超时')) {
-                        showError(errorMsg, '网络较慢，请求超时，请稍后再试');
+                        showError(globalErrorMsg, '网络较慢，请求超时，请稍后再试');
                     } else if (error.message.includes('Failed to fetch')) {
-                        showError(errorMsg, '无法连接到服务器，请检查网络是否正常');
+                        showError(globalErrorMsg, '无法连接到服务器，请检查网络是否正常');
                     } else if (error.message.includes('CORS')) {
-                        showError(errorMsg, '网络连接异常，请使用HTTPS访问');
+                        showError(globalErrorMsg, '网络连接异常，请使用HTTPS访问');
                     } else {
-                        showError(errorMsg, '登录出错：' + error.message);
+                        showError(globalErrorMsg, '登录出错：' + error.message);
                     }
                     console.error('登录异常：', error);
                 }
             });
 
-            // 6. 登录成功处理函数
+            // 10. 登录成功处理函数
             function loginSuccess(userData) {
                 const currentUser = {
                     id: userData._id,
@@ -469,28 +841,31 @@
                     isAdmin: userData.isAdmin || false,
                     expireTime: userData.tokenExpire
                 };
-                localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+                
+                // 安全存储用户信息
+                try {
+                    localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+                } catch (e) {
+                    console.error('存储用户信息失败', e);
+                    showError(document.getElementById('globalErrorMsg'), '登录成功，但存储用户信息失败');
+                    return;
+                }
     
-                const successMsg = document.getElementById('successMsg');
+                const successMsg = document.getElementById('globalSuccessMsg');
                 successMsg.textContent = '登录成功，正在进入主页...';
                 successMsg.style.display = 'block';
                 
+                // 跳转前添加短暂延迟，让用户看到成功消息
                 setTimeout(() => {
                     window.location.href = 'indexdaohang.html';
-                }, 1500);
+                }, 1000);
             }
 
-            // 7. 错误提示显示函数
-            function showError(element, message) {
-                element.textContent = message;
-                element.style.display = 'block';
-                setTimeout(() => {
-                    element.style.display = 'none';
-                }, 3000);
-            }
-
-            // 8. 键盘操作优化
+            // 11. 键盘操作优化
             document.getElementById('loginForm').addEventListener('keydown', function(event) {
+                // 允许Tab键正常工作
+                if (event.key === 'Tab') return;
+                
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     const username = document.getElementById('username').value.trim();
