@@ -93,6 +93,29 @@
             font-weight: 500;
         }
         
+        /* 更新提示样式 */
+        .update-notice {
+            text-align: center;
+            padding: 10px;
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin: 0 auto 20px;
+            max-width: 800px;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .close-update {
+            cursor: pointer;
+            margin-left: 10px;
+            color: #999;
+            transition: color 0.2s;
+        }
+        
+        .close-update:hover {
+            color: var(--danger-color);
+        }
+        
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -592,31 +615,6 @@
             background-color: var(--danger-color);
         }
 
-        /* 公告模态框样式 */
-        .announcement-content {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-        }
-        
-        .announcement-item {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .announcement-item:last-child {
-            border-bottom: none;
-        }
-        
-        .announcement-item h3 {
-            margin-bottom: 5px;
-        }
-        
-        .announcement-item small {
-            color: #999;
-        }
-
         /* 活动、商城、任务相关样式 */
         .event-item, .shop-item, .task-item {
             padding: 15px;
@@ -831,10 +829,6 @@
                 overflow-y: auto;
             }
             
-            .announcement-content, .series-select-grid {
-                max-height: 300px;
-            }
-            
             .series-select-grid {
                 grid-template-columns: 1fr 1fr;
             }
@@ -928,6 +922,11 @@
             </button>
             <a href="indexlo.html" class="login-link">登录/注册</a>
         </div>
+    </div>
+
+    <!-- 上次更新时间提示 -->
+    <div id="updateNotice" class="update-notice">
+        <p>上次更新: <span id="lastUpdateTime">2025-09-19</span> | <a href="versions.html" style="color: var(--primary-color);">查看更新内容</a> | <span class="close-update" onclick="closeUpdateNotice()">×</span></p>
     </div>
 
     <header>
@@ -1227,59 +1226,7 @@
         </div>
     </div>
 
-    <!-- 其他模态框保持不变 -->
-    <div class="modal" id="announcementModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close-modal" onclick="closeAnnouncementModal()">&times;</span>
-            <h2 class="profile-title">最新公告</h2>
-            <div class="announcement-content">
-                <div class="announcement-item">
-                    <h3 style="color: var(--danger-color);">【重磅更新】最新版本内容</h3>
-                    <p>1. 新增多项功能，提升用户体验</p>
-                    <p>2. 优化系统性能，修复已知问题</p>
-                    <small>发布时间：2025-08-29</small>
-                </div>
-                <div class="announcement-item">
-                    <h3 style="color: var(--accent-color);">【限时活动】</h3>
-                    <p>1. 参与问卷调查有机会获得游戏道具</p>
-                    <small>发布时间：2025-08-30</small>
-                </div>
-                <div class="announcement-item">
-                    <h3 style="color: var(--warning-color);">【BUG注意】</h3>
-                    <p>1. "称号与头衔"、「好友列表」功能目前仍存在bug，正在修复中...</p>
-                    <p>2. 移动端可能出现卡顿问题</p>
-                    <p>2. 「自由电子冒险3」游戏中1-5关卡尚未完善</p>
-                    <small>发布时间：2025-09-01</small>
-                </div>
-                
-                <div class="announcement-item">
-                    <h3 style="color: var(--primary-color);">【即将上线】</h3>
-                    <p>1. 新模式开发中，敬请期待</p>
-                    <p>2. 国庆节期间登录即可领取限定称号</p>
-                    <p>3. 即将推出用户等级系统</p>
-                    <p>4. 好友互动功能开发中</p>
-                    <p>5. 计划增加更多小游戏和互动玩法</p>
-                    <p>More: 更多版本前瞻就在「帮助中心」，等着你去探索</p>
-                    <small>发布时间：2025-08-30</small>
-                </div>
-                
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-                <div style="display: flex; align-items: center;">
-                    <input type="checkbox" id="dontShow30Min" style="margin-right: 10px;">
-                    <label for="dontShow30Min">30分钟内不再显示</label>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <input type="checkbox" id="dontShowAgain" style="margin-right: 10px;">
-                    <label for="dontShowAgain">1天内不再显示</label>
-                </div>
-            </div>
-            <button class="save-btn" onclick="closeAnnouncementModal()">
-                <i class="fas fa-check"></i> 我知道了
-            </button>
-        </div>
-    </div>
-
+    <!-- 活动模态框 -->
     <div class="modal" id="eventsModal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close-modal" onclick="closeEventsModal()">&times;</span>
@@ -1410,8 +1357,8 @@
                 disableDarkMode();
             }
             
-            // 初始化公告模态框显示逻辑
-            initAnnouncementDisplay();
+            // 初始化更新提示显示逻辑
+            initUpdateNoticeDisplay();
         });
         
         // 深色模式切换
@@ -1543,43 +1490,39 @@
             }, 300);
         }
         
-        // 打开公告模态框
-        function openAnnouncementModal() {
-            if (isProcessing) return;
-            document.getElementById('announcementModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('announcementModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭公告模态框
-        function closeAnnouncementModal() {
-            const modal = document.getElementById('announcementModal');
-            modal.classList.remove('active');
+        // 关闭更新提示
+        function closeUpdateNotice() {
+            const notice = document.getElementById('updateNotice');
+            notice.style.opacity = '0';
+            notice.style.transform = 'translateY(-20px)';
             
-            // 处理不再显示选项
-            if (document.getElementById('dontShow30Min').checked) {
-                localStorage.setItem('announcementLastShown', Date.now().toString());
-                localStorage.setItem('announcementHideUntil', (Date.now() + 30 * 60 * 1000).toString()); // 30分钟
-            } else if (document.getElementById('dontShowAgain').checked) {
-                localStorage.setItem('announcementLastShown', Date.now().toString());
-                localStorage.setItem('announcementHideUntil', (Date.now() + 24 * 60 * 60 * 1000).toString()); // 1天
-            }
+            // 7天后再次显示
+            localStorage.setItem('updateNoticeHidden', Date.now().toString());
             
             setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
+                notice.style.display = 'none';
+            }, 500);
         }
         
-        // 初始化公告显示逻辑
-        function initAnnouncementDisplay() {
-            const lastShown = localStorage.getItem('announcementLastShown');
-            const hideUntil = localStorage.getItem('announcementHideUntil');
-            const now = Date.now();
+        // 初始化更新提示显示逻辑
+        function initUpdateNoticeDisplay() {
+            const lastHidden = localStorage.getItem('updateNoticeHidden');
+            const notice = document.getElementById('updateNotice');
             
-            // 如果从未显示过，或者已经过了隐藏时间，则显示公告
-            if (!lastShown || (hideUntil && now > parseInt(hideUntil))) {
-                setTimeout(openAnnouncementModal, 1000);
+            // 如果用户没有关闭过提示，或者距离上次关闭已超过7天，则显示
+            if (!lastHidden || new Date().getTime() - parseInt(lastHidden) > 7 * 24 * 60 * 60 * 1000) {
+                notice.style.display = 'block';
+                
+                // 5秒后自动淡出，避免打扰
+                setTimeout(() => {
+                    notice.style.opacity = '0';
+                    notice.style.transform = 'translateY(-20px)';
+                    setTimeout(() => {
+                        notice.style.display = 'none';
+                    }, 500);
+                }, 5000);
+            } else {
+                notice.style.display = 'none';
             }
         }
         
