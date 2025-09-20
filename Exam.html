@@ -36,6 +36,9 @@
             .exam-card {
                 @apply bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
             }
+            .exam-card-upcoming {
+                @apply bg-white/80 rounded-xl shadow-md overflow-hidden border-2 border-dashed border-gray-300;
+            }
             .subject-badge {
                 @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
             }
@@ -66,6 +69,61 @@
             .filter-clear {
                 @apply ml-1 cursor-pointer hover:text-primary/80;
             }
+            /* 答题进度条 */
+            .progress-container {
+                @apply w-full bg-gray-200 rounded-full h-2.5 mb-6 overflow-hidden;
+            }
+            .progress-bar {
+                @apply bg-primary h-2.5 rounded-full transition-all duration-500 ease-out;
+            }
+            /* 选项选择样式 */
+            .option-selected {
+                @apply border-primary bg-blue-50 pl-8 relative;
+            }
+            .option-selected::before {
+                content: "✓";
+                position: absolute;
+                left: 3px;
+                color: #3b82f6;
+                font-weight: bold;
+            }
+            /* 标记题目样式 */
+            .marked-question {
+                @apply relative;
+            }
+            .marked-question::after {
+                content: "🔖";
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                font-size: 16px;
+            }
+            .mark-btn {
+                @apply text-gray-400 hover:text-accent transition-colors p-1;
+            }
+            .mark-btn.active {
+                @apply text-accent;
+            }
+            /* 计时器样式 */
+            .timer-container {
+                @apply flex items-center bg-gray-100 px-3 py-1.5 rounded-lg text-sm;
+            }
+            .timer-warning {
+                @apply text-danger animate-pulse;
+            }
+            /* 标记列表样式 */
+            .marks-list {
+                @apply fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-3 z-40 max-w-xs;
+            }
+            .marks-list-header {
+                @apply font-medium mb-2 flex justify-between items-center;
+            }
+            .marks-list-items {
+                @apply flex flex-wrap gap-1;
+            }
+            .mark-item {
+                @apply w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm cursor-pointer hover:bg-primary hover:text-white transition-colors;
+            }
         }
 
         @keyframes fadeIn {
@@ -89,9 +147,42 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        
+        /* 页面过渡动画 */
+        .page-transition {
+            animation: pageTransition 0.4s ease-out forwards;
+        }
+        
+        @keyframes pageTransition {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 按钮点击反馈 */
+        .btn-press {
+            transform: scale(0.98);
+        }
+        
+        /* 骨架屏加载效果 */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-dark">
+<body class="bg-gray-50 min-h-screen font-sans text-dark page-transition">
     <!-- 顶部导航栏 -->
     <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300" id="main-header">
         <div class="container mx-auto px-4">
@@ -108,6 +199,12 @@
                 </div>
                 
                 <div class="flex items-center space-x-3">
+                    <!-- 计时器 -->
+                    <div class="timer-container hidden md:flex" id="exam-timer">
+                        <i class="fa fa-clock-o mr-1.5 text-primary"></i>
+                        <span id="timer-display">00:00:00</span>
+                    </div>
+                    
                     <button class="hidden md:block bg-primary/10 text-primary px-4 py-2 rounded-lg hover:bg-primary/20 transition-all duration-300 transform hover:scale-105">
                         <i class="fa fa-user-circle mr-1"></i> 登录
                     </button>
@@ -165,12 +262,8 @@
                                 <div class="text-xs text-gray-500">词汇10题 · 语法15题 · 完形10题 · 阅读15题</div>
                             </div>
                             <div class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                                <div class="font-medium">物理 - 运动学知识点</div>
-                                <div class="text-xs text-gray-500">相关试卷：3份</div>
-                            </div>
-                            <div class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                                <div class="font-medium">英语 - 语法练习</div>
-                                <div class="text-xs text-gray-500">相关试卷：2份</div>
+                                <div class="font-medium">智能综合测试（随机抽题）</div>
+                                <div class="text-xs text-gray-500">从题库随机抽取30题 · 多学科综合</div>
                             </div>
                         </div>
                     </div>
@@ -207,6 +300,9 @@
                     </button>
                     <button class="filter-btn filter-inactive px-4 py-2 rounded-lg text-sm transition-all duration-300 transform hover:scale-105" data-filter="english" data-name="英语">
                         英语
+                    </button>
+                    <button class="filter-btn filter-inactive px-4 py-2 rounded-lg text-sm transition-all duration-300 transform hover:scale-105" data-filter="math" data-name="数学">
+                        数学
                     </button>
                 </div>
             </div>
@@ -255,7 +351,7 @@
                 <!-- 筛选结果统计和操作按钮 -->
                 <div class="flex flex-wrap justify-between items-center p-4 pt-0 border-t border-gray-100">
                     <div class="text-sm text-gray-500 mb-3 sm:mb-0">
-                        <span id="filter-count">找到 2 份符合条件的试卷</span>
+                        <span id="filter-count">找到 4 份符合条件的试卷</span>
                     </div>
                     <div class="flex gap-3">
                         <button id="reset-filters" class="text-gray-600 hover:text-gray-800 text-sm transition-colors flex items-center border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50">
@@ -270,8 +366,8 @@
             
             <!-- 试卷网格 -->
             <div class="grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-                <!-- 高二第1~2周学业水平考试(物化生) -->
-                <a href="高二第1~2周学业水平考试.html" class="exam-card group slide-up max-w-lg w-full" data-exam-id="1" 
+                <!-- 试卷1：物化生综合 -->
+                <a href="1.html" class="exam-card group slide-up max-w-lg w-full" data-exam-id="1" 
                    data-subject="comprehensive" data-grade="11" data-difficulty="medium" 
                    data-paper-type="weekly" data-keywords="高二,学业水平,物理,化学,生物,周测">
                     <div class="h-48 bg-gradient-to-r from-purple-600 to-indigo-600 relative overflow-hidden">
@@ -283,16 +379,13 @@
                                 最新
                             </span>
                         </div>
-                        <!-- 装饰元素 -->
-                        <div class="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-white/10"></div>
-                        <div class="absolute top-5 left-5 w-10 h-10 rounded-full bg-white/10"></div>
                     </div>
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
                             <h3 class="font-bold text-xl group-hover:text-primary transition-colors">高二第1~2周学业水平考试（物化生）</h3>
                             <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">20题</span>
                         </div>
-                        <p class="text-gray-600 mb-5">覆盖开学前两周学习内容，包含物理、化学、生物三个学科的15道综合测试题，全面检测学习成果。</p>
+                        <p class="text-gray-600 mb-5">覆盖开学前两周学习内容，包含物理、化学、生物三个学科的综合测试题。</p>
                         <div class="flex flex-wrap gap-3 mb-5">
                             <span class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full">物理5题</span>
                             <span class="text-xs bg-red-100 text-red-800 px-3 py-1 rounded-full">化学5题</span>
@@ -300,24 +393,18 @@
                             <span class="text-xs bg-purple-100 text-purple-800 px-3 py-1 rounded-full">周测</span>
                         </div>
                         <div class="flex justify-between items-center text-sm text-gray-500 mb-5">
-                            <div class="flex items-center">
-                                <i class="fa fa-clock-o mr-1 text-primary"></i> 12分钟
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fa fa-calendar mr-1 text-primary"></i> 2025-09-12
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fa fa-signal mr-1 text-primary"></i> 中等难度
-                            </div>
+                            <div><i class="fa fa-clock-o mr-1 text-primary"></i> 12分钟</div>
+                            <div><i class="fa fa-calendar mr-1 text-primary"></i> 2025-09-12</div>
+                            <div><i class="fa fa-signal mr-1 text-primary"></i> 中等难度</div>
                         </div>
-                        <button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center">
+                        <button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center exam-start-btn">
                             <i class="fa fa-play-circle mr-2"></i> 开始考试
                         </button>
                     </div>
                 </a>
 
-                <!-- 高二英语第一单元测试 -->
-                <a href="高二英语1.html" class="exam-card group slide-up max-w-lg w-full" data-exam-id="2" 
+                <!-- 试卷2：英语 -->
+                <a href="2.html" class="exam-card group slide-up max-w-lg w-full" data-exam-id="2" 
                    data-subject="english" data-grade="11" data-difficulty="hard" 
                    data-paper-type="weekly" data-keywords="高二,英语,周测,词汇,语法">
                     <div class="h-48 bg-gradient-to-r from-blue-500 to-blue-700 relative overflow-hidden">
@@ -329,16 +416,13 @@
                                 英语
                             </span>
                         </div>
-                        <!-- 装饰元素 -->
-                        <div class="absolute -bottom-10 -right-10 w-32 h-32 rounded-full bg-white/10"></div>
-                        <div class="absolute top-5 left-5 w-10 h-10 rounded-full bg-white/10"></div>
                     </div>
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
                             <h3 class="font-bold text-xl group-hover:text-primary transition-colors">高二第1~2周学业水平考试（英语）</h3>
                             <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">50题</span>
                         </div>
-                        <p class="text-gray-600 mb-5">自由电子推荐。</p>
+                        <p class="text-gray-600 mb-5">全面检测英语学习情况，包含词汇、语法、完形填空和阅读理解等题型。</p>
                         <div class="flex flex-wrap gap-3 mb-5">
                             <span class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full">词汇10题</span>
                             <span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full">语法15题</span>
@@ -347,53 +431,137 @@
                             <span class="text-xs bg-purple-100 text-purple-800 px-3 py-1 rounded-full">周测</span>
                         </div>
                         <div class="flex justify-between items-center text-sm text-gray-500 mb-5">
-                            <div class="flex items-center">
-                                <i class="fa fa-clock-o mr-1 text-primary"></i> 60分钟
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fa fa-calendar mr-1 text-primary"></i> 2025-09-13
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fa fa-signal mr-1 text-primary"></i> 提高难度
-                            </div>
+                            <div><i class="fa fa-clock-o mr-1 text-primary"></i> 60分钟</div>
+                            <div><i class="fa fa-calendar mr-1 text-primary"></i> 2025-09-13</div>
+                            <div><i class="fa fa-signal mr-1 text-primary"></i> 提高难度</div>
                         </div>
-                        <button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center">
+                        <button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center exam-start-btn">
                             <i class="fa fa-play-circle mr-2"></i> 开始考试
                         </button>
                     </div>
                 </a>
+
+                <!-- 综合试卷：从题库随机抽题 -->
+                <a href="5.html" class="exam-card group slide-up max-w-lg w-full" data-exam-id="5" 
+                   data-subject="comprehensive" data-grade="11" data-difficulty="adaptive" 
+                   data-paper-type="random" data-keywords="高二,综合,随机抽题,智能组卷">
+                    <div class="h-48 bg-gradient-to-r from-teal-500 to-cyan-600 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                            <i class="fa fa-random text-white text-6xl transform group-hover:rotate-12 transition-transform duration-500"></i>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="subject-badge bg-white/90 text-teal-700">
+                                智能组卷
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-bold text-xl group-hover:text-primary transition-colors">智能综合测试（随机抽题）</h3>
+                            <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">30题</span>
+                        </div>
+                        <p class="text-gray-600 mb-5">从海量题库中随机抽取题目，每次测试内容不同，全面评估学习水平。</p>
+                        <div class="flex flex-wrap gap-3 mb-5">
+                            <span class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full">理科10题</span>
+                            <span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full">文科10题</span>
+                            <span class="text-xs bg-purple-100 text-purple-800 px-3 py-1 rounded-full">综合10题</span>
+                            <span class="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full">随机抽题</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-500 mb-5">
+                            <div><i class="fa fa-clock-o mr-1 text-primary"></i> 40分钟</div>
+                            <div><i class="fa fa-refresh mr-1 text-primary"></i> 每次不同</div>
+                            <div><i class="fa fa-signal mr-1 text-primary"></i> 自适应难度</div>
+                        </div>
+                        <button class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center exam-start-btn">
+                            <i class="fa fa-play-circle mr-2"></i> 随机抽题测试
+                        </button>
+                    </div>
+                </a>
+                
+                <!-- 下周预计上线的数学试卷 -->
+                <div class="exam-card-upcoming group slide-up max-w-lg w-full" data-exam-id="6" 
+                   data-subject="math" data-grade="11" data-difficulty="medium" 
+                   data-paper-type="weekly" data-keywords="高二,数学,周测,函数,几何">
+                    <div class="h-48 bg-gradient-to-r from-gray-400 to-gray-500 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <i class="fa fa-calculator text-white/70 text-6xl"></i>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="subject-badge bg-accent/90 text-white animate-pulse">
+                                即将上线
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-bold text-xl text-gray-600">高二第4周学业水平考试（数学）</h3>
+                            <span class="text-sm text-gray-400 bg-gray-100 px-2 py-1 rounded-full">35题</span>
+                        </div>
+                        <p class="text-gray-500 mb-5">重点考察三角函数与立体几何，包含基础题与提高题，帮助巩固学习成果。</p>
+                        <div class="flex flex-wrap gap-3 mb-5">
+                            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">三角函数15题</span>
+                            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">立体几何10题</span>
+                            <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">应用题10题</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-500 mb-5">
+                            <div><i class="fa fa-clock-o mr-1 text-gray-400"></i> 50分钟</div>
+                            <div><i class="fa fa-calendar mr-1 text-gray-400"></i> 预计10月7日</div>
+                            <div><i class="fa fa-signal mr-1 text-gray-400"></i> 中等难度</div>
+                        </div>
+                        <button class="w-full bg-gray-200 text-gray-500 font-medium py-3 px-6 rounded-lg cursor-not-allowed flex items-center justify-center" disabled>
+                            <i class="fa fa-hourglass-half mr-2"></i> 下周上线
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- 精简的平台数据 -->
+    <!-- 平台数据 -->
     <section class="bg-gray-100 py-8">
         <div class="container mx-auto px-4">
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div class="bg-white p-4 rounded-xl shadow-sm transform transition-all duration-500 hover:shadow-lg hover:scale-105">
-                    <div class="text-3xl font-bold text-primary mb-1 counter" data-target="2">0</div>
+                    <div class="text-3xl font-bold text-primary mb-1 counter" data-target="4">0</div>
                     <div class="text-gray-600 text-sm">可用试卷</div>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow-sm transform transition-all duration-500 hover:shadow-lg hover:scale-105">
-                    <div class="text-3xl font-bold text-primary mb-1 counter" data-target="45">0</div>
+                    <div class="text-3xl font-bold text-primary mb-1 counter" data-target="230">0</div>
                     <div class="text-gray-600 text-sm">试题总量</div>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow-sm transform transition-all duration-500 hover:shadow-lg hover:scale-105">
-                    <div class="text-3xl font-bold text-primary mb-1 counter" data-target="100">0</div>
+                    <div class="text-3xl font-bold text-primary mb-1 counter" data-target="98">0</div>
                     <div class="text-gray-600 text-sm">用户满意度</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm transform transition-all duration-500 hover:shadow-lg hover:scale-105">
+                    <div class="text-3xl font-bold text-primary mb-1 counter" data-target="5">0</div>
+                    <div class="text-gray-600 text-sm">覆盖学科</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 简化的页脚 -->
+    <!-- 页脚 -->
     <footer class="bg-dark text-white pt-8 pb-4">
         <div class="container mx-auto px-4">
             <div class="text-center text-gray-500 text-sm">
-                <p>© 2023 学业水平考试中心 版权所有</p>
+                <p>© 2025 学业水平考试中心 版权所有</p>
             </div>
         </div>
     </footer>
+
+    <!-- 标记题目列表悬浮窗 -->
+    <div class="marks-list hidden" id="marks-list">
+        <div class="marks-list-header">
+            <span>标记题目</span>
+            <button id="close-marks-list" class="text-gray-400 hover:text-gray-600">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="marks-list-items" id="marks-list-items">
+            <!-- 标记的题目序号将通过JS动态添加 -->
+        </div>
+    </div>
 
     <script>
         // 页面加载完成后执行
@@ -409,10 +577,16 @@
             const resetFiltersBtn = document.getElementById('reset-filters');
             const applyFiltersBtn = document.getElementById('apply-filters');
             const filterCount = document.getElementById('filter-count');
-            const examCards = document.querySelectorAll('.exam-card');
+            const examCards = document.querySelectorAll('.exam-card, .exam-card-upcoming');
             const activeFiltersContainer = document.getElementById('active-filters');
+            const timerDisplay = document.getElementById('timer-display');
+            const examTimer = document.getElementById('exam-timer');
+            const marksList = document.getElementById('marks-list');
+            const marksListItems = document.getElementById('marks-list-items');
+            const closeMarksList = document.getElementById('close-marks-list');
+            const examStartBtns = document.querySelectorAll('.exam-start-btn');
             
-            // 获取所有筛选下拉框（仅保留核心筛选条件）
+            // 获取所有筛选下拉框
             const filterSelects = {
                 grade: document.getElementById('grade-filter'),
                 difficulty: document.getElementById('difficulty-filter'),
@@ -422,24 +596,30 @@
             // 存储筛选条件的显示名称映射
             const filterValueNames = {
                 grade: { '10': '高一', '11': '高二', '12': '高三', 'all': '全部年级' },
-                difficulty: { 'easy': '基础', 'medium': '中等', 'hard': '提高', 'all': '全部难度' },
-                paperType: { 'weekly': '周测', 'monthly': '月考', 'midterm': '期中', 'final': '期末', 'all': '全部类型' },
-                subject: { 'physics': '物理', 'chemistry': '化学', 'biology': '生物', 'comprehensive': '综合', 'english': '英语' }
+                difficulty: { 'easy': '基础', 'medium': '中等', 'hard': '提高', 'adaptive': '自适应', 'all': '全部难度' },
+                paperType: { 'weekly': '周测', 'monthly': '月考', 'midterm': '期中', 'final': '期末', 'random': '随机抽题', 'all': '全部类型' },
+                subject: { 'physics': '物理', 'chemistry': '化学', 'biology': '生物', 'comprehensive': '综合', 'english': '英语', 'math': '数学' }
             };
+            
+            // 存储标记的题目
+            let markedQuestions = [];
+            // 模拟考试开始时间
+            let examStartTime = null;
+            // 考试时长（分钟）- 默认为60分钟
+            const examDuration = 60;
             
             // 初始化筛选标签
             updateActiveFilterTags();
             
             // 按钮功能
             backBtn.addEventListener('click', function() {
-                // 直接跳转到指定页面，替换为你的目标页面URL
-                window.location.href = 'indexdaohang.html';
-
-                // 添加点击反馈动画
-                this.classList.add('bg-primary/10');
+                // 添加点击反馈
+                this.classList.add('btn-press');
                 setTimeout(() => {
-                    this.classList.remove('bg-primary/10');
-                }, 300);
+                    this.classList.remove('btn-press');
+                    // 实际应用中可以跳转到首页
+                    window.location.href = '#';
+                }, 150);
             });
             
             // 导航栏滚动效果
@@ -456,24 +636,18 @@
             // 移动端菜单切换
             mobileMenuBtn.addEventListener('click', function() {
                 mobileMenu.classList.toggle('hidden');
-                mobileMenu.classList.toggle('fade-in');
-                
-                // 图标切换动画
-                const icon = mobileMenuBtn.querySelector('i');
-                icon.classList.add('scale-0');
-                setTimeout(() => {
-                    if (icon.classList.contains('fa-bars')) {
-                        icon.classList.remove('fa-bars');
-                        icon.classList.add('fa-times');
-                    } else {
-                        icon.classList.remove('fa-times');
-                        icon.classList.add('fa-bars');
-                    }
-                    icon.classList.remove('scale-0');
-                }, 150);
+                // 切换图标
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('fa-bars')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
             });
             
-            // 高级搜索功能
+            // 搜索框功能
             searchInput.addEventListener('focus', function() {
                 searchSuggestions.classList.remove('hidden');
             });
@@ -484,195 +658,135 @@
                 }, 200);
             });
             
-            // 搜索建议项点击处理
+            // 搜索建议点击
             document.querySelectorAll('#search-suggestions > div').forEach(item => {
                 item.addEventListener('click', function() {
-                    searchInput.value = this.querySelector('.font-medium').textContent;
+                    const text = this.querySelector('.font-medium').textContent;
+                    searchInput.value = text;
                     searchSuggestions.classList.add('hidden');
-                    
-                    // 执行搜索
-                    performSearch();
-                    
-                    // 如果点击的是试卷项，直接跳转
-                    if (this.querySelector('.font-medium').textContent.includes('学业水平考试') || 
-                        this.querySelector('.font-medium').textContent.includes('英语')) {
-                        const href = this.querySelector('.font-medium').textContent.includes('英语') 
-                            ? '高二英语第一单元测试.html' 
-                            : '高二第1~2周学业水平考试.html';
-                        window.location.href = href;
-                    }
                 });
             });
             
-            // 实时搜索处理
-            searchInput.addEventListener('input', performSearch);
-            
-            // 执行搜索的函数
-            function performSearch() {
-                const searchTerm = searchInput.value.toLowerCase().trim();
-                
-                if (searchTerm.length > 0) {
-                    searchSuggestions.classList.remove('hidden');
-                    
-                    // 筛选搜索建议
-                    document.querySelectorAll('#search-suggestions > div').forEach(item => {
-                        const text = item.textContent.toLowerCase();
-                        if (text.includes(searchTerm)) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                } else {
-                    // 搜索内容为空时显示所有建议
-                    document.querySelectorAll('#search-suggestions > div').forEach(item => {
-                        item.style.display = 'block';
-                    });
-                }
-                
-                // 更新搜索筛选标签
-                updateActiveFilterTags();
-                
-                // 应用搜索过滤到试卷
-                applyFilters();
-            }
-            
-            // 学科筛选按钮交互
+            // 筛选按钮功能
             filterBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    // 更新按钮状态
+                    // 重置所有按钮样式
                     filterBtns.forEach(b => {
                         b.classList.remove('filter-active');
                         b.classList.add('filter-inactive');
                     });
+                    
+                    // 设置当前按钮为活跃状态
                     this.classList.remove('filter-inactive');
                     this.classList.add('filter-active');
-                    
-                    // 更新筛选标签
-                    updateActiveFilterTags();
                     
                     // 应用筛选
                     applyFilters();
                 });
             });
             
-            // 筛选下拉框变化事件
-            Object.values(filterSelects).forEach(select => {
-                select.addEventListener('change', function() {
-                    // 显示活跃筛选标签区域
-                    activeFiltersContainer.classList.remove('hidden');
-                });
-            });
-            
-            // 应用筛选按钮
-            applyFiltersBtn.addEventListener('click', function() {
-                // 按钮反馈动画
-                this.classList.add('bg-primary/80');
-                setTimeout(() => {
-                    this.classList.remove('bg-primary/80');
-                }, 200);
-                
-                // 更新筛选标签
-                updateActiveFilterTags();
-                
-                // 应用筛选
-                applyFilters();
-            });
-            
-            // 重置筛选条件
+            // 重置筛选按钮
             resetFiltersBtn.addEventListener('click', function() {
-                // 重置按钮状态
-                filterBtns.forEach((btn, index) => {
-                    btn.classList.remove('filter-active', 'filter-inactive');
-                    if (index === 0) { // 第一个按钮是"全部试卷"
+                // 重置筛选按钮
+                filterBtns.forEach(btn => {
+                    if (btn.dataset.filter === 'all') {
+                        btn.classList.remove('filter-inactive');
                         btn.classList.add('filter-active');
                     } else {
+                        btn.classList.remove('filter-active');
                         btn.classList.add('filter-inactive');
                     }
                 });
                 
-                // 重置下拉框
-                filterSelects.grade.value = '11'; // 默认高二
-                filterSelects.difficulty.value = 'medium'; // 默认中等
-                filterSelects.paperType.value = 'all'; // 默认全部类型
-                
-                // 清空搜索框
-                searchInput.value = '';
-                searchSuggestions.classList.add('hidden');
-                
-                // 更新筛选标签
-                updateActiveFilterTags();
+                // 重置下拉筛选框
+                Object.values(filterSelects).forEach(select => {
+                    select.value = 'all';
+                });
                 
                 // 应用筛选
                 applyFilters();
-                
-                // 按钮反馈动画
-                this.classList.add('bg-gray-100');
-                setTimeout(() => {
-                    this.classList.remove('bg-gray-100');
-                }, 300);
             });
+            
+            // 应用筛选按钮
+            applyFiltersBtn.addEventListener('click', function() {
+                applyFilters();
+            });
+            
+            // 应用筛选逻辑
+            function applyFilters() {
+                // 获取当前活跃的学科筛选
+                let activeSubject = 'all';
+                filterBtns.forEach(btn => {
+                    if (btn.classList.contains('filter-active')) {
+                        activeSubject = btn.dataset.filter;
+                    }
+                });
+                
+                // 获取下拉筛选值
+                const activeGrade = filterSelects.grade.value;
+                const activeDifficulty = filterSelects.difficulty.value;
+                const activePaperType = filterSelects.paperType.value;
+                
+                // 统计符合条件的试卷数量
+                let count = 0;
+                
+                // 筛选试卷
+                examCards.forEach(card => {
+                    // 检查是否符合所有筛选条件
+                    const subjectMatch = activeSubject === 'all' || card.dataset.subject === activeSubject;
+                    const gradeMatch = activeGrade === 'all' || card.dataset.grade === activeGrade;
+                    const difficultyMatch = activeDifficulty === 'all' || card.dataset.difficulty === activeDifficulty;
+                    const paperTypeMatch = activePaperType === 'all' || card.dataset.paperType === activePaperType;
+                    
+                    // 显示或隐藏试卷
+                    if (subjectMatch && gradeMatch && difficultyMatch && paperTypeMatch) {
+                        card.style.display = 'block';
+                        count++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // 更新筛选计数
+                filterCount.textContent = `找到 ${count} 份符合条件的试卷`;
+                
+                // 更新活跃筛选标签
+                updateActiveFilterTags();
+            }
             
             // 更新活跃筛选标签
             function updateActiveFilterTags() {
                 // 清空现有标签
-                const tagContainer = activeFiltersContainer;
-                // 保留"已选条件"文本
-                const labelElement = tagContainer.querySelector('.text-gray-600');
+                activeFiltersContainer.innerHTML = '<div class="text-sm text-gray-600 mr-2 mt-1">已选条件：</div>';
                 
-                // 清空容器并重新添加标签
-                tagContainer.innerHTML = '';
-                if (labelElement) {
-                    tagContainer.appendChild(labelElement);
-                }
-                
-                // 获取当前筛选条件
-                const activeFilterBtn = document.querySelector('.filter-btn.filter-active');
-                const subjectFilter = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
-                const subjectName = activeFilterBtn ? activeFilterBtn.getAttribute('data-name') : '全部试卷';
-                
-                // 收集所有非默认筛选条件
-                const activeFilters = [];
-                
-                // 添加学科筛选标签（如果不是"全部试卷"）
-                if (subjectFilter !== 'all') {
-                    activeFilters.push({
-                        type: 'subject',
-                        value: subjectFilter,
-                        name: subjectName
-                    });
-                }
-                
-                // 添加下拉框筛选条件
-                Object.keys(filterSelects).forEach(key => {
-                    const select = filterSelects[key];
-                    const value = select.value;
-                    const defaultValues = {
-                        grade: '11',
-                        difficulty: 'medium'
-                    };
-                    const isDefault = defaultValues[key] ? (value === defaultValues[key]) : (value === 'all');
-                    
-                    if (!isDefault) {
-                        activeFilters.push({
-                            type: key,
-                            value: value,
-                            name: `${select.getAttribute('data-name')}: ${filterValueNames[key][value] || value}`
-                        });
+                // 获取当前活跃的筛选条件
+                let activeSubject = 'all';
+                filterBtns.forEach(btn => {
+                    if (btn.classList.contains('filter-active')) {
+                        activeSubject = btn.dataset.filter;
                     }
                 });
                 
-                // 添加搜索关键词标签
-                const searchTerm = searchInput.value.trim();
-                if (searchTerm) {
-                    activeFilters.push({
-                        type: 'search',
-                        value: searchTerm,
-                        name: `搜索: ${searchTerm}`
-                    });
+                const activeGrade = filterSelects.grade.value;
+                const activeDifficulty = filterSelects.difficulty.value;
+                const activePaperType = filterSelects.paperType.value;
+                
+                // 收集活跃筛选条件
+                const activeFilters = [];
+                if (activeSubject !== 'all') {
+                    activeFilters.push({ type: 'subject', value: activeSubject });
+                }
+                if (activeGrade !== 'all') {
+                    activeFilters.push({ type: 'grade', value: activeGrade });
+                }
+                if (activeDifficulty !== 'all') {
+                    activeFilters.push({ type: 'difficulty', value: activeDifficulty });
+                }
+                if (activePaperType !== 'all') {
+                    activeFilters.push({ type: 'paperType', value: activePaperType });
                 }
                 
-                // 如果有活跃筛选条件，显示容器
+                // 显示或隐藏筛选标签容器
                 if (activeFilters.length > 0) {
                     activeFiltersContainer.classList.remove('hidden');
                     
@@ -680,22 +794,25 @@
                     activeFilters.forEach(filter => {
                         const tag = document.createElement('div');
                         tag.className = 'filter-tag';
-                        tag.innerHTML = `${filter.name} <i class="fa fa-times filter-clear" data-type="${filter.type}" data-value="${filter.value}"></i>`;
-                        tagContainer.appendChild(tag);
+                        tag.innerHTML = `
+                            ${filterValueNames[filter.type][filter.value]}
+                            <span class="filter-clear" data-type="${filter.type}" data-value="${filter.value}">
+                                <i class="fa fa-times-circle"></i>
+                            </span>
+                        `;
+                        activeFiltersContainer.appendChild(tag);
                     });
                     
-                    // 为筛选标签添加删除功能
+                    // 添加筛选标签的清除功能
                     document.querySelectorAll('.filter-clear').forEach(clearBtn => {
-                        clearBtn.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            const type = this.getAttribute('data-type');
-                            const value = this.getAttribute('data-value');
+                        clearBtn.addEventListener('click', function() {
+                            const type = this.dataset.type;
+                            const value = this.dataset.value;
                             
-                            // 根据类型清除相应的筛选条件
+                            // 重置对应的筛选条件
                             if (type === 'subject') {
-                                // 重置学科筛选按钮
                                 filterBtns.forEach(btn => {
-                                    if (btn.getAttribute('data-filter') === 'all') {
+                                    if (btn.dataset.filter === 'all') {
                                         btn.classList.remove('filter-inactive');
                                         btn.classList.add('filter-active');
                                     } else {
@@ -703,109 +820,129 @@
                                         btn.classList.add('filter-inactive');
                                     }
                                 });
-                            } else if (type === 'search') {
-                                // 清空搜索框
-                                searchInput.value = '';
-                                searchSuggestions.classList.add('hidden');
-                            } else if (Object.keys(filterSelects).includes(type)) {
-                                // 重置下拉框到默认值
-                                const defaultValues = {
-                                    grade: '11',
-                                    difficulty: 'medium',
-                                    paperType: 'all'
-                                };
-                                filterSelects[type].value = defaultValues[type] || 'all';
+                            } else if (type === 'grade') {
+                                filterSelects.grade.value = 'all';
+                            } else if (type === 'difficulty') {
+                                filterSelects.difficulty.value = 'all';
+                            } else if (type === 'paperType') {
+                                filterSelects.paperType.value = 'all';
                             }
                             
-                            // 更新筛选标签和应用筛选
-                            updateActiveFilterTags();
+                            // 应用筛选
                             applyFilters();
                         });
                     });
                 } else {
-                    // 没有活跃筛选条件，隐藏容器
                     activeFiltersContainer.classList.add('hidden');
                 }
             }
             
-            // 应用筛选条件到试卷列表
-            function applyFilters() {
-                // 获取当前所有筛选条件
-                const activeFilterBtn = document.querySelector('.filter-btn.filter-active');
-                const subjectFilter = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
-                const gradeFilter = filterSelects.grade.value;
-                const difficultyFilter = filterSelects.difficulty.value;
-                const paperTypeFilter = filterSelects.paperType.value;
-                const searchTerm = searchInput.value.toLowerCase().trim();
-                
-                let visibleCount = 0;
-                
-                // 遍历所有试卷卡片并应用筛选
-                examCards.forEach(card => {
-                    const cardSubject = card.getAttribute('data-subject');
-                    const cardGrade = card.getAttribute('data-grade');
-                    const cardDifficulty = card.getAttribute('data-difficulty');
-                    const cardPaperType = card.getAttribute('data-paper-type');
-                    const cardKeywords = card.getAttribute('data-keywords').toLowerCase();
+            // 开始考试按钮效果 - 修复跳转问题
+            examStartBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    // 添加点击反馈
+                    this.classList.add('btn-press');
                     
-                    // 检查是否符合所有筛选条件
-                    const subjectMatch = subjectFilter === 'all' || cardSubject === subjectFilter;
-                    const gradeMatch = gradeFilter === 'all' || cardGrade === gradeFilter;
-                    const difficultyMatch = difficultyFilter === 'all' || cardDifficulty === difficultyFilter;
-                    const paperTypeMatch = paperTypeFilter === 'all' || cardPaperType === paperTypeFilter;
-                    const searchMatch = !searchTerm || cardKeywords.includes(searchTerm);
+                    // 获取父级a标签
+                    const link = this.closest('a');
                     
-                    // 所有条件都满足才显示
-                    const isVisible = subjectMatch && gradeMatch && difficultyMatch && paperTypeMatch && searchMatch;
-                    
-                    if (isVisible) {
-                        card.style.display = 'block';
-                        visibleCount++;
+                    // 如果存在链接，使用链接的href进行跳转
+                    if (link && link.getAttribute('href')) {
+                        // 短暂延迟以显示按钮反馈
+                        setTimeout(() => {
+                            this.classList.remove('btn-press');
+                            window.location.href = link.getAttribute('href');
+                        }, 150);
                     } else {
-                        card.style.display = 'none';
+                        // 没有链接的情况（如即将上线的试卷）
+                        setTimeout(() => {
+                            this.classList.remove('btn-press');
+                        }, 150);
                     }
                 });
+            });
+            
+            // 开始考试计时器
+            function startExamTimer() {
+                // 如果计时器已在运行，则重置
+                if (examStartTime) {
+                    clearInterval(window.examTimerInterval);
+                }
                 
-                // 更新筛选结果计数
-                filterCount.textContent = `找到 ${visibleCount} 份符合条件的试卷`;
+                // 设置开始时间
+                examStartTime = new Date();
+                
+                // 更新计时器显示
+                updateTimerDisplay();
+                
+                // 设置定时器
+                window.examTimerInterval = setInterval(updateTimerDisplay, 1000);
+            }
+            
+            // 更新计时器显示
+            function updateTimerDisplay() {
+                if (!examStartTime) return;
+                
+                // 计算已用时间
+                const now = new Date();
+                const elapsedSeconds = Math.floor((now - examStartTime) / 1000);
+                
+                // 格式化时间
+                const hours = Math.floor(elapsedSeconds / 3600).toString().padStart(2, '0');
+                const minutes = Math.floor((elapsedSeconds % 3600) / 60).toString().padStart(2, '0');
+                const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+                
+                // 更新显示
+                timerDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+                
+                // 检查是否接近考试结束时间（剩余10分钟）
+                if (elapsedSeconds > (examDuration * 60 - 600)) {
+                    timerDisplay.classList.add('timer-warning');
+                } else {
+                    timerDisplay.classList.remove('timer-warning');
+                }
             }
             
             // 数字计数动画
             const counters = document.querySelectorAll('.counter');
-            const observerOptions = {
-                threshold: 0.5
-            };
-            
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const counter = entry.target;
                         const target = +counter.getAttribute('data-target');
                         const duration = 2000; // 动画持续时间（毫秒）
-                        const stepTime = 20; // 每步时间间隔（毫秒）
-                        const totalSteps = duration / stepTime;
-                        const stepSize = target / totalSteps;
-                        let current = 0;
+                        const frameDuration = 1000 / 60; // 每帧持续时间
+                        const totalFrames = Math.round(duration / frameDuration);
+                        let frame = 0;
                         
-                        const updateCounter = () => {
-                            current += stepSize;
-                            if (current < target) {
-                                counter.textContent = Math.ceil(current);
-                                setTimeout(updateCounter, stepTime);
-                            } else {
-                                counter.textContent = target;
+                        const updateCount = () => {
+                            frame++;
+                            const progress = frame / totalFrames;
+                            const currentCount = Math.round(target * progress);
+                            
+                            counter.textContent = currentCount;
+                            
+                            if (frame < totalFrames) {
+                                requestAnimationFrame(updateCount);
                             }
                         };
                         
-                        updateCounter();
+                        updateCount();
                         observer.unobserve(counter);
                     }
                 });
-            }, observerOptions);
+            }, { threshold: 0.5 });
             
             counters.forEach(counter => {
                 observer.observe(counter);
             });
+            
+            // 初始化页面动画
+            setTimeout(() => {
+                document.querySelectorAll('.slide-up').forEach((el, index) => {
+                    el.style.opacity = '1';
+                });
+            }, 100);
         });
     </script>
 </body>

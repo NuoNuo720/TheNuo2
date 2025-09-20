@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高二综合知识水平测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        danger: '#ef4444',
+                        science: '#8b5cf6',
+                        literature: '#ec4899',
+                        society: '#f59e0b',
+                        technology: '#10b981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .question-card {
+                @apply bg-white rounded-xl shadow-sm p-5 mb-6 transition-all duration-300 hover:shadow-md;
+            }
+            .option-item {
+                @apply border border-gray-300 rounded-lg p-3 mb-3 cursor-pointer hover:border-primary hover:bg-blue-50 transition-all duration-200;
+            }
+            .option-selected {
+                @apply border-primary bg-blue-50 pl-8 relative;
+            }
+            .option-selected::before {
+                content: "✓";
+                position: absolute;
+                left: 3px;
+                color: #3b82f6;
+                font-weight: bold;
+            }
+            .question-type-badge {
+                @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+            }
+            .progress-container {
+                @apply w-full bg-gray-200 rounded-full h-2.5 mb-6 overflow-hidden;
+            }
+            .progress-bar {
+                @apply bg-primary h-2.5 rounded-full transition-all duration-500 ease-out;
+            }
+            .timer-container {
+                @apply flex items-center bg-gray-100 px-3 py-1.5 rounded-lg text-sm;
+            }
+            .timer-warning {
+                @apply text-danger animate-pulse;
+            }
+            .mark-btn {
+                @apply text-gray-400 hover:text-accent transition-colors p-1;
+            }
+            .mark-btn.active {
+                @apply text-accent;
+            }
+            .marks-list {
+                @apply fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-3 z-40 max-w-xs;
+            }
+            .marks-list-header {
+                @apply font-medium mb-2 flex justify-between items-center;
+            }
+            .marks-list-items {
+                @apply flex flex-wrap gap-1;
+            }
+            .mark-item {
+                @apply w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm cursor-pointer hover:bg-primary hover:text-white transition-colors;
+            }
+            .nav-btn {
+                @apply fixed bottom-4 left-1/2 -translate-x-1/2 bg-primary text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 z-30 transition-all duration-300 hover:bg-primary/90 hover:shadow-xl;
+            }
+            .prev-btn {
+                @apply left-[calc(50%-100px)];
+            }
+            .next-btn {
+                @apply left-[calc(50%+100px)];
+            }
+            .question-image {
+                @apply w-full max-w-md mx-auto rounded-lg mb-4 shadow-sm;
+            }
+        }
+        
+        /* 页面过渡动画 */
+        .page-transition {
+            animation: pageTransition 0.4s ease-out forwards;
+        }
+        
+        @keyframes pageTransition {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 按钮点击反馈 */
+        .btn-press {
+            transform: scale(0.98);
+        }
+        
+        /* 题目加载动画 */
+        .question-fade-in {
+            animation: questionFadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes questionFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800 page-transition">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <!-- 返回按钮 -->
+                <button id="back-btn" class="mr-2 text-gray-600 hover:text-primary transition-colors flex items-center">
+                    <i class="fa fa-arrow-left mr-1"></i>
+                    <span class="hidden sm:inline">返回试卷列表</span>
+                </button>
+                
+                <div class="flex items-center space-x-2 flex-grow justify-center">
+                    <h1 class="text-lg md:text-xl font-bold text-gray-800 text-center">高二综合知识水平测试</h1>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- 计时器 -->
+                    <div class="timer-container hidden md:flex" id="exam-timer">
+                        <i class="fa fa-clock-o mr-1.5 text-primary"></i>
+                        <span id="timer-display">00:30:00</span>
+                    </div>
+                    
+                    <!-- 题目总数和已完成数 -->
+                    <div class="text-sm bg-gray-100 px-3 py-1.5 rounded-lg">
+                        <span id="completed-count">0</span>/<span id="total-count">25</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 答题进度条 -->
+            <div class="progress-container mb-4">
+                <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- 考试说明 -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-8">
+            <div class="flex items-start mb-3">
+                <i class="fa fa-info-circle text-primary mt-0.5 mr-2"></i>
+                <h2 class="text-lg font-bold">考试说明</h2>
+            </div>
+            <ul class="text-gray-600 text-sm space-y-2 ml-6 list-disc">
+                <li>本试卷共25题，满分100分，考试时间30分钟</li>
+                <li>包含科学6题、文学6题、社会6题、科技7题</li>
+                <li>请在规定时间内完成答题，超时将自动提交</li>
+                <li>点击选项即可作答，可随时修改答案</li>
+                <li>可标记不确定的题目，稍后回头检查</li>
+            </ul>
+        </div>
+        
+        <!-- 题目容器 -->
+        <div id="questions-container" class="space-y-6">
+            <!-- 科学题部分 -->
+            <div class="mb-8" data-type-section="science">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <span class="question-type-badge bg-science/10 text-science mr-2">科学</span>
+                    科学题 (1-6题)
+                </h2>
+                
+                <!-- 题目1：科学 -->
+                <div class="question-card question-fade-in" data-question-id="1" data-type="science">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-medium text-lg">1. 下列哪种行星属于类地行星？（ ）</h3>
+                        <button class="mark-btn" data-question-id="1">
+                            <i class="fa fa-bookmark-o"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-2 ml-4">
+                        <div class="option-item" data-question-id="1" data-option="A">
+                            A. 木星
+                        </div>
+                        <div class="option-item" data-question-id="1" data-option="B">
+                            B. 土星
+                        </div>
+                        <div class="option-item" data-question-id="1" data-option="C">
+                            C. 火星
+                        </div>
+                        <div class="option-item" data-question-id="1" data-option="D">
+                            D. 天王星
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 题目2：科学 -->
+                <div class="question-card question-fade-in" data-question-id="2" data-type="science" style="animation-delay: 0.1s">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-medium text-lg">2. 光合作用的产物主要是什么？（ ）</h3>
+                        <button class="mark-btn" data-question-id="2">
+                            <i class="fa fa-bookmark-o"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-2 ml-4">
+                        <div class="option-item" data-question-id="2" data-option="A">
+                            A. 氧气和葡萄糖
+                        </div>
+                        <div class="option-item" data-question-id="2" data-option="B">
+                            B. 二氧化碳和水
+                        </div>
+                        <div class="option-item" data-question-id="2" data-option="C">
+                            C. 蛋白质和脂肪
+                        </div>
+                        <div class="option-item" data-question-id="2" data-option="D">
+                            D. 维生素和矿物质
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 文学题部分 -->
+            <div class="mb-8" data-type-section="literature">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <span class="question-type-badge bg-literature/10 text-literature mr-2">文学</span>
+                    文学题 (7-12题)
+                </h2>
+                
+                <!-- 题目7：文学 -->
+                <div class="question-card question-fade-in" data-question-id="7" data-type="literature" style="animation-delay: 0.2s">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-medium text-lg">7. 《红楼梦》的作者是（ ）</h3>
+                        <button class="mark-btn" data-question-id="7">
+                            <i class="fa fa-bookmark-o"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-2 ml-4">
+                        <div class="option-item" data-question-id="7" data-option="A">
+                            A. 吴承恩
+                        </div>
+                        <div class="option-item" data-question-id="7" data-option="B">
+                            B. 曹雪芹
+                        </div>
+                        <div class="option-item" data-question-id="7" data-option="C">
+                            C. 罗贯中
+                        </div>
+                        <div class="option-item" data-question-id="7" data-option="D">
+                            D. 施耐庵
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 更多题目将通过懒加载显示 -->
+        </div>
+        
+        <!-- 加载更多提示 -->
+        <div id="load-more" class="text-center py-6">
+            <button id="load-more-btn" class="bg-primary/10 text-primary px-6 py-2 rounded-lg hover:bg-primary/20 transition-all duration-300">
+                加载更多题目 <i class="fa fa-chevron-down ml-1"></i>
+            </button>
+        </div>
+        
+        <!-- 提交按钮 -->
+        <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-30">
+            <button id="submit-btn" class="bg-primary text-white px-8 py-3 rounded-lg shadow-lg font-medium transition-all duration-300 hover:bg-primary/90 hover:shadow-xl">
+                提交试卷
+            </button>
+        </div>
+        
+        <!-- 上一题/下一题按钮 -->
+        <button id="prev-btn" class="nav-btn prev-btn opacity-50 pointer-events-none">
+            <i class="fa fa-chevron-left"></i> 上一题
+        </button>
+        <button id="next-btn" class="nav-btn next-btn">
+            下一题 <i class="fa fa-chevron-right"></i>
+        </button>
+    </main>
+    
+    <!-- 标记题目列表悬浮窗 -->
+    <div class="marks-list hidden" id="marks-list">
+        <div class="marks-list-header">
+            <span>标记题目</span>
+            <button id="close-marks-list" class="text-gray-400 hover:text-gray-600">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="marks-list-items" id="marks-list-items">
+            <div class="text-gray-400 text-sm w-full text-center">暂无标记题目</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM元素
+            const backBtn = document.getElementById('back-btn');
+            const timerDisplay = document.getElementById('timer-display');
+            const progressBar = document.getElementById('progress-bar');
+            const completedCountEl = document.getElementById('completed-count');
+            const totalCountEl = document.getElementById('total-count');
+            const questionsContainer = document.getElementById('questions-container');
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            const loadMoreContainer = document.getElementById('load-more');
+            const submitBtn = document.getElementById('submit-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const marksList = document.getElementById('marks-list');
+            const marksListItems = document.getElementById('marks-list-items');
+            const closeMarksList = document.getElementById('close-marks-list');
+            
+            // 数据存储
+            const totalQuestions = 25; // 总题目数
+            let completedCount = 0; // 已完成题目数
+            let userAnswers = {}; // 用户答案存储 {questionId: option}
+            let markedQuestions = []; // 标记的题目
+            let currentQuestionIndex = 0; // 当前题目索引
+            let loadedQuestions = 7; // 已加载题目数
+            
+            // 初始化页面
+            totalCountEl.textContent = totalQuestions;
+            updateProgress();
+            
+            // 考试计时功能 - 30分钟
+            const examDuration = 30 * 60; // 30分钟，单位秒
+            let remainingTime = examDuration;
+            let timerInterval;
+            
+            function startTimer() {
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+            
+            function updateTimer() {
+                remainingTime--;
+                
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "00:00:00";
+                    timerDisplay.classList.add('timer-warning');
+                    alert('考试时间已到，自动提交试卷！');
+                    submitExam();
+                    return;
+                }
+                
+                // 格式化时间
+                const hours = Math.floor(remainingTime / 3600);
+                const minutes = Math.floor((remainingTime % 3600) / 60);
+                const seconds = remainingTime % 60;
+                
+                timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // 剩余时间少于5分钟时添加警告样式
+                if (remainingTime <= 300) {
+                    timerDisplay.classList.add('timer-warning');
+                }
+            }
+            
+            // 开始计时
+            startTimer();
+            
+            // 选项点击事件
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('option-item') || e.target.closest('.option-item')) {
+                    const option = e.target.closest('.option-item');
+                    const questionId = option.getAttribute('data-question-id');
+                    const selectedOption = option.getAttribute('data-option');
+                    
+                    // 清除同一题目的其他选项选中状态
+                    document.querySelectorAll(`.option-item[data-question-id="${questionId}"]`).forEach(item => {
+                        item.classList.remove('option-selected');
+                    });
+                    
+                    // 设置当前选项为选中状态
+                    option.classList.add('option-selected');
+                    
+                    // 记录答案
+                    const wasCompleted = questionId in userAnswers;
+                    userAnswers[questionId] = selectedOption;
+                    
+                    // 更新已完成计数（如果是新完成的题目）
+                    if (!wasCompleted) {
+                        completedCount++;
+                        updateProgress();
+                    }
+                    
+                    // 更新导航按钮状态
+                    updateNavButtons();
+                }
+            });
+            
+            // 题目标记功能
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.mark-btn')) {
+                    const btn = e.target.closest('.mark-btn');
+                    const questionId = btn.getAttribute('data-question-id');
+                    const icon = btn.querySelector('i');
+                    
+                    // 切换标记状态
+                    if (markedQuestions.includes(questionId)) {
+                        // 移除标记
+                        markedQuestions = markedQuestions.filter(id => id !== questionId);
+                        icon.classList.remove('fa-bookmark');
+                        icon.classList.add('fa-bookmark-o');
+                        btn.classList.remove('active');
+                    } else {
+                        // 添加标记
+                        markedQuestions.push(questionId);
+                        icon.classList.remove('fa-bookmark-o');
+                        icon.classList.add('fa-bookmark');
+                        btn.classList.add('active');
+                    }
+                    
+                    // 更新标记列表
+                    updateMarksList();
+                }
+            });
+            
+            // 更新标记列表
+            function updateMarksList() {
+                marksListItems.innerHTML = '';
+                
+                if (markedQuestions.length === 0) {
+                    marksListItems.innerHTML = '<div class="text-gray-400 text-sm w-full text-center">暂无标记题目</div>';
+                    return;
+                }
+                
+                // 排序标记的题目
+                markedQuestions.sort((a, b) => a - b);
+                
+                markedQuestions.forEach(questionId => {
+                    const markItem = document.createElement('div');
+                    markItem.className = 'mark-item';
+                    markItem.textContent = questionId;
+                    markItem.addEventListener('click', () => {
+                        jumpToQuestion(questionId);
+                    });
+                    marksListItems.appendChild(markItem);
+                });
+            }
+            
+            // 关闭标记列表
+            closeMarksList.addEventListener('click', function() {
+                marksList.classList.add('hidden');
+            });
+            
+            // 点击页面其他区域显示标记列表
+            document.addEventListener('click', function(e) {
+                if (markedQuestions.length > 0 && 
+                    !marksList.contains(e.target) && 
+                    !e.target.closest('.mark-btn') &&
+                    !e.target.closest('#close-marks-list')) {
+                    marksList.classList.remove('hidden');
+                }
+            });
+            
+            // 加载更多题目
+            loadMoreBtn.addEventListener('click', function() {
+                this.classList.add('btn-press');
+                
+                setTimeout(() => {
+                    this.classList.remove('btn-press');
+                    
+                    // 题目类型和样式
+                    const questionTypes = ['science', 'literature', 'society', 'technology'];
+                    const typeLabels = {
+                        'science': { badge: '科学', color: 'science' },
+                        'literature': { badge: '文学', color: 'literature' },
+                        'society': { badge: '社会', color: 'society' },
+                        'technology': { badge: '科技', color: 'technology' }
+                    };
+                    
+                    // 一次加载8题
+                    const batchSize = 8;
+                    const end = Math.min(loadedQuestions + batchSize, totalQuestions);
+                    
+                    for (let i = loadedQuestions + 1; i <= end; i++) {
+                        // 确定题目类型
+                        let questionType;
+                        if (i <= 6) questionType = 'science';
+                        else if (i <= 12) questionType = 'literature';
+                        else if (i <= 18) questionType = 'society';
+                        else questionType = 'technology';
+                        
+                        const typeInfo = typeLabels[questionType];
+                        
+                        // 创建题目元素
+                        const questionEl = document.createElement('div');
+                        questionEl.className = 'question-card question-fade-in';
+                        questionEl.setAttribute('data-question-id', i);
+                        questionEl.setAttribute('data-type', questionType);
+                        questionEl.style.animationDelay = `${(i - loadedQuestions - 1) * 0.1}s`;
+                        
+                        // 题目内容
+                        let questionText = '';
+                        let questionContent = '';
+                        
+                        switch(questionType) {
+                            case 'science':
+                                questionText = `${i}. 下列哪种气体是导致温室效应的主要原因？（ ）`;
+                                break;
+                            case 'literature':
+                                questionText = `${i}. 鲁迅的代表作不包括下列哪一部？（ ）`;
+                                break;
+                            case 'society':
+                                questionText = `${i}. 中国古代四大发明不包括（ ）`;
+                                break;
+                            case 'technology':
+                                if (i === 19) {
+                                    questionContent = `<img src="https://picsum.photos/400/200?random=1" alt="计算机设备图片" class="question-image">`;
+                                }
+                                questionText = `${i}. 第一台电子计算机诞生于哪一年？（ ）`;
+                                break;
+                        }
+                        
+                        questionEl.innerHTML = `
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center">
+                                    <span class="question-type-badge bg-${typeInfo.color}/10 text-${typeInfo.color} mr-2">${typeInfo.badge}</span>
+                                    <h3 class="font-medium text-lg">${questionText}</h3>
+                                </div>
+                                <button class="mark-btn" data-question-id="${i}">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                            </div>
+                            ${questionContent}
+                            <div class="space-y-2 ml-4">
+                                <div class="option-item" data-question-id="${i}" data-option="A">
+                                    A. 选项A
+                                </div>
+                                <div class="option-item" data-question-id="${i}" data-option="B">
+                                    B. 选项B
+                                </div>
+                                <div class="option-item" data-question-id="${i}" data-option="C">
+                                    C. 选项C
+                                </div>
+                                <div class="option-item" data-question-id="${i}" data-option="D">
+                                    D. 选项D
+                                </div>
+                            </div>
+                        `;
+                        
+                        // 添加到对应题型区域
+                        let typeSection = document.querySelector(`div[data-type-section="${questionType}"]`);
+                        if (!typeSection) {
+                            typeSection = document.createElement('div');
+                            typeSection.className = 'mb-8';
+                            typeSection.setAttribute('data-type-section', questionType);
+                            typeSection.innerHTML = `
+                                <h2 class="text-xl font-bold mb-4 flex items-center">
+                                    <span class="question-type-badge bg-${typeInfo.color}/10 text-${typeInfo.color} mr-2">${typeInfo.badge}</span>
+                                    ${typeInfo.badge}题 (${questionType === 'science' ? '1-6' : 
+                                      questionType === 'literature' ? '7-12' : 
+                                      questionType === 'society' ? '13-18' : '19-25'}题)
+                                </h2>
+                            `;
+                            questionsContainer.appendChild(typeSection);
+                        }
+                        typeSection.appendChild(questionEl);
+                    }
+                    
+                    loadedQuestions = end;
+                    
+                    // 如果所有题目都已加载，隐藏加载更多按钮
+                    if (loadedQuestions >= totalQuestions) {
+                        loadMoreContainer.style.display = 'none';
+                    }
+                }, 150);
+            });
+            
+            // 提交试卷
+            submitBtn.addEventListener('click', function() {
+                this.classList.add('btn-press');
+                
+                setTimeout(() => {
+                    this.classList.remove('btn-press');
+                    
+                    if (confirm(`您已完成${completedCount}/${totalQuestions}题，确定要提交试卷吗？`)) {
+                        // 显示提交动画
+                        this.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 提交中...';
+                        this.disabled = true;
+                        
+                        // 模拟提交过程
+                        setTimeout(() => {
+                            // 页面过渡效果
+                            document.body.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                            setTimeout(() => {
+                                // 跳转到试卷列表页
+                                window.location.href = 'Exam.html';
+                            }, 300);
+                        }, 1500);
+                    }
+                }, 150);
+            });
+            
+            // 更新进度条和已完成计数
+            function updateProgress() {
+                completedCountEl.textContent = completedCount;
+                const progress = (completedCount / totalQuestions) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+            
+            // 上一题/下一题导航
+            function updateNavButtons() {
+                const questions = document.querySelectorAll('.question-card');
+                currentQuestionIndex = Array.from(questions).findIndex(q => {
+                    const rect = q.getBoundingClientRect();
+                    return rect.top >= 0 && rect.top < window.innerHeight / 2;
+                });
+                
+                // 更新按钮状态
+                if (currentQuestionIndex <= 0) {
+                    prevBtn.classList.add('opacity-50', 'pointer-events-none');
+                } else {
+                    prevBtn.classList.remove('opacity-50', 'pointer-events-none');
+                }
+                
+                if (currentQuestionIndex >= questions.length - 1 && loadedQuestions >= totalQuestions) {
+                    nextBtn.classList.add('opacity-50', 'pointer-events-none');
+                } else {
+                    nextBtn.classList.remove('opacity-50', 'pointer-events-none');
+                }
+            }
+            
+            // 上一题按钮
+            prevBtn.addEventListener('click', function() {
+                this.classList.add('btn-press');
+                
+                setTimeout(() => {
+                    this.classList.remove('btn-press');
+                    
+                    const questions = document.querySelectorAll('.question-card');
+                    if (currentQuestionIndex > 0) {
+                        const prevQuestion = questions[currentQuestionIndex - 1];
+                        scrollToQuestion(prevQuestion);
+                    }
+                }, 150);
+            });
+            
+            // 下一题按钮
+            nextBtn.addEventListener('click', function() {
+                this.classList.add('btn-press');
+                
+                setTimeout(() => {
+                    this.classList.remove('btn-press');
+                    
+                    const questions = document.querySelectorAll('.question-card');
+                    
+                    // 如果当前是最后一题且还有未加载的题目，则加载更多
+                    if (currentQuestionIndex >= questions.length - 1 && loadedQuestions < totalQuestions) {
+                        loadMoreBtn.click();
+                        return;
+                    }
+                    
+                    if (currentQuestionIndex < questions.length - 1) {
+                        const nextQuestion = questions[currentQuestionIndex + 1];
+                        scrollToQuestion(nextQuestion);
+                    }
+                }, 150);
+            });
+            
+            // 滚动到指定题目
+            function scrollToQuestion(questionEl) {
+                window.scrollTo({
+                    top: questionEl.offsetTop - 120, // 减去导航栏高度
+                    behavior: 'smooth'
+                });
+                
+                // 高亮显示目标题目
+                questionEl.classList.add('ring-2', 'ring-primary');
+                setTimeout(() => {
+                    questionEl.classList.remove('ring-2', 'ring-primary');
+                }, 1000);
+                
+                // 更新当前题目索引
+                setTimeout(updateNavButtons, 500);
+            }
+            
+            // 跳转到指定题号
+            function jumpToQuestion(questionId) {
+                const questionEl = document.querySelector(`.question-card[data-question-id="${questionId}"]`);
+                if (questionEl) {
+                    scrollToQuestion(questionEl);
+                    marksList.classList.add('hidden');
+                } else {
+                    // 如果题目未加载，先加载
+                    loadMoreBtn.click();
+                    // 延迟后再次尝试跳转
+                    setTimeout(() => {
+                        const qEl = document.querySelector(`.question-card[data-question-id="${questionId}"]`);
+                        if (qEl) {
+                            scrollToQuestion(qEl);
+                            marksList.classList.add('hidden');
+                        }
+                    }, 1000);
+                }
+            }
+            
+            // 返回按钮
+            backBtn.addEventListener('click', function() {
+                this.classList.add('btn-press');
+                
+                setTimeout(() => {
+                    this.classList.remove('btn-press');
+                    
+                    if (confirm('确定要离开考试页面吗？未完成的题目将不会保存。')) {
+                        // 页面过渡效果
+                        document.body.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                        setTimeout(() => {
+                            window.location.href = 'Exam.html';
+                        }, 300);
+                    }
+                }, 150);
+            });
+            
+            // 初始化导航按钮状态
+            updateNavButtons();
+            
+            // 滚动时更新导航按钮状态
+            window.addEventListener('scroll', updateNavButtons);
+        });
+    </script>
+</body>
+</html>
