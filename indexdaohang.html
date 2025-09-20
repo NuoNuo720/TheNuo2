@@ -21,6 +21,7 @@
             --text-color: #333;
             --card-bg: white;
             --navbar-bg: #333;
+            --sidebar-bg: #f8f9fa;
             --primary-color: #3498db;
             --primary-dark: #2980b9;
             --accent-color: #9b59b6;
@@ -37,6 +38,7 @@
             --text-color: #f0f4f8;
             --card-bg: #252a41;
             --navbar-bg: #16213e;
+            --sidebar-bg: #1e2541;
             --border-color: #4a5568;
             --light-bg: #323851;
             --shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -122,64 +124,160 @@
             min-height: 100vh;
             padding: 0;
             line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
         }
 
         header {
             text-align: center;
-            margin-bottom: 40px;
-            padding: 20px 0;
+            padding: 15px 0;
+            background-color: var(--navbar-bg);
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         h1 {
-            color: var(--text-color);
-            margin-bottom: 10px;
-            font-size: 2.2rem;
-            position: relative;
+            color: white;
+            margin-bottom: 5px;
+            font-size: 1.8rem;
             display: inline-block;
         }
 
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 10%;
-            width: 80%;
-            height: 3px;
-            background-color: var(--primary-color);
-            border-radius: 3px;
-        }
-
         .subtitle {
-            color: #667580;
-            font-size: 1.1rem;
+            color: #b0b8c0;
+            font-size: 0.9rem;
             max-width: 600px;
             margin: 0 auto;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
 
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 220px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding: 0 15px;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 12px;
+            padding-left: 10px;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-item {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+        }
+
+        .sidebar-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* 主内容区 */
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+
+        .search-bar {
+            width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 15px 8px 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        /* 游戏卡片网格 */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
-            padding: 20px 0;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            padding: 10px 0;
         }
 
         .nav-card {
             background-color: var(--card-bg);
             border-radius: 12px;
-            padding: 30px 20px;
+            padding: 20px 15px;
             text-align: center;
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
             cursor: pointer;
             border: 2px solid transparent;
-            opacity: 0;
-            transform: translateY(20px);
             position: relative;
             overflow: hidden;
             user-select: none;
@@ -206,7 +304,7 @@
         }
 
         .nav-card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             border-color: var(--primary-color);
         }
@@ -216,8 +314,8 @@
         }
 
         .card-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: 40px;
+            margin-bottom: 15px;
             color: var(--primary-color);
             transition: transform 0.3s ease;
         }
@@ -227,8 +325,8 @@
         }
 
         .card-title {
-            font-size: 1.4rem;
-            margin-bottom: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
             color: var(--text-color);
             transition: color 0.3s ease;
         }
@@ -239,7 +337,7 @@
 
         .card-desc {
             color: #7f8c8d;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             line-height: 1.5;
         }
 
@@ -280,66 +378,46 @@
 
         footer {
             text-align: center;
-            margin-top: 60px;
+            padding: 10px 0;
             color: #95a5a6;
-            font-size: 0.9rem;
-            padding: 20px 0;
+            font-size: 0.8rem;
             border-top: 1px solid var(--border-color);
-        }
-
-        .navbar {
-            width: 100%;
             background-color: var(--navbar-bg);
-            padding: 15px 20px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
 
-        .navbar-title {
-            color: white;
-            font-size: 1.2em;
-            font-weight: bold;
+        .user-profile {
+            padding: 15px;
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .navbar-title i {
-            font-size: 1.4em;
-        }
-
-        .user-area {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: white;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
         }
 
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid white;
+            border: 2px solid var(--primary-color);
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .user-avatar:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        .user-info {
+            flex: 1;
         }
 
         .username {
-            white-space: nowrap;
             font-weight: 500;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-status {
+            font-size: 0.8rem;
+            color: var(--success-color);
         }
 
         .logout-btn, .btn {
@@ -361,14 +439,14 @@
         }
 
         .login-link {
-            color: white;
+            color: var(--primary-color);
             text-decoration: none;
             transition: color 0.2s;
         }
 
         .login-link:hover {
             text-decoration: underline;
-            color: var(--primary-color);
+            color: var(--primary-dark);
         }
 
         /* 模态框样式 */
@@ -796,25 +874,47 @@
         }
 
         @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 0;
+            }
+            
+            .sidebar-title, .sidebar-link span {
+                display: none;
+            }
+            
+            .sidebar-link {
+                justify-content: center;
+                padding: 12px;
+            }
+            
+            .user-profile {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px 5px;
+            }
+            
+            .user-info {
+                display: none;
+            }
+            
             .card-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 20px;
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
             }
 
             h1 {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
             }
 
-            .navbar-title {
-                font-size: 1rem;
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
-
-            .username {
-                display: none;
-            }
-
-            .user-area {
-                gap: 10px;
+            
+            .search-bar {
+                width: 100%;
             }
             
             .title-badge {
@@ -836,24 +936,20 @@
 
         @media (max-width: 480px) {
             .card-grid {
-                grid-template-columns: 1fr;
-            }
-
-            header {
-                margin-bottom: 20px;
+                grid-template-columns: 1fr 1fr;
             }
 
             .nav-card {
-                padding: 20px 15px;
+                padding: 15px 10px;
             }
 
             .card-icon {
-                font-size: 36px;
-                margin-bottom: 15px;
+                font-size: 30px;
+                margin-bottom: 10px;
             }
 
             .card-title {
-                font-size: 1.2rem;
+                font-size: 1rem;
             }
             
             .series-select-grid {
@@ -910,201 +1006,268 @@
         </div>
     </div>
 
-    <!-- 导航栏（含用户信息区域） -->
-    <div class="navbar">
-        <div class="navbar-title">
-            <i class="fas fa-compass"></i>
-            多功能导航中心
-        </div>
-        <div class="user-area" id="userArea">
-            <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式">
-                <i class="fas fa-moon"></i>
-            </button>
-            <a href="indexlo.html" class="login-link">登录/注册</a>
-        </div>
-    </div>
+    <div class="app-container">
+        <!-- 顶部标题栏 -->
+        <header>
+            <h1>多功能启动中心</h1>
+            <p class="subtitle">探索各种实用工具和有趣功能，提升您的在线体验</p>
+        </header>
 
-    <!-- 上次更新时间提示 -->
-    <div id="updateNotice" class="update-notice">
-        <p>上次更新: <span id="lastUpdateTime">2025-09-19</span> | <a href="versions.html" style="color: var(--primary-color);">查看更新内容</a> | <span class="close-update" onclick="closeUpdateNotice()">×</span></p>
-    </div>
-
-    <header>
-        <h1>功能导航中心</h1>
-        <p class="subtitle">探索各种实用工具和有趣功能，提升您的在线体验</p>
-    </header>
-
-    <div class="error-message" id="errorMsg"></div>
-    <div class="success-message" id="successMsg"></div>
-
-    <div class="container">
-        <!-- 游戏娱乐分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-gamepad"></i> 游戏娱乐
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('24gameinformation.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-gamepad"></i>
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 侧边栏导航 -->
+            <div class="sidebar">
+                <!-- 用户信息 -->
+                <div class="user-profile">
+                    <img src="https://via.placeholder.com/150" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <div class="user-info">
+                        <div class="username">游客</div>
+                        <div class="user-status"><i class="fas fa-circle"></i> 未登录</div>
                     </div>
-                    <h2 class="card-title">小游戏合集</h2>
-                    <p class="card-desc">Interesting Games</p>
+                    <a href="indexlo.html" class="login-link">登录/注册</a>
                 </div>
-                
-                <!-- 自由电子系列模块入口 -->
-                <div class="nav-card hot-game" onclick="openFreeElectronSeries()">
-                    <div class="hot-tag">
-                        <i class="fas fa-fire"></i>
-                    </div>
-                    <div class="card-icon">
-                        <i class="fas fa-gamepad"></i>
-                    </div>
-                    <h2 class="card-title">自由电子冒险</h2>
-                    <p class="card-desc">自由电子冒险系列！</p>
+
+                <!-- 导航菜单 -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">主菜单</h3>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link active" data-category="all">
+                                <i class="fas fa-home"></i>
+                                <span>主页</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="games">
+                                <i class="fas fa-gamepad"></i>
+                                <span>游戏娱乐</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="learning">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span>学习系列</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="tools">
+                                <i class="fas fa-tools"></i>
+                                <span>实用工具</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="user">
+                                <i class="fas fa-user-circle"></i>
+                                <span>用户中心</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="system">
+                                <i class="fas fa-cog"></i>
+                                <span>系统功能</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-                
-                <!-- 派对游戏 -->
-                <div class="nav-card hot-game" onclick="navigateTo('简易蛋仔.html')">
-                    <div class="hot-tag">
-                        <i class="fas fa-fire"></i>
+
+                <!-- 快速访问 -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">快速访问</h3>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="openEventsModal()">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>活动中心</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="openTasksModal()">
+                                <i class="fas fa-tasks"></i>
+                                <span>每日任务</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="navigateTo('versions.html')">
+                                <i class="fas fa-newspaper"></i>
+                                <span>更新公告</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 主题切换 -->
+                <div class="sidebar-section" style="margin-top: auto;">
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item">
+                            <button class="sidebar-link theme-toggle" id="themeToggle" title="切换深色/浅色模式">
+                                <i class="fas fa-moon"></i>
+                                <span>切换主题</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="content-area">
+                <!-- 上次更新时间提示 -->
+                <div id="updateNotice" class="update-notice">
+                    <p>上次更新: <span id="lastUpdateTime">2025-09-19</span> | <a href="versions.html" style="color: var(--primary-color);">查看更新内容</a> | <span class="close-update" onclick="closeUpdateNotice()">×</span></p>
+                </div>
+
+                <div class="content-header">
+                    <h2 class="content-title" id="currentCategoryTitle">所有功能</h2>
+                    <div class="search-bar">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="搜索功能...">
                     </div>
-                    <div class="card-icon">
-                        <i class="fas fa-users-gear"></i>
+                </div>
+
+                <div class="error-message" id="errorMsg"></div>
+                <div class="success-message" id="successMsg"></div>
+
+                <!-- 所有功能卡片 -->
+                <div class="card-grid">
+                    <!-- 游戏娱乐分类 -->
+                    <div class="nav-card category-games" onclick="navigateTo('24gameinformation.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <h2 class="card-title">小游戏合集</h2>
+                        <p class="card-desc">Interesting Games</p>
                     </div>
-                    <h2 class="card-title">派对游戏</h2>
-                    <p class="card-desc">随机游戏，挑战全能</p>
+                    
+                    <!-- 自由电子系列模块入口 -->
+                    <div class="nav-card hot-game category-games" onclick="openFreeElectronSeries()">
+                        <div class="hot-tag">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <h2 class="card-title">自由电子冒险</h2>
+                        <p class="card-desc">自由电子冒险系列！</p>
+                    </div>
+                    
+                    <!-- 派对游戏 -->
+                    <div class="nav-card hot-game category-games" onclick="navigateTo('简易蛋仔.html')">
+                        <div class="hot-tag">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-users-gear"></i>
+                        </div>
+                        <h2 class="card-title">派对游戏</h2>
+                        <p class="card-desc">随机游戏，挑战全能</p>
+                    </div>
+
+                    <!-- 学习系列分类 -->
+                    <div class="nav-card category-learning" onclick="openLearningSeries()">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h2 class="card-title">English words</h2>
+                        <p class="card-desc">英语单词学习工具</p>
+                    </div>
+                    
+                    <div class="nav-card category-learning" onclick="navigateTo('Exam.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h2 class="card-title">学业水平考试</h2>
+                        <p class="card-desc">半猫试卷</p>
+                    </div>
+
+                    <!-- 实用工具分类 -->
+                    <div class="nav-card category-tools" onclick="navigateTo('knowledge.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h2 class="card-title">百宝箱</h2>
+                        <p class="card-desc">半猫小知识丷</p>
+                    </div>
+
+                    <div class="nav-card category-tools" onclick="navigateTo('diaochawenjuan.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-poll"></i>
+                        </div>
+                        <h2 class="card-title">调查问卷</h2>
+                        <p class="card-desc">提交实时反馈，有机会获取限定称号</p>
+                    </div>
+
+                    <!-- 用户中心分类 -->
+                    <div class="nav-card category-user" onclick="navigateTo('friends.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h2 class="card-title">好友列表</h2>
+                        <p class="card-desc">管理你的好友和联系人，一起互动(目前有bug 等待修复中...)</p>
+                    </div>
+
+                    <div class="nav-card category-user" onclick="openEventsModal()">
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h2 class="card-title">活动中心</h2>
+                        <p class="card-desc">参与限时活动，赢取丰厚奖励</p>
+                    </div>
+
+                    <div class="nav-card category-user" onclick="openShopModal()">
+                        <div class="card-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <h2 class="card-title">积分商城</h2>
+                        <p class="card-desc">使用积分兑换各种精美道具</p>
+                    </div>
+
+                    <div class="nav-card category-user" onclick="openTasksModal()">
+                        <div class="card-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h2 class="card-title">每日任务</h2>
+                        <p class="card-desc">完成任务获取积分和特殊奖励</p>
+                    </div>
+
+                    <!-- 系统功能分类 -->
+                    <div class="nav-card category-system" onclick="navigateTo('help.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-poll"></i>
+                        </div>
+                        <h2 class="card-title">帮助中心</h2>
+                        <p class="card-desc">Help</p>
+                    </div>
+
+                    <div class="nav-card category-system" onclick="navigateTo('versions.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <h2 class="card-title">更新公告</h2>
+                        <p class="card-desc">查看最新版本更新内容和功能预告</p>
+                    </div>
+                    
+                    <div class="nav-card category-system" onclick="showComingSoonNotice()">
+                        <div class="card-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h2 class="card-title">更多功能</h2>
+                        <p class="card-desc">持续更新中，即将上线更多实用工具</p>
+                    </div>
+                    
+                    <div class="nav-card category-system" onclick="confirmAction('确定要进入管理员页面吗？', 'gotoAdminLogin')">
+                        <div class="card-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h2 class="card-title">我是管理员?</h2>
+                        <p class="card-desc">管理员特殊功能登录页面...</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 学习系列分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-graduation-cap"></i> 学习系列
-            </h2>
-            <div class="card-grid">
-                <!-- 学习系列模块入口 -->
-                <div class="nav-card" onclick="openLearningSeries()">
-                    <div class="card-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <h2 class="card-title">English words</h2>
-                    <p class="card-desc">英语单词学习工具</p>
-                </div>
-               <div class="nav-card" onclick="navigateTo('Exam.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <h2 class="card-title">学业水平考试</h2>
-                    <p class="card-desc">半猫试卷</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 实用工具分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-tools"></i> 实用工具
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('knowledge.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <h2 class="card-title">百宝箱</h2>
-                    <p class="card-desc">半猫小知识丷</p>
-                </div>
-
-                <div class="nav-card" onclick="navigateTo('diaochawenjuan.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-poll"></i>
-                    </div>
-                    <h2 class="card-title">调查问卷</h2>
-                    <p class="card-desc">提交实时反馈，有机会获取限定称号</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 用户中心分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-user-circle"></i> 用户中心
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('friends.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h2 class="card-title">好友列表</h2>
-                    <p class="card-desc">管理你的好友和联系人，一起互动(目前有bug 等待修复中...)</p>
-                </div>
-
-                <div class="nav-card" onclick="openEventsModal()">
-                    <div class="card-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <h2 class="card-title">活动中心</h2>
-                    <p class="card-desc">参与限时活动，赢取丰厚奖励</p>
-                </div>
-
-                <div class="nav-card" onclick="openShopModal()">
-                    <div class="card-icon">
-                        <i class="fas fa-shopping-bag"></i>
-                    </div>
-                    <h2 class="card-title">积分商城</h2>
-                    <p class="card-desc">使用积分兑换各种精美道具</p>
-                </div>
-
-                <div class="nav-card" onclick="openTasksModal()">
-                    <div class="card-icon">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <h2 class="card-title">每日任务</h2>
-                    <p class="card-desc">完成任务获取积分和特殊奖励</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 系统功能分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-cog"></i> 系统功能
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('help.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-poll"></i>
-                    </div>
-                    <h2 class="card-title">帮助中心</h2>
-                    <p class="card-desc">Help</p>
-                </div>
-
-                <div class="nav-card" onclick="navigateTo('versions.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-newspaper"></i>
-                    </div>
-                    <h2 class="card-title">更新公告</h2>
-                    <p class="card-desc">查看最新版本更新内容和功能预告</p>
-                </div>
-                
-                <div class="nav-card" onclick="showComingSoonNotice()">
-                    <div class="card-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <h2 class="card-title">更多功能</h2>
-                    <p class="card-desc">持续更新中，即将上线更多实用工具</p>
-                </div>
-                
-                <div class="nav-card" onclick="confirmAction('确定要进入管理员页面吗？', 'gotoAdminLogin')">
-                    <div class="card-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <h2 class="card-title">我是管理员?</h2>
-                    <p class="card-desc">管理员特殊功能登录页面...</p>
-                </div>
-            </div>
-        </div>
+        <!-- 底部状态栏 -->
+        <footer>
+            <p>© 2025 多功能启动中心 | 版本 v1.0.0</p>
+        </footer>
     </div>
 
     <!-- 自由电子系列选择模态框 -->
@@ -1166,520 +1329,374 @@
                     <div class="card-icon">
                         <i class="fas fa-spell-check"></i>
                     </div>
-                    <h3 class="card-title">English words 2nd</h3>
-                    <p class="card-desc">高二选修一专属模式[限定]</p>
+                    <h3 class="card-title">English words 2</h3>
+                    <p class="card-desc">进阶版单词学习与测试</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 个人信息模态框 -->
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeProfileModal()">&times;</span>
-            <h2 class="profile-title">个人信息</h2>
-            
-            <div class="avatar-upload-section">
-                <img id="modalAvatar" class="avatar-preview" src="" alt="用户头像" onclick="document.getElementById('avatarInput').click()">
-                <button class="upload-btn">
-                    <i class="fas fa-upload"></i> 更换头像
-                </button>
-                <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarUpload(event)">
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">当前称号</label>
-                <div id="titleDisplay" class="profile-value">暂无称号</div>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">称号管理</label>
-                <button class="upload-btn" onclick="navigateTo('title-manage.html')">
-                    <i class="fas fa-trophy"></i> 查看/管理我的称号
-                </button>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">用户名</label>
-                <div id="usernameDisplay" class="profile-value"></div>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">登录时间</label>
-                <div id="loginTimeDisplay" class="profile-value"></div>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">账号状态</label>
-                <div id="accountStatus" class="profile-value">正常</div>
-            </div>
-
-            <!-- 积分显示 -->
-            <div class="profile-section">
-                <label class="profile-label">我的积分</label>
-                <div id="userPoints" class="profile-value">0</div>
-            </div>
-            
-            <button class="save-btn" onclick="saveAvatar()">
-                <i class="fas fa-save"></i> 保存头像
-            </button>
-        </div>
-    </div>
-
-    <!-- 活动模态框 -->
+    <!-- 活动中心模态框 -->
     <div class="modal" id="eventsModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <span class="close-modal" onclick="closeEventsModal()">&times;</span>
             <h2 class="profile-title">活动中心</h2>
-            <div class="announcement-content">
-                <!-- 活动内容将通过JavaScript动态加载 -->
+            
+            <div class="event-item">
+                <div class="event-date"><i class="far fa-calendar"></i> 2025-09-20 至 2025-10-07</div>
+                <h3>国庆限时挑战</h3>
+                <p>参与指定游戏，完成挑战任务即可获得限定头像框和大量积分奖励！</p>
             </div>
-            <button class="save-btn" onclick="closeEventsModal()">
-                <i class="fas fa-check"></i> 关闭
-            </button>
+            
+            <div class="event-item">
+                <div class="event-date"><i class="far fa-calendar"></i> 长期有效</div>
+                <h3>新手成长计划</h3>
+                <p>新用户完成指定任务，即可获得新手大礼包和专属称号</p>
+            </div>
+            
+            <div class="event-item">
+                <div class="event-date"><i class="far fa-calendar"></i> 每周更新</div>
+                <h3>周末狂欢</h3>
+                <p>周末期间所有游戏积分翻倍，任务奖励提升50%</p>
+            </div>
         </div>
     </div>
 
+    <!-- 积分商城模态框 -->
     <div class="modal" id="shopModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <span class="close-modal" onclick="closeShopModal()">&times;</span>
             <h2 class="profile-title">积分商城</h2>
-            <div class="announcement-content">
-                <div class="shop-item">
-                    <div>
-                        <h3>初级称号礼盒</h3>
-                        <p>随机获得一个初级称号</p>
-                    </div>
-                    <div>
-                        <span class="shop-price">50积分</span>
-                        <button class="redeem-btn" onclick="confirmAction('确定要兑换初级称号礼盒吗？', 'redeemItem', ['初级称号礼盒', 50])">兑换</button>
-                    </div>
+            
+            <div class="shop-item">
+                <div>
+                    <h3>限定头像框 <span class="status-badge status-active">可兑换</span></h3>
+                    <p>精美限定头像框，彰显你的独特身份</p>
                 </div>
-                <div class="shop-item">
-                    <div>
-                        <h3>中级称号礼盒</h3>
-                        <p>随机获得一个中级称号</p>
-                    </div>
-                    <div>
-                        <span class="shop-price">150积分</span>
-                        <button class="redeem-btn" onclick="confirmAction('确定要兑换中级称号礼盒吗？', 'redeemItem', ['中级称号礼盒', 150])">兑换</button>
-                    </div>
-                </div>
-                <div class="shop-item">
-                    <div>
-                        <h3>高级称号礼盒</h3>
-                        <p>随机获得一个高级称号</p>
-                    </div>
-                    <div>
-                        <span class="shop-price">300积分</span>
-                        <button class="redeem-btn" onclick="confirmAction('确定要兑换高级称号礼盒吗？', 'redeemItem', ['高级称号礼盒', 300])">兑换</button>
-                    </div>
+                <div>
+                    <span class="shop-price">500积分</span>
+                    <button class="redeem-btn" onclick="showNotification('兑换成功！', 'success')">兑换</button>
                 </div>
             </div>
-            <button class="save-btn" onclick="closeShopModal()">
-                <i class="fas fa-check"></i> 关闭
-            </button>
+            
+            <div class="shop-item">
+                <div>
+                    <h3>游戏道具包 <span class="status-badge status-active">可兑换</span></h3>
+                    <p>包含多种游戏内实用道具，助你轻松通关</p>
+                </div>
+                <div>
+                    <span class="shop-price">300积分</span>
+                    <button class="redeem-btn" onclick="showNotification('兑换成功！', 'success')">兑换</button>
+                </div>
+            </div>
+            
+            <div class="shop-item">
+                <div>
+                    <h3>高级会员体验7天 <span class="status-badge status-inactive">积分不足</span></h3>
+                    <p>体验高级会员专属功能和特权</p>
+                </div>
+                <div>
+                    <span class="shop-price">1000积分</span>
+                    <button class="redeem-btn" disabled onclick="showNotification('积分不足，无法兑换', 'error')">兑换</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- 每日任务模态框 -->
     <div class="modal" id="tasksModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <span class="close-modal" onclick="closeTasksModal()">&times;</span>
             <h2 class="profile-title">每日任务</h2>
-            <div class="announcement-content">
-                <div class="task-item">
-                    <div>
-                        <h3>每日登录</h3>
-                        <p class="task-difficulty">难度：简单</p>
-                        <p>每天登录一次系统</p>
-                        <p class="task-reward">奖励：10积分</p>
-                    </div>
-                    <button class="complete-btn" onclick="confirmAction('确定要领取每日登录奖励吗？', 'completeTask', ['每日登录', 10])">领取</button>
+            
+            <div class="task-item">
+                <div>
+                    <div class="task-difficulty"><i class="fas fa-star"></i> 简单</div>
+                    <h3>登录系统</h3>
+                    <p>每日登录一次即可完成</p>
+                    <p class="task-reward"><i class="fas fa-coins"></i> 奖励: 50积分</p>
                 </div>
-                <div class="task-item">
-                    <div>
-                        <h3>完成一次问卷调查</h3>
-                        <p class="task-difficulty">难度：中等</p>
-                        <p>提交一份有效的调查问卷</p>
-                        <p class="task-reward">奖励：50积分 + 限定称号</p>
-                    </div>
-                    <button class="complete-btn" onclick="confirmAction('确定要标记此任务为完成吗？', 'completeTask', ['完成一次问卷调查', 50])">完成</button>
-                </div>
-                <div class="task-item">
-                    <div>
-                        <h3>游玩任意小游戏</h3>
-                        <p class="task-difficulty">难度：简单</p>
-                        <p>从游戏合集选择并游玩一款游戏</p>
-                        <p class="task-reward">奖励：20积分</p>
-                    </div>
-                    <button class="complete-btn" onclick="confirmAction('确定要标记此任务为完成吗？', 'completeTask', ['游玩任意小游戏', 20])">完成</button>
+                <div>
+                    <button class="complete-btn" onclick="showNotification('任务已完成，奖励已发放', 'success')">完成</button>
                 </div>
             </div>
-            <button class="save-btn" onclick="closeTasksModal()">
-                <i class="fas fa-check"></i> 关闭
-            </button>
+            
+            <div class="task-item">
+                <div>
+                    <div class="task-difficulty"><i class="fas fa-star"></i><i class="fas fa-star"></i> 中等</div>
+                    <h3>体验一款游戏</h3>
+                    <p>任意游戏体验时间超过5分钟</p>
+                    <p class="task-reward"><i class="fas fa-coins"></i> 奖励: 100积分</p>
+                </div>
+                <div>
+                    <button class="complete-btn" onclick="showNotification('任务已完成，奖励已发放', 'success')">完成</button>
+                </div>
+            </div>
+            
+            <div class="task-item">
+                <div>
+                    <div class="task-difficulty"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i> 困难</div>
+                    <h3>邀请好友</h3>
+                    <p>成功邀请一位新用户注册</p>
+                    <p class="task-reward"><i class="fas fa-coins"></i> 奖励: 500积分 + 限定称号</p>
+                </div>
+                <div>
+                    <button class="complete-btn" disabled>未完成</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="notification" id="notification">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificationText"></span>
-    </div>
-
-    <footer>
-        <p>© 2025 多功能导航中心 | 持续更新中</p>
-    </footer>
-
     <script>
-        // 全局变量控制重复点击
-        let isProcessing = false;
-        let confirmedAction = null;
-        let confirmedParams = [];
-        
-        // 页面加载完成后执行
-        document.addEventListener('DOMContentLoaded', function() {
-            // 初始化卡片动画
-            setTimeout(() => {
-                const cards = document.querySelectorAll('.nav-card');
-                cards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, 100 * index);
-                });
-            }, 100);
-            
-            // 检查深色模式偏好
-            if (localStorage.getItem('darkMode') === 'true' || 
-                (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                enableDarkMode();
-            } else {
-                disableDarkMode();
-            }
-            
-            // 初始化更新提示显示逻辑
-            initUpdateNoticeDisplay();
-        });
-        
         // 深色模式切换
-        document.getElementById('themeToggle').addEventListener('click', function() {
-            if (document.body.classList.contains('dark-mode')) {
-                disableDarkMode();
-            } else {
-                enableDarkMode();
-            }
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // 检查本地存储的主题偏好
+        if (localStorage.getItem('darkMode') === 'true' || 
+            (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
         });
-        
-        function enableDarkMode() {
-            document.body.classList.add('dark-mode');
-            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i>';
-            localStorage.setItem('darkMode', 'true');
-        }
-        
-        function disableDarkMode() {
-            document.body.classList.remove('dark-mode');
-            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-moon"></i>';
-            localStorage.setItem('darkMode', 'false');
-        }
-        
-        // 导航跳转功能 - 添加加载状态和过渡动画
+
+        // 侧边栏导航切换
+        const sidebarLinks = document.querySelectorAll('.sidebar-link[data-category]');
+        const categoryTitles = {
+            'all': '所有功能',
+            'games': '游戏娱乐',
+            'learning': '学习系列',
+            'tools': '实用工具',
+            'user': '用户中心',
+            'system': '系统功能'
+        };
+        const currentCategoryTitle = document.getElementById('currentCategoryTitle');
+        const navCards = document.querySelectorAll('.nav-card');
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // 更新活跃状态
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                // 更新标题
+                const category = link.getAttribute('data-category');
+                currentCategoryTitle.textContent = categoryTitles[category] || '所有功能';
+                
+                // 过滤卡片显示
+                navCards.forEach(card => {
+                    if (category === 'all' || card.classList.contains(`category-${category}`)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // 搜索功能
+        const searchInput = document.querySelector('.search-input');
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            navCards.forEach(card => {
+                const title = card.querySelector('.card-title').textContent.toLowerCase();
+                const desc = card.querySelector('.card-desc').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || desc.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // 页面导航
         function navigateTo(url) {
-            if (isProcessing) return;
-            isProcessing = true;
-            
-            // 显示加载状态
-            document.getElementById('loadingOverlay').classList.add('active');
-            
-            // 页面过渡动画
-            const transition = document.getElementById('pageTransition');
-            transition.classList.add('active');
-            
-            // 延迟跳转，确保动画效果可见
+            showLoading();
             setTimeout(() => {
                 window.location.href = url;
-            }, 300);
-        }
-        
-        // 打开自由电子系列模态框
-        function openFreeElectronSeries() {
-            if (isProcessing) return;
-            document.getElementById('freeElectronModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('freeElectronModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭自由电子系列模态框
-        function closeFreeElectronModal() {
-            const modal = document.getElementById('freeElectronModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开学习系列模态框
-        function openLearningSeries() {
-            if (isProcessing) return;
-            document.getElementById('learningModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('learningModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭学习系列模态框
-        function closeLearningModal() {
-            const modal = document.getElementById('learningModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开活动模态框
-        function openEventsModal() {
-            if (isProcessing) return;
-            document.getElementById('eventsModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('eventsModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭活动模态框
-        function closeEventsModal() {
-            const modal = document.getElementById('eventsModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开商城模态框
-        function openShopModal() {
-            if (isProcessing) return;
-            document.getElementById('shopModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('shopModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭商城模态框
-        function closeShopModal() {
-            const modal = document.getElementById('shopModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开任务模态框
-        function openTasksModal() {
-            if (isProcessing) return;
-            document.getElementById('tasksModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('tasksModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭任务模态框
-        function closeTasksModal() {
-            const modal = document.getElementById('tasksModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 关闭更新提示
-        function closeUpdateNotice() {
-            const notice = document.getElementById('updateNotice');
-            notice.style.opacity = '0';
-            notice.style.transform = 'translateY(-20px)';
-            
-            // 7天后再次显示
-            localStorage.setItem('updateNoticeHidden', Date.now().toString());
-            
-            setTimeout(() => {
-                notice.style.display = 'none';
             }, 500);
         }
-        
-        // 初始化更新提示显示逻辑
-        function initUpdateNoticeDisplay() {
-            const lastHidden = localStorage.getItem('updateNoticeHidden');
-            const notice = document.getElementById('updateNotice');
-            
-            // 如果用户没有关闭过提示，或者距离上次关闭已超过7天，则显示
-            if (!lastHidden || new Date().getTime() - parseInt(lastHidden) > 7 * 24 * 60 * 60 * 1000) {
-                notice.style.display = 'block';
-                
-                // 5秒后自动淡出，避免打扰
-                setTimeout(() => {
-                    notice.style.opacity = '0';
-                    notice.style.transform = 'translateY(-20px)';
-                    setTimeout(() => {
-                        notice.style.display = 'none';
-                    }, 500);
-                }, 5000);
-            } else {
-                notice.style.display = 'none';
-            }
+
+        // 模态框控制
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
         }
-        
-        // 显示即将上线通知
-        function showComingSoonNotice() {
-            showNotification('该功能即将上线，敬请期待！', 'info');
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
-        
-        // 显示功能未开放通知
-        function showDisabledNotice(featureName) {
-            showNotification(`${featureName} 尚未开放，敬请期待！`, 'info');
+
+        // 自由电子系列模态框
+        function openFreeElectronSeries() {
+            openModal('freeElectronModal');
         }
-        
+
+        function closeFreeElectronModal() {
+            closeModal('freeElectronModal');
+        }
+
+        // 学习系列模态框
+        function openLearningSeries() {
+            openModal('learningModal');
+        }
+
+        function closeLearningModal() {
+            closeModal('learningModal');
+        }
+
+        // 活动中心模态框
+        function openEventsModal() {
+            openModal('eventsModal');
+        }
+
+        function closeEventsModal() {
+            closeModal('eventsModal');
+        }
+
+        // 积分商城模态框
+        function openShopModal() {
+            openModal('shopModal');
+        }
+
+        function closeShopModal() {
+            closeModal('shopModal');
+        }
+
+        // 每日任务模态框
+        function openTasksModal() {
+            openModal('tasksModal');
+        }
+
+        function closeTasksModal() {
+            closeModal('tasksModal');
+        }
+
+        // 关闭更新提示
+        function closeUpdateNotice() {
+            const updateNotice = document.getElementById('updateNotice');
+            updateNotice.style.opacity = '0';
+            updateNotice.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                updateNotice.style.display = 'none';
+            }, 500);
+            localStorage.setItem('hideUpdateNotice', 'true');
+        }
+
+        // 检查是否需要显示更新提示
+        if (localStorage.getItem('hideUpdateNotice') === 'true') {
+            document.getElementById('updateNotice').style.display = 'none';
+        }
+
         // 显示通知
         function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
             
-            // 移除之前的类型类
-            notification.classList.remove('success', 'error');
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
             
-            // 添加新类型类和图标
-            if (type === 'success') {
-                notification.classList.add('success');
-                notification.innerHTML = `<i class="fas fa-check-circle"></i><span id="notificationText">${message}</span>`;
-            } else if (type === 'error') {
-                notification.classList.add('error');
-                notification.innerHTML = `<i class="fas fa-exclamation-circle"></i><span id="notificationText">${message}</span>`;
-            } else {
-                notification.innerHTML = `<i class="fas fa-info-circle"></i><span id="notificationText">${message}</span>`;
-            }
+            notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+            document.body.appendChild(notification);
             
-            notificationText.textContent = message;
-            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
             
-            // 3秒后自动隐藏
             setTimeout(() => {
                 notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
             }, 3000);
         }
+
+        // 显示即将上线提示
+        function showComingSoonNotice() {
+            showNotification('该功能正在开发中，即将上线，敬请期待！', 'info');
+        }
+
+        // 显示已禁用提示
+        function showDisabledNotice(featureName) {
+            showNotification(`${featureName} 目前尚未开放，敬请期待！`, 'info');
+        }
+
+        // 加载状态
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // 确认对话框
+        let confirmedAction = null;
         
-        // 管理员登录
+        function confirmAction(title, action, message = '') {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            confirmedAction = action;
+            const confirmModal = document.getElementById('confirmModal');
+            confirmModal.style.display = 'flex';
+            setTimeout(() => {
+                confirmModal.classList.add('active');
+            }, 10);
+        }
+        
+        function closeConfirmModal() {
+            const confirmModal = document.getElementById('confirmModal');
+            confirmModal.classList.remove('active');
+            setTimeout(() => {
+                confirmModal.style.display = 'none';
+                confirmedAction = null;
+            }, 300);
+        }
+        
+        function executeConfirmedAction() {
+            if (confirmedAction === 'gotoAdminLogin') {
+                navigateTo('adminlogin.html');
+            }
+            closeConfirmModal();
+        }
+
+        // 管理员登录页面跳转
         function gotoAdminLogin() {
             navigateTo('adminlogin.html');
         }
-        
-        // 头像上传处理
-        function handleAvatarUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('modalAvatar').src = e.target.result;
-                    showNotification('头像预览已更新，点击保存按钮生效', 'info');
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-        
-        // 保存头像
-        function saveAvatar() {
-            // 模拟保存操作
-            showLoading();
-            setTimeout(() => {
-                hideLoading();
-                showNotification('头像更新成功！', 'success');
-                closeProfileModal();
-            }, 1000);
-        }
-        
-        // 显示加载状态
-        function showLoading() {
-            isProcessing = true;
-            document.getElementById('loadingOverlay').classList.add('active');
-        }
-        
-        // 隐藏加载状态
-        function hideLoading() {
-            isProcessing = false;
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }
-        
-        // 兑换物品
-        function redeemItem(itemName, points) {
-            showLoading();
-            // 模拟兑换操作
-            setTimeout(() => {
-                hideLoading();
-                showNotification(`成功兑换 ${itemName}，消耗 ${points} 积分`, 'success');
-                // 这里可以添加更新积分的逻辑
-            }, 1000);
-        }
-        
-        // 完成任务
-        function completeTask(taskName, points) {
-            showLoading();
-            // 模拟完成任务操作
-            setTimeout(() => {
-                hideLoading();
-                showNotification(`成功完成 ${taskName}，获得 ${points} 积分`, 'success');
-                // 这里可以添加更新积分和任务状态的逻辑
-            }, 1000);
-        }
-        
-        // 打开确认对话框
-        function confirmAction(title, action, params = []) {
-            if (isProcessing) return;
+
+        // 页面加载完成后执行
+        window.addEventListener('load', () => {
+            // 隐藏加载状态
+            hideLoading();
             
-            document.getElementById('confirmTitle').textContent = title;
-            confirmedAction = action;
-            confirmedParams = params;
-            
-            document.getElementById('confirmModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('confirmModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭确认对话框
-        function closeConfirmModal() {
-            const modal = document.getElementById('confirmModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-                confirmedAction = null;
-                confirmedParams = [];
-            }, 300);
-        }
-        
-        // 执行确认的操作
-        function executeConfirmedAction() {
-            if (confirmedAction && typeof window[confirmedAction] === 'function') {
-                // 关闭确认框
-                closeConfirmModal();
-                
-                // 执行相应操作
-                window[confirmedAction](...confirmedParams);
-            }
-        }
-        
-        // 关闭所有模态框的通用方法
-        function closeAllModals() {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                modal.classList.remove('active');
+            // 初始化卡片动画
+            const cards = document.querySelectorAll('.nav-card');
+            cards.forEach((card, index) => {
                 setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 300);
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 + index * 100);
             });
-        }
-        
-        // 点击模态框外部关闭
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                closeAllModals();
-            }
-        }
+        });
     </script>
 </body>
 </html>
