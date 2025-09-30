@@ -41,13 +41,13 @@
                 content-visibility: auto;
             }
             .question-card {
-                @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
+                @apply bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
             }
             .option-item {
-                @apply border border-gray-300 rounded-lg p-4 mb-3 cursor-pointer hover:border-primary hover:bg-blue-50 transition-all duration-200;
+                @apply border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-3 cursor-pointer hover:border-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200;
             }
             .option-selected {
-                @apply border-primary bg-blue-50 pl-10 relative;
+                @apply border-primary bg-blue-50 dark:bg-blue-900/20 pl-10 relative;
             }
             .option-selected::before {
                 content: "✓";
@@ -57,7 +57,7 @@
                 font-weight: bold;
             }
             .option-correct {
-                @apply border-secondary bg-green-50 pl-10 relative;
+                @apply border-secondary bg-green-50 dark:bg-green-900/20 pl-10 relative;
             }
             .option-correct::before {
                 content: "✓";
@@ -67,7 +67,7 @@
                 font-weight: bold;
             }
             .option-incorrect {
-                @apply border-danger bg-red-50 pl-10 relative;
+                @apply border-danger bg-red-50 dark:bg-red-900/20 pl-10 relative;
             }
             .option-incorrect::before {
                 content: "✗";
@@ -80,7 +80,7 @@
                 @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
             }
             .stat-card {
-                @apply bg-white rounded-lg shadow-sm p-4 text-center transition-all duration-300;
+                @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center transition-all duration-300;
             }
             .stat-card:hover {
                 @apply shadow-md transform -translate-y-1;
@@ -93,7 +93,6 @@
                 position: fixed;
                 width: 10px;
                 height: 10px;
-                background-color: #f00;
                 opacity: 0;
                 animation: confetti-fall 5s ease-in-out forwards;
                 pointer-events: none;
@@ -101,6 +100,14 @@
             @keyframes confetti-fall {
                 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
                 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+            }
+            .badge-pulse {
+                animation: badgePulse 2s infinite;
+            }
+            @keyframes badgePulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
             }
         }
         
@@ -138,7 +145,7 @@
         
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
         
@@ -184,68 +191,142 @@
             z-index: 100;
             transition: width 0.3s ease;
         }
+        
+        /* 夜间模式样式 */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        .dark body {
+            background-color: #1a1a2e;
+            color: #e2e8f0;
+        }
+        
+        .dark .bg-gray-50 {
+            background-color: #16213e;
+        }
+        
+        .dark .bg-gray-100 {
+            background-color: #0f3460;
+        }
+        
+        .dark .text-gray-800 {
+            color: #e2e8f0;
+        }
+        
+        .dark .text-gray-600 {
+            color: #cbd5e1;
+        }
+        
+        .dark .text-gray-500 {
+            color: #94a3b8;
+        }
+        
+        .dark .border-gray-300 {
+            border-color: #334155;
+        }
+        
+        .dark .bg-white {
+            background-color: #1e293b;
+        }
+        
+        .dark .shadow-md {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dark .hover:bg-gray-100 {
+            background-color: #334155;
+        }
+        
+        /* 平滑滚动 */
+        html {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen font-sans text-gray-800">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen font-sans text-gray-800 dark:text-gray-200 transition-colors duration-300">
     <!-- 进度条 -->
     <div class="progress-bar" id="progress-bar"></div>
     
     <!-- 顶部导航栏 -->
-    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 transition-all duration-300">
+    <header class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
-                <h1 class="text-xl font-bold text-gray-800 flex items-center">
+                <h1 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
                     <i class="fa fa-book text-primary mr-2"></i>
                     高一高二综合题库
                 </h1>
                 
                 <div class="flex items-center space-x-4">
                     <div class="stat-card hidden sm:block">
-                        <div class="text-sm text-gray-500">已刷题数</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">已刷题数</div>
                         <div class="text-xl font-bold text-primary" id="total-count">0</div>
                     </div>
                     
                     <div class="relative">
-                        <button id="stats-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <button id="plan-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <i class="fa fa-calendar text-primary"></i>
+                            <span id="plan-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-xs rounded-full flex items-center justify-center hidden badge-pulse"></span>
+                        </button>
+                    </div>
+                    
+                    <div class="relative">
+                        <button id="wrong-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <i class="fa fa-exclamation-circle text-danger"></i>
+                            <span id="wrong-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-danger text-white text-xs rounded-full flex items-center justify-center hidden"></span>
+                        </button>
+                    </div>
+                    
+                    <div class="relative">
+                        <button id="stats-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                             <i class="fa fa-bar-chart text-primary"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="relative">
+                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <i class="fa fa-moon-o dark:hidden text-gray-600"></i>
+                            <i class="fa fa-sun-o hidden dark:block text-yellow-400"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
     </header>
-    <button id="back-button" class="absolute left-4 top-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center z-10">
+    
+    <button id="back-button" class="absolute left-4 top-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center z-10 shadow-sm">
         <i class="fa fa-arrow-left mr-2"></i> 返回学业水平测试中心
     </button>
+    
     <!-- 统计弹窗 -->
     <div id="stats-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 scale-in">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4 scale-in">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold">学习统计</h3>
-                <button id="close-stats" class="text-gray-500 hover:text-gray-800">
+                <button id="close-stats" class="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
                     <i class="fa fa-times"></i>
                 </button>
             </div>
             
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500">总刷题数</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">总刷题数</div>
                     <div class="text-2xl font-bold text-primary" id="modal-total">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500">正确率</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">正确率</div>
                     <div class="text-2xl font-bold text-secondary" id="modal-accuracy">0%</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500">错误题数</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">错误题数</div>
                     <div class="text-xl font-bold text-danger" id="wrong-count">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500">连续正确</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">连续正确</div>
                     <div class="text-2xl font-bold text-accent" id="modal-streak">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="text-sm text-gray-500">最高连续正确</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">最高连续正确</div>
                     <div class="text-2xl font-bold text-accent" id="modal-best-streak">0</div>
                 </div>
             </div>
@@ -257,8 +338,83 @@
                 </div>
             </div>
             
-            <button id="reset-stats" class="w-full py-2 px-4 border border-danger text-danger rounded-lg hover:bg-danger/5 transition-colors">
+            <button id="reset-stats" class="w-full py-2 px-4 border border-danger text-danger rounded-lg hover:bg-danger/5 dark:hover:bg-danger/10 transition-colors">
                 重置统计数据
+            </button>
+        </div>
+    </div>
+    
+    <!-- 错题本弹窗 -->
+    <div id="wrong-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">错题本</h3>
+                <button id="close-wrong" class="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="flex-grow overflow-y-auto pr-2" id="wrong-questions-container">
+                <!-- 错题将动态生成 -->
+                <div class="text-center text-gray-500 dark:text-gray-400 py-8" id="no-wrong-message">
+                    <i class="fa fa-check-circle text-secondary text-4xl mb-2"></i>
+                    <p>恭喜！你目前没有错题</p>
+                </div>
+            </div>
+            
+            <button id="clear-wrong" class="mt-4 w-full py-2 px-4 border border-danger text-danger rounded-lg hover:bg-danger/5 dark:hover:bg-danger/10 transition-colors">
+                清空错题本
+            </button>
+        </div>
+    </div>
+    
+    <!-- 学习计划弹窗 -->
+    <div id="plan-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4 scale-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">学习计划</h3>
+                <button id="close-plan" class="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">每日刷题目标</label>
+                <div class="flex items-center">
+                    <button id="decrease-goal" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-l-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fa fa-minus"></i>
+                    </button>
+                    <input type="number" id="daily-goal" min="1" max="100" class="w-full h-10 border-y border-gray-300 dark:border-gray-700 bg-transparent text-center focus:outline-none" value="10">
+                    <button id="increase-goal" class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-r-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fa fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="font-medium mb-2">今日进度</h4>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-1">
+                    <div id="daily-progress-bar" class="bg-primary h-4 rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                    <span id="daily-current">0</span>
+                    <span id="daily-target">/ 10</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">连续打卡</div>
+                    <div class="text-2xl font-bold text-accent" id="streak-days">0天</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">本月完成</div>
+                    <div class="text-2xl font-bold text-secondary" id="monthly-completion">0%</div>
+                </div>
+            </div>
+            
+            <button id="save-plan" class="w-full py-3 bg-primary text-white rounded-lg shadow hover:bg-primary/90 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                保存计划
             </button>
         </div>
     </div>
@@ -266,29 +422,79 @@
     <!-- 主内容区 -->
     <main class="container mx-auto px-4 py-8 max-w-3xl">
         <!-- 成就提示 (默认隐藏) -->
-        <div id="achievement" class="hidden bg-white rounded-xl shadow-lg p-4 mb-6 flex items-center bounce-in">
+        <div id="achievement" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-6 flex items-center bounce-in">
             <div class="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mr-4">
                 <i class="fa fa-trophy text-2xl text-accent"></i>
             </div>
             <div>
-                <h3 class="font-bold text-gray-800" id="achievement-title">新成就解锁!</h3>
-                <p class="text-gray-600 text-sm" id="achievement-desc">你已完成10道题，继续加油!</p>
+                <h3 class="font-bold text-gray-800 dark:text-white" id="achievement-title">新成就解锁!</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-sm" id="achievement-desc">你已完成10道题，继续加油!</p>
             </div>
+        </div>
+        
+        <!-- 每日目标提示 (默认隐藏) -->
+        <div id="goal-reminder" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-6 flex items-center slide-up">
+            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                <i class="fa fa-bullseye text-xl text-primary"></i>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-bold text-gray-800 dark:text-white text-sm">今日学习目标</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-xs" id="goal-reminder-text">已完成 3/10 题，继续努力！</p>
+            </div>
+            <button id="close-reminder" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         
         <!-- 统计信息 -->
         <div class="grid grid-cols-3 gap-4 mb-6">
             <div class="stat-card">
-                <div class="text-sm text-gray-500">正确率</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">正确率</div>
                 <div class="text-xl font-bold text-secondary" id="accuracy-rate">0%</div>
             </div>
             <div class="stat-card">
-                <div class="text-sm text-gray-500">正确题数</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">正确题数</div>
                 <div class="text-xl font-bold text-secondary" id="correct-count">0</div>
             </div>
             <div class="stat-card">
-                <div class="text-sm text-gray-500">连续正确</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">连续正确</div>
                 <div class="text-xl font-bold text-accent" id="current-streak">0</div>
+            </div>
+        </div>
+        
+        <!-- 科目筛选器 -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6 overflow-x-auto">
+            <div class="flex space-x-2 min-w-max">
+                <button class="subject-filter active px-3 py-1.5 rounded-full text-sm bg-primary text-white" data-subject="all">
+                    全部
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="physics">
+                    物理
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="chemistry">
+                    化学
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="biology">
+                    生物
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="math">
+                    数学
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="english">
+                    英语
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="chinese">
+                    语文
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="history">
+                    历史
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="geography">
+                    地理
+                </button>
+                <button class="subject-filter px-3 py-1.5 rounded-full text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-subject="politics">
+                    政治
+                </button>
             </div>
         </div>
         
@@ -303,7 +509,7 @@
                         <span class="subject-badge bg-primary/10 text-primary mr-2" id="question-subject">科目</span>
                         <h2 class="font-medium text-lg" id="question-text">加载题目中...</h2>
                     </div>
-                    <span class="text-sm text-gray-500" id="question-id">题ID: --</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400" id="question-id">题ID: --</span>
                 </div>
                 
                 <div class="space-y-3 ml-2 relative z-10" id="options-container">
@@ -313,7 +519,7 @@
         </div>
         
         <!-- 答案解析区 (默认隐藏) -->
-        <div id="explanation-container" class="hidden bg-white rounded-xl shadow-md p-6 mb-8 slide-up">
+        <div id="explanation-container" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 slide-up">
             <h3 class="text-lg font-bold mb-3 flex items-center">
                 <i class="fa fa-info-circle text-primary mr-2"></i>答案解析
             </h3>
@@ -321,7 +527,13 @@
                 <span class="font-medium">正确答案：</span>
                 <span class="text-secondary font-bold" id="correct-answer"></span>
             </div>
-            <div class="text-gray-700" id="explanation-text"></div>
+            <div class="text-gray-700 dark:text-gray-300" id="explanation-text"></div>
+            
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button id="add-to-wrong" class="text-danger hover:text-danger/80 flex items-center text-sm">
+                    <i class="fa fa-exclamation-circle mr-1"></i> 加入错题本
+                </button>
+            </div>
         </div>
         
         <!-- 按钮区 -->
@@ -335,8 +547,8 @@
         </div>
     </main>
 
-    <footer class="bg-white/80 backdrop-blur-md py-4 mt-12">
-        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+    <footer class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md py-4 mt-12">
+        <div class="container mx-auto px-4 text-center text-gray-500 dark:text-gray-400 text-sm">
             <p>高一高二综合题库 &copy; 2025 | 学习数据自动保存</p>
         </div>
     </footer>
@@ -345,6 +557,28 @@
         document.getElementById('back-button').addEventListener('click', function() {
             window.history.back();
         });
+        
+        // 夜间模式切换
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        // 检查用户偏好
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        themeToggle.addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+            
+            // 保存用户偏好
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+        });
+        
         document.addEventListener('DOMContentLoaded', function() {
             // 从localStorage加载统计数据
             let stats = JSON.parse(localStorage.getItem('questionStats')) || {
@@ -364,8 +598,41 @@
                     geography: { total: 0, correct: 0 },
                     politics: { total: 0, correct: 0 }
                 },
-                answeredQuestions: []
+                answeredQuestions: [],
+                wrongQuestions: []
             };
+            
+            // 从localStorage加载学习计划数据
+            const today = new Date().toISOString().split('T')[0];
+            let planData = JSON.parse(localStorage.getItem('studyPlan')) || {
+                dailyGoal: 10,
+                progress: {},
+                streakDays: 0,
+                lastStudyDate: null
+            };
+            
+            // 初始化今日进度
+            if (!planData.progress[today]) {
+                planData.progress[today] = 0;
+            }
+            
+            // 检查连续打卡
+            if (planData.lastStudyDate) {
+                const lastDate = new Date(planData.lastStudyDate);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                // 如果最后学习日期不是今天，且不是昨天，则重置连续打卡
+                if (planData.lastStudyDate !== today && 
+                    !(lastDate.toDateString() === yesterday.toDateString())) {
+                    planData.streakDays = 0;
+                }
+            }
+            
+            // 保存学习计划数据
+            function savePlanData() {
+                localStorage.setItem('studyPlan', JSON.stringify(planData));
+            }
             
             // 题目数据库 - 100道题
             const questionBank = [
@@ -957,10 +1224,10 @@
                         A: "神经元是神经系统结构和功能的基本单位",
                         B: "兴奋在神经纤维上的传导是单向的",
                         C: "兴奋在神经元之间的传递是通过电信号完成的",
-                        D: "大脑皮层是调节机体活动的最高级中枢"
+                        D: "脑干是调节机体活动的最高级中枢"
                     },
                     answer: "A",
-                    explanation: "神经元是神经系统结构和功能的基本单位，故A正确；兴奋在神经纤维上的传导是双向的，故B错误；兴奋在神经元之间的传递是通过化学信号（神经递质）完成的，故C错误；大脑皮层是调节机体活动的最高级中枢，这是正确的，但A选项是更基础的正确表述。"
+                    explanation: "神经元是神经系统结构和功能的基本单位，故A正确；兴奋在神经纤维上的传导是双向的，故B错误；兴奋在神经元之间的传递是通过化学信号（神经递质）完成的，故C错误；大脑皮层才是调节机体活动的最高级中枢，脑干主要负责维持生命活动的基本中枢，故D错误。"
                 },
                 {
                     id: 43,
@@ -1670,49 +1937,49 @@
                         D: "南美洲"
                     },
                     answer: "A",
-                    explanation: "亚洲是世界上面积最大的大洲，面积约4400万平方千米，占世界陆地总面积的29.4%，故A正确。"
+                    explanation: "亚洲是世界上面积最大的大洲，面积约                        4400万平方千米，约占世界陆地总面积的29.4%，故A正确。"
                 },
                 {
                     id: 93,
                     subject: "地理",
                     subjectClass: "geography",
-                    question: "下列气候类型中，降水集中在冬季的是（ ）",
+                    question: "下列现象中，由地球公转引起的是（ ）",
                     options: {
-                        A: "热带雨林气候",
-                        B: "地中海气候",
-                        C: "温带季风气候",
-                        D: "温带海洋性气候"
+                        A: "昼夜更替",
+                        B: "时间差异",
+                        C: "四季变化",
+                        D: "日月星辰东升西落"
                     },
-                    answer: "B",
-                    explanation: "地中海气候的特点是夏季炎热干燥，冬季温和多雨，降水集中在冬季，故B正确；热带雨林气候全年高温多雨；温带季风气候夏季高温多雨，冬季寒冷干燥；温带海洋性气候全年温和湿润。"
+                    answer: "C",
+                    explanation: "地球公转产生的地理现象有四季变化、昼夜长短的变化、正午太阳高度的变化等；地球自转产生的地理现象有昼夜更替、时间差异、日月星辰东升西落等，故C正确。"
                 },
                 {
                     id: 94,
                     subject: "地理",
                     subjectClass: "geography",
-                    question: "板块构造学说认为，地壳中比较活跃的地带是（ ）",
+                    question: "世界上最大的热带雨林气候区分布在（ ）",
                     options: {
-                        A: "板块内部",
-                        B: "板块与板块交界地带",
-                        C: "大陆内部",
-                        D: "海洋底部"
+                        A: "亚马孙河流域",
+                        B: "刚果河流域",
+                        C: "马来群岛",
+                        D: "非洲撒哈拉地区"
                     },
-                    answer: "B",
-                    explanation: "板块构造学说认为，地球岩石圈是由板块拼合而成的，全球主要有六大板块，板块在不断地运动着，一般来说，板块内部地壳比较稳定，板块与板块交界的地带，地壳比较活跃，多火山、地震，故B正确。"
+                    answer: "A",
+                    explanation: "世界上最大的热带雨林气候区分布在南美洲的亚马孙河流域，该地区终年高温多雨，植物生长茂盛，故A正确。"
                 },
                 {
                     id: 95,
                     subject: "地理",
                     subjectClass: "geography",
-                    question: "下列河流中，注入太平洋的是（ ）",
+                    question: "下列关于板块构造学说的说法中，正确的是（ ）",
                     options: {
-                        A: "长江",
-                        B: "恒河",
-                        C: "尼罗河",
-                        D: "伏尔加河"
+                        A: "地球表层由七大板块组成",
+                        B: "板块内部地壳比较活跃",
+                        C: "板块交界地带地壳比较稳定",
+                        D: "板块运动是引起火山和地震的主要原因"
                     },
-                    answer: "A",
-                    explanation: "长江是中国第一大河，发源于青藏高原，最终注入太平洋，故A正确；恒河注入印度洋；尼罗河注入地中海（大西洋）；伏尔加河注入里海（内陆湖）。"
+                    answer: "D",
+                    explanation: "板块运动是引起火山和地震的主要原因，故D正确；地球表层由六大板块组成，故A错误；板块内部地壳比较稳定，板块交界地带地壳比较活跃，故B、C错误。"
                 },
                 
                 // 政治（96-100）
@@ -1728,7 +1995,7 @@
                         D: "基层群众自治制度"
                     },
                     answer: "A",
-                    explanation: "人民代表大会制度是我国的根本政治制度，是我国人民当家作主的重要途径和最高实现形式，故A正确；B、C、D选项是我国的基本政治制度。"
+                    explanation: "人民代表大会制度是我国的根本政治制度，是我国人民当家作主的重要途径和最高实现形式，故A正确；中国共产党领导的多党合作和政治协商制度、民族区域自治制度、基层群众自治制度是我国的基本政治制度。"
                 },
                 {
                     id: 97,
@@ -1736,113 +2003,431 @@
                     subjectClass: "politics",
                     question: "商品的基本属性是（ ）",
                     options: {
-                        A: "使用价值和价值",
-                        B: "使用价值和价格",
-                        C: "价值和价格",
-                        D: "价值和交换价值"
+                        A: "价值和价格",
+                        B: "价值和使用价值",
+                        C: "使用价值和价格",
+                        D: "交换价值和价值"
                     },
-                    answer: "A",
-                    explanation: "商品是用于交换的劳动产品，具有使用价值和价值两种基本属性，使用价值是商品能够满足人们某种需要的属性，价值是凝结在商品中的无差别的人类劳动，故A正确。"
+                    answer: "B",
+                    explanation: "商品是用于交换的劳动产品，具有使用价值和价值两种基本属性，使用价值是商品能够满足人们某种需要的属性，价值是凝结在商品中的无差别的人类劳动，故B正确。"
                 },
                 {
                     id: 98,
                     subject: "政治",
                     subjectClass: "politics",
-                    question: "下列属于公民基本权利的是（ ）",
+                    question: "我国公民最基本的政治权利是（ ）",
                     options: {
-                        A: "依法纳税",
-                        B: "维护国家统一和民族团结",
-                        C: "受教育",
-                        D: "服兵役"
+                        A: "言论自由",
+                        B: "选举权和被选举权",
+                        C: "监督权",
+                        D: "受教育权"
                     },
-                    answer: "C",
-                    explanation: "受教育既是公民的基本权利，也是公民的基本义务，故C正确；A、B、D选项是公民的基本义务。"
+                    answer: "B",
+                    explanation: "选举权和被选举权是我国公民最基本的政治权利，是公民参与管理国家和管理社会的基础和标志，故B正确；言论自由和监督权是公民的政治权利，但不是最基本的；受教育权是公民的文化权利。"
                 },
                 {
                     id: 99,
                     subject: "政治",
                     subjectClass: "politics",
-                    question: "社会主义核心价值观中，国家层面的价值目标是（ ）",
+                    question: "下列关于国际关系的说法中，正确的是（ ）",
                     options: {
-                        A: "自由、平等、公正、法治",
-                        B: "爱国、敬业、诚信、友善",
-                        C: "富强、民主、文明、和谐",
-                        D: "以上都是"
+                        A: "国际关系的基本形式是合作",
+                        B: "国家利益是国际关系的决定性因素",
+                        C: "国际关系的内容就是政治关系",
+                        D: "国家力量是国际关系的决定性因素"
                     },
-                    answer: "C",
-                    explanation: "社会主义核心价值观包含三个层面的内容：国家层面的价值目标是富强、民主、文明、和谐；社会层面的价值取向是自由、平等、公正、法治；公民个人层面的价值准则是爱国、敬业、诚信、友善，故C正确。"
+                    answer: "B",
+                    explanation: "国家利益是国际关系的决定性因素，国家间的共同利益是国家合作的基础，而利益对立则是引起国家冲突的根源，故B正确；国际关系的基本形式是竞争、合作和冲突；国际关系的内容包括政治、经济、文化、军事等多方面；国家力量是影响国际关系的重要因素，但不是决定性因素。"
                 },
                 {
                     id: 100,
                     subject: "政治",
                     subjectClass: "politics",
-                    question: "哲学的基本问题是（ ）",
+                    question: "辩证唯物主义认为，物质的唯一特性是（ ）",
                     options: {
-                        A: "物质和意识的关系问题",
-                        B: "唯物主义和唯心主义的关系问题",
-                        C: "辩证法和形而上学的关系问题",
-                        D: "可知论和不可知论的关系问题"
+                        A: "运动性",
+                        B: "可知性",
+                        C: "客观实在性",
+                        D: "普遍性"
                     },
-                    answer: "A",
-                    explanation: "哲学的基本问题是思维和存在的关系问题，也就是物质和意识的关系问题，它包括两方面的内容：一是思维和存在何者为本原的问题；二是思维和存在有没有同一性的问题，即思维能否正确认识存在的问题，故A正确。"
+                    answer: "C",
+                    explanation: "辩证唯物主义认为，物质是不依赖于人的意识，并能为人的意识所反映的客观实在，物质的唯一特性是客观实在性，故C正确；运动是物质的根本属性和存在方式。"
                 }
             ];
             
-            // 应用状态
+            // 当前题目索引
+            let currentQuestionIndex = -1;
             let currentQuestion = null;
             let selectedOption = null;
+            let filteredQuestions = [...questionBank];
+            let currentSubjectFilter = 'all';
             
-            // DOM元素
-            const questionContainer = document.getElementById('question-container');
-            const questionSubject = document.getElementById('question-subject');
-            const questionText = document.getElementById('question-text');
-            const questionId = document.getElementById('question-id');
-            const optionsContainer = document.getElementById('options-container');
-            const explanationContainer = document.getElementById('explanation-container');
-            const correctAnswerEl = document.getElementById('correct-answer');
-            const explanationText = document.getElementById('explanation-text');
-            const submitBtn = document.getElementById('submit-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const totalCountEl = document.getElementById('total-count');
-            const accuracyRateEl = document.getElementById('accuracy-rate');
-            const correctCountEl = document.getElementById('correct-count');
-            const wrongCountEl = document.getElementById('wrong-count');
-            const currentStreakEl = document.getElementById('current-streak');
-            const statsBtn = document.getElementById('stats-btn');
-            const statsModal = document.getElementById('stats-modal');
-            const closeStatsBtn = document.getElementById('close-stats');
-            const resetStatsBtn = document.getElementById('reset-stats');
-            const modalTotalEl = document.getElementById('modal-total');
-            const modalAccuracyEl = document.getElementById('modal-accuracy');
-            const modalStreakEl = document.getElementById('modal-streak');
-            const modalBestStreakEl = document.getElementById('modal-best-streak');
-            const subjectStatsEl = document.getElementById('subject-stats');
-            const achievementEl = document.getElementById('achievement');
-            const achievementTitleEl = document.getElementById('achievement-title');
-            const achievementDescEl = document.getElementById('achievement-desc');
-            const progressBarEl = document.getElementById('progress-bar');
-            const questionDecorationEl = document.getElementById('question-decoration');
+            // 更新统计数据显示
+            function updateStatsDisplay() {
+                const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+                
+                document.getElementById('total-count').textContent = stats.total;
+                document.getElementById('accuracy-rate').textContent = `${accuracy}%`;
+                document.getElementById('correct-count').textContent = stats.correct;
+                document.getElementById('current-streak').textContent = stats.currentStreak;
+                document.getElementById('wrong-count').textContent = stats.wrong;
+                
+                // 更新弹窗统计
+                document.getElementById('modal-total').textContent = stats.total;
+                document.getElementById('modal-accuracy').textContent = `${accuracy}%`;
+                document.getElementById('modal-streak').textContent = stats.currentStreak;
+                document.getElementById('modal-best-streak').textContent = stats.bestStreak;
+                
+                // 更新错题本徽章
+                const wrongBadge = document.getElementById('wrong-badge');
+                if (stats.wrongQuestions.length > 0) {
+                    wrongBadge.textContent = stats.wrongQuestions.length;
+                    wrongBadge.classList.remove('hidden');
+                } else {
+                    wrongBadge.classList.add('hidden');
+                }
+                
+                // 更新学习计划进度
+                document.getElementById('daily-current').textContent = planData.progress[today];
+                document.getElementById('daily-target').textContent = `/ ${planData.dailyGoal}`;
+                const progressPercent = Math.min(100, (planData.progress[today] / planData.dailyGoal) * 100);
+                document.getElementById('daily-progress-bar').style.width = `${progressPercent}%`;
+                document.getElementById('streak-days').textContent = `${planData.streakDays}天`;
+                
+                // 计算本月完成率
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                let totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                let completedDays = 0;
+                
+                for (let i = 1; i <= totalDaysInMonth; i++) {
+                    const date = new Date(currentYear, currentMonth, i).toISOString().split('T')[0];
+                    if (planData.progress[date] >= planData.dailyGoal) {
+                        completedDays++;
+                    }
+                    
+                    // 如果是今天及之前的日期
+                    if (i <= new Date().getDate()) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                
+                const monthlyCompletion = totalDaysInMonth > 0 ? Math.round((completedDays / totalDaysInMonth) * 100) : 0;
+                document.getElementById('monthly-completion').textContent = `${monthlyCompletion}%`;
+                
+                // 显示目标提醒
+                const goalReminder = document.getElementById('goal-reminder');
+                const goalReminderText = document.getElementById('goal-reminder-text');
+                goalReminderText.textContent = `已完成 ${planData.progress[today]}/${planData.dailyGoal} 题，继续努力！`;
+                
+                if (planData.progress[today] < planData.dailyGoal && stats.total > 0) {
+                    goalReminder.classList.remove('hidden');
+                } else {
+                    goalReminder.classList.add('hidden');
+                }
+                
+                // 检查是否完成今日目标
+                if (planData.progress[today] >= planData.dailyGoal && !localStorage.getItem('goalCompletedToday')) {
+                    showAchievement('今日目标达成！', `恭喜你完成了今日${planData.dailyGoal}题的学习目标！`);
+                    localStorage.setItem('goalCompletedToday', 'true');
+                    
+                    // 更新连续打卡
+                    if (planData.lastStudyDate !== today) {
+                        planData.streakDays++;
+                        planData.lastStudyDate = today;
+                        savePlanData();
+                    }
+                }
+                
+                // 更新科目统计
+                const subjectStatsContainer = document.getElementById('subject-stats');
+                subjectStatsContainer.innerHTML = '';
+                
+                const subjects = [
+                    { name: '物理', class: 'physics' },
+                    { name: '化学', class: 'chemistry' },
+                    { name: '生物', class: 'biology' },
+                    { name: '数学', class: 'math' },
+                    { name: '英语', class: 'english' },
+                    { name: '语文', class: 'chinese' },
+                    { name: '历史', class: 'history' },
+                    { name: '地理', class: 'geography' },
+                    { name: '政治', class: 'politics' }
+                ];
+                
+                subjects.forEach(subject => {
+                    const data = stats.subjects[subject.class];
+                    const accuracy = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+                    
+                    const subjectStat = document.createElement('div');
+                    subjectStat.className = 'flex justify-between items-center';
+                    subjectStat.innerHTML = `
+                        <span class="flex items-center">
+                            <span class="w-2 h-2 rounded-full bg-${subject.class} mr-2"></span>
+                            ${subject.name}
+                        </span>
+                        <span>${accuracy}%</span>
+                    `;
+                    subjectStatsContainer.appendChild(subjectStat);
+                });
+            }
             
-            // 初始化UI显示统计数据
-            updateStatsUI();
-            updateModalStats();
+            // 显示新题目
+            function showNewQuestion() {
+                // 过滤已回答的题目，确保不重复出现
+                const unAnsweredQuestions = filteredQuestions.filter(q => 
+                    !stats.answeredQuestions.includes(q.id)
+                );
+                
+                // 如果没有未回答的题目，则从所有题目中随机选择
+                const availableQuestions = unAnsweredQuestions.length > 0 ? 
+                    unAnsweredQuestions : filteredQuestions;
+                
+                if (availableQuestions.length === 0) {
+                    document.getElementById('question-text').textContent = '没有找到相关题目，请尝试其他科目筛选。';
+                    document.getElementById('options-container').innerHTML = '';
+                    document.getElementById('submit-btn').disabled = true;
+                    return;
+                }
+                
+                // 随机选择一道题目
+                currentQuestionIndex = Math.floor(Math.random() * availableQuestions.length);
+                currentQuestion = availableQuestions[currentQuestionIndex];
+                selectedOption = null;
+                
+                // 更新题目显示
+                document.getElementById('question-subject').textContent = currentQuestion.subject;
+                document.getElementById('question-subject').className = `subject-badge bg-${currentQuestion.subjectClass}/10 text-${currentQuestion.subjectClass} mr-2`;
+                document.getElementById('question-text').textContent = currentQuestion.question;
+                document.getElementById('question-id').textContent = `题ID: ${currentQuestion.id}`;
+                
+                // 设置装饰元素颜色
+                document.getElementById('question-decoration').className = `absolute -right-10 -top-10 w-20 h-20 rounded-full opacity-10 bg-${currentQuestion.subjectClass}`;
+                
+                // 生成选项
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+                
+                for (const [key, value] of Object.entries(currentQuestion.options)) {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'option-item';
+                    optionElement.dataset.option = key;
+                    optionElement.innerHTML = `<span class="font-medium mr-2">${key}.</span> ${value}`;
+                    
+                    optionElement.addEventListener('click', function() {
+                        // 移除其他选项的选中状态
+                        document.querySelectorAll('.option-item').forEach(item => {
+                            item.classList.remove('option-selected');
+                        });
+                        
+                        // 设置当前选项为选中状态
+                        this.classList.add('option-selected');
+                        selectedOption = key;
+                        
+                        // 启用提交按钮
+                        document.getElementById('submit-btn').disabled = false;
+                    });
+                    
+                    optionsContainer.appendChild(optionElement);
+                }
+                
+                // 重置按钮和解析区
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('submit-btn').classList.remove('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                document.getElementById('explanation-container').classList.add('hidden');
+                
+                // 添加动画效果
+                document.getElementById('question-container').classList.remove('fade-in');
+                void document.getElementById('question-container').offsetWidth; // 重置动画
+                document.getElementById('question-container').classList.add('fade-in');
+            }
             
-            // 初始化
-            loadRandomQuestion();
-            
-            // 从localStorage加载数据后更新统计弹窗
-            statsBtn.addEventListener('click', function() {
-                updateModalStats();
-                statsModal.classList.remove('hidden');
-                statsModal.classList.add('flex');
+            // 提交答案
+            document.getElementById('submit-btn').addEventListener('click', function() {
+                if (!selectedOption) return;
+                
+                // 禁用所有选项
+                document.querySelectorAll('.option-item').forEach(item => {
+                    item.style.pointerEvents = 'none';
+                    
+                    // 标记正确和错误选项
+                    if (item.dataset.option === currentQuestion.answer) {
+                        item.classList.add('option-correct');
+                    } else if (item.dataset.option === selectedOption) {
+                        item.classList.add('option-incorrect');
+                    }
+                });
+                
+                // 显示解析
+                document.getElementById('correct-answer').textContent = currentQuestion.answer;
+                document.getElementById('explanation-text').textContent = currentQuestion.explanation;
+                document.getElementById('explanation-container').classList.remove('hidden');
+                
+                // 切换按钮
+                this.classList.add('hidden');
+                document.getElementById('next-btn').classList.remove('hidden');
+                
+                // 更新统计数据
+                stats.total++;
+                planData.progress[today]++;
+                stats.answeredQuestions.push(currentQuestion.id);
+                stats.subjects[currentQuestion.subjectClass].total++;
+                
+                // 检查是否正确
+                if (selectedOption === currentQuestion.answer) {
+                    // 正确
+                    stats.correct++;
+                    stats.subjects[currentQuestion.subjectClass].correct++;
+                    stats.currentStreak++;
+                    
+                    // 更新最佳连续正确记录
+                    if (stats.currentStreak > stats.bestStreak) {
+                        stats.bestStreak = stats.currentStreak;
+                        
+                        // 解锁成就
+                        if (stats.bestStreak === 5) {
+                            showAchievement('连续答对5题！', '你已解锁"小试牛刀"成就，继续保持！');
+                        } else if (stats.bestStreak === 10) {
+                            showAchievement('连续答对10题！', '你已解锁"学霸潜质"成就，太厉害了！');
+                        } else if (stats.bestStreak === 20) {
+                            showAchievement('连续答对20题！', '你已解锁"学神附体"成就，无人能挡！');
+                        }
+                    }
+                    
+                    // 显示庆祝效果
+                    createConfetti();
+                } else {
+                    // 错误
+                    stats.wrong++;
+                    stats.currentStreak = 0;
+                    
+                    // 添加到错题本
+                    if (!stats.wrongQuestions.includes(currentQuestion.id)) {
+                        stats.wrongQuestions.push(currentQuestion.id);
+                    }
+                }
+                
+                // 解锁成就
+                if (stats.total === 10) {
+                    showAchievement('初窥门径', '你已完成10道题，开始熟悉题型了！');
+                } else if (stats.total === 50) {
+                    showAchievement('渐入佳境', '你已完成50道题，继续加油！');
+                } else if (stats.total === 100) {
+                    showAchievement('题库达人', '你已完成所有题目，太了不起了！');
+                }
+                
+                if (stats.correct === 10) {
+                    showAchievement('正确率10题', '你已答对10道题，继续保持！');
+                } else if (stats.correct === 50) {
+                    showAchievement('正确率50题', '你已答对50道题，非常出色！');
+                }
+                
+                // 保存统计数据
+                localStorage.setItem('questionStats', JSON.stringify(stats));
+                savePlanData();
+                
+                // 更新显示
+                updateStatsDisplay();
+                
+                // 更新进度条
+                updateProgressBar();
             });
             
-            closeStatsBtn.addEventListener('click', function() {
-                statsModal.classList.add('hidden');
-                statsModal.classList.remove('flex');
+            // 下一题
+            document.getElementById('next-btn').addEventListener('click', function() {
+                showNewQuestion();
             });
             
-            resetStatsBtn.addEventListener('click', function() {
+            // 显示成就
+            function showAchievement(title, description) {
+                const achievement = document.getElementById('achievement');
+                document.getElementById('achievement-title').textContent = title;
+                document.getElementById('achievement-desc').textContent = description;
+                
+                achievement.classList.remove('hidden');
+                
+                // 3秒后隐藏
+                setTimeout(() => {
+                    achievement.classList.add('hidden');
+                }, 3000);
+            }
+            
+            // 创建庆祝彩屑
+            function createConfetti() {
+                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+                const container = document.body;
+                
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.width = `${Math.random() * 10 + 5}px`;
+                    confetti.style.height = `${Math.random() * 10 + 5}px`;
+                    confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                    confetti.style.animationDelay = `${Math.random() * 2}s`;
+                    
+                    container.appendChild(confetti);
+                    
+                    // 动画结束后移除
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }
+            }
+            
+            // 更新进度条
+            function updateProgressBar() {
+                const progressBar = document.getElementById('progress-bar');
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    progressBar.style.width = '0%';
+                }, 500);
+            }
+            
+            // 科目筛选
+            document.querySelectorAll('.subject-filter').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 更新按钮样式
+                    document.querySelectorAll('.subject-filter').forEach(btn => {
+                        btn.classList.remove('active', 'bg-primary', 'text-white');
+                        btn.classList.add('bg-gray-100', 'dark:bg-gray-700', 'hover:bg-gray-200', 'dark:hover:bg-gray-600');
+                    });
+                    
+                    this.classList.add('active', 'bg-primary', 'text-white');
+                    this.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'hover:bg-gray-200', 'dark:hover:bg-gray-600');
+                    
+                    // 筛选题目
+                    currentSubjectFilter = this.dataset.subject;
+                    
+                    if (currentSubjectFilter === 'all') {
+                        filteredQuestions = [...questionBank];
+                    } else {
+                        filteredQuestions = questionBank.filter(q => q.subjectClass === currentSubjectFilter);
+                    }
+                    
+                    // 显示新题目
+                    showNewQuestion();
+                });
+            });
+            
+            // 统计弹窗
+            document.getElementById('stats-btn').addEventListener('click', function() {
+                document.getElementById('stats-modal').classList.remove('hidden');
+                document.getElementById('stats-modal').classList.add('flex');
+            });
+            
+            document.getElementById('close-stats').addEventListener('click', function() {
+                document.getElementById('stats-modal').classList.add('hidden');
+                document.getElementById('stats-modal').classList.remove('flex');
+            });
+            
+            // 重置统计数据
+            document.getElementById('reset-stats').addEventListener('click', function() {
                 if (confirm('确定要重置所有统计数据吗？此操作不可恢复。')) {
                     stats = {
                         total: 0,
@@ -1861,325 +2446,242 @@
                             geography: { total: 0, correct: 0 },
                             politics: { total: 0, correct: 0 }
                         },
-                        answeredQuestions: []
+                        answeredQuestions: [],
+                        wrongQuestions: []
                     };
-                    saveStats();
-                    updateStatsUI();
-                    updateModalStats();
+                    
+                    localStorage.setItem('questionStats', JSON.stringify(stats));
+                    updateStatsDisplay();
+                    
+                    // 隐藏弹窗
+                    document.getElementById('stats-modal').classList.add('hidden');
+                    document.getElementById('stats-modal').classList.remove('flex');
                 }
             });
             
-            // 加载随机题目
-            function loadRandomQuestion() {
-                // 过滤掉已回答的题目
-                const unansweredQuestions = questionBank.filter(q => 
-                    !stats.answeredQuestions.includes(q.id)
-                );
-                
-                // 如果所有题目都已回答，重置已回答列表
-                if (unansweredQuestions.length === 0) {
-                    stats.answeredQuestions = [];
-                    saveStats();
-                    return loadRandomQuestion();
+            // 错题本弹窗
+            document.getElementById('wrong-btn').addEventListener('click', function() {
+                renderWrongQuestions();
+                document.getElementById('wrong-modal').classList.remove('hidden');
+                document.getElementById('wrong-modal').classList.add('flex');
+            });
+            
+            document.getElementById('close-wrong').addEventListener('click', function() {
+                document.getElementById('wrong-modal').classList.add('hidden');
+                document.getElementById('wrong-modal').classList.remove('flex');
+            });
+            
+            // 清空错题本
+            document.getElementById('clear-wrong').addEventListener('click', function() {
+                if (confirm('确定要清空错题本吗？此操作不可恢复。')) {
+                    stats.wrongQuestions = [];
+                    localStorage.setItem('questionStats', JSON.stringify(stats));
+                    renderWrongQuestions();
+                    updateStatsDisplay();
                 }
-                
-                // 随机选择一道题
-                const randomIndex = Math.floor(Math.random() * unansweredQuestions.length);
-                currentQuestion = unansweredQuestions[randomIndex];
-                
-                // 重置状态
-                selectedOption = null;
-                explanationContainer.classList.add('hidden');
-                
-                // 更新UI
-                updateQuestionUI();
-                submitBtn.disabled = false;
-                nextBtn.classList.add('hidden');
-                submitBtn.classList.remove('hidden');
-                
-                // 更新进度条
-                updateProgressBar();
-                
-                // 添加动画效果
-                questionContainer.classList.remove('fade-in');
-                void questionContainer.offsetWidth; // 触发重绘
-                questionContainer.classList.add('fade-in');
-            }
+            });
             
-            // 更新题目UI
-            function updateQuestionUI() {
-                if (!currentQuestion) return;
+            // 渲染错题
+            function renderWrongQuestions() {
+                const container = document.getElementById('wrong-questions-container');
+                const noWrongMessage = document.getElementById('no-wrong-message');
                 
-                // 更新题目信息
-                questionSubject.textContent = currentQuestion.subject;
-                questionSubject.className = `subject-badge bg-${currentQuestion.subjectClass}/10 text-${currentQuestion.subjectClass} mr-2`;
-                questionText.textContent = currentQuestion.question;
-                questionId.textContent = `题ID: ${currentQuestion.id}`;
-                
-                // 设置装饰元素颜色
-                questionDecorationEl.className = `absolute -right-10 -top-10 w-20 h-20 rounded-full opacity-10 bg-${currentQuestion.subjectClass}`;
-                
-                // 清空并生成选项
-                optionsContainer.innerHTML = '';
-                Object.keys(currentQuestion.options).forEach(optionKey => {
-                    const optionEl = document.createElement('div');
-                    optionEl.className = 'option-item';
-                    optionEl.innerHTML = `<span class="font-medium mr-2">${optionKey}.</span>${currentQuestion.options[optionKey]}`;
-                    optionEl.dataset.option = optionKey;
-                    
-                    optionEl.addEventListener('click', () => {
-                        // 移除其他选项的选中状态
-                        document.querySelectorAll('.option-item').forEach(el => {
-                            el.classList.remove('option-selected');
-                        });
-                        
-                        // 设置当前选项为选中状态
-                        optionEl.classList.add('option-selected');
-                        selectedOption = optionKey;
-                        
-                        // 添加选中动画
-                        optionEl.classList.add('pulse');
-                        setTimeout(() => optionEl.classList.remove('pulse'), 500);
-                    });
-                    
-                    optionsContainer.appendChild(optionEl);
-                });
-            }
-            
-            // 提交答案
-            submitBtn.addEventListener('click', function() {
-                if (!selectedOption) {
-                    // 添加抖动效果提示未选择答案
-                    optionsContainer.classList.add('shake');
-                    setTimeout(() => {
-                        optionsContainer.classList.remove('shake');
-                    }, 500);
+                if (stats.wrongQuestions.length === 0) {
+                    container.innerHTML = '';
+                    noWrongMessage.classList.remove('hidden');
                     return;
                 }
                 
-                // 标记为已回答
-                stats.answeredQuestions.push(currentQuestion.id);
+                noWrongMessage.classList.add('hidden');
+                container.innerHTML = '';
                 
-                // 更新科目统计
-                const subject = currentQuestion.subjectClass;
-                stats.subjects[subject].total++;
+                // 获取错题详情
+                const wrongQuestions = questionBank.filter(q => 
+                    stats.wrongQuestions.includes(q.id)
+                );
                 
-                // 检查答案
-                const isCorrect = selectedOption === currentQuestion.answer;
-                
-                // 更新统计
-                if (isCorrect) {
-                    stats.correct++;
-                    stats.subjects[subject].correct++;
-                    stats.currentStreak++;
-                    
-                    // 更新最佳连续正确记录
-                    if (stats.currentStreak > stats.bestStreak) {
-                        stats.bestStreak = stats.currentStreak;
+                // 按科目分组
+                const groupedQuestions = {};
+                wrongQuestions.forEach(q => {
+                    if (!groupedQuestions[q.subjectClass]) {
+                        groupedQuestions[q.subjectClass] = [];
                     }
-                    
-                    // 显示庆祝效果
-                    createConfetti();
-                    
-                    // 检查成就
-                    checkAchievements();
-                } else {
-                    stats.wrong++;
-                    stats.currentStreak = 0;
-                }
-                
-                stats.total = stats.correct + stats.wrong;
-                
-                // 保存统计数据
-                saveStats();
-                
-                // 更新UI
-                updateStatsUI();
-                
-                // 显示正确/错误状态
-                document.querySelectorAll('.option-item').forEach(optionEl => {
-                    const optionKey = optionEl.dataset.option;
-                    optionEl.removeEventListener('click', () => {}); // 移除点击事件
-                    
-                    if (optionKey === currentQuestion.answer) {
-                        optionEl.classList.add('option-correct');
-                        optionEl.classList.add('scale-in');
-                    } else if (optionKey === selectedOption) {
-                        optionEl.classList.add('option-incorrect');
-                        optionEl.classList.add('scale-in');
-                    }
-                    
-                    optionEl.classList.remove('option-selected', 'hover:border-primary', 'hover:bg-blue-50');
+                    groupedQuestions[q.subjectClass].push(q);
                 });
                 
-                // 显示解析
-                correctAnswerEl.textContent = currentQuestion.answer;
-                explanationText.textContent = currentQuestion.explanation;
-                explanationContainer.classList.remove('hidden');
+                // 生成错题列表
+                for (const [subjectClass, questions] of Object.entries(groupedQuestions)) {
+                    const subjectName = questions[0].subject;
+                    
+                    const subjectSection = document.createElement('div');
+                    subjectSection.className = 'mb-6';
+                    subjectSection.innerHTML = `
+                        <h4 class="font-medium mb-3 flex items-center">
+                            <span class="w-2 h-2 rounded-full bg-${subjectClass} mr-2"></span>
+                            ${subjectName} (${questions.length})
+                        </h4>
+                        <div class="space-y-3">
+                            ${questions.map(q => `
+                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="text-sm mb-2">${q.question}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">正确答案：<span class="text-secondary font-medium">${q.answer}</span></div>
+                                    <button class="text-primary text-xs hover:underline review-question" data-id="${q.id}">查看详情</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    container.appendChild(subjectSection);
+                }
                 
-                // 切换按钮状态
-                submitBtn.disabled = true;
-                nextBtn.classList.remove('hidden');
-                submitBtn.classList.add('hidden');
-            });
-            
-            // 下一题
-            nextBtn.addEventListener('click', loadRandomQuestion);
-            
-            // 保存统计数据到localStorage
-            function saveStats() {
-                localStorage.setItem('questionStats', JSON.stringify(stats));
-            }
-            
-            // 更新统计UI
-            function updateStatsUI() {
-                totalCountEl.textContent = stats.total;
-                correctCountEl.textContent = stats.correct;
-                wrongCountEl.textContent = stats.wrong;
-                currentStreakEl.textContent = stats.currentStreak;
-                
-                const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
-                accuracyRateEl.textContent = `${accuracy}%`;
-            }
-            
-            // 更新统计弹窗
-            function updateModalStats() {
-                modalTotalEl.textContent = stats.total;
-                modalStreakEl.textContent = stats.currentStreak;
-                modalBestStreakEl.textContent = stats.bestStreak;
-                
-                const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
-                modalAccuracyEl.textContent = `${accuracy}%`;
-                
-                // 更新科目统计
-                subjectStatsEl.innerHTML = '';
-                const subjects = {
-                    physics: "物理",
-                    chemistry: "化学",
-                    biology: "生物",
-                    math: "数学",
-                    english: "英语",
-                    chinese: "语文",
-                    history: "历史",
-                    geography: "地理",
-                    politics: "政治"
-                };
-                
-                Object.keys(subjects).forEach(key => {
-                    const subject = stats.subjects[key];
-                    if (subject.total > 0) {
-                        const subjectAccuracy = Math.round((subject.correct / subject.total) * 100);
-                        const barWidth = Math.min(subjectAccuracy, 100);
+                // 添加查看详情事件
+                document.querySelectorAll('.review-question').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const questionId = parseInt(this.dataset.id);
+                        const question = questionBank.find(q => q.id === questionId);
                         
-                        const subjectEl = document.createElement('div');
-                        subjectEl.className = 'mb-2';
-                        subjectEl.innerHTML = `
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm">${subjects[key]}</span>
-                                <span class="text-sm font-medium">${subjectAccuracy}%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-${key} h-2 rounded-full" style="width: ${barWidth}%"></div>
-                            </div>
-                        `;
-                        subjectStatsEl.appendChild(subjectEl);
-                    }
+                        if (question) {
+                            // 显示该题目
+                            currentQuestion = question;
+                            selectedOption = null;
+                            
+                            // 更新题目显示
+                            document.getElementById('question-subject').textContent = currentQuestion.subject;
+                            document.getElementById('question-subject').className = `subject-badge bg-${currentQuestion.subjectClass}/10 text-${currentQuestion.subjectClass} mr-2`;
+                            document.getElementById('question-text').textContent = currentQuestion.question;
+                            document.getElementById('question-id').textContent = `题ID: ${currentQuestion.id}`;
+                            
+                            // 设置装饰元素颜色
+                            document.getElementById('question-decoration').className = `absolute -right-10 -top-10 w-20 h-20 rounded-full opacity-10 bg-${currentQuestion.subjectClass}`;
+                            
+                            // 生成选项
+                            const optionsContainer = document.getElementById('options-container');
+                            optionsContainer.innerHTML = '';
+                            
+                            for (const [key, value] of Object.entries(currentQuestion.options)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.className = 'option-item';
+                                optionElement.dataset.option = key;
+                                optionElement.innerHTML = `<span class="font-medium mr-2">${key}.</span> ${value}`;
+                                
+                                // 标记正确选项
+                                if (key === currentQuestion.answer) {
+                                    optionElement.classList.add('option-correct');
+                                }
+                                
+                                optionElement.style.pointerEvents = 'none';
+                                optionsContainer.appendChild(optionElement);
+                            }
+                            
+                            // 显示解析
+                            document.getElementById('correct-answer').textContent = currentQuestion.answer;
+                            document.getElementById('explanation-text').textContent = currentQuestion.explanation;
+                            document.getElementById('explanation-container').classList.remove('hidden');
+                            
+                            // 切换按钮
+                            document.getElementById('submit-btn').classList.add('hidden');
+                            document.getElementById('next-btn').classList.remove('hidden');
+                            
+                            // 关闭错题本弹窗
+                            document.getElementById('wrong-modal').classList.add('hidden');
+                            document.getElementById('wrong-modal').classList.remove('flex');
+                            
+                            // 滚动到题目
+                            document.getElementById('question-container').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
                 });
             }
             
-            // 创建庆祝彩屑
-            function createConfetti() {
-                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-                const container = document.body;
-                
-                // 清除现有彩屑
-                document.querySelectorAll('.confetti').forEach(c => c.remove());
-                
-                // 创建新彩屑
-                for (let i = 0; i < 100; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    confetti.style.left = `${Math.random() * 100}vw`;
-                    confetti.style.width = `${Math.random() * 10 + 5}px`;
-                    confetti.style.height = `${Math.random() * 10 + 5}px`;
-                    confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
-                        confetti.style.animationDelay = `${Math.random() * 2}s`;
-                        container.appendChild(confetti);
+            // 加入错题本
+            document.getElementById('add-to-wrong').addEventListener('click', function() {
+                if (currentQuestion && !stats.wrongQuestions.includes(currentQuestion.id)) {
+                    stats.wrongQuestions.push(currentQuestion.id);
+                    stats.wrong++;
+                    localStorage.setItem('questionStats', JSON.stringify(stats));
+                    updateStatsDisplay();
                     
-                        // 动画结束后移除彩屑
-                        setTimeout(() => confetti.remove(), 5000);
-                    }
-                }
-            
-                // 检查成就
-                function checkAchievements() {
-                    let achievement = null;
-                
-                    // 检查各种成就条件
-                    if (stats.total === 10) {
-                        achievement = {
-                            title: "初试锋芒",
-                            desc: "你已完成10道题，继续加油！"
-                        };
-                    } else if (stats.total === 50) {
-                        achievement = {
-                            title: "坚持不懈",
-                            desc: "你已完成50道题，学习毅力令人敬佩！"
-                        };
-                    } else if (stats.total === 100) {
-                        achievement = {
-                            title: "题库达人",
-                            desc: "你已完成所有题目，真是太棒了！"
-                        };
-                    } else if (stats.bestStreak === 5) {
-                        achievement = {
-                            title: "渐入佳境",
-                            desc: "你已连续答对5道题，保持状态！"
-                        };
-                    } else if (stats.bestStreak === 10) {
-                        achievement = {
-                            title: "势不可挡",
-                            desc: "你已连续答对10道题，太厉害了！"
-                        };
-                    } else if (stats.correct / stats.total >= 0.9 && stats.total >= 20) {
-                        achievement = {
-                            title: "学霸本色",
-                            desc: "你的正确率超过90%，学霸非你莫属！"
-                        };
-                    }
-                
-                    // 如果解锁了成就，显示成就提示
-                    if (achievement) {
-                        achievementTitleEl.textContent = achievement.title;
-                        achievementDescEl.textContent = achievement.desc;
-                        achievementEl.classList.remove('hidden');
+                    // 显示提示
+                    this.innerHTML = '<i class="fa fa-check mr-1"></i> 已加入错题本';
+                    this.classList.add('text-secondary');
+                    this.classList.remove('text-danger');
                     
-                        // 5秒后隐藏成就提示
-                        setTimeout(() => {
-                            achievementEl.classList.add('hidden');
-                        }, 5000);
-                    }
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 加入错题本';
+                        this.classList.remove('text-secondary');
+                        this.classList.add('text-danger');
+                    }, 2000);
                 }
-            
-                // 更新进度条
-                function updateProgressBar() {
-                    const progress = (stats.answeredQuestions.length / questionBank.length) * 100;
-                    progressBarEl.style.width = `${progress}%`;
-                }
-            
-                // 滚动监听，改变导航栏样式
-                window.addEventListener('scroll', function() {
-                    const header = document.querySelector('header');
-                    if (window.scrollY > 10) {
-                        header.classList.add('py-2', 'shadow');
-                        header.classList.remove('py-4');
-                    } else {
-                        header.classList.add('py-4');
-                        header.classList.remove('py-2', 'shadow');
-                    }
-                });
             });
+            
+            // 学习计划弹窗
+            document.getElementById('plan-btn').addEventListener('click', function() {
+                document.getElementById('daily-goal').value = planData.dailyGoal;
+                document.getElementById('plan-modal').classList.remove('hidden');
+                document.getElementById('plan-modal').classList.add('flex');
+            });
+            
+            document.getElementById('close-plan').addEventListener('click', function() {
+                document.getElementById('plan-modal').classList.add('hidden');
+                document.getElementById('plan-modal').classList.remove('flex');
+            });
+            
+            // 调整每日目标
+            document.getElementById('decrease-goal').addEventListener('click', function() {
+                const goalInput = document.getElementById('daily-goal');
+                let goal = parseInt(goalInput.value);
+                if (goal > 1) {
+                    goalInput.value = goal - 1;
+                }
+            });
+            
+            document.getElementById('increase-goal').addEventListener('click', function() {
+                const goalInput = document.getElementById('daily-goal');
+                let goal = parseInt(goalInput.value);
+                if (goal < 100) {
+                    goalInput.value = goal + 1;
+                }
+            });
+            
+            // 保存学习计划
+            document.getElementById('save-plan').addEventListener('click', function() {
+                const newGoal = parseInt(document.getElementById('daily-goal').value);
+                if (newGoal >= 1 && newGoal <= 100) {
+                    planData.dailyGoal = newGoal;
+                    savePlanData();
+                    updateStatsDisplay();
+                    
+                    // 显示保存成功提示
+                    this.textContent = '保存成功！';
+                    this.classList.add('bg-secondary');
+                    
+                    setTimeout(() => {
+                        this.textContent = '保存计划';
+                        this.classList.remove('bg-secondary');
+                        document.getElementById('plan-modal').classList.add('hidden');
+                        document.getElementById('plan-modal').classList.remove('flex');
+                    }, 1000);
+                }
+            });
+            
+            // 关闭目标提醒
+            document.getElementById('close-reminder').addEventListener('click', function() {
+                document.getElementById('goal-reminder').classList.add('hidden');
+            });
+            
+            // 初始化
+            updateStatsDisplay();
+            showNewQuestion();
+            
+            // 检查是否有未完成的计划
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            
+            if (planData.progress[yesterdayStr] && planData.progress[yesterdayStr] < planData.dailyGoal) {
+                document.getElementById('plan-badge').classList.remove('hidden');
+            }
+        });
     </script>
 </body>
 </html>

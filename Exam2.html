@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高一高二高二综合题库 - 智能练习模式</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 优化Font Awesome Awesome引入，仅加载核心样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入Chart.js用于展示答题趋势 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind自定义颜色和JIT模式 -->
+    <script>
+        tailwind.config = {
+            mode: 'jit', // 启用JIT模式减少CSS体积
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        danger: '#ef4444',
+                        physics: '#3b82f6',
+                        chemistry: '#ef4444',
+                        biology: '#10b981',
+                        math: '#8b5cf6',
+                        english: '#ec4899',
+                        chinese: '#6366f1',
+                        history: '#9ca3af',
+                        geography: '#0ea5e9',
+                        politics: '#f43f5e'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .question-card {
+                @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
+            }
+            .option-item {
+                @apply border border-gray-300 rounded-lg p-4 mb-3 cursor-pointer hover:border-primary hover:bg-blue-50 transition-all duration-200 touch-manipulation;
+            }
+            .option-selected {
+                @apply border-primary bg-blue-50 pl-10 relative;
+            }
+            .option-selected::before {
+                content: "✓";
+                position: absolute;
+                left: 3px;
+                color: #3b82f6;
+                font-weight: bold;
+            }
+            .option-correct {
+                @apply border-secondary bg-green-50 pl-10 relative;
+            }
+            .option-correct::before {
+                content: "✓";
+                position: absolute;
+                left: 3px;
+                color: #10b981;
+                font-weight: bold;
+            }
+            .option-incorrect {
+                @apply border-danger bg-red-50 pl-10 relative;
+            }
+            .option-incorrect::before {
+                content: "✗";
+                position: absolute;
+                left: 3px;
+                color: #ef4444;
+                font-weight: bold;
+            }
+            .subject-badge {
+                @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+            }
+            .stat-card {
+                @apply bg-white rounded-lg shadow-sm p-4 text-center transition-all duration-300;
+            }
+            .stat-card:hover {
+                @apply shadow-md transform -translate-y-1;
+            }
+            .progress-ring {
+                transform: rotate(-90deg);
+                transform-origin: 50% 50%;
+            }
+            .confetti {
+                position: fixed;
+                width: 10px;
+                height: 10px;
+                opacity: 0;
+                animation: confetti-fall 5s ease-in-out forwards;
+                pointer-events: none;
+            }
+            @keyframes confetti-fall {
+                0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+                100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+            }
+            /* 懒加载图片样式 */
+            .lazy-load {
+                opacity: 0;
+                transition: opacity 0.3s ease-in-out;
+            }
+            .lazy-load.loaded {
+                opacity: 1;
+            }
+            /* 调整触摸设备点击区域 */
+            .touch-target {
+                @apply min-h-[48px] flex items-center justify-center;
+            }
+        }
+        
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease-out forwards;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .scale-in {
+            animation: scaleIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-3px); }
+            40%, 60% { transform: translateX(3px); }
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+            width: 0%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            transition: width 0.3s ease;
+        }
+        
+        /* 横屏模式优化 */
+        @media (orientation: landscape) {
+            .options-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+        }
+        
+        /* 可访问性 - 高对比度模式 */
+        [data-theme="high-contrast"] {
+            --color-text: #ffffff;
+            --color-background: #000000;
+            --color-primary: #00ffff;
+            --color-secondary: #ffff00;
+            --color-danger: #ff0000;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen font-sans text-gray-800" data-theme="default">
+    <!-- 进度条 -->
+    <div class="progress-bar" id="progress-bar" aria-hidden="true"></div>
+    
+    <!-- 顶部导航栏 -->
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 transition-all duration-300">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fa fa-book text-primary mr-2" aria-hidden="true"></i>
+                    高一高二综合题库
+                </h1>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="stat-card hidden sm:block">
+                        <div class="text-sm text-gray-500">已刷题数</div>
+                        <div class="text-xl font-bold text-primary" id="total-count" aria-live="polite">0</div>
+                    </div>
+                    
+                    <!-- 新增：字体大小调整按钮 -->
+                    <div class="relative">
+                        <button id="font-size-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors touch-target" aria-label="调整字体大小">
+                            <i class="fa fa-text-height text-primary" aria-hidden="true"></i>
+                        </button>
+                        <div id="font-size-menu" class="hidden absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg py-2 z-20">
+                            <button id="font-smaller" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors touch-target" aria-label="减小字体">
+                                <i class="fa fa-font mr-2" aria-hidden="true"></i>小
+                            </button>
+                            <button id="font-default" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors touch-target" aria-label="默认字体">
+                                <i class="fa fa-font mr-2" aria-hidden="true"></i>中
+                            </button>
+                            <button id="font-larger" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors touch-target" aria-label="增大字体">
+                                <i class="fa fa-font mr-2" aria-hidden="true"></i>大
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 新增：高对比度模式切换 -->
+                    <button id="contrast-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors touch-target" aria-label="切换高对比度模式">
+                        <i class="fa fa-adjust text-primary" aria-hidden="true"></i>
+                    </button>
+                    
+                    <div class="relative">
+                        <button id="stats-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors touch-target" aria-label="查看学习统计">
+                            <i class="fa fa-bar-chart text-primary" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 新增：错题本按钮 -->
+                    <div class="relative">
+                        <button id="wrong-questions-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors touch-target" aria-label="查看错题本">
+                            <i class="fa fa-exclamation-circle text-danger" aria-hidden="true"></i>
+                        </button>
+                        <span id="wrong-count-badge" class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" aria-live="polite">0</span>
+                    </div>
+                    
+                    <!-- 新增：收藏按钮 -->
+                    <div class="relative">
+                        <button id="bookmarks-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors touch-target" aria-label="查看收藏题目">
+                            <i class="fa fa-bookmark-o text-accent" aria-hidden="true"></i>
+                        </button>
+                        <span id="bookmark-count-badge" class="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" aria-live="polite">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <button id="back-button" class="absolute left-4 top-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center z-10 touch-target">
+        <i class="fa fa-arrow-left mr-2" aria-hidden="true"></i> 返回学业水平测试中心
+    </button>
+    
+    <!-- 统计弹窗 -->
+    <div id="stats-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="stats-modal-title">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4 scale-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" id="stats-modal-title">学习统计</h3>
+                <button id="close-stats" class="text-gray-500 hover:text-gray-800 p-2 touch-target" aria-label="关闭统计">
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500">总刷题数</div>
+                    <div class="text-2xl font-bold text-primary" id="modal-total" aria-live="polite">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500">正确率</div>
+                    <div class="text-2xl font-bold text-secondary" id="modal-accuracy" aria-live="polite">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500">错误题数</div>
+                    <div class="text-xl font-bold text-danger" id="wrong-count" aria-live="polite">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500">连续正确</div>
+                    <div class="text-2xl font-bold text-accent" id="modal-streak" aria-live="polite">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500">最高连续正确</div>
+                    <div class="text-2xl font-bold text-accent" id="modal-best-streak" aria-live="polite">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-sm text-gray-500">学习时长</div>
+                    <div class="text-2xl font-bold text-primary" id="study-time" aria-live="polite">0分钟</div>
+                </div>
+            </div>
+            
+            <!-- 新增：答题趋势图表 -->
+            <div class="mb-6">
+                <h4 class="font-medium mb-2">答题趋势</h4>
+                <div class="bg-gray-50 p-2 rounded-lg">
+                    <canvas id="trend-chart" height="200"></canvas>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="font-medium mb-2">各科目正确率</h4>
+                <div id="subject-stats" class="space-y-2">
+                    <!-- 科目统计将动态生成 -->
+                </div>
+            </div>
+            
+            <button id="reset-stats" class="w-full py-2 px-4 border border-danger text-danger rounded-lg hover:bg-danger/5 transition-colors touch-target">
+                重置统计数据
+            </button>
+        </div>
+    </div>
+
+    <!-- 错题本弹窗 -->
+    <div id="wrong-questions-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="wrong-questions-title">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto scale-in">
+            <div class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10">
+                <h3 class="text-xl font-bold" id="wrong-questions-title">错题本</h3>
+                <button id="close-wrong-questions" class="text-gray-500 hover:text-gray-800 p-2 touch-target" aria-label="关闭错题本">
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            
+            <div id="wrong-questions-list" class="space-y-4">
+                <!-- 错题列表将动态生成 -->
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fa fa-check-circle text-4xl mb-2 text-gray-300" aria-hidden="true"></i>
+                    <p>暂无错题记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 收藏题目弹窗 -->
+    <div id="bookmarks-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="bookmarks-title">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto scale-in">
+            <div class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10">
+                <h3 class="text-xl font-bold" id="bookmarks-title">收藏题目</h3>
+                <button id="close-bookmarks" class="text-gray-500 hover:text-gray-800 p-2 touch-target" aria-label="关闭收藏">
+                    <i class="fa fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            
+            <div id="bookmarks-list" class="space-y-4">
+                <!-- 收藏列表将动态生成 -->
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fa fa-bookmark-o text-4xl mb-2 text-gray-300" aria-hidden="true"></i>
+                    <p>暂无收藏题目</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8 max-w-3xl">
+        <!-- 成就提示 (默认隐藏) -->
+        <div id="achievement" class="hidden bg-white rounded-xl shadow-lg p-4 mb-6 flex items-center bounce-in" role="alert" aria-live="assertive">
+            <div class="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mr-4">
+                <i class="fa fa-trophy text-2xl text-accent" aria-hidden="true"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-800" id="achievement-title">新成就解锁!</h3>
+                <p class="text-gray-600 text-sm" id="achievement-desc">你已完成10道题，继续加油!</p>
+            </div>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="stat-card">
+                <div class="text-sm text-gray-500">正确率</div>
+                <div class="text-xl font-bold text-secondary" id="accuracy-rate" aria-live="polite">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-sm text-gray-500">正确题数</div>
+                <div class="text-xl font-bold text-secondary" id="correct-count" aria-live="polite">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-sm text-gray-500">连续正确</div>
+                <div class="text-xl font-bold text-accent" id="current-streak" aria-live="polite">0</div>
+            </div>
+        </div>
+        
+        <!-- 题目容器 -->
+        <div id="question-container" class="mb-8 fade-in">
+            <div class="question-card relative overflow-hidden">
+                <!-- 装饰元素 -->
+                <div class="absolute -right-10 -top-10 w-20 h-20 rounded-full opacity-10" id="question-decoration"></div>
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-2 relative z-10">
+                    <div class="flex items-center">
+                        <span class="subject-badge bg-primary/10 text-primary mr-2" id="question-subject">科目</span>
+                        <h2 class="font-medium text-lg" id="question-text">加载题目中...</h2>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <!-- 新增：当前题目收藏按钮 -->
+                        <button id="current-bookmark-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors touch-target" aria-label="收藏本题">
+                            <i class="fa fa-bookmark-o text-accent" aria-hidden="true"></i>
+                        </button>
+                        <span class="text-sm text-gray-500" id="question-id">题ID: --</span>
+                    </div>
+                </div>
+                
+                <!-- 题目图片容器（支持懒加载） -->
+                <div id="question-image-container" class="mb-4 hidden">
+                    <img src="" alt="" class="lazy-load max-w-full h-auto rounded-lg" id="question-image">
+                </div>
+                
+                <div class="space-y-3 ml-2 relative z-10" id="options-container">
+                    <!-- 选项将通过JS动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 答案解析区 (默认隐藏) -->
+        <div id="explanation-container" class="hidden bg-white rounded-xl shadow-md p-6 mb-8 slide-up">
+            <h3 class="text-lg font-bold mb-3 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2" aria-hidden="true"></i>答案解析
+            </h3>
+            <div class="mb-4">
+                <span class="font-medium">正确答案：</span>
+                <span class="text-secondary font-bold" id="correct-answer"></span>
+            </div>
+            <div class="text-gray-700" id="explanation-text"></div>
+        </div>
+        
+        <!-- 按钮区 -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button id="submit-btn" class="bg-primary text-white px-8 py-3 rounded-lg shadow hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none transform hover:scale-105 active:scale-95 transition-transform touch-target" aria-label="提交答案">
+                提交答案
+            </button>
+            <button id="next-btn" class="hidden bg-secondary text-white px-8 py-3 rounded-lg shadow hover:bg-secondary/90 transition-all flex-1 sm:flex-none transform hover:scale-105 active:scale-95 transition-transform touch-target" aria-label="下一题">
+                下一题
+            </button>
+        </div>
+    </main>
+
+    <footer class="bg-white/80 backdrop-blur-md py-4 mt-12">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>高一高二综合题库 &copy; 2025 | 学习数据自动保存</p>
+        </div>
+    </footer>
+
+    <script>
+        // 图片懒加载实现
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化懒加载图片
+            const lazyImages = document.querySelectorAll('.lazy-load');
+            
+            const lazyLoadObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.classList.add('loaded');
+                        observer.unobserve(img);
+                    }
+                });
+            });
+            
+            lazyImages.forEach(img => {
+                lazyLoadObserver.observe(img);
+            });
+        });
+        
+        document.getElementById('back-button').addEventListener('click', function() {
+            window.history.back();
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从localStorage加载统计数据，并确保所有数组属性都已初始化
+            let storedStats = JSON.parse(localStorage.getItem('questionStats'));
+            let stats = {
+                total: 0,
+                correct: 0,
+                wrong: 0,
+                currentStreak: 0,
+                bestStreak: 0,
+                subjects: {
+                    physics: { total: 0, correct: 0 },
+                    chemistry: { total: 0, correct: 0 },
+                    biology: { total: 0, correct: 0 },
+                    math: { total: 0, correct: 0 },
+                    english: { total: 0, correct: 0 },
+                    chinese: { total: 0, correct: 0 },
+                    history: { total: 0, correct: 0 },
+                    geography: { total: 0, correct: 0 },
+                    politics: { total: 0, correct: 0 }
+                },
+                answeredQuestions: [],
+                wrongQuestions: [],       // 确保初始化为空数组
+                bookmarkedQuestions: [],  // 确保初始化为空数组
+                studyTime: 0,             // 学习时间（分钟）
+                startTime: new Date().getTime(), // 记录开始时间
+                trendData: []             // 答题趋势数据
+            };
+            
+            // 合并存储的统计数据（如果存在）
+            if (storedStats) {
+                // 合并基本统计数据
+                stats.total = storedStats.total || 0;
+                stats.correct = storedStats.correct || 0;
+                stats.wrong = storedStats.wrong || 0;
+                stats.currentStreak = storedStats.currentStreak || 0;
+                stats.bestStreak = storedStats.bestStreak || 0;
+                stats.studyTime = storedStats.studyTime || 0;
+                
+                // 合并数组数据，确保它们是数组类型
+                stats.answeredQuestions = Array.isArray(storedStats.answeredQuestions) ? storedStats.answeredQuestions : [];
+                stats.wrongQuestions = Array.isArray(storedStats.wrongQuestions) ? storedStats.wrongQuestions : [];
+                stats.bookmarkedQuestions = Array.isArray(storedStats.bookmarkedQuestions) ? storedStats.bookmarkedQuestions : [];
+                stats.trendData = Array.isArray(storedStats.trendData) ? storedStats.trendData : [];
+                
+                // 恢复开始时间或使用新时间
+                stats.startTime = storedStats.startTime || new Date().getTime();
+                
+                // 合并科目数据
+                if (storedStats.subjects) {
+                    Object.keys(stats.subjects).forEach(subject => {
+                        if (storedStats.subjects[subject]) {
+                            stats.subjects[subject].total = storedStats.subjects[subject].total || 0;
+                            stats.subjects[subject].correct = storedStats.subjects[subject].correct || 0;
+                        }
+                    });
+                }
+            }
+            
+            // 题目数据库 - 示例题目（此处省略部分题目以简化代码）
+            const questionBank = [
+                // 物理（1-15）
+                {
+                    id: 1,
+                    subject: "物理",
+                    subjectClass: "physics",
+                    question: "下列关于力和运动的说法中，正确的是（ ）",
+                    image: "https://picsum.photos/id/237/800/400",
+                    options: {
+                        A: "物体运动状态改变时，一定受到了力的作用",
+                        B: "物体受到力的作用，运动状态一定改变",
+                        C: "静止的物体没有惯性",
+                        D: "用力推桌子，桌子没动，是因为推力小于摩擦力"
+                    },
+                    answer: "A",
+                    explanation: "力是改变物体运动状态的原因，物体运动状态改变时一定受到力的作用，故A正确；物体受到平衡力作用时，运动状态不变，故B错误；一切物体都有惯性，与运动状态无关，故C错误；桌子没动处于平衡状态，推力等于摩擦力，故D错误。"
+                },
+                {
+                    id: 2,
+                    subject: "物理",
+                    subjectClass: "physics",
+                    question: "关于电路的说法错误的是（ ）",
+                    image: "https://picsum.photos/id/238/800/400",
+                    options: {
+                        A: "电源是提供电能的装置",
+                        B: "电路中必须有电源并且是通路时，电路中才有电流",
+                        C: "电流沿着'正极→用电器→负极'的方向流动",
+                        D: "用电器是将其他形式的能转化为电能的装置"
+                    },
+                    answer: "D",
+                    explanation: "用电器是将电能转化为其他形式能的装置，如电灯将电能转化为光能和热能，故D错误。其他选项说法均正确。"
+                },
+                // 可以继续添加更多题目...
+            ];
+            
+            // 修复：确保在访问数组长度前先检查数组是否存在
+            function updateWrongQuestionsDisplay() {
+                const wrongListEl = document.getElementById('wrong-questions-list');
+                const wrongCountBadge = document.getElementById('wrong-count-badge');
+                
+                // 确保wrongQuestions是数组
+                const wrongQuestions = Array.isArray(stats.wrongQuestions) ? stats.wrongQuestions : [];
+                
+                // 更新错题数量徽章
+                wrongCountBadge.textContent = wrongQuestions.length;
+                
+                // 清空列表
+                wrongListEl.innerHTML = '';
+                
+                if (wrongQuestions.length === 0) {
+                    // 显示空状态
+                    wrongListEl.innerHTML = `
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fa fa-check-circle text-4xl mb-2 text-gray-300" aria-hidden="true"></i>
+                            <p>暂无错题记录</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 添加错题到列表
+                wrongQuestions.forEach(questionId => {
+                    const question = questionBank.find(q => q.id === questionId);
+                    if (question) {
+                        const questionEl = document.createElement('div');
+                        questionEl.className = 'question-card p-4';
+                        questionEl.innerHTML = `
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="subject-badge bg-${question.subjectClass}/10 text-${question.subjectClass}">${question.subject}</span>
+                                <button class="remove-wrong p-1 text-gray-400 hover:text-danger" data-id="${question.id}" aria-label="从错题本移除">
+                                    <i class="fa fa-times" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <p class="mb-2 text-sm">${question.question}</p>
+                            <div class="text-sm text-secondary">正确答案：${question.answer}</div>
+                        `;
+                        wrongListEl.appendChild(questionEl);
+                    }
+                });
+                
+                // 添加移除错题事件监听
+                document.querySelectorAll('.remove-wrong').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        stats.wrongQuestions = stats.wrongQuestions.filter(qId => qId !== id);
+                        stats.wrong = stats.wrongQuestions.length;
+                        saveStats();
+                        updateWrongQuestionsDisplay();
+                        updateStatsDisplay();
+                    });
+                });
+            }
+            
+            // 其他函数和初始化代码...
+            function updateStatsDisplay() {
+                // 更新统计数据显示
+                const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+                
+                document.getElementById('total-count').textContent = stats.total;
+                document.getElementById('accuracy-rate').textContent = `${accuracy}%`;
+                document.getElementById('correct-count').textContent = stats.correct;
+                document.getElementById('current-streak').textContent = stats.currentStreak;
+                
+                // 更新弹窗中的统计数据
+                document.getElementById('modal-total').textContent = stats.total;
+                document.getElementById('modal-accuracy').textContent = `${accuracy}%`;
+                document.getElementById('wrong-count').textContent = stats.wrong;
+                document.getElementById('modal-streak').textContent = stats.currentStreak;
+                document.getElementById('modal-best-streak').textContent = stats.bestStreak;
+                
+                // 更新学习时间（分钟）
+                const currentTime = new Date().getTime();
+                const sessionTime = Math.floor((currentTime - stats.startTime) / (1000 * 60));
+                const totalStudyTime = stats.studyTime + sessionTime;
+                document.getElementById('study-time').textContent = `${totalStudyTime}分钟`;
+            }
+            
+            function saveStats() {
+                // 保存前更新学习时间
+                const currentTime = new Date().getTime();
+                const sessionTime = Math.floor((currentTime - stats.startTime) / (1000 * 60));
+                stats.studyTime += sessionTime;
+                stats.startTime = currentTime; // 重置开始时间
+                
+                localStorage.setItem('questionStats', JSON.stringify(stats));
+            }
+            
+            // 初始化函数
+            function init() {
+                updateStatsDisplay();
+                updateWrongQuestionsDisplay();
+                // 可以添加其他初始化逻辑...
+            }
+            
+            // 初始化应用
+            init();
+            
+            // 定时保存统计数据（每30秒）
+            setInterval(saveStats, 30000);
+            
+            // 窗口关闭时保存数据
+            window.addEventListener('beforeunload', saveStats);
+        });
+    </script>
+</body>
+</html>
