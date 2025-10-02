@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 添加字体导入 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <!-- 配置Tailwind自定义主题 -->
     <script>
@@ -59,6 +61,19 @@
                 0%, 100% { transform: scale(1); opacity: 0.7; }
                 50% { transform: scale(1.5); opacity: 0; }
             }
+            .tutorial-highlight {
+                animation: highlight 1.5s infinite alternate;
+            }
+            @keyframes highlight {
+                from { box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.5); }
+                to { box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.8); }
+            }
+            .power-up {
+                transition: all 0.3s ease;
+            }
+            .power-up:hover {
+                transform: translateY(-5px) scale(1.05);
+            }
         }
     </style>
 </head>
@@ -74,6 +89,12 @@
             </h1>
         </div>
         <div class="flex gap-2">
+            <button id="achievementsBtn" class="bg-slate-800/70 hover:bg-slate-700/70 transition-colors px-3 py-1.5 rounded-lg text-sm flex items-center">
+                <i class="fa fa-trophy text-yellow-500 mr-1"></i> 成就
+            </button>
+            <button id="upgradesBtn" class="bg-slate-800/70 hover:bg-slate-700/70 transition-colors px-3 py-1.5 rounded-lg text-sm flex items-center">
+                <i class="fa fa-cogs text-blue-400 mr-1"></i> 升级
+            </button>
             <button id="helpBtn" class="bg-slate-800/70 hover:bg-slate-700/70 transition-colors px-3 py-1.5 rounded-lg text-sm flex items-center">
                 <i class="fa fa-question-circle text-blue-400 mr-1"></i> 帮助
             </button>
@@ -150,26 +171,34 @@
                 
                 <!-- 电子 -->
                 <div id="electron" class="absolute w-10 h-10 rounded-full bg-electron glow" 
-                     style="left: 100px; top: 50%;">
+                     style="left: 15%; top: 40%;">
                     <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">e⁻</div>
                 </div>
                 
                 <!-- 正电子 -->
                 <div id="positron" class="absolute w-10 h-10 rounded-full bg-positron glow" 
-                     style="left: 200px; top: 50%;">
+                     style="left: 30%; top: 60%;">
                     <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">e⁺</div>
-                </div>
-                
-                <!-- 同步核心（目标） -->
-                <div id="core1" class="core absolute w-14 h-14 rounded-full bg-quantum/30 border-2 border-quantum flex items-center justify-center pulse-slow" 
-                     style="left: 70%; top: 30%;">
-                    <div class="w-6 h-6 bg-quantum rounded-full"></div>
                 </div>
                 
                 <!-- 控制提示 -->
                 <div class="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded text-xs">
                     <div class="mb-1"><span class="text-electron">WASD</span> 控制电子 | <span class="text-positron">方向键</span> 控制正电子</div>
                     <div><span class="text-entanglement">空格</span> 释放共振脉冲</div>
+                </div>
+                
+                <!-- 教程提示层 -->
+                <div id="tutorialOverlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm z-40 hidden flex items-center justify-center">
+                    <div class="bg-slate-800 rounded-xl p-4 max-w-md w-11/12 border border-slate-700">
+                        <div id="tutorialContent" class="text-center">
+                            <!-- 教程内容将动态填充 -->
+                        </div>
+                        <div class="mt-4 flex justify-center">
+                            <button id="tutorialNextBtn" class="bg-quantum hover:bg-quantum/80 transition-colors px-4 py-2 rounded-lg text-sm">
+                                下一步
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -235,8 +264,276 @@
             <button id="levelSelectBtn" class="bg-quantum/80 hover:bg-quantum transition-colors px-4 py-2 rounded-lg flex items-center">
                 <i class="fa fa-th-list mr-2"></i> 选择关卡
             </button>
+            <button id="difficultyBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-signal mr-2"></i> 难度: <span id="difficultyText">中等</span>
+            </button>
         </div>
     </main>
+    
+    <!-- 升级弹窗 -->
+    <div id="upgradesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4 text-center text-blue-400">
+                <i class="fa fa-cogs mr-2"></i>粒子升级
+            </h2>
+            
+            <div class="mb-4">
+                <h3 class="font-semibold text-white mb-2">可用量子点: <span id="quantumPoints" class="text-quantum">0</span></h3>
+                <p class="text-xs text-slate-400 mb-3">完成关卡和成就可获得量子点，用于升级粒子能力</p>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- 电子升级 -->
+                <div class="bg-slate-900/50 p-3 rounded-lg border border-electron/30">
+                    <h4 class="font-semibold text-electron mb-2">电子升级</h4>
+                    
+                    <div class="space-y-3">
+                        <div class="power-up">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm">能量容量</span>
+                                <span class="text-xs text-electron">等级 <span id="electronEnergyLevel">1</span>/5</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
+                                <div id="electronEnergyProgress" class="h-full bg-electron w-20%"></div>
+                            </div>
+                            <button class="upgrade-btn w-full text-xs bg-electron/20 hover:bg-electron/40 transition-colors py-1 rounded" data-upgrade="electronEnergy">
+                                升级 (消耗 <span class="cost">5</span> 量子点)
+                            </button>
+                        </div>
+                        
+                        <div class="power-up">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm">移动速度</span>
+                                <span class="text-xs text-electron">等级 <span id="electronSpeedLevel">1</span>/5</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
+                                <div id="electronSpeedProgress" class="h-full bg-electron w-20%"></div>
+                            </div>
+                            <button class="upgrade-btn w-full text-xs bg-electron/20 hover:bg-electron/40 transition-colors py-1 rounded" data-upgrade="electronSpeed">
+                                升级 (消耗 <span class="cost">5</span> 量子点)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 正电子升级 -->
+                <div class="bg-slate-900/50 p-3 rounded-lg border border-positron/30">
+                    <h4 class="font-semibold text-positron mb-2">正电子升级</h4>
+                    
+                    <div class="space-y-3">
+                        <div class="power-up">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm">能量容量</span>
+                                <span class="text-xs text-positron">等级 <span id="positronEnergyLevel">1</span>/5</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
+                                <div id="positronEnergyProgress" class="h-full bg-positron w-20%"></div>
+                            </div>
+                            <button class="upgrade-btn w-full text-xs bg-positron/20 hover:bg-positron/40 transition-colors py-1 rounded" data-upgrade="positronEnergy">
+                                升级 (消耗 <span class="cost">5</span> 量子点)
+                            </button>
+                        </div>
+                        
+                        <div class="power-up">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm">移动速度</span>
+                                <span class="text-xs text-positron">等级 <span id="positronSpeedLevel">1</span>/5</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
+                                <div id="positronSpeedProgress" class="h-full bg-positron w-20%"></div>
+                            </div>
+                            <button class="upgrade-btn w-full text-xs bg-positron/20 hover:bg-positron/40 transition-colors py-1 rounded" data-upgrade="positronSpeed">
+                                升级 (消耗 <span class="cost">5</span> 量子点)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 量子升级 -->
+                <div class="bg-slate-900/50 p-3 rounded-lg border border-quantum/30">
+                    <h4 class="font-semibold text-quantum mb-2">量子能力升级</h4>
+                    
+                    <div class="space-y-3">
+                        <div class="power-up">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm">共振能量积累</span>
+                                <span class="text-xs text-quantum">等级 <span id="resonanceLevel">1</span>/5</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
+                                <div id="resonanceProgress" class="h-full bg-quantum w-20%"></div>
+                            </div>
+                            <button class="upgrade-btn w-full text-xs bg-quantum/20 hover:bg-quantum/40 transition-colors py-1 rounded" data-upgrade="resonance">
+                                升级 (消耗 <span class="cost">10</span> 量子点)
+                            </button>
+                        </div>
+                        
+                        <div class="power-up">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm">纠缠度稳定性</span>
+                                <span class="text-xs text-quantum">等级 <span id="entanglementStabilityLevel">1</span>/5</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
+                                <div id="entanglementStabilityProgress" class="h-full bg-quantum w-20%"></div>
+                            </div>
+                            <button class="upgrade-btn w-full text-xs bg-quantum/20 hover:bg-quantum/40 transition-colors py-1 rounded" data-upgrade="entanglementStability">
+                                升级 (消耗 <span class="cost">10</span> 量子点)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <button id="closeUpgradesBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-2 rounded-lg text-sm">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 成就弹窗 -->
+    <div id="achievementsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4 text-center text-yellow-400">
+                <i class="fa fa-trophy mr-2"></i>游戏成就
+            </h2>
+            
+            <div class="space-y-3">
+                <div class="achievement flex items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3 flex-shrink-0">
+                        <i class="fa fa-star text-yellow-500"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between">
+                            <h4 class="font-semibold">量子初体验</h4>
+                            <span class="text-xs text-green-400" id="achievement1Status">未完成</span>
+                        </div>
+                        <p class="text-xs text-slate-400">完成第一关</p>
+                        <p class="text-xs text-quantum mt-1">奖励: 5量子点</p>
+                    </div>
+                </div>
+                
+                <div class="achievement flex items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3 flex-shrink-0">
+                        <i class="fa fa-diamond text-yellow-500"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between">
+                            <h4 class="font-semibold">核心收藏家</h4>
+                            <span class="text-xs text-green-400" id="achievement2Status">未完成</span>
+                        </div>
+                        <p class="text-xs text-slate-400">收集50个同步核心</p>
+                        <p class="text-xs text-quantum mt-1">奖励: 15量子点</p>
+                    </div>
+                </div>
+                
+                <div class="achievement flex items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3 flex-shrink-0">
+                        <i class="fa fa-refresh text-yellow-500"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between">
+                            <h4 class="font-semibold">共振大师</h4>
+                            <span class="text-xs text-green-400" id="achievement3Status">未完成</span>
+                        </div>
+                        <p class="text-xs text-slate-400">释放50次量子共振脉冲</p>
+                        <p class="text-xs text-quantum mt-1">奖励: 10量子点</p>
+                    </div>
+                </div>
+                
+                <div class="achievement flex items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3 flex-shrink-0">
+                        <i class="fa fa-link text-yellow-500"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between">
+                            <h4 class="font-semibold">完美纠缠</h4>
+                            <span class="text-xs text-green-400" id="achievement4Status">未完成</span>
+                        </div>
+                        <p class="text-xs text-slate-400">单关保持100%纠缠度</p>
+                        <p class="text-xs text-quantum mt-1">奖励: 20量子点</p>
+                    </div>
+                </div>
+                
+                <div class="achievement flex items-center p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3 flex-shrink-0">
+                        <i class="fa fa-gamepad text-yellow-500"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between">
+                            <h4 class="font-semibold">量子征服者</h4>
+                            <span class="text-xs text-green-400" id="achievement5Status">未完成</span>
+                        </div>
+                        <p class="text-xs text-slate-400">完成所有12个主线关卡</p>
+                        <p class="text-xs text-quantum mt-1">奖励: 50量子点</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <button id="closeAchievementsBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-2 rounded-lg text-sm">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 难度选择弹窗 -->
+    <div id="difficultyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700">
+            <h2 class="text-xl font-bold mb-4 text-center text-blue-400">
+                <i class="fa fa-signal mr-2"></i>选择难度
+            </h2>
+            
+            <div class="space-y-3">
+                <button class="difficulty-option w-full text-left p-3 bg-slate-900/50 hover:bg-slate-700/50 rounded-lg border border-slate-700 transition-colors" data-difficulty="easy">
+                    <div class="font-semibold text-green-400">简单模式</div>
+                    <div class="text-xs text-slate-400 mt-1">
+                        纠缠度下降缓慢，能量消耗少，适合新手
+                    </div>
+                </button>
+                
+                <button class="difficulty-option w-full text-left p-3 bg-slate-900/50 hover:bg-slate-700/50 rounded-lg border border-slate-700 transition-colors" data-difficulty="medium">
+                    <div class="font-semibold text-blue-400">中等模式</div>
+                    <div class="text-xs text-slate-400 mt-1">
+                        平衡的游戏体验，适合大多数玩家
+                    </div>
+                </button>
+                
+                <button class="difficulty-option w-full text-left p-3 bg-slate-900/50 hover:bg-slate-700/50 rounded-lg border border-slate-700 transition-colors" data-difficulty="hard">
+                    <div class="font-semibold text-red-400">困难模式</div>
+                    <div class="text-xs text-slate-400 mt-1">
+                        纠缠度下降迅速，能量消耗大，挑战高手
+                    </div>
+                </button>
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <button id="closeDifficultyBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-2 rounded-lg text-sm">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 关卡选择弹窗 -->
+    <div id="levelSelectModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-2xl w-11/12 mx-4 transform transition-all border border-slate-700 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4 text-center text-blue-400">
+                <i class="fa fa-th-list mr-2"></i>选择关卡
+            </h2>
+            
+            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                <!-- 关卡按钮将动态生成 -->
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <button id="closeLevelSelectBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-2 rounded-lg text-sm">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
     
     <!-- 帮助弹窗 -->
     <div id="helpModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
@@ -300,6 +597,18 @@
             </div>
         </div>
     </div>
+    
+    <!-- 成就解锁提示 -->
+    <div id="achievementUnlocked" class="fixed top-4 right-4 bg-slate-800/90 backdrop-blur-sm rounded-lg p-3 border border-yellow-500/30 shadow-lg transform translate-x-full transition-transform duration-500 z-50 flex items-center">
+        <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3">
+            <i class="fa fa-trophy text-yellow-500"></i>
+        </div>
+        <div>
+            <div class="font-semibold text-yellow-400 text-sm">成就解锁！</div>
+            <div id="achievementName" class="text-xs text-white">量子初体验</div>
+            <div id="achievementReward" class="text-xs text-quantum">+5量子点</div>
+        </div>
+    </div>
 
     <script>
         // 游戏状态
@@ -307,25 +616,37 @@
             // 粒子属性
             electron: {
                 element: null,
-                x: 100,
+                x: 0,
                 y: 0,
                 size: 40,
+                baseSpeed: 3,
                 speed: 3,
+                baseEnergy: 100,
                 energy: 100,
                 velocityX: 0,
                 velocityY: 0,
-                keys: { w: false, a: false, s: false, d: false }
+                keys: { w: false, a: false, s: false, d: false },
+                upgrades: {
+                    energy: 1,
+                    speed: 1
+                }
             },
             positron: {
                 element: null,
-                x: 200,
+                x: 0,
                 y: 0,
                 size: 40,
+                baseSpeed: 3,
                 speed: 3,
+                baseEnergy: 100,
                 energy: 100,
                 velocityX: 0,
                 velocityY: 0,
-                keys: { ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false }
+                keys: { ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false },
+                upgrades: {
+                    energy: 1,
+                    speed: 1
+                }
             },
             
             // 游戏元素
@@ -339,13 +660,21 @@
             
             // 游戏状态
             level: 1,
+            maxUnlockedLevel: 1,
             coresCollected: 0,
             totalCores: 3,
+            totalCoresCollected: 0,
+            resonanceUses: 0,
             entanglementLevel: 100,
             resonanceEnergy: 0,
             maxResonance: 100,
+            resonanceGainRate: 0.5,
             isPlaying: false,
             gameLoop: null,
+            quantumPoints: 0,
+            
+            // 难度设置
+            difficulty: 'medium', // easy, medium, hard
             
             // 游戏区域
             gameArea: null,
@@ -353,12 +682,25 @@
             gameHeight: 0,
             entanglementLine: null,
             
-            // 物理参数
+            // 物理参数（会根据难度和升级变化）
             maxEntanglementDistance: 200,
             minEntanglementDistance: 50,
             entanglementLossRate: 0.5,
             entanglementGainRate: 0.2,
-            friction: 0.95
+            friction: 0.95,
+            
+            // 成就系统
+            achievements: {
+                1: { completed: false, name: "量子初体验", description: "完成第一关", reward: 5 },
+                2: { completed: false, name: "核心收藏家", description: "收集50个同步核心", reward: 15, progress: 0, target: 50 },
+                3: { completed: false, name: "共振大师", description: "释放50次量子共振脉冲", reward: 10, progress: 0, target: 50 },
+                4: { completed: false, name: "完美纠缠", description: "单关保持100%纠缠度", reward: 20 },
+                5: { completed: false, name: "量子征服者", description: "完成所有12个主线关卡", reward: 50 }
+            },
+            
+            // 教程状态
+            tutorialStep: 0,
+            tutorialCompleted: false
         };
         
         // DOM元素
@@ -379,18 +721,65 @@
             helpBtn: document.getElementById('helpBtn'),
             closeHelpBtn: document.getElementById('closeHelpBtn'),
             levelSelectBtn: document.getElementById('levelSelectBtn'),
+            difficultyBtn: document.getElementById('difficultyBtn'),
+            difficultyText: document.getElementById('difficultyText'),
             resonanceBtn: document.getElementById('resonanceBtn'),
+            upgradesBtn: document.getElementById('upgradesBtn'),
+            closeUpgradesBtn: document.getElementById('closeUpgradesBtn'),
+            achievementsBtn: document.getElementById('achievementsBtn'),
+            closeAchievementsBtn: document.getElementById('closeAchievementsBtn'),
             
             // 弹窗
             helpModal: document.getElementById('helpModal'),
             messageModal: document.getElementById('messageModal'),
             modalTitle: document.getElementById('modalTitle'),
             modalMessage: document.getElementById('modalMessage'),
-            modalBtn: document.getElementById('modalBtn')
+            modalBtn: document.getElementById('modalBtn'),
+            difficultyModal: document.getElementById('difficultyModal'),
+            closeDifficultyBtn: document.getElementById('closeDifficultyBtn'),
+            levelSelectModal: document.getElementById('levelSelectModal'),
+            closeLevelSelectBtn: document.getElementById('closeLevelSelectBtn'),
+            upgradesModal: document.getElementById('upgradesModal'),
+            achievementsModal: document.getElementById('achievementsModal'),
+            
+            // 升级相关
+            quantumPoints: document.getElementById('quantumPoints'),
+            electronEnergyLevel: document.getElementById('electronEnergyLevel'),
+            electronEnergyProgress: document.getElementById('electronEnergyProgress'),
+            electronSpeedLevel: document.getElementById('electronSpeedLevel'),
+            electronSpeedProgress: document.getElementById('electronSpeedProgress'),
+            positronEnergyLevel: document.getElementById('positronEnergyLevel'),
+            positronEnergyProgress: document.getElementById('positronEnergyProgress'),
+            positronSpeedLevel: document.getElementById('positronSpeedLevel'),
+            positronSpeedProgress: document.getElementById('positronSpeedProgress'),
+            resonanceLevel: document.getElementById('resonanceLevel'),
+            resonanceProgress: document.getElementById('resonanceProgress'),
+            entanglementStabilityLevel: document.getElementById('entanglementStabilityLevel'),
+            entanglementStabilityProgress: document.getElementById('entanglementStabilityProgress'),
+            
+            // 成就相关
+            achievement1Status: document.getElementById('achievement1Status'),
+            achievement2Status: document.getElementById('achievement2Status'),
+            achievement3Status: document.getElementById('achievement3Status'),
+            achievement4Status: document.getElementById('achievement4Status'),
+            achievement5Status: document.getElementById('achievement5Status'),
+            
+            // 教程相关
+            tutorialOverlay: document.getElementById('tutorialOverlay'),
+            tutorialContent: document.getElementById('tutorialContent'),
+            tutorialNextBtn: document.getElementById('tutorialNextBtn'),
+            
+            // 成就解锁提示
+            achievementUnlocked: document.getElementById('achievementUnlocked'),
+            achievementName: document.getElementById('achievementName'),
+            achievementReward: document.getElementById('achievementReward')
         };
         
         // 初始化游戏
         function initGame() {
+            // 从本地存储加载游戏状态
+            loadGameState();
+            
             // 设置游戏区域
             gameState.gameArea = elements.gameArea;
             updateGameDimensions();
@@ -400,19 +789,29 @@
             gameState.positron.element = elements.positron;
             gameState.entanglementLine = elements.entanglementLine;
             
-            // 初始化核心
-            gameState.cores = [
-                document.getElementById('core1')
-            ];
+            // 生成关卡选择按钮
+            generateLevelSelectButtons();
+            
+            // 应用难度设置
+            applyDifficultySettings();
+            
+            // 应用升级
+            applyUpgrades();
             
             // 更新显示
             updateUI();
+            updateUpgradesUI();
+            updateAchievementsUI();
             
             // 添加事件监听器
             setupEventListeners();
             
-            // 显示帮助
-            elements.helpModal.classList.remove('hidden');
+            // 显示教程或帮助
+            if (!gameState.tutorialCompleted) {
+                startTutorial();
+            } else {
+                elements.helpModal.classList.remove('hidden');
+            }
         }
         
         // 设置事件监听器
@@ -494,12 +893,466 @@
             elements.modalBtn.addEventListener('click', () => {
                 elements.messageModal.classList.add('hidden');
                 if (gameState.coresCollected >= gameState.totalCores) {
+                    // 解锁下一关
+                    if (gameState.level >= gameState.maxUnlockedLevel) {
+                        gameState.maxUnlockedLevel = gameState.level + 1;
+                        saveGameState();
+                        generateLevelSelectButtons();
+                    }
                     gameState.level++;
                     startLevel();
                 } else {
                     startLevel();
                 }
             });
+            
+            // 难度按钮
+            elements.difficultyBtn.addEventListener('click', () => {
+                elements.difficultyModal.classList.remove('hidden');
+            });
+            elements.closeDifficultyBtn.addEventListener('click', () => {
+                elements.difficultyModal.classList.add('hidden');
+                applyDifficultySettings();
+                updateUI();
+            });
+            
+            // 难度选择
+            document.querySelectorAll('.difficulty-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    gameState.difficulty = option.dataset.difficulty;
+                    elements.difficultyText.textContent = 
+                        gameState.difficulty === 'easy' ? '简单' : 
+                        gameState.difficulty === 'medium' ? '中等' : '困难';
+                    saveGameState();
+                });
+            });
+            
+            // 关卡选择
+            elements.levelSelectBtn.addEventListener('click', () => {
+                elements.levelSelectModal.classList.remove('hidden');
+            });
+            elements.closeLevelSelectBtn.addEventListener('click', () => {
+                elements.levelSelectModal.classList.add('hidden');
+            });
+            
+            // 升级按钮
+            elements.upgradesBtn.addEventListener('click', () => {
+                elements.upgradesModal.classList.remove('hidden');
+                updateUpgradesUI();
+            });
+            elements.closeUpgradesBtn.addEventListener('click', () => {
+                elements.upgradesModal.classList.add('hidden');
+            });
+            
+            // 升级选项
+            document.querySelectorAll('.upgrade-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    upgradeAbility(btn.dataset.upgrade);
+                });
+            });
+            
+            // 成就按钮
+            elements.achievementsBtn.addEventListener('click', () => {
+                elements.achievementsModal.classList.remove('hidden');
+                updateAchievementsUI();
+            });
+            elements.closeAchievementsBtn.addEventListener('click', () => {
+                elements.achievementsModal.classList.add('hidden');
+            });
+            
+            // 教程按钮
+            elements.tutorialNextBtn.addEventListener('click', () => {
+                nextTutorialStep();
+            });
+            
+            // 窗口大小变化
+            window.addEventListener('resize', () => {
+                updateGameDimensions();
+                if (gameState.isPlaying) {
+                    updateParticlePositions();
+                }
+            });
+        }
+        
+        // 生成关卡选择按钮
+        function generateLevelSelectButtons() {
+            const container = elements.levelSelectModal.querySelector('.grid');
+            container.innerHTML = '';
+            
+            // 生成12个主线关卡
+            for (let i = 1; i <= 12; i++) {
+                const button = document.createElement('button');
+                button.className = `level-btn flex items-center justify-center w-12 h-12 rounded-lg text-center transition-all ${i <= gameState.maxUnlockedLevel ? 'bg-slate-700 hover:bg-quantum' : 'bg-slate-900/50 text-slate-500 cursor-not-allowed'}`;
+                button.textContent = i;
+                button.dataset.level = i;
+                
+                if (i <= gameState.maxUnlockedLevel) {
+                    button.addEventListener('click', () => {
+                        gameState.level = i;
+                        elements.levelSelectModal.classList.add('hidden');
+                        restartLevel();
+                    });
+                }
+                
+                container.appendChild(button);
+            }
+        }
+        
+        // 应用难度设置
+        function applyDifficultySettings() {
+            switch (gameState.difficulty) {
+                case 'easy':
+                    gameState.entanglementLossRate = 0.3;
+                    gameState.entanglementGainRate = 0.3;
+                    gameState.maxEntanglementDistance = 250;
+                    gameState.minEntanglementDistance = 40;
+                    break;
+                case 'medium':
+                    gameState.entanglementLossRate = 0.5;
+                    gameState.entanglementGainRate = 0.2;
+                    gameState.maxEntanglementDistance = 200;
+                    gameState.minEntanglementDistance = 50;
+                    break;
+                case 'hard':
+                    gameState.entanglementLossRate = 0.8;
+                    gameState.entanglementGainRate = 0.1;
+                    gameState.maxEntanglementDistance = 150;
+                    gameState.minEntanglementDistance = 60;
+                    break;
+            }
+        }
+        
+        // 开始教程
+        function startTutorial() {
+            gameState.tutorialStep = 0;
+            elements.tutorialOverlay.classList.remove('hidden');
+            showTutorialStep();
+        }
+        
+        // 显示当前教程步骤
+        function showTutorialStep() {
+            const steps = [
+                {
+                    title: "欢迎来到量子协作!",
+                    content: "在这个游戏中，你需要同时控制两个处于量子纠缠状态的粒子：电子和正电子。",
+                    highlight: null
+                },
+                {
+                    title: "控制电子",
+                    content: "使用 <span class='text-electron font-bold'>WASD</span> 键控制蓝色的电子移动。尝试移动一下！",
+                    highlight: 'electron'
+                },
+                {
+                    title: "控制正电子",
+                    content: "使用 <span class='text-positron font-bold'>方向键</span> 控制橙色的正电子移动。尝试移动一下！",
+                    highlight: 'positron'
+                },
+                {
+                    title: "量子纠缠",
+                    content: "两个粒子之间的连接线表示量子纠缠。保持适当距离，过远或过近都会降低纠缠度。",
+                    highlight: 'quantumLink'
+                },
+                {
+                    title: "同步核心",
+                    content: "你的目标是收集所有紫色的同步核心。靠近它们即可收集。",
+                    highlight: null
+                },
+                {
+                    title: "共振能量",
+                    content: "当两个粒子向同一方向移动时，会积累共振能量。满值后按空格键释放强大脉冲！",
+                    highlight: 'resonanceBar'
+                },
+                {
+                    title: "准备就绪!",
+                    content: "现在你已经了解了基本操作，准备开始你的量子冒险吧！",
+                    highlight: null
+                }
+            ];
+            
+            // 移除之前的高亮
+            document.querySelectorAll('.tutorial-highlight').forEach(el => {
+                el.classList.remove('tutorial-highlight');
+            });
+            
+            // 设置当前步骤内容
+            const step = steps[gameState.tutorialStep];
+            elements.tutorialContent.innerHTML = `
+                <h3 class="text-lg font-bold mb-3 text-quantum">${step.title}</h3>
+                <p class="text-sm text-slate-300 mb-2">${step.content}</p>
+                ${gameState.tutorialStep === steps.length - 1 ? 
+                    '<p class="text-xs text-slate-500">点击"开始游戏"进入第一关</p>' : ''}
+            `;
+            
+            // 高亮元素
+            if (step.highlight && document.getElementById(step.highlight)) {
+                document.getElementById(step.highlight).classList.add('tutorial-highlight');
+            }
+            
+            // 更新按钮文本
+            elements.tutorialNextBtn.textContent = 
+                gameState.tutorialStep === steps.length - 1 ? '开始游戏' : '下一步';
+        }
+        
+        // 下一个教程步骤
+        function nextTutorialStep() {
+            gameState.tutorialStep++;
+            
+            if (gameState.tutorialStep >= 7) {
+                // 完成教程
+                elements.tutorialOverlay.classList.add('hidden');
+                gameState.tutorialCompleted = true;
+                saveGameState();
+                startLevel();
+            } else {
+                showTutorialStep();
+            }
+        }
+        
+        // 升级能力
+        function upgradeAbility(upgradeType) {
+            let cost, maxLevel, currentLevel, target;
+            
+            // 确定升级参数
+            switch (upgradeType) {
+                case 'electronEnergy':
+                    cost = 5 * gameState.electron.upgrades.energy;
+                    maxLevel = 5;
+                    currentLevel = gameState.electron.upgrades.energy;
+                    target = gameState.electron.upgrades;
+                    break;
+                case 'electronSpeed':
+                    cost = 5 * gameState.electron.upgrades.speed;
+                    maxLevel = 5;
+                    currentLevel = gameState.electron.upgrades.speed;
+                    target = gameState.electron.upgrades;
+                    break;
+                case 'positronEnergy':
+                    cost = 5 * gameState.positron.upgrades.energy;
+                    maxLevel = 5;
+                    currentLevel = gameState.positron.upgrades.energy;
+                    target = gameState.positron.upgrades;
+                    break;
+                case 'positronSpeed':
+                    cost = 5 * gameState.positron.upgrades.speed;
+                    maxLevel = 5;
+                    currentLevel = gameState.positron.upgrades.speed;
+                    target = gameState.positron.upgrades;
+                    break;
+                case 'resonance':
+                    cost = 10 * gameState.resonanceLevel;
+                    maxLevel = 5;
+                    currentLevel = gameState.resonanceLevel;
+                    target = { level: gameState.resonanceLevel };
+                    break;
+                case 'entanglementStability':
+                    cost = 10 * gameState.entanglementStabilityLevel;
+                    maxLevel = 5;
+                    currentLevel = gameState.entanglementStabilityLevel;
+                    target = { level: gameState.entanglementStabilityLevel };
+                    break;
+                default:
+                    return;
+            }
+            
+            // 检查是否可以升级
+            if (currentLevel >= maxLevel) {
+                showMessage('已达最大等级', '该能力已经升级到最高等级', '确定');
+                return;
+            }
+            
+            if (gameState.quantumPoints < cost) {
+                showMessage('量子点不足', `升级需要 ${cost} 量子点，但你只有 ${gameState.quantumPoints} 个`, '确定');
+                return;
+            }
+            
+            // 执行升级
+            gameState.quantumPoints -= cost;
+            
+            if (upgradeType === 'electronEnergy') {
+                gameState.electron.upgrades.energy++;
+            } else if (upgradeType === 'electronSpeed') {
+                gameState.electron.upgrades.speed++;
+            } else if (upgradeType === 'positronEnergy') {
+                gameState.positron.upgrades.energy++;
+            } else if (upgradeType === 'positronSpeed') {
+                gameState.positron.upgrades.speed++;
+            } else if (upgradeType === 'resonance') {
+                gameState.resonanceLevel++;
+            } else if (upgradeType === 'entanglementStability') {
+                gameState.entanglementStabilityLevel++;
+            }
+            
+            // 应用升级效果
+            applyUpgrades();
+            
+            // 保存并更新UI
+            saveGameState();
+            updateUpgradesUI();
+            updateUI();
+        }
+        
+        // 应用升级效果
+        function applyUpgrades() {
+            // 电子升级
+            gameState.electron.speed = gameState.electron.baseSpeed * (1 + (gameState.electron.upgrades.speed - 1) * 0.2);
+            gameState.electron.baseEnergy = 100 + (gameState.electron.upgrades.energy - 1) * 20;
+            gameState.electron.energy = gameState.electron.baseEnergy;
+            
+            // 正电子升级
+            gameState.positron.speed = gameState.positron.baseSpeed * (1 + (gameState.positron.upgrades.speed - 1) * 0.2);
+            gameState.positron.baseEnergy = 100 + (gameState.positron.upgrades.energy - 1) * 20;
+            gameState.positron.energy = gameState.positron.baseEnergy;
+            
+            // 共振能量升级
+            gameState.resonanceGainRate = 0.5 + (gameState.resonanceLevel - 1) * 0.1;
+            
+            // 纠缠稳定性升级
+            const stabilityFactor = 1 - (gameState.entanglementStabilityLevel - 1) * 0.15;
+            gameState.entanglementLossRate *= stabilityFactor;
+        }
+        
+        // 更新升级UI
+        function updateUpgradesUI() {
+            elements.quantumPoints.textContent = gameState.quantumPoints;
+            
+            // 电子升级
+            elements.electronEnergyLevel.textContent = gameState.electron.upgrades.energy;
+            elements.electronEnergyProgress.style.width = `${gameState.electron.upgrades.energy * 20}%`;
+            elements.electronSpeedLevel.textContent = gameState.electron.upgrades.speed;
+            elements.electronSpeedProgress.style.width = `${gameState.electron.upgrades.speed * 20}%`;
+            
+            // 正电子升级
+            elements.positronEnergyLevel.textContent = gameState.positron.upgrades.energy;
+            elements.positronEnergyProgress.style.width = `${gameState.positron.upgrades.energy * 20}%`;
+            elements.positronSpeedLevel.textContent = gameState.positron.upgrades.speed;
+            elements.positronSpeedProgress.style.width = `${gameState.positron.upgrades.speed * 20}%`;
+            
+            // 量子能力升级
+            elements.resonanceLevel.textContent = gameState.resonanceLevel;
+            elements.resonanceProgress.style.width = `${gameState.resonanceLevel * 20}%`;
+            elements.entanglementStabilityLevel.textContent = gameState.entanglementStabilityLevel;
+            elements.entanglementStabilityProgress.style.width = `${gameState.entanglementStabilityLevel * 20}%`;
+            
+            // 更新升级按钮成本
+            document.querySelectorAll('.upgrade-btn').forEach(btn => {
+                const costElem = btn.querySelector('.cost');
+                let cost;
+                
+                switch (btn.dataset.upgrade) {
+                    case 'electronEnergy':
+                        cost = 5 * gameState.electron.upgrades.energy;
+                        break;
+                    case 'electronSpeed':
+                        cost = 5 * gameState.electron.upgrades.speed;
+                        break;
+                    case 'positronEnergy':
+                        cost = 5 * gameState.positron.upgrades.energy;
+                        break;
+                    case 'positronSpeed':
+                        cost = 5 * gameState.positron.upgrades.speed;
+                        break;
+                    case 'resonance':
+                        cost = 10 * gameState.resonanceLevel;
+                        break;
+                    case 'entanglementStability':
+                        cost = 10 * gameState.entanglementStabilityLevel;
+                        break;
+                }
+                
+                costElem.textContent = cost;
+                
+                // 禁用已达最大等级的升级
+                const maxLevelReached = 
+                    (btn.dataset.upgrade === 'electronEnergy' && gameState.electron.upgrades.energy >= 5) ||
+                    (btn.dataset.upgrade === 'electronSpeed' && gameState.electron.upgrades.speed >= 5) ||
+                    (btn.dataset.upgrade === 'positronEnergy' && gameState.positron.upgrades.energy >= 5) ||
+                    (btn.dataset.upgrade === 'positronSpeed' && gameState.positron.upgrades.speed >= 5) ||
+                    (btn.dataset.upgrade === 'resonance' && gameState.resonanceLevel >= 5) ||
+                    (btn.dataset.upgrade === 'entanglementStability' && gameState.entanglementStabilityLevel >= 5);
+                
+                if (maxLevelReached) {
+                    btn.disabled = true;
+                    btn.textContent = "已达最大等级";
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+        
+        // 更新成就UI
+        function updateAchievementsUI() {
+            for (let i = 1; i <= 5; i++) {
+                const elem = document.getElementById(`achievement${i}Status`);
+                if (gameState.achievements[i].completed) {
+                    elem.textContent = "已完成";
+                    elem.classList.add('text-green-400');
+                    elem.classList.remove('text-red-400');
+                } else {
+                    if (gameState.achievements[i].progress !== undefined) {
+                        elem.textContent = `${gameState.achievements[i].progress}/${gameState.achievements[i].target}`;
+                    } else {
+                        elem.textContent = "未完成";
+                    }
+                    elem.classList.remove('text-green-400');
+                    elem.classList.add('text-red-400');
+                }
+            }
+        }
+        
+        // 检查成就解锁
+        function checkAchievements() {
+            // 成就1: 完成第一关
+            if (!gameState.achievements[1].completed && gameState.level >= 1 && gameState.coresCollected >= gameState.totalCores) {
+                unlockAchievement(1);
+            }
+            
+            // 成就2: 收集50个核心
+            gameState.achievements[2].progress = gameState.totalCoresCollected;
+            if (!gameState.achievements[2].completed && gameState.totalCoresCollected >= 50) {
+                unlockAchievement(2);
+            }
+            
+            // 成就3: 使用50次共振脉冲
+            gameState.achievements[3].progress = gameState.resonanceUses;
+            if (!gameState.achievements[3].completed && gameState.resonanceUses >= 50) {
+                unlockAchievement(3);
+            }
+            
+            // 成就4: 单关保持100%纠缠度
+            if (!gameState.achievements[4].completed && gameState.entanglementLevel === 100 && 
+                gameState.coresCollected >= gameState.totalCores) {
+                unlockAchievement(4);
+            }
+            
+            // 成就5: 完成所有12关
+            if (!gameState.achievements[5].completed && gameState.maxUnlockedLevel >= 13) {
+                unlockAchievement(5);
+            }
+            
+            updateAchievementsUI();
+            saveGameState();
+        }
+        
+        // 解锁成就
+        function unlockAchievement(id) {
+            if (gameState.achievements[id].completed) return;
+            
+            gameState.achievements[id].completed = true;
+            gameState.quantumPoints += gameState.achievements[id].reward;
+            
+            // 显示成就解锁提示
+            elements.achievementName.textContent = gameState.achievements[id].name;
+            elements.achievementReward.textContent = `+${gameState.achievements[id].reward}量子点`;
+            elements.achievementUnlocked.classList.remove('translate-x-full');
+            
+            // 3秒后隐藏提示
+            setTimeout(() => {
+                elements.achievementUnlocked.classList.add('translate-x-full');
+            }, 3000);
+            
+            updateUpgradesUI();
         }
         
         // 更新游戏区域尺寸
@@ -507,9 +1360,13 @@
             gameState.gameWidth = gameState.gameArea.offsetWidth;
             gameState.gameHeight = gameState.gameArea.offsetHeight;
             
-            // 重新定位粒子
-            gameState.electron.y = gameState.gameHeight / 2;
-            gameState.positron.y = gameState.gameHeight / 2;
+            // 重新定位粒子（如果游戏未运行）
+            if (!gameState.isPlaying) {
+                gameState.electron.x = gameState.gameWidth * 0.15;
+                gameState.electron.y = gameState.gameHeight * 0.4;
+                gameState.positron.x = gameState.gameWidth * 0.3;
+                gameState.positron.y = gameState.gameHeight * 0.6;
+            }
         }
         
         // 开始关卡
@@ -538,16 +1395,16 @@
         
         // 重置粒子
         function resetParticles() {
-            // 重置位置
-            gameState.electron.x = gameState.gameWidth * 0.2;
-            gameState.electron.y = gameState.gameHeight / 2;
-            gameState.electron.energy = 100;
+            // 重置位置（优化初始位置，避免开局失败）
+            gameState.electron.x = gameState.gameWidth * 0.15; // 左侧15%位置
+            gameState.electron.y = gameState.gameHeight * 0.4;  // 上侧40%位置
+            gameState.electron.energy = gameState.electron.baseEnergy;
             gameState.electron.velocityX = 0;
             gameState.electron.velocityY = 0;
             
-            gameState.positron.x = gameState.gameWidth * 0.3;
-            gameState.positron.y = gameState.gameHeight / 2;
-            gameState.positron.energy = 100;
+            gameState.positron.x = gameState.gameWidth * 0.3;  // 左侧30%位置
+            gameState.positron.y = gameState.gameHeight * 0.6;  // 下侧60%位置
+            gameState.positron.energy = gameState.positron.baseEnergy;
             gameState.positron.velocityX = 0;
             gameState.positron.velocityY = 0;
             
@@ -569,15 +1426,15 @@
             clearLevelElements();
             
             // 根据关卡设置难度
-            const coreCount = Math.min(3, 1 + Math.floor(level / 2));
+            const coreCount = Math.min(5, 2 + Math.floor(level / 3));
             gameState.totalCores = coreCount;
             
             // 放置核心
             for (let i = 0; i < coreCount; i++) {
                 const core = document.createElement('div');
                 core.className = 'core absolute w-14 h-14 rounded-full bg-quantum/30 border-2 border-quantum flex items-center justify-center pulse-slow';
-                core.style.left = `${50 + Math.random() * 50}%`;
-                core.style.top = `${20 + Math.random() * 60}%`;
+                core.style.left = `${50 + (i % 2 === 0 ? -1 : 1) * Math.random() * 30}%`;
+                core.style.top = `${30 + Math.floor(i / 2) * 30 + Math.random() * 20}%`;
                 core.innerHTML = '<div class="w-6 h-6 bg-quantum rounded-full"></div>';
                 core.dataset.collected = "false";
                 
@@ -586,7 +1443,7 @@
             }
             
             // 添加障碍物
-            const obstacleCount = 3 + level;
+            const obstacleCount = 3 + Math.min(10, level);
             for (let i = 0; i < obstacleCount; i++) {
                 const size = 30 + Math.random() * 40;
                 const obstacle = document.createElement('div');
@@ -604,7 +1461,7 @@
             // 添加电荷屏障
             if (level > 1) {
                 // 正电荷屏障
-                const positiveBarriers = Math.floor(level / 2);
+                const positiveBarriers = Math.min(4, Math.floor(level / 3));
                 for (let i = 0; i < positiveBarriers; i++) {
                     const barrier = createBarrier('positive');
                     gameState.gameArea.appendChild(barrier);
@@ -612,11 +1469,21 @@
                 }
                 
                 // 负电荷屏障
-                const negativeBarriers = Math.floor(level / 2);
+                const negativeBarriers = Math.min(4, Math.floor(level / 3));
                 for (let i = 0; i < negativeBarriers; i++) {
                     const barrier = createBarrier('negative');
                     gameState.gameArea.appendChild(barrier);
                     gameState.barriers.negative.push(barrier);
+                }
+            }
+            
+            // 第5关后添加能量碎片
+            if (level > 4) {
+                const fragmentCount = 3 + Math.floor(level / 4);
+                for (let i = 0; i < fragmentCount; i++) {
+                    const fragment = createEnergyFragment();
+                    gameState.gameArea.appendChild(fragment);
+                    gameState.fragments.push(fragment);
                 }
             }
         }
@@ -644,6 +1511,21 @@
             return barrier;
         }
         
+        // 创建能量碎片
+        function createEnergyFragment() {
+            const fragment = document.createElement('div');
+            const isElectronFragment = Math.random() > 0.5;
+            
+            fragment.className = `absolute w-8 h-8 rounded-full ${isElectronFragment ? 'bg-electron/60' : 'bg-positron/60'} flex items-center justify-center pulse-slow`;
+            fragment.style.left = `${10 + Math.random() * 80}%`;
+            fragment.style.top = `${10 + Math.random() * 80}%`;
+            fragment.style.transform = 'translate(-50%, -50%)';
+            fragment.dataset.type = isElectronFragment ? 'electron' : 'positron';
+            fragment.innerHTML = `<i class="fa fa-bolt text-xs"></i>`;
+            
+            return fragment;
+        }
+        
         // 清除关卡元素
         function clearLevelElements() {
             // 清除核心
@@ -668,10 +1550,16 @@
                 if (barrier.parentNode) barrier.parentNode.removeChild(barrier);
             });
             gameState.barriers.negative = [];
+            
+            // 清除能量碎片
+            gameState.fragments.forEach(fragment => {
+                if (fragment.parentNode) fragment.parentNode.removeChild(fragment);
+            });
+            gameState.fragments = [];
         }
         
         // 游戏循环
-        function gameLoop() {
+        function gameLoop(timestamp) {
             if (!gameState.isPlaying) return;
             
             // 更新粒子移动
@@ -683,8 +1571,14 @@
             // 检查核心收集
             checkCoreCollection();
             
+            // 检查能量碎片收集
+            checkFragmentCollection();
+            
             // 检查碰撞
             checkCollisions();
+            
+            // 检查成就
+            checkAchievements();
             
             // 更新UI
             updateUI();
@@ -800,7 +1694,7 @@
             if ((electronMovingX && positronMovingX && sameXDirection) || 
                 (electronMovingY && positronMovingY && sameYDirection)) {
                 
-                gameState.resonanceEnergy += 0.5;
+                gameState.resonanceEnergy += gameState.resonanceGainRate;
                 
                 // 添加同步效果
                 if (Math.random() > 0.7) {
@@ -898,16 +1792,55 @@
             }
         }
         
+        // 检查能量碎片收集
+        function checkFragmentCollection() {
+            for (let i = 0; i < gameState.fragments.length; i++) {
+                const fragment = gameState.fragments[i];
+                if (fragment.dataset.collected === "true") continue;
+                
+                const fragRect = fragment.getBoundingClientRect();
+                const gameRect = gameState.gameArea.getBoundingClientRect();
+                
+                // 碎片位置（相对于游戏区域）
+                const fragX = fragRect.left - gameRect.left + fragRect.width / 2;
+                const fragY = fragRect.top - gameRect.top + fragRect.height / 2;
+                
+                // 检查对应粒子是否接触碎片
+                if (fragment.dataset.type === 'electron') {
+                    const distance = getDistance(
+                        gameState.electron.x + gameState.electron.size/2,
+                        gameState.electron.y + gameState.electron.size/2,
+                        fragX, fragY
+                    );
+                    
+                    if (distance < 20) {
+                        collectFragment(fragment, 'electron');
+                    }
+                } else {
+                    const distance = getDistance(
+                        gameState.positron.x + gameState.positron.size/2,
+                        gameState.positron.y + gameState.positron.size/2,
+                        fragX, fragY
+                    );
+                    
+                    if (distance < 20) {
+                        collectFragment(fragment, 'positron');
+                    }
+                }
+            }
+        }
+        
         // 收集核心
         function collectCore(core) {
             core.dataset.collected = "true";
             core.classList.add('opacity-0', 'scale-0', 'transition-all', 'duration-300');
             
             gameState.coresCollected++;
+            gameState.totalCoresCollected++;
             
             // 增加能量
-            gameState.electron.energy = Math.min(100, gameState.electron.energy + 20);
-            gameState.positron.energy = Math.min(100, gameState.positron.energy + 20);
+            gameState.electron.energy = Math.min(gameState.electron.baseEnergy, gameState.electron.energy + 20);
+            gameState.positron.energy = Math.min(gameState.positron.baseEnergy, gameState.positron.energy + 20);
             
             // 显示收集效果
             const effect = document.createElement('div');
@@ -930,6 +1863,39 @@
             if (gameState.coresCollected >= gameState.totalCores) {
                 completeLevel();
             }
+        }
+        
+        // 收集能量碎片
+        function collectFragment(fragment, type) {
+            fragment.dataset.collected = "true";
+            fragment.classList.add('opacity-0', 'scale-0', 'transition-all', 'duration-300');
+            
+            // 增加对应粒子的能量
+            if (type === 'electron') {
+                gameState.electron.energy = Math.min(gameState.electron.baseEnergy, gameState.electron.energy + 10);
+            } else {
+                gameState.positron.energy = Math.min(gameState.positron.baseEnergy, gameState.positron.energy + 10);
+            }
+            
+            // 显示收集效果
+            const effect = document.createElement('div');
+            effect.className = `absolute w-12 h-12 rounded-full ${type === 'electron' ? 'bg-electron/30' : 'bg-positron/30'} sync-effect`;
+            effect.style.left = fragment.style.left;
+            effect.style.top = fragment.style.top;
+            effect.style.transform = 'translate(-50%, -50%)';
+            effect.style.pointerEvents = 'none';
+            effect.style.zIndex = '20';
+            
+            gameState.gameArea.appendChild(effect);
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    gameState.gameArea.removeChild(effect);
+                }
+                if (fragment.parentNode) {
+                    gameState.gameArea.removeChild(fragment);
+                }
+            }, 300);
         }
         
         // 检查碰撞
@@ -1079,6 +2045,7 @@
             
             // 重置共振能量
             gameState.resonanceEnergy = 0;
+            gameState.resonanceUses++;
             
             // 创建脉冲效果
             const pulse = document.createElement('div');
@@ -1137,11 +2104,19 @@
             gameState.isPlaying = false;
             cancelAnimationFrame(gameState.gameLoop);
             
+            // 奖励量子点
+            const levelReward = 5 + gameState.level * 2;
+            gameState.quantumPoints += levelReward;
+            
             showMessage(
                 `关卡 ${gameState.level} 完成！`,
-                `成功收集所有同步核心，量子纠缠稳定。<br><br>纠缠度保持: ${Math.round(gameState.entanglementLevel)}%`,
+                `成功收集所有同步核心，量子纠缠稳定。<br><br>纠缠度保持: ${Math.round(gameState.entanglementLevel)}%<br>奖励: ${levelReward}量子点`,
                 `进入关卡 ${gameState.level + 1}`
             );
+            
+            // 保存游戏状态
+            saveGameState();
+            updateUpgradesUI();
         }
         
         // 游戏结束
@@ -1191,15 +2166,135 @@
             elements.resonancePercent.textContent = `${resonancePercent}%`;
         }
         
-        // 工具函数：计算两点距离
+        // 保存游戏状态到本地存储
+        function saveGameState() {
+            const stateToSave = {
+                level: gameState.level,
+                maxUnlockedLevel: gameState.maxUnlockedLevel,
+                totalCoresCollected: gameState.totalCoresCollected,
+                resonanceUses: gameState.resonanceUses,
+                quantumPoints: gameState.quantumPoints,
+                difficulty: gameState.difficulty,
+                electronUpgrades: gameState.electron.upgrades,
+                positronUpgrades: gameState.positron.upgrades,
+                resonanceLevel: gameState.resonanceLevel,
+                entanglementStabilityLevel: gameState.entanglementStabilityLevel,
+                achievements: gameState.achievements,
+                tutorialCompleted: gameState.tutorialCompleted
+            };
+            
+            localStorage.setItem('electronAdventure4State', JSON.stringify(stateToSave));
+        }
+        
+        // 从本地存储加载游戏状态
+        function loadGameState() {
+            const savedState = localStorage.getItem('electronAdventure4State');
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    
+                    // 基础关卡与进度信息
+                    gameState.level = parsedState.level || 1;
+                    gameState.maxUnlockedLevel = parsedState.maxUnlockedLevel || 1;
+                    gameState.totalCoresCollected = parsedState.totalCoresCollected || 0;
+                    gameState.resonanceUses = parsedState.resonanceUses || 0;
+                    gameState.quantumPoints = parsedState.quantumPoints || 0;
+                    gameState.difficulty = parsedState.difficulty || 'medium';
+                    
+                    // 升级数据
+                    gameState.electron.upgrades = parsedState.electronUpgrades || { energy: 1, speed: 1 };
+                    gameState.positron.upgrades = parsedState.positronUpgrades || { energy: 1, speed: 1 };
+                    gameState.resonanceLevel = parsedState.resonanceLevel || 1;
+                    gameState.entanglementStabilityLevel = parsedState.entanglementStabilityLevel || 1;
+                    
+                    // 成就与教程状态
+                    gameState.achievements = parsedState.achievements || {
+                        1: { completed: false, name: "量子初体验", description: "完成第一关", reward: 5 },
+                        2: { completed: false, name: "核心收藏家", description: "收集50个同步核心", reward: 15, progress: 0, target: 50 },
+                        3: { completed: false, name: "共振大师", description: "释放50次量子共振脉冲", reward: 10, progress: 0, target: 50 },
+                        4: { completed: false, name: "完美纠缠", description: "单关保持100%纠缠度", reward: 20 },
+                        5: { completed: false, name: "量子征服者", description: "完成所有12个主线关卡", reward: 50 }
+                    };
+                    gameState.tutorialCompleted = parsedState.tutorialCompleted || false;
+                    
+                    // 更新难度显示
+                    elements.difficultyText.textContent = 
+                        gameState.difficulty === 'easy' ? '简单' : 
+                        gameState.difficulty === 'medium' ? '中等' : '困难';
+                } catch (e) {
+                    console.error('加载游戏状态失败，使用默认状态:', e);
+                    // 加载失败时重置为默认状态
+                    resetDefaultGameState();
+                }
+            } else {
+                // 无保存状态时使用默认值
+                resetDefaultGameState();
+            }
+        }
+        
+        // 重置为默认游戏状态
+        function resetDefaultGameState() {
+            gameState.level = 1;
+            gameState.maxUnlockedLevel = 1;
+            gameState.totalCoresCollected = 0;
+            gameState.resonanceUses = 0;
+            gameState.quantumPoints = 0;
+            gameState.difficulty = 'medium';
+            
+            gameState.electron.upgrades = { energy: 1, speed: 1 };
+            gameState.positron.upgrades = { energy: 1, speed: 1 };
+            gameState.resonanceLevel = 1;
+            gameState.entanglementStabilityLevel = 1;
+            
+            gameState.tutorialCompleted = false;
+            elements.difficultyText.textContent = '中等';
+        }
+        
+        // 计算两点之间距离的工具函数
         function getDistance(x1, y1, x2, y2) {
             const dx = x2 - x1;
             const dy = y2 - y1;
             return Math.sqrt(dx * dx + dy * dy);
         }
         
-        // 启动游戏
-        window.addEventListener('load', initGame);
+        // 页面加载完成后初始化游戏
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化游戏（加载状态、设置事件、生成界面）
+            initGame();
+            
+            // 修复移动设备虚拟按钮的触摸事件兼容性
+            document.querySelectorAll('.virtual-btn').forEach(btn => {
+                // 防止触摸事件与点击事件重复触发
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const key = btn.dataset.key;
+                    if (!key) return;
+                    
+                    // 模拟按键按下效果（用于移动设备点击虚拟按钮）
+                    if (key in gameState.electron.keys) {
+                        gameState.electron.keys[key] = true;
+                        // 100ms后自动释放（模拟短按）
+                        setTimeout(() => {
+                            gameState.electron.keys[key] = false;
+                        }, 100);
+                    }
+                    if (key in gameState.positron.keys) {
+                        gameState.positron.keys[key] = true;
+                        setTimeout(() => {
+                            gameState.positron.keys[key] = false;
+                        }, 100);
+                    }
+                });
+            });
+            
+            // 修复共振按钮的点击事件
+            elements.resonanceBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (gameState.isPlaying && gameState.resonanceEnergy >= gameState.maxResonance) {
+                    activateResonancePulse();
+                }
+            });
+        });
     </script>
 </body>
 </html>
