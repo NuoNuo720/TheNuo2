@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>自由电子冒险4：量子协作 | Quantum Co-op</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        electron: '#3B82F6',    // 电子蓝
+                        positron: '#F97316',    // 正电子橙
+                        neutron: '#6B7280',     // 中子灰
+                        entanglement: '#10B981',// 纠缠绿
+                        space: '#0F172A',       // 太空黑
+                        quantum: '#8B5CF6',     // 量子紫
+                    },
+                    fontFamily: {
+                        future: ['Orbitron', 'Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .glow {
+                filter: drop-shadow(0 0 8px currentColor);
+            }
+            .field-grid {
+                background-image: linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+                background-size: 30px 30px;
+            }
+            .entanglement-link {
+                stroke-dasharray: 5,5;
+                animation: dash 1.5s linear infinite;
+            }
+            @keyframes dash {
+                to { stroke-dashoffset: 10; }
+            }
+            .pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .sync-effect {
+                animation: syncPulse 0.5s ease-in-out;
+            }
+            @keyframes syncPulse {
+                0%, 100% { transform: scale(1); opacity: 0.7; }
+                50% { transform: scale(1.5); opacity: 0; }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-space to-slate-900 text-white min-h-screen font-future overflow-x-hidden">
+    <!-- 顶部导航 -->
+    <nav class="container mx-auto px-4 py-2 flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center">
+            <div class="w-10 h-10 rounded-full bg-quantum/30 flex items-center justify-center mr-2">
+                <i class="fa fa-link text-entanglement glow"></i>
+            </div>
+            <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-electron to-positron">
+                自由电子冒险4
+            </h1>
+        </div>
+        <div class="flex gap-2">
+            <button id="helpBtn" class="bg-slate-800/70 hover:bg-slate-700/70 transition-colors px-3 py-1.5 rounded-lg text-sm flex items-center">
+                <i class="fa fa-question-circle text-blue-400 mr-1"></i> 帮助
+            </button>
+        </div>
+    </nav>
+
+    <!-- 游戏主容器 -->
+    <main class="container mx-auto px-2 py-3 max-w-6xl">
+        <!-- 状态面板 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-electron/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-bolt text-electron"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">电子能量</div>
+                    <div class="font-bold" id="electronEnergy">100</div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-positron/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-fire text-positron"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">正电子能量</div>
+                    <div class="font-bold" id="positronEnergy">100</div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-entanglement/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-link text-entanglement"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">纠缠度</div>
+                    <div class="font-bold" id="entanglementLevel">100%</div>
+                </div>
+            </div>
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 flex items-center border border-slate-700">
+                <div class="w-7 h-7 rounded-full bg-quantum/20 flex items-center justify-center mr-2">
+                    <i class="fa fa-diamond text-quantum"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">同步核心</div>
+                    <div class="font-bold" id="coresCollected">0/3</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 共振能量条 -->
+        <div class="bg-slate-800/50 backdrop-blur-sm rounded-lg p-2 mb-3 border border-slate-700">
+            <div class="flex justify-between items-center mb-1">
+                <div class="text-xs text-slate-400 flex items-center">
+                    <i class="fa fa-refresh text-entanglement mr-1"></i> 共振能量
+                </div>
+                <div class="text-xs font-medium" id="resonancePercent">0%</div>
+            </div>
+            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                <div id="resonanceBar" class="h-full bg-gradient-to-r from-electron to-positron w-0 transition-all duration-300"></div>
+            </div>
+            <div class="text-center text-xs text-slate-500 mt-1">
+                同步动作可积累共振能量，满值时按空格键释放量子脉冲
+            </div>
+        </div>
+        
+        <!-- 游戏区域 -->
+        <div class="relative mb-4">
+            <div id="gameArea" class="relative bg-space rounded-xl overflow-hidden border-2 border-slate-700 field-grid" 
+                 style="height: clamp(200px, 60vh, 600px);">
+                <!-- 量子纠缠线容器 -->
+                <svg id="entanglementLine" class="absolute inset-0 pointer-events-none z-10">
+                    <line id="quantumLink" x1="0" y1="0" x2="0" y2="0" stroke="rgba(16, 185, 129, 0.6)" 
+                          stroke-width="2" class="entanglement-link" />
+                </svg>
+                
+                <!-- 电子 -->
+                <div id="electron" class="absolute w-10 h-10 rounded-full bg-electron glow" 
+                     style="left: 100px; top: 50%;">
+                    <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">e⁻</div>
+                </div>
+                
+                <!-- 正电子 -->
+                <div id="positron" class="absolute w-10 h-10 rounded-full bg-positron glow" 
+                     style="left: 200px; top: 50%;">
+                    <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">e⁺</div>
+                </div>
+                
+                <!-- 同步核心（目标） -->
+                <div id="core1" class="core absolute w-14 h-14 rounded-full bg-quantum/30 border-2 border-quantum flex items-center justify-center pulse-slow" 
+                     style="left: 70%; top: 30%;">
+                    <div class="w-6 h-6 bg-quantum rounded-full"></div>
+                </div>
+                
+                <!-- 控制提示 -->
+                <div class="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded text-xs">
+                    <div class="mb-1"><span class="text-electron">WASD</span> 控制电子 | <span class="text-positron">方向键</span> 控制正电子</div>
+                    <div><span class="text-entanglement">空格</span> 释放共振脉冲</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动设备虚拟控制器 -->
+        <div class="md:hidden grid grid-cols-2 gap-4 mb-6">
+            <!-- 电子控制器 (WASD) -->
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+                <h4 class="text-center text-sm font-medium text-electron mb-2">电子控制</h4>
+                <div class="grid grid-cols-3 gap-1 aspect-square">
+                    <div></div>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-electron/50 rounded-lg flex items-center justify-center" data-key="w">
+                        <i class="fa fa-arrow-up"></i>
+                    </button>
+                    <div></div>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-electron/50 rounded-lg flex items-center justify-center" data-key="a">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <div></div>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-electron/50 rounded-lg flex items-center justify-center" data-key="d">
+                        <i class="fa fa-arrow-right"></i>
+                    </button>
+                    <div></div>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-electron/50 rounded-lg flex items-center justify-center" data-key="s">
+                        <i class="fa fa-arrow-down"></i>
+                    </button>
+                    <div></div>
+                </div>
+            </div>
+            
+            <!-- 正电子控制器 (方向键) -->
+            <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+                <h4 class="text-center text-sm font-medium text-positron mb-2">正电子控制</h4>
+                <div class="grid grid-cols-3 gap-1 aspect-square">
+                    <div></div>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-positron/50 rounded-lg flex items-center justify-center" data-key="ArrowUp">
+                        <i class="fa fa-arrow-up"></i>
+                    </button>
+                    <div></div>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-positron/50 rounded-lg flex items-center justify-center" data-key="ArrowLeft">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <button id="resonanceBtn" class="virtual-btn bg-entanglement/70 hover:bg-entanglement rounded-lg flex items-center justify-center">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-positron/50 rounded-lg flex items-center justify-center" data-key="ArrowRight">
+                        <i class="fa fa-arrow-right"></i>
+                    </button>
+                    <div></div>
+                    <button class="virtual-btn bg-slate-700/70 hover:bg-positron/50 rounded-lg flex items-center justify-center" data-key="ArrowDown">
+                        <i class="fa fa-arrow-down"></i>
+                    </button>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 快捷按钮 -->
+        <div class="flex flex-wrap justify-center gap-3 mb-6">
+            <button id="restartBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-refresh mr-2"></i> 重置关卡
+            </button>
+            <button id="levelSelectBtn" class="bg-quantum/80 hover:bg-quantum transition-colors px-4 py-2 rounded-lg flex items-center">
+                <i class="fa fa-th-list mr-2"></i> 选择关卡
+            </button>
+        </div>
+    </main>
+    
+    <!-- 帮助弹窗 -->
+    <div id="helpModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4 text-center text-blue-400">
+                <i class="fa fa-question-circle mr-2"></i>量子协作指南
+            </h2>
+            
+            <div class="space-y-4 text-sm">
+                <div>
+                    <h3 class="font-semibold text-entanglement mb-1">核心玩法</h3>
+                    <p class="text-slate-300">同时控制电子和正电子，收集所有同步核心并保持量子纠缠状态。两粒子属性不同，需配合使用。</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-entanglement mb-1">控制方式</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1">
+                        <li><span class="text-electron">WASD</span> 控制电子（蓝色）</li>
+                        <li><span class="text-positron">方向键</span> 控制正电子（橙色）</li>
+                        <li><span class="text-white">空格键</span> 释放共振脉冲（需能量满）</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-entanglement mb-1">量子规则</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1">
+                        <li><span class="text-entanglement">纠缠度</span>：两粒子距离过远会降低，归零则失败</li>
+                        <li><span class="text-electron">电子</span>：可穿过负电荷屏障，吸引电子碎片</li>
+                        <li><span class="text-positron">正电子</span>：可穿过正电荷屏障，吸引正电子碎片</li>
+                        <li><span class="text-quantum">共振脉冲</span>：可暂时消除障碍物，激活特殊装置</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-entanglement mb-1">同步技巧</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1">
+                        <li>同时向同一方向移动可快速积累共振能量</li>
+                        <li>两粒子碰撞会产生能量爆发，可破坏周围障碍物</li>
+                        <li>保持适当距离，既不要太远也不要过近</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <button id="closeHelpBtn" class="bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-2 rounded-lg text-sm">
+                    开始游戏
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 游戏消息弹窗 -->
+    <div id="messageModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 rounded-xl p-6 max-w-md w-11/12 mx-4 transform transition-all border border-slate-700">
+            <h2 id="modalTitle" class="text-xl font-bold mb-3 text-center"></h2>
+            <p id="modalMessage" class="text-center mb-5 text-sm"></p>
+            <div class="flex justify-center">
+                <button id="modalBtn" class="bg-quantum hover:bg-quantum/80 transition-colors px-5 py-2 rounded-lg text-sm">
+                    继续
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            // 粒子属性
+            electron: {
+                element: null,
+                x: 100,
+                y: 0,
+                size: 40,
+                speed: 3,
+                energy: 100,
+                velocityX: 0,
+                velocityY: 0,
+                keys: { w: false, a: false, s: false, d: false }
+            },
+            positron: {
+                element: null,
+                x: 200,
+                y: 0,
+                size: 40,
+                speed: 3,
+                energy: 100,
+                velocityX: 0,
+                velocityY: 0,
+                keys: { ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false }
+            },
+            
+            // 游戏元素
+            cores: [],
+            obstacles: [],
+            fragments: [],
+            barriers: {
+                positive: [],
+                negative: []
+            },
+            
+            // 游戏状态
+            level: 1,
+            coresCollected: 0,
+            totalCores: 3,
+            entanglementLevel: 100,
+            resonanceEnergy: 0,
+            maxResonance: 100,
+            isPlaying: false,
+            gameLoop: null,
+            
+            // 游戏区域
+            gameArea: null,
+            gameWidth: 0,
+            gameHeight: 0,
+            entanglementLine: null,
+            
+            // 物理参数
+            maxEntanglementDistance: 200,
+            minEntanglementDistance: 50,
+            entanglementLossRate: 0.5,
+            entanglementGainRate: 0.2,
+            friction: 0.95
+        };
+        
+        // DOM元素
+        const elements = {
+            electron: document.getElementById('electron'),
+            positron: document.getElementById('positron'),
+            gameArea: document.getElementById('gameArea'),
+            entanglementLine: document.getElementById('quantumLink'),
+            electronEnergy: document.getElementById('electronEnergy'),
+            positronEnergy: document.getElementById('positronEnergy'),
+            entanglementLevel: document.getElementById('entanglementLevel'),
+            coresCollected: document.getElementById('coresCollected'),
+            resonanceBar: document.getElementById('resonanceBar'),
+            resonancePercent: document.getElementById('resonancePercent'),
+            
+            // 按钮
+            restartBtn: document.getElementById('restartBtn'),
+            helpBtn: document.getElementById('helpBtn'),
+            closeHelpBtn: document.getElementById('closeHelpBtn'),
+            levelSelectBtn: document.getElementById('levelSelectBtn'),
+            resonanceBtn: document.getElementById('resonanceBtn'),
+            
+            // 弹窗
+            helpModal: document.getElementById('helpModal'),
+            messageModal: document.getElementById('messageModal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalMessage: document.getElementById('modalMessage'),
+            modalBtn: document.getElementById('modalBtn')
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            // 设置游戏区域
+            gameState.gameArea = elements.gameArea;
+            updateGameDimensions();
+            
+            // 初始化粒子引用
+            gameState.electron.element = elements.electron;
+            gameState.positron.element = elements.positron;
+            gameState.entanglementLine = elements.entanglementLine;
+            
+            // 初始化核心
+            gameState.cores = [
+                document.getElementById('core1')
+            ];
+            
+            // 更新显示
+            updateUI();
+            
+            // 添加事件监听器
+            setupEventListeners();
+            
+            // 显示帮助
+            elements.helpModal.classList.remove('hidden');
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 键盘控制
+            document.addEventListener('keydown', (e) => {
+                if (!gameState.isPlaying) return;
+                
+                // 电子控制 (WASD)
+                if (e.key in gameState.electron.keys) {
+                    gameState.electron.keys[e.key] = true;
+                }
+                
+                // 正电子控制 (方向键)
+                if (e.key in gameState.positron.keys) {
+                    gameState.positron.keys[e.key] = true;
+                }
+                
+                // 共振脉冲 (空格)
+                if (e.key === ' ' && gameState.resonanceEnergy >= gameState.maxResonance) {
+                    activateResonancePulse();
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                // 电子控制 (WASD)
+                if (e.key in gameState.electron.keys) {
+                    gameState.electron.keys[e.key] = false;
+                }
+                
+                // 正电子控制 (方向键)
+                if (e.key in gameState.positron.keys) {
+                    gameState.positron.keys[e.key] = false;
+                }
+            });
+            
+            // 虚拟按钮控制（移动设备）
+            document.querySelectorAll('.virtual-btn').forEach(btn => {
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (!gameState.isPlaying) return;
+                    
+                    const key = btn.dataset.key;
+                    if (key in gameState.electron.keys) {
+                        gameState.electron.keys[key] = true;
+                    }
+                    if (key in gameState.positron.keys) {
+                        gameState.positron.keys[key] = true;
+                    }
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    const key = btn.dataset.key;
+                    if (key in gameState.electron.keys) {
+                        gameState.electron.keys[key] = false;
+                    }
+                    if (key in gameState.positron.keys) {
+                        gameState.positron.keys[key] = false;
+                    }
+                });
+            });
+            
+            // 共振按钮
+            elements.resonanceBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState.isPlaying && gameState.resonanceEnergy >= gameState.maxResonance) {
+                    activateResonancePulse();
+                }
+            });
+            
+            // 其他按钮
+            elements.restartBtn.addEventListener('click', restartLevel);
+            elements.helpBtn.addEventListener('click', () => elements.helpModal.classList.remove('hidden'));
+            elements.closeHelpBtn.addEventListener('click', () => {
+                elements.helpModal.classList.add('hidden');
+                if (!gameState.isPlaying) startLevel();
+            });
+            elements.modalBtn.addEventListener('click', () => {
+                elements.messageModal.classList.add('hidden');
+                if (gameState.coresCollected >= gameState.totalCores) {
+                    gameState.level++;
+                    startLevel();
+                } else {
+                    startLevel();
+                }
+            });
+        }
+        
+        // 更新游戏区域尺寸
+        function updateGameDimensions() {
+            gameState.gameWidth = gameState.gameArea.offsetWidth;
+            gameState.gameHeight = gameState.gameArea.offsetHeight;
+            
+            // 重新定位粒子
+            gameState.electron.y = gameState.gameHeight / 2;
+            gameState.positron.y = gameState.gameHeight / 2;
+        }
+        
+        // 开始关卡
+        function startLevel() {
+            // 重置状态
+            gameState.coresCollected = 0;
+            gameState.entanglementLevel = 100;
+            gameState.resonanceEnergy = 0;
+            
+            // 重置粒子
+            resetParticles();
+            
+            // 生成关卡内容
+            generateLevel(gameState.level);
+            
+            // 更新UI
+            updateUI();
+            
+            // 启动游戏循环
+            if (gameState.gameLoop) {
+                cancelAnimationFrame(gameState.gameLoop);
+            }
+            gameState.isPlaying = true;
+            gameState.gameLoop = requestAnimationFrame(gameLoop);
+        }
+        
+        // 重置粒子
+        function resetParticles() {
+            // 重置位置
+            gameState.electron.x = gameState.gameWidth * 0.2;
+            gameState.electron.y = gameState.gameHeight / 2;
+            gameState.electron.energy = 100;
+            gameState.electron.velocityX = 0;
+            gameState.electron.velocityY = 0;
+            
+            gameState.positron.x = gameState.gameWidth * 0.3;
+            gameState.positron.y = gameState.gameHeight / 2;
+            gameState.positron.energy = 100;
+            gameState.positron.velocityX = 0;
+            gameState.positron.velocityY = 0;
+            
+            // 重置按键状态
+            Object.keys(gameState.electron.keys).forEach(key => {
+                gameState.electron.keys[key] = false;
+            });
+            Object.keys(gameState.positron.keys).forEach(key => {
+                gameState.positron.keys[key] = false;
+            });
+            
+            // 更新显示
+            updateParticlePositions();
+        }
+        
+        // 生成关卡
+        function generateLevel(level) {
+            // 清除现有元素
+            clearLevelElements();
+            
+            // 根据关卡设置难度
+            const coreCount = Math.min(3, 1 + Math.floor(level / 2));
+            gameState.totalCores = coreCount;
+            
+            // 放置核心
+            for (let i = 0; i < coreCount; i++) {
+                const core = document.createElement('div');
+                core.className = 'core absolute w-14 h-14 rounded-full bg-quantum/30 border-2 border-quantum flex items-center justify-center pulse-slow';
+                core.style.left = `${50 + Math.random() * 50}%`;
+                core.style.top = `${20 + Math.random() * 60}%`;
+                core.innerHTML = '<div class="w-6 h-6 bg-quantum rounded-full"></div>';
+                core.dataset.collected = "false";
+                
+                gameState.gameArea.appendChild(core);
+                gameState.cores.push(core);
+            }
+            
+            // 添加障碍物
+            const obstacleCount = 3 + level;
+            for (let i = 0; i < obstacleCount; i++) {
+                const size = 30 + Math.random() * 40;
+                const obstacle = document.createElement('div');
+                obstacle.className = 'absolute bg-slate-700 rounded-full';
+                obstacle.style.width = `${size}px`;
+                obstacle.style.height = `${size}px`;
+                obstacle.style.left = `${5 + Math.random() * 90}%`;
+                obstacle.style.top = `${5 + Math.random() * 90}%`;
+                obstacle.style.transform = 'translate(-50%, -50%)';
+                
+                gameState.gameArea.appendChild(obstacle);
+                gameState.obstacles.push(obstacle);
+            }
+            
+            // 添加电荷屏障
+            if (level > 1) {
+                // 正电荷屏障
+                const positiveBarriers = Math.floor(level / 2);
+                for (let i = 0; i < positiveBarriers; i++) {
+                    const barrier = createBarrier('positive');
+                    gameState.gameArea.appendChild(barrier);
+                    gameState.barriers.positive.push(barrier);
+                }
+                
+                // 负电荷屏障
+                const negativeBarriers = Math.floor(level / 2);
+                for (let i = 0; i < negativeBarriers; i++) {
+                    const barrier = createBarrier('negative');
+                    gameState.gameArea.appendChild(barrier);
+                    gameState.barriers.negative.push(barrier);
+                }
+            }
+        }
+        
+        // 创建电荷屏障
+        function createBarrier(type) {
+            const barrier = document.createElement('div');
+            const isVertical = Math.random() > 0.5;
+            
+            barrier.className = `absolute ${type === 'positive' ? 'bg-positron/20 border-positron' : 'bg-electron/20 border-electron'} border-2`;
+            
+            if (isVertical) {
+                barrier.style.width = '4px';
+                barrier.style.height = `${30 + Math.random() * 50}%`;
+                barrier.style.left = `${10 + Math.random() * 80}%`;
+                barrier.style.top = `${10 + Math.random() * (90 - 30 - Math.random() * 50)}%`;
+            } else {
+                barrier.style.width = `${30 + Math.random() * 50}%`;
+                barrier.style.height = '4px';
+                barrier.style.top = `${10 + Math.random() * 80}%`;
+                barrier.style.left = `${10 + Math.random() * (90 - 30 - Math.random() * 50)}%`;
+            }
+            
+            barrier.style.transform = 'translate(-50%, 0)';
+            return barrier;
+        }
+        
+        // 清除关卡元素
+        function clearLevelElements() {
+            // 清除核心
+            gameState.cores.forEach(core => {
+                if (core.parentNode) core.parentNode.removeChild(core);
+            });
+            gameState.cores = [];
+            
+            // 清除障碍物
+            gameState.obstacles.forEach(obstacle => {
+                if (obstacle.parentNode) obstacle.parentNode.removeChild(obstacle);
+            });
+            gameState.obstacles = [];
+            
+            // 清除屏障
+            gameState.barriers.positive.forEach(barrier => {
+                if (barrier.parentNode) barrier.parentNode.removeChild(barrier);
+            });
+            gameState.barriers.positive = [];
+            
+            gameState.barriers.negative.forEach(barrier => {
+                if (barrier.parentNode) barrier.parentNode.removeChild(barrier);
+            });
+            gameState.barriers.negative = [];
+        }
+        
+        // 游戏循环
+        function gameLoop() {
+            if (!gameState.isPlaying) return;
+            
+            // 更新粒子移动
+            updateParticleMovement();
+            
+            // 更新纠缠状态
+            updateEntanglement();
+            
+            // 检查核心收集
+            checkCoreCollection();
+            
+            // 检查碰撞
+            checkCollisions();
+            
+            // 更新UI
+            updateUI();
+            
+            // 继续循环
+            gameState.gameLoop = requestAnimationFrame(gameLoop);
+        }
+        
+        // 更新粒子移动
+        function updateParticleMovement() {
+            // 电子移动 (WASD)
+            if (gameState.electron.keys.w) {
+                gameState.electron.velocityY -= gameState.electron.speed * 0.5;
+            }
+            if (gameState.electron.keys.s) {
+                gameState.electron.velocityY += gameState.electron.speed * 0.5;
+            }
+            if (gameState.electron.keys.a) {
+                gameState.electron.velocityX -= gameState.electron.speed * 0.5;
+            }
+            if (gameState.electron.keys.d) {
+                gameState.electron.velocityX += gameState.electron.speed * 0.5;
+            }
+            
+            // 正电子移动 (方向键)
+            if (gameState.positron.keys.ArrowUp) {
+                gameState.positron.velocityY -= gameState.positron.speed * 0.5;
+            }
+            if (gameState.positron.keys.ArrowDown) {
+                gameState.positron.velocityY += gameState.positron.speed * 0.5;
+            }
+            if (gameState.positron.keys.ArrowLeft) {
+                gameState.positron.velocityX -= gameState.positron.speed * 0.5;
+            }
+            if (gameState.positron.keys.ArrowRight) {
+                gameState.positron.velocityX += gameState.positron.speed * 0.5;
+            }
+            
+            // 应用摩擦
+            gameState.electron.velocityX *= gameState.friction;
+            gameState.electron.velocityY *= gameState.friction;
+            gameState.positron.velocityX *= gameState.friction;
+            gameState.positron.velocityY *= gameState.friction;
+            
+            // 检查同步动作（积累共振能量）
+            checkSynchronizedMovement();
+            
+            // 更新位置
+            gameState.electron.x += gameState.electron.velocityX;
+            gameState.electron.y += gameState.electron.velocityY;
+            gameState.positron.x += gameState.positron.velocityX;
+            gameState.positron.y += gameState.positron.velocityY;
+            
+            // 边界检查
+            constrainParticleToBounds(gameState.electron);
+            constrainParticleToBounds(gameState.positron);
+            
+            // 更新显示位置
+            updateParticlePositions();
+        }
+        
+        // 约束粒子在游戏区域内
+        function constrainParticleToBounds(particle) {
+            const halfSize = particle.size / 2;
+            if (particle.x < halfSize) particle.x = halfSize;
+            if (particle.x > gameState.gameWidth - halfSize) {
+                particle.x = gameState.gameWidth - halfSize;
+            }
+            if (particle.y < halfSize) particle.y = halfSize;
+            if (particle.y > gameState.gameHeight - halfSize) {
+                particle.y = gameState.gameHeight - halfSize;
+            }
+        }
+        
+        // 更新粒子显示位置
+        function updateParticlePositions() {
+            // 更新电子位置
+            gameState.electron.element.style.left = `${gameState.electron.x}px`;
+            gameState.electron.element.style.top = `${gameState.electron.y}px`;
+            
+            // 更新正电子位置
+            gameState.positron.element.style.left = `${gameState.positron.x}px`;
+            gameState.positron.element.style.top = `${gameState.positron.y}px`;
+            
+            // 更新纠缠线
+            gameState.entanglementLine.setAttribute('x1', gameState.electron.x + gameState.electron.size/2);
+            gameState.entanglementLine.setAttribute('y1', gameState.electron.y + gameState.electron.size/2);
+            gameState.entanglementLine.setAttribute('x2', gameState.positron.x + gameState.positron.size/2);
+            gameState.entanglementLine.setAttribute('y2', gameState.positron.y + gameState.positron.size/2);
+            
+            // 根据纠缠度调整线条透明度
+            const opacity = gameState.entanglementLevel / 100;
+            gameState.entanglementLine.setAttribute('stroke', `rgba(16, 185, 129, ${opacity})`);
+        }
+        
+        // 检查同步动作
+        function checkSynchronizedMovement() {
+            // 检测是否在同一方向移动
+            const electronMovingX = Math.abs(gameState.electron.velocityX) > 0.5;
+            const electronMovingY = Math.abs(gameState.electron.velocityY) > 0.5;
+            const positronMovingX = Math.abs(gameState.positron.velocityX) > 0.5;
+            const positronMovingY = Math.abs(gameState.positron.velocityY) > 0.5;
+            
+            // X方向同步
+            const sameXDirection = (gameState.electron.velocityX > 0 && gameState.positron.velocityX > 0) ||
+                                 (gameState.electron.velocityX < 0 && gameState.positron.velocityX < 0);
+            
+            // Y方向同步
+            const sameYDirection = (gameState.electron.velocityY > 0 && gameState.positron.velocityY > 0) ||
+                                 (gameState.electron.velocityY < 0 && gameState.positron.velocityY < 0);
+            
+            // 同步移动时增加共振能量
+            if ((electronMovingX && positronMovingX && sameXDirection) || 
+                (electronMovingY && positronMovingY && sameYDirection)) {
+                
+                gameState.resonanceEnergy += 0.5;
+                
+                // 添加同步效果
+                if (Math.random() > 0.7) {
+                    createSyncEffect(
+                        (gameState.electron.x + gameState.positron.x) / 2,
+                        (gameState.electron.y + gameState.positron.y) / 2
+                    );
+                }
+            } else {
+                // 不同步时缓慢减少
+                gameState.resonanceEnergy = Math.max(0, gameState.resonanceEnergy - 0.1);
+            }
+            
+            // 限制最大共振能量
+            if (gameState.resonanceEnergy > gameState.maxResonance) {
+                gameState.resonanceEnergy = gameState.maxResonance;
+            }
+        }
+        
+        // 创建同步效果
+        function createSyncEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'absolute w-12 h-12 rounded-full bg-entanglement/50 sync-effect';
+            effect.style.left = `${x}px`;
+            effect.style.top = `${y}px`;
+            effect.style.transform = 'translate(-50%, -50%)';
+            effect.style.pointerEvents = 'none';
+            effect.style.zIndex = '10';
+            
+            gameState.gameArea.appendChild(effect);
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    gameState.gameArea.removeChild(effect);
+                }
+            }, 500);
+        }
+        
+        // 更新纠缠状态
+        function updateEntanglement() {
+            // 计算粒子距离
+            const dx = gameState.electron.x - gameState.positron.x;
+            const dy = gameState.electron.y - gameState.positron.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // 根据距离更新纠缠度
+            if (distance > gameState.maxEntanglementDistance || distance < gameState.minEntanglementDistance) {
+                // 距离过远或过近都会降低纠缠度
+                gameState.entanglementLevel -= gameState.entanglementLossRate;
+            } else {
+                // 最佳距离增加纠缠度
+                gameState.entanglementLevel += gameState.entanglementGainRate;
+            }
+            
+            // 限制纠缠度范围
+            gameState.entanglementLevel = Math.max(0, Math.min(100, gameState.entanglementLevel));
+            
+            // 纠缠度为0时游戏结束
+            if (gameState.entanglementLevel <= 0) {
+                gameOver('量子解缠', '两粒子失去量子纠缠，任务失败');
+            }
+        }
+        
+        // 检查核心收集
+        function checkCoreCollection() {
+            for (let i = 0; i < gameState.cores.length; i++) {
+                const core = gameState.cores[i];
+                if (core.dataset.collected === "true") continue;
+                
+                const coreRect = core.getBoundingClientRect();
+                const gameRect = gameState.gameArea.getBoundingClientRect();
+                
+                // 核心位置（相对于游戏区域）
+                const coreX = coreRect.left - gameRect.left + coreRect.width / 2;
+                const coreY = coreRect.top - gameRect.top + coreRect.height / 2;
+                
+                // 检查电子是否接触核心
+                const electronDist = getDistance(
+                    gameState.electron.x + gameState.electron.size/2,
+                    gameState.electron.y + gameState.electron.size/2,
+                    coreX, coreY
+                );
+                
+                // 检查正电子是否接触核心
+                const positronDist = getDistance(
+                    gameState.positron.x + gameState.positron.size/2,
+                    gameState.positron.y + gameState.positron.size/2,
+                    coreX, coreY
+                );
+                
+                // 任一粒子接触即可收集
+                if (electronDist < 30 || positronDist < 30) {
+                    collectCore(core);
+                }
+            }
+        }
+        
+        // 收集核心
+        function collectCore(core) {
+            core.dataset.collected = "true";
+            core.classList.add('opacity-0', 'scale-0', 'transition-all', 'duration-300');
+            
+            gameState.coresCollected++;
+            
+            // 增加能量
+            gameState.electron.energy = Math.min(100, gameState.electron.energy + 20);
+            gameState.positron.energy = Math.min(100, gameState.positron.energy + 20);
+            
+            // 显示收集效果
+            const effect = document.createElement('div');
+            effect.className = 'absolute w-20 h-20 rounded-full bg-quantum/30 sync-effect';
+            effect.style.left = core.style.left;
+            effect.style.top = core.style.top;
+            effect.style.transform = 'translate(-50%, -50%)';
+            effect.style.pointerEvents = 'none';
+            effect.style.zIndex = '20';
+            
+            gameState.gameArea.appendChild(effect);
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    gameState.gameArea.removeChild(effect);
+                }
+            }, 500);
+            
+            // 检查是否收集所有核心
+            if (gameState.coresCollected >= gameState.totalCores) {
+                completeLevel();
+            }
+        }
+        
+        // 检查碰撞
+        function checkCollisions() {
+            // 粒子间碰撞
+            const particleDistance = getDistance(
+                gameState.electron.x + gameState.electron.size/2,
+                gameState.electron.y + gameState.electron.size/2,
+                gameState.positron.x + gameState.positron.size/2,
+                gameState.positron.y + gameState.positron.size/2
+            );
+            
+            if (particleDistance < (gameState.electron.size + gameState.positron.size) / 2.5) {
+                // 粒子碰撞 - 产生能量爆发
+                particleCollisionEffect();
+                
+                // 互相弹开
+                const dx = gameState.positron.x - gameState.electron.x;
+                const dy = gameState.positron.y - gameState.electron.y;
+                const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                
+                gameState.electron.velocityX = (dx / distance) * -3;
+                gameState.electron.velocityY = (dy / distance) * -3;
+                gameState.positron.velocityX = (dx / distance) * 3;
+                gameState.positron.velocityY = (dy / distance) * 3;
+                
+                // 消耗能量
+                gameState.electron.energy = Math.max(0, gameState.electron.energy - 5);
+                gameState.positron.energy = Math.max(0, gameState.positron.energy - 5);
+            }
+            
+            // 障碍物碰撞
+            gameState.obstacles.forEach(obstacle => {
+                checkObstacleCollision(obstacle, gameState.electron);
+                checkObstacleCollision(obstacle, gameState.positron);
+            });
+            
+            // 电荷屏障碰撞
+            gameState.barriers.positive.forEach(barrier => {
+                // 正电荷屏障只阻挡电子
+                checkBarrierCollision(barrier, gameState.electron);
+            });
+            
+            gameState.barriers.negative.forEach(barrier => {
+                // 负电荷屏障只阻挡正电子
+                checkBarrierCollision(barrier, gameState.positron);
+            });
+            
+            // 检查能量是否耗尽
+            if (gameState.electron.energy <= 0 || gameState.positron.energy <= 0) {
+                gameOver('能量耗尽', '粒子能量耗尽，无法维持量子状态');
+            }
+        }
+        
+        // 粒子碰撞效果
+        function particleCollisionEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'absolute w-24 h-24 rounded-full bg-gradient-to-r from-electron to-positron sync-effect';
+            effect.style.left = `${(gameState.electron.x + gameState.positron.x) / 2}px`;
+            effect.style.top = `${(gameState.electron.y + gameState.positron.y) / 2}px`;
+            effect.style.transform = 'translate(-50%, -50%)';
+            effect.style.pointerEvents = 'none';
+            effect.style.zIndex = '20';
+            
+            gameState.gameArea.appendChild(effect);
+            
+            // 增加共振能量
+            gameState.resonanceEnergy = Math.min(gameState.maxResonance, gameState.resonanceEnergy + 20);
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    gameState.gameArea.removeChild(effect);
+                }
+            }, 500);
+        }
+        
+        // 检查与障碍物碰撞
+        function checkObstacleCollision(obstacle, particle) {
+            const obsRect = obstacle.getBoundingClientRect();
+            const gameRect = gameState.gameArea.getBoundingClientRect();
+            
+            const obsX = obsRect.left - gameRect.left + obsRect.width / 2;
+            const obsY = obsRect.top - gameRect.top + obsRect.height / 2;
+            const obsSize = Math.max(obsRect.width, obsRect.height) / 2;
+            
+            const partX = particle.x + particle.size / 2;
+            const partY = particle.y + particle.size / 2;
+            
+            const distance = getDistance(obsX, obsY, partX, partY);
+            
+            if (distance < obsSize + particle.size / 2) {
+                // 碰撞响应
+                const dx = partX - obsX;
+                const dy = partY - obsY;
+                const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                
+                // 反弹
+                const push = 2;
+                particle.velocityX = (dx / dist) * push;
+                particle.velocityY = (dy / dist) * push;
+                
+                // 消耗能量
+                particle.energy = Math.max(0, particle.energy - 1);
+            }
+        }
+        
+        // 检查与屏障碰撞
+        function checkBarrierCollision(barrier, particle) {
+            const barRect = barrier.getBoundingClientRect();
+            const gameRect = gameState.gameArea.getBoundingClientRect();
+            
+            const barLeft = barRect.left - gameRect.left;
+            const barTop = barRect.top - gameRect.top;
+            const barRight = barLeft + barRect.width;
+            const barBottom = barTop + barRect.height;
+            
+            const partLeft = particle.x;
+            const partTop = particle.y;
+            const partRight = partLeft + particle.size;
+            const partBottom = partTop + particle.size;
+            
+            // 简单碰撞检测
+            if (partRight > barLeft && partLeft < barRight && 
+                partBottom > barTop && partTop < barBottom) {
+                
+                // 从屏障弹回
+                const centerX = partLeft + particle.size / 2;
+                const centerY = partTop + particle.size / 2;
+                
+                // 计算反弹方向
+                if (barRect.width < barRect.height) {
+                    // 垂直屏障 - 水平反弹
+                    particle.velocityX = -particle.velocityX * 1.2;
+                } else {
+                    // 水平屏障 - 垂直反弹
+                    particle.velocityY = -particle.velocityY * 1.2;
+                }
+                
+                // 消耗更多能量
+                particle.energy = Math.max(0, particle.energy - 2);
+            }
+        }
+        
+        // 激活共振脉冲
+        function activateResonancePulse() {
+            if (gameState.resonanceEnergy < gameState.maxResonance) return;
+            
+            // 重置共振能量
+            gameState.resonanceEnergy = 0;
+            
+            // 创建脉冲效果
+            const pulse = document.createElement('div');
+            pulse.className = 'absolute rounded-full bg-gradient-to-r from-electron/30 to-positron/30 transition-all duration-500';
+            pulse.style.width = '0px';
+            pulse.style.height = '0px';
+            pulse.style.left = `${(gameState.electron.x + gameState.positron.x) / 2 + gameState.electron.size/2}px`;
+            pulse.style.top = `${(gameState.electron.y + gameState.positron.y) / 2 + gameState.electron.size/2}px`;
+            pulse.style.transform = 'translate(-50%, -50%)';
+            pulse.style.pointerEvents = 'none';
+            pulse.style.zIndex = '15';
+            
+            gameState.gameArea.appendChild(pulse);
+            
+            // 扩展脉冲
+            setTimeout(() => {
+                pulse.style.width = '300px';
+                pulse.style.height = '300px';
+                pulse.style.opacity = '0';
+            }, 10);
+            
+            // 移除脉冲
+            setTimeout(() => {
+                if (pulse.parentNode) {
+                    gameState.gameArea.removeChild(pulse);
+                }
+            }, 600);
+            
+            // 脉冲效果：暂时移除障碍物
+            gameState.obstacles.forEach(obstacle => {
+                const obsRect = obstacle.getBoundingClientRect();
+                const gameRect = gameState.gameArea.getBoundingClientRect();
+                
+                const obsX = obsRect.left - gameRect.left + obsRect.width / 2;
+                const obsY = obsRect.top - gameRect.top + obsRect.height / 2;
+                
+                const pulseX = (gameState.electron.x + gameState.positron.x) / 2 + gameState.electron.size/2;
+                const pulseY = (gameState.electron.y + gameState.positron.y) / 2 + gameState.electron.size/2;
+                
+                const distance = getDistance(obsX, obsY, pulseX, pulseY);
+                
+                if (distance < 150) {
+                    obstacle.style.opacity = '0.2';
+                    obstacle.style.pointerEvents = 'none';
+                    
+                    setTimeout(() => {
+                        obstacle.style.opacity = '1';
+                        obstacle.style.pointerEvents = 'auto';
+                    }, 2000);
+                }
+            });
+        }
+        
+        // 完成关卡
+        function completeLevel() {
+            gameState.isPlaying = false;
+            cancelAnimationFrame(gameState.gameLoop);
+            
+            showMessage(
+                `关卡 ${gameState.level} 完成！`,
+                `成功收集所有同步核心，量子纠缠稳定。<br><br>纠缠度保持: ${Math.round(gameState.entanglementLevel)}%`,
+                `进入关卡 ${gameState.level + 1}`
+            );
+        }
+        
+        // 游戏结束
+        function gameOver(title, message) {
+            gameState.isPlaying = false;
+            cancelAnimationFrame(gameState.gameLoop);
+            
+            showMessage(
+                title,
+                `${message}<br><br>已收集核心: ${gameState.coresCollected}/${gameState.totalCores}`,
+                '重新尝试'
+            );
+        }
+        
+        // 重新开始关卡
+        function restartLevel() {
+            gameState.isPlaying = false;
+            if (gameState.gameLoop) {
+                cancelAnimationFrame(gameState.gameLoop);
+            }
+            startLevel();
+        }
+        
+        // 显示消息
+        function showMessage(title, message, buttonText) {
+            elements.modalTitle.textContent = title;
+            elements.modalMessage.innerHTML = message;
+            elements.modalBtn.textContent = buttonText;
+            elements.messageModal.classList.remove('hidden');
+        }
+        
+        // 更新UI
+        function updateUI() {
+            // 更新能量显示
+            elements.electronEnergy.textContent = Math.round(gameState.electron.energy);
+            elements.positronEnergy.textContent = Math.round(gameState.positron.energy);
+            
+            // 更新纠缠度
+            elements.entanglementLevel.textContent = `${Math.round(gameState.entanglementLevel)}%`;
+            
+            // 更新核心收集
+            elements.coresCollected.textContent = `${gameState.coresCollected}/${gameState.totalCores}`;
+            
+            // 更新共振能量
+            const resonancePercent = Math.round((gameState.resonanceEnergy / gameState.maxResonance) * 100);
+            elements.resonanceBar.style.width = `${resonancePercent}%`;
+            elements.resonancePercent.textContent = `${resonancePercent}%`;
+        }
+        
+        // 工具函数：计算两点距离
+        function getDistance(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        
+        // 启动游戏
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
