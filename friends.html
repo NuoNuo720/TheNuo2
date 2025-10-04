@@ -7,7 +7,8 @@
   <!-- 外部资源引入 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 优先加载Supabase库 -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
   <!-- Tailwind 自定义配置 -->
   <script>
@@ -15,10 +16,10 @@
       theme: {
         extend: {
           colors: {
-            primary: '#4f46e5', // 主色调（靛蓝）
-            secondary: '#e0e7ff', // 辅助色
-            success: '#10b981', // 成功色
-            danger: '#ef4444', // 危险色
+            primary: '#4f46e5',
+            secondary: '#e0e7ff',
+            success: '#10b981',
+            danger: '#ef4444',
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -152,12 +153,14 @@
     </div>
   </div>
 
+  <!-- 核心修复：将脚本放在页面底部，确保Supabase先加载完成 -->
   <script>
     // --------------------------
-    // 1. 初始化 Supabase 客户端
+    // 1. 优先初始化 Supabase 客户端
     // --------------------------
     const supabaseUrl = "https://csrsbqixmzfdlpqokazr.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcnNicWl4bXpmZGxwcW9rYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjA1NTMsImV4cCI6MjA3NTEzNjU1M30.VC6miCQW-tiNVbYNf8KgkCkZ3wQoy2HDERs1-DTdKEw";
+    // 确保在这里完成初始化
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // --------------------------
@@ -200,13 +203,12 @@
     }
 
     // --------------------------
-    // 4. 用户注册/登录/登出功能（最终修复版）
+    // 4. 用户注册/登录/登出功能
     // --------------------------
-    // 注册用户（同步Supabase认证系统）
     async function registerUser(username) {
       if (!username.trim()) return alert("请输入昵称～");
 
-      // 步骤1：在Supabase认证系统创建用户
+      // 现在supabase已经初始化完成，可以安全使用
       const randomEmail = `${Date.now()}@temp.com`;
       const randomPassword = Math.random().toString(36).slice(-8);
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -219,7 +221,6 @@
       }
       const authUserId = authData.user.id;
 
-      // 步骤2：检查昵称是否已被占用
       const { data: existingUser } = await supabase
         .from("users")
         .select("id")
@@ -231,11 +232,10 @@
         return alert("昵称已被占用，请换一个～");
       }
 
-      // 步骤3：在users表创建用户（绑定认证ID）
       const { data: newUser, error } = await supabase
         .from("users")
         .insert([{ 
-          id: authUserId,  // 使用认证系统的ID
+          id: authUserId,
           username: username.trim() 
         }])
         .select()
@@ -246,18 +246,15 @@
         return alert("注册失败：" + error.message);
       }
 
-      // 步骤4：保存用户状态
       currentUser = newUser;
       localStorage.setItem("supabase-friend-user", JSON.stringify(newUser));
       alert(`注册成功！欢迎 ${newUser.username}～`);
       initPage();
     }
 
-    // 登录用户（修复认证会话获取）
     async function loginUser(username) {
       if (!username.trim()) return alert("请输入昵称～");
 
-      // 步骤1：查找用户
       const { data: user, error } = await supabase
         .from("users")
         .select("*")
@@ -266,14 +263,12 @@
 
       if (error) return alert("未找到该用户，请先注册～");
 
-      // 步骤2：强制刷新认证会话（关键修复）
       const { data: authData, error: sessionError } = await supabase.auth.refreshSession();
       if (sessionError || !authData.session) {
         alert("登录失败：请先注册新账号（旧账号会话已失效）～");
         return;
       }
 
-      // 验证ID一致性
       console.log("登录时的认证ID：", authData.session.user.id);
       console.log("用户表ID：", user.id);
       if (authData.session.user.id !== user.id) {
@@ -281,16 +276,13 @@
         return;
       }
 
-      // 步骤3：保存用户状态
       currentUser = user;
       localStorage.setItem("supabase-friend-user", JSON.stringify(user));
       alert(`欢迎回来，${user.username}～`);
       initPage();
     }
 
-    // 登出用户
     async function logoutUser() {
-      // 清除认证会话
       await supabase.auth.signOut();
       
       currentUser = null;
@@ -302,20 +294,17 @@
     }
 
     // --------------------------
-    // 5. 好友管理功能（最终修复版）
+    // 5. 好友管理功能
     // --------------------------
-    // 搜索用户并发送好友申请
     async function searchAndAddFriend(targetUsername) {
       if (!currentUser) return alert("请先登录～");
       if (!targetUsername.trim()) return alert("请输入好友昵称～");
       if (targetUsername.trim() === currentUser.username) return alert("不能加自己为好友哦～");
 
-      // 打印ID用于调试
       console.log("当前用户ID（users表）：", currentUser.id);
       const { data: authData } = await supabase.auth.getSession();
       console.log("当前认证ID（Supabase）：", authData.session?.user?.id);
 
-      // 步骤1：搜索目标用户
       const { data: targetUser, error: searchErr } = await supabase
         .from("users")
         .select("id, username, avatar")
@@ -324,7 +313,6 @@
 
       if (searchErr) return alert("未找到这个用户～");
 
-      // 步骤2：检查是否已存在关系（修复406错误）
       const { data: sentReq, error: sentErr } = await supabase
         .from("friend_relations")
         .select("status", { count: "exact", head: false })
@@ -339,7 +327,6 @@
         .eq("receiver_id", currentUser.id)
         .single();
 
-      // 处理查询错误（未找到记录是正常情况）
       const existingRelation = sentErr ? (receivedErr ? null : receivedReq) : sentReq;
 
       if (existingRelation) {
@@ -348,7 +335,6 @@
         if (existingRelation.status === "rejected") return alert("对方之前拒绝过你的申请～");
       }
 
-      // 步骤3：发送好友申请
       const { error: applyErr } = await supabase
         .from("friend_relations")
         .insert([{
@@ -364,7 +350,6 @@
       alert(`好友申请已发送给 ${targetUser.username}～`);
     }
 
-    // 加载好友申请列表
     async function loadFriendRequests() {
       if (!currentUser) return;
 
@@ -401,7 +386,6 @@
       `).join("");
     }
 
-    // 处理好友申请
     async function handleFriendRequest(requestId, isAccept) {
       const { error } = await supabase
         .from("friend_relations")
@@ -417,7 +401,6 @@
       loadFriendList();
     }
 
-    // 加载我的好友列表
     async function loadFriendList() {
       if (!currentUser) return;
 
@@ -455,7 +438,6 @@
       `).join("");
     }
 
-    // 删除好友
     async function removeFriend(friendId, e) {
       e.stopPropagation();
       if (!confirm("确定要删除这个好友吗？")) return;
