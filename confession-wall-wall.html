@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>匿名表白墙</title>
+  <!-- 引入外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#ff4d6d',
+            secondary: '#f7f7f7',
+            accent: '#ffe0e9',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .hover-lift:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-pink-50 to-purple-50 min-h-screen font-sans">
+  <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <!-- 页面标题 -->
+    <header class="text-center mb-10">
+      <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary mb-2">
+        <i class="fa fa-heart text-primary animate-pulse"></i> 匿名表白墙
+      </h1>
+      <p class="text-gray-600">说出那些藏在心底的话</p>
+    </header>
+    
+    <!-- 表白输入区域 -->
+    <div class="bg-white rounded-xl p-6 mb-8 card-shadow hover-lift">
+      <textarea 
+        id="confessionInput" 
+        placeholder="在这里写下你的表白，大胆说出你的心意吧..." 
+        class="w-full h-32 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none resize-none"
+      ></textarea>
+      <div class="flex justify-end mt-4">
+        <button 
+          id="submitBtn" 
+          class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2 font-medium"
+        >
+          <i class="fa fa-paper-plane"></i> 发布表白
+        </button>
+      </div>
+    </div>
+    
+    <!-- 状态提示区域 -->
+    <div id="statusMessage" class="hidden mb-6 p-4 rounded-lg text-center"></div>
+    
+    <!-- 表白列表 -->
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+        <i class="fa fa-comments text-primary mr-2"></i> 表白列表
+      </h2>
+      <div id="confessionsList" class="space-y-4">
+        <!-- 加载提示 -->
+        <div id="loadingIndicator" class="text-center py-10 text-gray-500">
+          <i class="fa fa-spinner fa-spin mr-2"></i> 加载中...
+        </div>
+        
+        <!-- 表白内容会在这里动态生成 -->
+      </div>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="text-center text-gray-500 text-sm mt-12 pb-6">
+      <p>匿名表白，勇敢说爱 <i class="fa fa-heart text-primary"></i></p>
+    </footer>
+  </div>
+
+  <script src="./js/confession.js"></script>
+</body>
+</html>

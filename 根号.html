@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学开根号计算器</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        neutral: '#1F2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类和动画 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1);
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+            }
+            .bounce-animation {
+                animation: bounce 0.6s ease-in-out;
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            .slide-up {
+                animation: slideUp 0.4s ease-out;
+            }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen font-sans text-neutral flex flex-col">
+    <!-- 页面头部 -->
+    <header class="py-6 px-4 sm:px-6 lg:px-8 bg-white/80 backdrop-blur-sm shadow-sm">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-center text-neutral">
+                <i class="fa fa-calculator text-primary mr-2"></i>数学开根号计算器
+            </h1>
+            <p class="text-center text-gray-500 mt-2">支持分数输入，明确根式范围</p>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="flex-grow py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto">
+            <!-- 计算器卡片 -->
+            <div class="bg-white rounded-2xl p-6 sm:p-8 card-shadow transition-all duration-300 hover:shadow-lg">
+                <!-- 公式展示 -->
+                <div class="text-center mb-8">
+                    <div class="text-2xl sm:text-3xl font-semibold text-gray-700">
+                        √<span id="displayNumber" class="border-b-2 border-primary pb-1">(x)</span> = 
+                        <span id="displayResult" class="text-primary font-bold">?</span>
+                    </div>
+                </div>
+                
+                <!-- 输入类型选择 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        请选择输入类型:
+                    </label>
+                    <div class="flex flex-wrap gap-3">
+                        <button 
+                            id="numberTypeBtn" 
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex-1"
+                        >
+                            <i class="fa fa-hashtag mr-1"></i> 数字
+                        </button>
+                        <button 
+                            id="fractionTypeBtn" 
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex-1"
+                        >
+                            <i class="fa fa-fraction mr-1"></i> 分数
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 数字输入区域 -->
+                <div id="numberInputArea" class="mb-6">
+                    <label for="numberInput" class="block text-sm font-medium text-gray-700 mb-2">
+                        请输入要开根号的数字:
+                    </label>
+                    <div class="flex">
+                        <input 
+                            type="number" 
+                            id="numberInput" 
+                            class="flex-grow px-4 py-3 rounded-l-lg border border-gray-300 input-focus transition-all"
+                            placeholder="例如: 16 或 8"
+                            min="0"
+                            step="any"
+                        >
+                        <button 
+                            id="calculateBtn" 
+                            class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-r-lg font-medium transition-all duration-200 transform hover:scale-105"
+                        >
+                            <i class="fa fa-calculator mr-1"></i> 计算
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 分数输入区域 (默认隐藏) -->
+                <div id="fractionInputArea" class="hidden mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        请输入要开根号的分数:
+                    </label>
+                    <div class="flex items-center">
+                        <input 
+                            type="number" 
+                            id="numeratorInput" 
+                            class="flex-grow px-4 py-3 rounded-l-lg border border-gray-300 input-focus transition-all border-r-0"
+                            placeholder="分子（如15）"
+                            min="0"
+                            step="any"
+                        >
+                        <div class="bg-gray-100 px-3 py-3 border-t border-b border-gray-300 text-gray-500">/</div>
+                        <input 
+                            type="number" 
+                            id="denominatorInput" 
+                            class="flex-grow px-4 py-3 border border-gray-300 input-focus transition-all border-r-0"
+                            placeholder="分母（如2）"
+                            min="1"
+                            step="any"
+                        >
+                        <button 
+                            id="calculateFractionBtn" 
+                            class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-r-lg font-medium transition-all duration-200 transform hover:scale-105"
+                        >
+                            <i class="fa fa-calculator mr-1"></i> 计算
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 根式转换询问 -->
+                <div id="radicalQuestion" class="hidden mb-6 p-4 bg-purple-50 border border-purple-100 rounded-lg fade-in">
+                    <p class="text-gray-700 mb-3">这个数字的平方根不是整数，需要转换为最简根式吗？</p>
+                    <div class="flex space-x-3">
+                        <button id="convertYes" class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors">
+                            是的
+                        </button>
+                        <button id="convertNo" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            不需要
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 结果区域 -->
+                <div id="resultArea" class="hidden mb-6">
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-700 mb-2">计算结果:</h3>
+                        <div class="flex flex-col sm:flex-row items-center justify-between">
+                            <div class="text-lg mb-2 sm:mb-0">
+                                <span class="text-gray-600">√</span>
+                                <span id="resultNumber" class="font-semibold"></span>
+                                <span class="text-gray-600"> = </span>
+                            </div>
+                            <div id="resultValue" class="text-2xl font-bold text-primary"></div>
+                        </div>
+                        
+                        <!-- 最简根式显示 -->
+                        <div id="radicalForm" class="hidden mt-3 pt-3 border-t border-blue-100 text-lg">
+                            <span class="text-gray-600">最简根式: </span>
+                            <span id="radicalValue" class="font-semibold text-accent"></span>
+                        </div>
+                        
+                        <!-- 验证按钮 -->
+                        <button id="verifyBtn" class="mt-4 px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors flex items-center">
+                            <i class="fa fa-check-circle mr-2"></i> 验证结果
+                        </button>
+                        
+                        <!-- 验证动画区域 -->
+                        <div id="verificationArea" class="hidden mt-4 pt-4 border-t border-blue-100 slide-up">
+                            <p class="text-gray-700 mb-3">小数验证过程:</p>
+                            <div id="decimalVerificationSteps" class="text-center text-lg font-medium mb-4"></div>
+                            
+                            <p class="text-gray-700 mb-3">根式验证过程:</p>
+                            <div id="radicalVerificationSteps" class="text-center text-lg font-medium"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 历史记录 -->
+                <div class="mt-8">
+                    <h3 class="font-medium text-gray-700 mb-3 flex items-center">
+                        <i class="fa fa-history text-gray-400 mr-2"></i> 计算历史
+                    </h3>
+                    <div id="historyList" class="max-h-40 overflow-y-auto space-y-2 text-sm">
+                        <div class="text-gray-500 italic text-center py-4">暂无计算记录</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 说明卡片 -->
+            <div class="mt-8 bg-white rounded-2xl p-6 card-shadow">
+                <h3 class="font-semibold text-lg text-gray-800 mb-3">使用说明</h3>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                        <span>输入分数如15/2时，会明确显示为√(15/2)</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                        <span>最简根式会清晰区分：√(15/2) 化简为 √30/2</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                        <span>验证过程会完整展示根式平方的计算步骤</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="py-4 px-4 text-center text-gray-500 text-sm bg-white/80 backdrop-blur-sm">
+        <p>© 2023 数学开根号计算器 | 明确根式范围版</p>
+    </footer>
+
+    <!-- JavaScript 逻辑（核心改进：明确根式范围显示） -->
+    <script>
+        // 获取DOM元素
+        const numberTypeBtn = document.getElementById('numberTypeBtn');
+        const fractionTypeBtn = document.getElementById('fractionTypeBtn');
+        const numberInputArea = document.getElementById('numberInputArea');
+        const fractionInputArea = document.getElementById('fractionInputArea');
+        const numberInput = document.getElementById('numberInput');
+        const numeratorInput = document.getElementById('numeratorInput');
+        const denominatorInput = document.getElementById('denominatorInput');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const calculateFractionBtn = document.getElementById('calculateFractionBtn');
+        const resultArea = document.getElementById('resultArea');
+        const resultNumber = document.getElementById('resultNumber');
+        const resultValue = document.getElementById('resultValue');
+        const displayNumber = document.getElementById('displayNumber');
+        const displayResult = document.getElementById('displayResult');
+        const historyList = document.getElementById('historyList');
+        const radicalQuestion = document.getElementById('radicalQuestion');
+        const convertYes = document.getElementById('convertYes');
+        const convertNo = document.getElementById('convertNo');
+        const radicalForm = document.getElementById('radicalForm');
+        const radicalValue = document.getElementById('radicalValue');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const verificationArea = document.getElementById('verificationArea');
+        const decimalVerificationSteps = document.getElementById('decimalVerificationSteps');
+        const radicalVerificationSteps = document.getElementById('radicalVerificationSteps');
+        
+        // 存储当前计算结果
+        let currentResult = null;
+        let currentNumber = null;
+        let currentNumberType = 'number'; // 'number' 或 'fraction'
+        let currentFraction = null; // { numerator: x, denominator: y }
+        let currentRadical = null;
+        
+        // 存储计算历史
+        let calculationHistory = [];
+        
+        // 切换输入类型
+        function switchInputType(type) {
+            currentNumberType = type;
+            if (type === 'number') {
+                numberInputArea.classList.remove('hidden');
+                fractionInputArea.classList.add('hidden');
+                numberTypeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                numberTypeBtn.classList.add('bg-primary', 'text-white');
+                fractionTypeBtn.classList.remove('bg-primary', 'text-white');
+                fractionTypeBtn.classList.add('bg-gray-200', 'text-gray-700');
+            } else {
+                numberInputArea.classList.add('hidden');
+                fractionInputArea.classList.remove('hidden');
+                fractionTypeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                fractionTypeBtn.classList.add('bg-primary', 'text-white');
+                numberTypeBtn.classList.remove('bg-primary', 'text-white');
+                numberTypeBtn.classList.add('bg-gray-200', 'text-gray-700');
+            }
+            // 重置结果显示
+            resultArea.classList.add('hidden');
+            radicalQuestion.classList.add('hidden');
+        }
+        
+        // 计算平方根函数（数字）
+        function calculateSquareRoot() {
+            resetVerification();
+            const inputValue = numberInput.value.trim();
+            if (!inputValue) {
+                showNotification('请输入一个数字', 'error');
+                return;
+            }
+            const number = parseFloat(inputValue);
+            if (isNaN(number) || number < 0) {
+                showNotification('请输入有效的非负数字', 'error');
+                return;
+            }
+            processCalculation(number, number.toString());
+        }
+        
+        // 计算平方根函数（分数）
+        function calculateFractionSquareRoot() {
+            resetVerification();
+            const numeratorValue = numeratorInput.value.trim();
+            const denominatorValue = denominatorInput.value.trim();
+            if (!numeratorValue || !denominatorValue) {
+                showNotification('请输入分子和分母', 'error');
+                return;
+            }
+            const numerator = parseFloat(numeratorValue);
+            const denominator = parseFloat(denominatorValue);
+            if (isNaN(numerator) || isNaN(denominator) || numerator < 0 || denominator <= 0) {
+                showNotification('请输入有效的非负分子和正分母', 'error');
+                return;
+            }
+            // 计算分数值并保存分数信息
+            const number = numerator / denominator;
+            currentFraction = { numerator: numerator, denominator: denominator };
+            // 显示时添加括号明确范围
+            processCalculation(number, `(${numerator}/${denominator})`);
+        }
+        
+        // 处理计算逻辑（通用）
+        function processCalculation(number, displayStr) {
+            // 计算平方根
+            const squareRoot = Math.sqrt(number);
+            
+            // 保存当前计算结果
+            currentResult = squareRoot;
+            currentNumber = number;
+            currentRadical = null;
+            
+            // 显示结果，确保根号覆盖的范围明确
+            displayNumber.textContent = displayStr;
+            displayResult.textContent = squareRoot.toFixed(6);
+            
+            resultNumber.textContent = displayStr;
+            resultValue.textContent = squareRoot.toFixed(6);
+            
+            // 隐藏根式显示（如果之前显示）
+            radicalForm.classList.add('hidden');
+            
+            // 显示结果区域
+            if (resultArea.classList.contains('hidden')) {
+                resultArea.classList.remove('hidden');
+                resultArea.classList.add('fade-in');
+            }
+            
+            // 检查是否为整数根
+            const isIntegerRoot = isSquare(number);
+            
+            // 如果不是整数根，询问是否转换为最简根式
+            if (!isIntegerRoot) {
+                radicalQuestion.classList.remove('hidden');
+            } else {
+                radicalQuestion.classList.add('hidden');
+                // 添加到历史记录
+                addToHistory(number, squareRoot, true, null, displayStr);
+            }
+            
+            // 清空输入框
+            if (currentNumberType === 'number') {
+                numberInput.value = '';
+            } else {
+                numeratorInput.value = '';
+                denominatorInput.value = '';
+            }
+            
+            // 显示成功通知
+            showNotification('计算完成', 'success');
+        }
+        
+        // 检查一个数是否为完全平方数
+        function isSquare(n) {
+            if (n < 0) return false;
+            const sqrtN = Math.sqrt(n);
+            return Math.abs(sqrtN - Math.round(sqrtN)) < 1e-10;
+        }
+        
+        // 将平方根转换为最简根式（核心改进：明确显示范围）
+        function convertToSimplestRadical(n) {
+            // 如果是分数，分别处理分子和分母
+            if (currentFraction) {
+                const { numerator, denominator } = currentFraction;
+                
+                // 计算 √(a/b) = √(a*b)/b
+                const product = numerator * denominator;
+                const simplifiedProduct = convertSingleNumberToRadical(product);
+                
+                // 处理系数和根号部分
+                const parts = parseRadical(simplifiedProduct);
+                
+                // 构建结果，明确显示根号只覆盖分子部分
+                if (parts.coefficient === 1 && parts.radical !== 1) {
+                    return `√${parts.radical}/${denominator}`;
+                } else if (parts.coefficient !== 1 && parts.radical === 1) {
+                    return `${parts.coefficient}/${denominator}`;
+                } else if (parts.coefficient === 1 && parts.radical === 1) {
+                    return `1/${denominator}`;
+                } else {
+                    return `${parts.coefficient}√${parts.radical}/${denominator}`;
+                }
+            } else {
+                return convertSingleNumberToRadical(n);
+            }
+        }
+        
+        // 转换单个数字为最简根式
+        function convertSingleNumberToRadical(n) {
+            // 处理0的情况
+            if (n === 0) return "0";
+            
+            let factor = 1;
+            let remaining = n;
+            
+            // 寻找最大的平方因子
+            for (let i = Math.floor(Math.sqrt(n)); i > 1; i--) {
+                const square = i * i;
+                if (remaining % square === 0) {
+                    factor = i;
+                    remaining = remaining / square;
+                    break;
+                }
+            }
+            
+            // 构建最简根式
+            if (factor === 1) {
+                return `√${remaining}`;
+            } else if (remaining === 1) {
+                return factor.toString();
+            } else {
+                return `${factor}√${remaining}`;
+            }
+        }
+        
+        // 解析根式为系数和根号部分
+        function parseRadical(radicalStr) {
+            // 处理纯数字情况
+            if (!radicalStr.includes('√')) {
+                return {
+                    coefficient: parseFloat(radicalStr),
+                    radical: 1
+                };
+            }
+            
+            const sqrtIndex = radicalStr.indexOf('√');
+            // 提取系数部分（如果没有系数，默认为1）
+            const coefficientPart = sqrtIndex > 0 ? radicalStr.substring(0, sqrtIndex) : '1';
+            const coefficient = parseFloat(coefficientPart);
+            
+            // 提取根号内的部分
+            const radical = parseFloat(radicalStr.substring(sqrtIndex + 1));
+            
+            return { coefficient, radical };
+        }
+        
+        // 转换为最简根式
+        function handleConvertYes() {
+            if (currentNumber === null) return;
+            
+            try {
+                const radical = convertToSimplestRadical(currentNumber);
+                currentRadical = radical;
+                radicalValue.textContent = radical;
+                radicalForm.classList.remove('hidden');
+                
+                // 添加到历史记录
+                addToHistory(currentNumber, currentResult, false, radical, getDisplayNumberStr());
+            } catch (error) {
+                showNotification('转换为最简根式时出错', 'error');
+                console.error('根式转换错误:', error);
+            }
+            
+            // 隐藏询问
+            radicalQuestion.classList.add('hidden');
+        }
+        
+        // 不转换为最简根式
+        function handleConvertNo() {
+            if (currentNumber === null) return;
+            
+            // 添加到历史记录
+            addToHistory(currentNumber, currentResult, false, null, getDisplayNumberStr());
+            
+            // 隐藏询问
+            radicalQuestion.classList.add('hidden');
+        }
+        
+        // 获取用于显示的数字字符串
+        function getDisplayNumberStr() {
+            return resultNumber.textContent;
+        }
+        
+        // 重置验证显示
+        function resetVerification() {
+            verificationArea.classList.add('hidden');
+            decimalVerificationSteps.innerHTML = '';
+            radicalVerificationSteps.innerHTML = '';
+        }
+        
+        // 验证结果（平方动画）
+        function verifyResult() {
+            if (currentResult === null || currentNumber === null) return;
+            
+            // 清空之前的验证步骤
+            decimalVerificationSteps.innerHTML = '';
+            radicalVerificationSteps.innerHTML = '';
+            
+            // 显示验证区域
+            verificationArea.classList.remove('hidden');
+            
+            // 小数验证步骤
+            const decimalSteps = [
+                `<span class="text-primary">(${currentResult.toFixed(6)})</span><sup>2</sup>`,
+                `<span class="text-primary">${currentResult.toFixed(6)}</span> × <span class="text-primary">${currentResult.toFixed(6)}</span>`,
+                `<span class="text-gray-700">≈</span> <span class="text-secondary font-bold">${currentNumber.toFixed(6)}</span>`
+            ];
+            
+            // 逐步显示小数验证步骤，带有动画效果
+            let decimalStepIndex = 0;
+            const decimalStepInterval = setInterval(() => {
+                if (decimalStepIndex < decimalSteps.length) {
+                    decimalVerificationSteps.innerHTML = decimalSteps.slice(0, decimalStepIndex + 1).join(' <span class="text-gray-500 mx-2">→</span> ');
+                    
+                    // 添加弹跳动画
+                    decimalVerificationSteps.classList.add('bounce-animation');
+                    setTimeout(() => {
+                        decimalVerificationSteps.classList.remove('bounce-animation');
+                    }, 600);
+                    
+                    decimalStepIndex++;
+                } else {
+                    clearInterval(decimalStepInterval);
+                    
+                    // 开始根式验证（如果有）
+                    if (currentRadical) {
+                        startRadicalVerification();
+                    }
+                }
+            }, 800);
+        }
+        
+        // 根式验证
+        function startRadicalVerification() {
+            if (!currentRadical) return;
+            
+            // 构建根式验证步骤
+            let radicalSteps;
+            
+            // 检查是否是分数形式的根式
+            if (currentRadical.indexOf('/') !== -1) {
+                const [numRad, denRad] = currentRadical.split('/');
+                radicalSteps = [
+                    `<span class="text-accent">(${currentRadical})</span><sup>2</sup>`,
+                    `<span class="text-accent">(${numRad})</span><sup>2</sup> / <span class="text-accent">(${denRad})</span><sup>2</sup>`,
+                    `<span class="text-accent">${squareRadical(numRad)}</span> / <span class="text-accent">${denRad * denRad}</span>`,
+                    `<span class="text-gray-700">=</span> <span class="text-secondary font-bold">${getDisplayNumberStr().replace(/[()]/g, '')}</span>`
+                ];
+            } else {
+                radicalSteps = [
+                    `<span class="text-accent">(${currentRadical})</span><sup>2</sup>`,
+                    `<span class="text-accent">${squareRadical(currentRadical)}</span>`,
+                    `<span class="text-gray-700">=</span> <span class="text-secondary font-bold">${getDisplayNumberStr().replace(/[()]/g, '')}</span>`
+                ];
+            }
+            
+            // 逐步显示根式验证步骤，带有动画效果
+            let radicalStepIndex = 0;
+            const radicalStepInterval = setInterval(() => {
+                if (radicalStepIndex < radicalSteps.length) {
+                    radicalVerificationSteps.innerHTML = radicalSteps.slice(0, radicalStepIndex + 1).join(' <span class="text-gray-500 mx-2">→</span> ');
+                    
+                    // 添加弹跳动画
+                    radicalVerificationSteps.classList.add('bounce-animation');
+                    setTimeout(() => {
+                        radicalVerificationSteps.classList.remove('bounce-animation');
+                    }, 600);
+                    
+                    radicalStepIndex++;
+                } else {
+                    clearInterval(radicalStepInterval);
+                }
+            }, 800);
+        }
+        
+        // 计算根式的平方
+        function squareRadical(radicalStr) {
+            const parts = parseRadical(radicalStr);
+            return parts.coefficient * parts.coefficient * parts.radical;
+        }
+        
+        // 添加到历史记录
+        function addToHistory(number, result, isInteger = false, radical = null, displayStr = null) {
+            const historyItem = {
+                number: number,
+                result: result,
+                isInteger: isInteger,
+                radical: radical,
+                displayStr: displayStr || number.toString(),
+                timestamp: new Date()
+            };
+            
+            calculationHistory.unshift(historyItem); // 添加到开头
+            
+            // 限制历史记录数量
+            if (calculationHistory.length > 10) {
+                calculationHistory.pop();
+            }
+            
+            // 更新历史记录显示
+            updateHistoryDisplay();
+        }
+        
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            // 清空历史记录列表
+            historyList.innerHTML = '';
+            
+            if (calculationHistory.length === 0) {
+                historyList.innerHTML = '<div class="text-gray-500 italic text-center py-4">暂无计算记录</div>';
+                return;
+            }
+            
+            // 添加历史记录项
+            calculationHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'bg-gray-50 p-2 rounded-lg flex justify-between items-center hover:bg-gray-100 transition-colors';
+                
+                let resultDisplay = item.result.toFixed(6);
+                if (item.radical) {
+                    resultDisplay += ` (${item.radical})`;
+                }
+                
+                historyItem.innerHTML = `
+                    <div>√${item.displayStr} = <span class="text-primary font-medium">${resultDisplay}</span></div>
+                    <span class="text-xs text-gray-400">${formatTime(item.timestamp)}</span>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // 格式化时间
+        function formatTime(date) {
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            
+            // 设置样式和内容
+            let bgColor, icon;
+            switch(type) {
+                case 'success':
+                    bgColor = 'bg-green-500';
+                    icon = 'fa-check-circle';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-500';
+                    icon = 'fa-exclamation-circle';
+                    break;
+                default:
+                    bgColor = 'bg-blue-500';
+                    icon = 'fa-info-circle';
+            }
+            
+            notification.className = `fixed bottom-4 right-4 ${bgColor} text-white px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 translate-y-10 opacity-0`;
+            notification.innerHTML = `<i class="fa ${icon} mr-2"></i>${message}`;
+            
+            // 添加到页面
+            document.body.appendChild(notification);
+            
+            // 显示动画
+            setTimeout(() => {
+                notification.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                notification.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // 事件监听
+        numberTypeBtn.addEventListener('click', () => switchInputType('number'));
+        fractionTypeBtn.addEventListener('click', () => switchInputType('fraction'));
+        calculateBtn.addEventListener('click', calculateSquareRoot);
+        calculateFractionBtn.addEventListener('click', calculateFractionSquareRoot);
+        convertYes.addEventListener('click', handleConvertYes);
+        convertNo.addEventListener('click', handleConvertNo);
+        verifyBtn.addEventListener('click', verifyResult);
+        
+        // 按Enter键计算
+        numberInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculateSquareRoot();
+            }
+        });
+        
+        numeratorInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculateFractionSquareRoot();
+            }
+        });
+        
+        denominatorInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculateFractionSquareRoot();
+            }
+        });
+        
+        // 初始化
+        switchInputType('number');
+        updateHistoryDisplay();
+    </script>
+</body>
+</html>

@@ -24,6 +24,32 @@
             /* 新增：轻微背景渐变，提升质感 */
             background-image: linear-gradient(120deg, #f0f4f8, #e9ecef);
         }
+
+        /* 滚动字幕样式 */
+        .marquee-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffc107;
+            color: #333;
+            padding: 8px 0;
+            overflow: hidden;
+            z-index: 100;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 30s linear infinite;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
         
         .container {
             width:300px;
@@ -276,6 +302,13 @@
     </style>
 </head>
 <body>
+    <!-- 滚动字幕 -->
+    <div class="marquee-container">
+        <div class="marquee-content">
+            如果用户在APP内无法注册 请不要担心 这是一个常见的问题 可以移步至官方网站https://thenuo2.netlify.app/进行注册 注册之后便可以在APP内正常登录 或用户可以选择使用离线方式进行登录
+        </div>
+    </div>
+
     <!-- 加载动画 -->
     <div id="loader-wrapper">
       <div id="loader"></div>
