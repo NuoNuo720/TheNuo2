@@ -1,4 +1,4 @@
-// 初始化 Supabase（把下面的 URL 和密钥，替换成你自己的）
+// 初始化 Supabase
 const supabaseUrl = "https://csrsbqixmzfdlpqokazr.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcnNicWl4bXpmZGxwcW9rYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjA1NTMsImV4cCI6MjA3NTEzNjU1M30.VC6miCQW-tiNVbYNf8KgkCkZ3wQoy2HDERs1-DTdKEw";
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -7,12 +7,22 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 const confessionInput = document.getElementById("confessionInput");
 const submitBtn = document.getElementById("submitBtn");
 const confessionsList = document.getElementById("confessionsList");
+// 新增：获取类型选择元素（假设你有一个类型选择器）
+const typeSelect = document.getElementById("typeSelect"); // 例如：<select id="typeSelect">
 
 // 【功能 1：提交表白】
 submitBtn.addEventListener("click", async () => {
   const content = confessionInput.value.trim();
+  // 新增：获取选中的类型
+  const type = typeSelect.value;
+  
   if (!content) {
     alert("请输入表白内容～");
+    return;
+  }
+  
+  if (!type) {
+    alert("请选择表白类型～");
     return;
   }
 
@@ -20,18 +30,19 @@ submitBtn.addEventListener("click", async () => {
   submitBtn.disabled = true;
   submitBtn.innerText = "发布中...";
 
-  // 把内容提交到 Supabase 的 confessions 表
+  // 把内容和类型提交到 Supabase 的 confessions 表
   const { error } = await supabase
-    .from("confessions") // 表名
-    .insert([{ content: content }]); // 插入内容
+    .from("confessions")
+    .insert([{ content: content, type: type }]); // 新增：添加type字段
 
   if (error) {
     alert("发布失败，请重试～");
     console.error("发布出错：", error);
   } else {
-    // 清空输入框
+    // 清空输入框和类型选择
     confessionInput.value = "";
-    // 重新加载表白列表（这样新提交的能立即显示）
+    typeSelect.value = ""; // 新增：清空类型选择
+    // 重新加载表白列表
     loadConfessions();
   }
 
@@ -44,11 +55,11 @@ submitBtn.addEventListener("click", async () => {
 async function loadConfessions() {
   confessionsList.innerHTML = "加载中...";
 
-  // 从 Supabase 获取 confessions 表的数据（按时间倒序，最新的在最前面）
+  // 从 Supabase 获取数据
   const { data, error } = await supabase
     .from("confessions")
     .select("*")
-    .order("created_at", { ascending: false }); // 按创建时间倒序
+    .order("created_at", { ascending: false });
 
   if (error) {
     confessionsList.innerHTML = "加载失败，请刷新页面～";
@@ -61,14 +72,19 @@ async function loadConfessions() {
     return;
   }
 
-  // 遍历数据，生成表白卡片
+  // 遍历数据，生成表白卡片（包含类型显示）
   confessionsList.innerHTML = "";
   data.forEach((item) => {
-    // 格式化时间（比如：2025-10-04 12:30）
     const time = new Date(item.created_at).toLocaleString();
     const confessionItem = document.createElement("div");
     confessionItem.className = "confession-item";
+    // 新增：显示类型信息
     confessionItem.innerHTML = `
+      <div style="margin-bottom: 8px;">
+        <span style="display: inline-block; padding: 2px 8px; background: #eee; border-radius: 12px; font-size: 12px; margin-right: 8px;">
+          ${item.type}
+        </span>
+      </div>
       <p>${item.content}</p>
       <div style="font-size: 12px; color: #999; margin-top: 10px;">
         发布时间：${time}
@@ -80,3 +96,4 @@ async function loadConfessions() {
 
 // 页面加载时，先加载一次表白内容
 loadConfessions();
+    

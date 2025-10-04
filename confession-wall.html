@@ -190,8 +190,8 @@
 
   <script>
     // Supabase 初始化 - 请替换为您自己的项目URL和anon key
-    const supabaseUrl = 'https://your-project-url.supabase.co';
-    const supabaseKey = 'your-anon-key';
+    const supabaseUrl = 'https://csrsbqixmzfdlpqokazr.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcnNicWl4bXpmZGxwcW9rYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjA1NTMsImV4cCI6MjA3NTEzNjU1M30.VC6miCQW-tiNVbYNf8KgkCkZ3wQoy2HDERs1-DTdKEw';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
     
     // DOM 元素
@@ -275,17 +275,17 @@
       }
       
       const type = getSelectedType();
-      const timestamp = new Date().toISOString();
+      // 不需要手动设置created_at，由数据库自动生成
       
       // 禁用按钮防止重复提交
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 发布中...';
       
       try {
-        // 保存到Supabase
+        // 保存到Supabase，不包含timestamp，使用数据库自动生成的created_at
         const { data, error } = await supabase
           .from('confessions')
-          .insert([{ content, type, timestamp }])
+          .insert([{ content, type }])
           .select();
           
         if (error) throw error;
@@ -320,8 +320,8 @@
     }
     
     // 格式化时间
-    function formatTime(timestamp) {
-      const date = new Date(timestamp);
+    function formatTime(createdAt) {
+      const date = new Date(createdAt);
       return date.toLocaleString('zh-CN', {
         year: 'numeric',
         month: 'short',
@@ -356,7 +356,8 @@
             <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${getTagClass(confession.type)}">
               ${confession.type}
             </span>
-            <span class="text-xs text-gray-400">${formatTime(confession.timestamp)}</span>
+            <!-- 使用created_at而非timestamp -->
+            <span class="text-xs text-gray-400">${formatTime(confession.created_at)}</span>
           </div>
           <p class="text-gray-800 mb-3 whitespace-pre-line">${confession.content}</p>
           <div class="flex items-center text-gray-500 text-sm">
@@ -411,11 +412,11 @@
         loadingIndicator.classList.remove('hidden');
         emptyState.classList.add('hidden');
         
-        // 从Supabase获取数据，按时间倒序排列
+        // 从Supabase获取数据，按created_at倒序排列（关键修改）
         const { data, error } = await supabase
           .from('confessions')
           .select('*')
-          .order('timestamp', { ascending: false });
+          .order('created_at', { ascending: false }); // 这里是关键修复
           
         if (error) throw error;
         
@@ -506,7 +507,6 @@
     // 页面加载完成后初始化
     window.addEventListener('load', () => {
       createParticles();
-      // 初始化Supabase表（实际应用中应该在Supabase控制台创建）
       loadConfessions();
     });
   </script>
