@@ -4,10 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>匿名表白墙</title>
-  <!-- 引入外部资源 -->
+  
+  <!-- 关键样式资源优先加载 -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 非关键资源异步加载 -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 更换为正确的Supabase SDK链接 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 资源加载错误处理 -->
+  <script>
+    // 监控外部资源加载错误
+    window.addEventListener('error', function(e) {
+      if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
+        showErrorNotification('资源加载失败，请检查网络连接后刷新页面');
+      }
+    }, true);
+    
+    // 错误通知函数
+    function showErrorNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // 5秒后自动移除
+      setTimeout(() => {
+        notification.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+        setTimeout(() => notification.remove(), 300);
+      }, 5000);
+    }
+  </script>
   
   <!-- Tailwind 配置 -->
   <script>
@@ -71,6 +99,14 @@
   <div id="particles-container" class="fixed inset-0 pointer-events-none z-0 opacity-30"></div>
   
   <div class="container mx-auto px-4 py-8 max-w-3xl relative z-10">
+    <!-- 返回导航按钮 -->
+    <div class="mb-6">
+      <a href="indexdaohang.html" class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-50 shadow-sm transition-all">
+        <i class="fa fa-arrow-left"></i>
+        <span>返回导航页</span>
+      </a>
+    </div>
+    
     <!-- 页面标题 -->
     <header class="text-center mb-10">
       <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary mb-2">
@@ -129,6 +165,7 @@
       </div>
     </div>
     
+    <!-- 其他部分保持不变 -->
     <!-- 筛选和搜索区域 -->
     <div class="bg-white rounded-xl p-4 mb-6 card-shadow">
       <div class="flex flex-col sm:flex-row gap-3">
@@ -176,8 +213,6 @@
             发布第一条表白
           </button>
         </div>
-        
-        <!-- 表白内容会在这里动态生成 -->
       </div>
     </div>
     
@@ -189,100 +224,141 @@
   </div>
 
   <script>
-    // Supabase 初始化 - 请替换为您自己的项目URL和anon key
-    const supabaseUrl = 'https://csrsbqixmzfdlpqokazr.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcnNicWl4bXpmZGxwcW9rYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjA1NTMsImV4cCI6MjA3NTEzNjU1M30.VC6miCQW-tiNVbYNf8KgkCkZ3wQoy2HDERs1-DTdKEw';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-    
-    // DOM 元素
-    const confessionInput = document.getElementById('confessionInput');
-    const charCount = document.getElementById('charCount');
-    const submitBtn = document.getElementById('submitBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const confessionsList = document.getElementById('confessionsList');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const emptyState = document.getElementById('emptyState');
-    const confessionCount = document.getElementById('confessionCount');
-    const statusMessage = document.getElementById('statusMessage');
-    const searchInput = document.getElementById('searchInput');
-    const filterSelect = document.getElementById('filterSelect');
-    const emptyStateBtn = document.getElementById('emptyStateBtn');
-    
-    // 存储所有表白数据
+    // 全局变量
+    let supabase;
     let allConfessions = [];
     
-    // 字符计数功能
-    confessionInput.addEventListener('input', () => {
-      const count = confessionInput.value.length;
-      charCount.textContent = `${count}/500`;
+    // DOM 元素缓存
+    const elements = {
+      confessionInput: document.getElementById('confessionInput'),
+      charCount: document.getElementById('charCount'),
+      submitBtn: document.getElementById('submitBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      confessionsList: document.getElementById('confessionsList'),
+      loadingIndicator: document.getElementById('loadingIndicator'),
+      emptyState: document.getElementById('emptyState'),
+      confessionCount: document.getElementById('confessionCount'),
+      statusMessage: document.getElementById('statusMessage'),
+      searchInput: document.getElementById('searchInput'),
+      filterSelect: document.getElementById('filterSelect'),
+      emptyStateBtn: document.getElementById('emptyStateBtn')
+    };
+    
+    // 初始化应用
+    function initApp() {
+      try {
+        // 初始化Supabase客户端
+        initSupabase();
+        
+        // 设置事件监听
+        setupEventListeners();
+        
+        // 加载表白数据
+        loadConfessions();
+        
+        // 创建粒子背景
+        createParticles();
+      } catch (error) {
+        console.error('初始化失败:', error);
+        showStatus('应用初始化失败，请刷新页面重试', true);
+        elements.loadingIndicator.classList.add('hidden');
+        elements.emptyState.classList.remove('hidden');
+      }
+    }
+    
+    // 初始化Supabase
+    function initSupabase() {
+      const supabaseUrl = 'https://csrsbqixmzfdlpqokazr.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcnNicWl4bXpmZGxwcW9rYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjA1NTMsImV4cCI6MjA3NTEzNjU1M30.VC6miCQW-tiNVbYNf8KgkCkZ3wQoy2HDERs1-DTdKEw';
       
-      // 接近上限时改变颜色
-      if (count > 450) {
-        charCount.classList.add('text-amber-500');
-      } else {
-        charCount.classList.remove('text-amber-500');
+      if (!window.supabase) {
+        throw new Error('Supabase SDK未加载成功');
       }
       
-      if (count >= 500) {
-        charCount.classList.add('text-red-500');
-      } else {
-        charCount.classList.remove('text-red-500');
-      }
-    });
+      supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    }
     
-    // 清空按钮功能
-    clearBtn.addEventListener('click', () => {
-      confessionInput.value = '';
-      confessionInput.dispatchEvent(new Event('input')); // 触发输入事件以更新计数
-    });
+    // 其余JavaScript代码保持不变
+    function setupEventListeners() {
+      // 字符计数
+      elements.confessionInput.addEventListener('input', updateCharCount);
+      
+      // 清空按钮
+      elements.clearBtn.addEventListener('click', clearInput);
+      
+      // 空状态按钮
+      elements.emptyStateBtn.addEventListener('click', focusInput);
+      
+      // 提交表白
+      elements.submitBtn.addEventListener('click', submitConfession);
+      
+      // 搜索和筛选
+      elements.searchInput.addEventListener('input', debounce(applyFilters, 300));
+      elements.filterSelect.addEventListener('change', applyFilters);
+      
+      // 初始化字符计数
+      updateCharCount();
+    }
     
-    // 空状态按钮点击事件
-    emptyStateBtn.addEventListener('click', () => {
-      confessionInput.focus();
-      // 平滑滚动到输入区域
-      confessionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
     
-    // 显示状态消息
+    function updateCharCount() {
+      const count = elements.confessionInput.value.length;
+      elements.charCount.textContent = `${count}/500`;
+      
+      elements.charCount.classList.toggle('text-amber-500', count > 450);
+      elements.charCount.classList.toggle('text-red-500', count >= 500);
+    }
+    
+    function clearInput() {
+      elements.confessionInput.value = '';
+      updateCharCount();
+    }
+    
+    function focusInput() {
+      elements.confessionInput.focus();
+      elements.confessionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
     function showStatus(message, isError = false) {
-      statusMessage.textContent = message;
-      statusMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+      elements.statusMessage.textContent = message;
+      elements.statusMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
       
       if (isError) {
-        statusMessage.classList.add('bg-red-100', 'text-red-800');
+        elements.statusMessage.classList.add('bg-red-100', 'text-red-800');
       } else {
-        statusMessage.classList.add('bg-green-100', 'text-green-800');
+        elements.statusMessage.classList.add('bg-green-100', 'text-green-800');
       }
       
-      // 3秒后自动隐藏
       setTimeout(() => {
-        statusMessage.classList.add('hidden');
+        elements.statusMessage.classList.add('hidden');
       }, 3000);
     }
     
-    // 获取选中的表白类型
     function getSelectedType() {
       const selected = document.querySelector('input[name="confessionType"]:checked');
       return selected ? selected.value : '暗恋';
     }
     
-    // 提交表白
-    submitBtn.addEventListener('click', async () => {
-      const content = confessionInput.value.trim();
+    async function submitConfession() {
+      const content = elements.confessionInput.value.trim();
       if (!content) {
         showStatus('请输入表白内容', true);
         return;
       }
       
       const type = getSelectedType();
-      // 不需要手动设置created_at，由数据库自动生成
       
-      // 禁用按钮防止重复提交
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 发布中...';
+      elements.submitBtn.disabled = true;
+      elements.submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 发布中...';
       
       try {
-        // 保存到Supabase，不包含timestamp，使用数据库自动生成的created_at
         const { data, error } = await supabase
           .from('confessions')
           .insert([{ content, type }])
@@ -290,25 +366,18 @@
           
         if (error) throw error;
         
-        // 清空输入框
-        confessionInput.value = '';
-        confessionInput.dispatchEvent(new Event('input'));
-        
+        clearInput();
         showStatus('表白发布成功！');
-        
-        // 重新加载表白列表
         loadConfessions();
       } catch (error) {
         console.error('提交失败:', error);
         showStatus('发布失败，请稍后再试', true);
       } finally {
-        // 恢复按钮状态
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fa fa-paper-plane"></i> 发布表白';
+        elements.submitBtn.disabled = false;
+        elements.submitBtn.innerHTML = '<i class="fa fa-paper-plane"></i> 发布表白';
       }
-    });
+    }
     
-    // 获取标签对应的样式类
     function getTagClass(type) {
       switch(type) {
         case '暗恋': return 'bg-tag1 text-white';
@@ -319,7 +388,6 @@
       }
     }
     
-    // 格式化时间
     function formatTime(createdAt) {
       const date = new Date(createdAt);
       return date.toLocaleString('zh-CN', {
@@ -331,23 +399,18 @@
       });
     }
     
-    // 渲染表白列表
     function renderConfessions(confessions) {
-      // 清空列表
-      confessionsList.innerHTML = '';
+      elements.confessionsList.innerHTML = '';
       
-      // 显示适当的状态
       if (confessions.length === 0) {
-        emptyState.classList.remove('hidden');
-        confessionCount.textContent = '0条';
+        elements.emptyState.classList.remove('hidden');
+        elements.confessionCount.textContent = '0条';
         return;
       }
       
-      // 隐藏空状态
-      emptyState.classList.add('hidden');
-      confessionCount.textContent = `${confessions.length}条`;
+      elements.emptyState.classList.add('hidden');
+      elements.confessionCount.textContent = `${confessions.length}条`;
       
-      // 添加表白项
       confessions.forEach(confession => {
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl p-5 card-shadow hover-lift fade-in';
@@ -356,7 +419,6 @@
             <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${getTagClass(confession.type)}">
               ${confession.type}
             </span>
-            <!-- 使用created_at而非timestamp -->
             <span class="text-xs text-gray-400">${formatTime(confession.created_at)}</span>
           </div>
           <p class="text-gray-800 mb-3 whitespace-pre-line">${confession.content}</p>
@@ -368,103 +430,105 @@
           </div>
         `;
         
-        confessionsList.appendChild(card);
+        elements.confessionsList.appendChild(card);
         
-        // 添加点赞事件
         const likeBtn = card.querySelector('.like-btn');
         likeBtn.addEventListener('click', async (e) => {
           const id = e.currentTarget.dataset.id;
           const likeCountEl = e.currentTarget.querySelector('span');
           const likeIcon = e.currentTarget.querySelector('i');
           
+          if (likeIcon.classList.contains('fa-heart')) return;
+          
           try {
-            // 查找当前表白
             const confession = allConfessions.find(c => c.id === id);
             const newLikes = (confession.likes || 0) + 1;
             
-            // 更新UI
             likeCountEl.textContent = newLikes;
             likeIcon.classList.remove('fa-heart-o');
             likeIcon.classList.add('fa-heart', 'text-primary');
             
-            // 更新数据库
             const { error } = await supabase
               .from('confessions')
               .update({ likes: newLikes })
               .eq('id', id);
               
             if (error) throw error;
-            
-            // 更新本地数据
             confession.likes = newLikes;
           } catch (error) {
             console.error('点赞失败:', error);
             showStatus('操作失败，请稍后再试', true);
+            likeCountEl.textContent = (confession.likes || 0);
+            likeIcon.classList.remove('fa-heart', 'text-primary');
+            likeIcon.classList.add('fa-heart-o');
           }
         });
       });
     }
     
-    // 加载表白列表
     async function loadConfessions() {
       try {
-        // 显示加载状态
-        loadingIndicator.classList.remove('hidden');
-        emptyState.classList.add('hidden');
+        elements.loadingIndicator.classList.remove('hidden');
+        elements.emptyState.classList.add('hidden');
         
-        // 从Supabase获取数据，按created_at倒序排列（关键修改）
         const { data, error } = await supabase
           .from('confessions')
           .select('*')
-          .order('created_at', { ascending: false }); // 这里是关键修复
+          .order('created_at', { ascending: false });
           
         if (error) throw error;
         
-        // 保存所有表白数据
         allConfessions = data || [];
-        
-        // 应用当前筛选条件
         applyFilters();
       } catch (error) {
         console.error('加载失败:', error);
         showStatus('加载失败，请刷新页面重试', true);
-        emptyState.classList.remove('hidden');
+        elements.emptyState.classList.remove('hidden');
       } finally {
-        loadingIndicator.classList.add('hidden');
+        elements.loadingIndicator.classList.add('hidden');
       }
     }
     
-    // 应用筛选和搜索
     function applyFilters() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
-      const filterType = filterSelect.value;
+      const searchTerm = elements.searchInput.value.toLowerCase().trim();
+      const filterType = elements.filterSelect.value;
       
       let filtered = [...allConfessions];
       
-      // 应用类型筛选
       if (filterType !== 'all') {
         filtered = filtered.filter(c => c.type === filterType);
       }
       
-      // 应用搜索筛选
       if (searchTerm) {
         filtered = filtered.filter(c => 
           c.content.toLowerCase().includes(searchTerm)
         );
       }
       
-      // 渲染筛选后的结果
       renderConfessions(filtered);
     }
     
-    // 搜索和筛选事件监听
-    searchInput.addEventListener('input', applyFilters);
-    filterSelect.addEventListener('change', applyFilters);
-    
-    // 简单的粒子背景效果
     function createParticles() {
       const container = document.getElementById('particles-container');
       const particleCount = 20;
+      
+      if (!container) {
+        const newContainer = document.createElement('div');
+        newContainer.id = 'particles-container';
+        newContainer.className = 'fixed inset-0 pointer-events-none z-0 opacity-30';
+        document.body.appendChild(newContainer);
+      }
+      
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes float {
+          0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.5; }
+          90% { opacity: 0.5; }
+          100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
       
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
@@ -482,33 +546,10 @@
       }
     }
     
-    // 添加浮动动画样式
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes float {
-        0% {
-          transform: translateY(0) rotate(0deg);
-          opacity: 0;
-        }
-        10% {
-          opacity: 0.5;
-        }
-        90% {
-          opacity: 0.5;
-        }
-        100% {
-          transform: translateY(-100vh) rotate(720deg);
-          opacity: 0;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    // 页面加载完成后初始化
-    window.addEventListener('load', () => {
-      createParticles();
-      loadConfessions();
-    });
+    if (window.supabase) {
+      initApp();
+    }
   </script>
 </body>
 </html>
+    

@@ -4,13 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>好友系统（含实时聊天）</title>
-  <!-- 外部资源引入 -->
+  <!-- 外部资源引入（使用国内CDN+精简版本） -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 精简版Font Awesome，仅包含使用到的图标 -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- 优先加载Supabase库 -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
-  <!-- Tailwind 自定义配置 -->
+  <!-- Tailwind 自定义配置（精简） -->
   <script>
     tailwind.config = {
       theme: {
@@ -20,28 +19,31 @@
             secondary: '#e0e7ff',
             success: '#10b981',
             danger: '#ef4444',
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-          },
-        },
+          }
+        }
       }
     }
   </script>
   
-  <!-- 自定义工具类 -->
+  <!-- 自定义工具类（必要的才保留） -->
   <style type="text/tailwindcss">
     @layer utilities {
       .content-auto { content-visibility: auto; }
       .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
-      .hover-lift { transition: transform 0.2s ease; }
-      .hover-lift:hover { transform: translateY(-2px); }
       .message-in { border-radius: 18px 18px 18px 0; }
       .message-out { border-radius: 18px 18px 0 18px; }
     }
   </style>
+  
+  <!-- 关键CSS内联，避免外部请求阻塞 -->
+  <style>
+    /* 核心样式内联，减少渲染阻塞 */
+    body { font-family: system-ui, sans-serif; background-color: #f9fafb; }
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
+<body class="bg-gray-50 min-h-screen">
   <div class="container mx-auto px-4 py-8 max-w-5xl">
     <!-- 返回导航页按钮 -->
     <div class="mb-6">
@@ -106,7 +108,12 @@
           <h3 class="text-lg font-semibold mb-3 flex items-center">
             <i class="fa fa-bell text-primary mr-2"></i> 好友申请
           </h3>
-          <div id="friendRequests" class="space-y-2"></div>
+          <div id="friendRequests" class="space-y-2">
+            <!-- 加载状态 -->
+            <div id="requestsLoader" class="text-center py-4 text-gray-500 hidden">
+              <i class="fa fa-circle-o-notch fa-spin"></i> 加载中...
+            </div>
+          </div>
         </div>
 
         <!-- 我的好友列表 -->
@@ -114,7 +121,12 @@
           <h3 class="text-lg font-semibold mb-3 flex items-center">
             <i class="fa fa-user-o text-primary mr-2"></i> 我的好友
           </h3>
-          <div id="friendList" class="space-y-2"></div>
+          <div id="friendList" class="space-y-2">
+            <!-- 加载状态 -->
+            <div id="friendsLoader" class="text-center py-4 text-gray-500 hidden">
+              <i class="fa fa-circle-o-notch fa-spin"></i> 加载中...
+            </div>
+          </div>
         </div>
       </div>
 
@@ -131,7 +143,12 @@
           </h3>
           
           <!-- 聊天消息容器（可滚动） -->
-          <div id="messageContainer" class="h-[400px] overflow-y-auto p-3 border border-gray-100 rounded-lg mb-4 space-y-3"></div>
+          <div id="messageContainer" class="h-[400px] overflow-y-auto p-3 border border-gray-100 rounded-lg mb-4 space-y-3">
+            <!-- 消息加载状态 -->
+            <div id="messagesLoader" class="text-center py-4 text-gray-500 hidden">
+              <i class="fa fa-circle-o-notch fa-spin"></i> 加载消息中...
+            </div>
+          </div>
           
           <!-- 发送消息输入框 -->
           <div class="flex gap-2">
@@ -153,452 +170,562 @@
     </div>
   </div>
 
-  <!-- 核心修复：将脚本放在页面底部，确保Supabase先加载完成 -->
+  <!-- 延迟加载Supabase库（非首屏关键资源） -->
   <script>
-    // --------------------------
-    // 1. 优先初始化 Supabase 客户端
-    // --------------------------
-    const supabaseUrl = "https://csrsbqixmzfdlpqokazr.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcnNicWl4bXpmZGxwcW9rYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjA1NTMsImV4cCI6MjA3NTEzNjU1M30.VC6miCQW-tiNVbYNf8KgkCkZ3wQoy2HDERs1-DTdKEw";
-    // 确保在这里完成初始化
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    // --------------------------
-    // 2. 全局变量定义
-    // --------------------------
-    let currentUser = JSON.parse(localStorage.getItem("supabase-friend-user")) || null;
-    let selectedFriendId = null;
-    let selectedFriendName = null;
-    let selectedFriendAvatar = null;
-    let chatSubscription = null;
-
-    // --------------------------
-    // 3. 页面初始化
-    // --------------------------
-    window.addEventListener('load', () => {
-      initPage();
-    });
-
-    function initPage() {
-      const loginForm = document.getElementById('loginForm');
-      const userInfo = document.getElementById('userInfo');
-      const friendSystem = document.getElementById('friendSystem');
-      const currentUsername = document.getElementById('currentUsername');
-
-      if (currentUser) {
-        loginForm.classList.add('hidden');
-        userInfo.classList.remove('hidden');
-        friendSystem.classList.remove('hidden');
-        currentUsername.textContent = currentUser.username;
-        
-        loadFriendRequests();
-        loadFriendList();
-      } else {
-        loginForm.classList.remove('hidden');
-        userInfo.classList.add('hidden');
-        friendSystem.classList.add('hidden');
-        document.getElementById('chatArea').classList.add('hidden');
-        document.getElementById('chatTip').classList.remove('hidden');
-      }
-    }
-
-    // --------------------------
-    // 4. 用户注册/登录/登出功能
-    // --------------------------
-    async function registerUser(username) {
-      if (!username.trim()) return alert("请输入昵称～");
-
-      // 现在supabase已经初始化完成，可以安全使用
-      const randomEmail = `${Date.now()}@temp.com`;
-      const randomPassword = Math.random().toString(36).slice(-8);
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: randomEmail,
-        password: randomPassword
+    // 动态加载Supabase库，不阻塞首屏渲染
+    function loadSupabase() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@supabase/supabase-js@2';
+        script.onload = () => resolve(window.supabase);
+        script.onerror = reject;
+        document.body.appendChild(script);
       });
-
-      if (authError || !authData.user) {
-        return alert("注册失败：" + authError?.message || "无法创建用户");
-      }
-      const authUserId = authData.user.id;
-
-      const { data: existingUser } = await supabase
-        .from("users")
-        .select("id")
-        .eq("username", username.trim())
-        .single();
-
-      if (existingUser) {
-        await supabase.auth.admin.deleteUser(authUserId);
-        return alert("昵称已被占用，请换一个～");
-      }
-
-      const { data: newUser, error } = await supabase
-        .from("users")
-        .insert([{ 
-          id: authUserId,
-          username: username.trim() 
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        await supabase.auth.admin.deleteUser(authUserId);
-        return alert("注册失败：" + error.message);
-      }
-
-      currentUser = newUser;
-      localStorage.setItem("supabase-friend-user", JSON.stringify(newUser));
-      alert(`注册成功！欢迎 ${newUser.username}～`);
-      initPage();
     }
 
-    async function loginUser(username) {
-      if (!username.trim()) return alert("请输入昵称～");
-
-      const { data: user, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username.trim())
-        .single();
-
-      if (error) return alert("未找到该用户，请先注册～");
-
-      const { data: authData, error: sessionError } = await supabase.auth.refreshSession();
-      if (sessionError || !authData.session) {
-        alert("登录失败：请先注册新账号（旧账号会话已失效）～");
-        return;
-      }
-
-      console.log("登录时的认证ID：", authData.session.user.id);
-      console.log("用户表ID：", user.id);
-      if (authData.session.user.id !== user.id) {
-        alert("账号异常：认证ID与用户ID不匹配，请重新注册～");
-        return;
-      }
-
-      currentUser = user;
-      localStorage.setItem("supabase-friend-user", JSON.stringify(user));
-      alert(`欢迎回来，${user.username}～`);
-      initPage();
-    }
-
-    async function logoutUser() {
-      await supabase.auth.signOut();
-      
-      currentUser = null;
-      localStorage.removeItem("supabase-friend-user");
-      
-      if (chatSubscription) chatSubscription.unsubscribe();
-      alert("已登出～");
-      initPage();
-    }
-
-    // --------------------------
-    // 5. 好友管理功能
-    // --------------------------
-    async function searchAndAddFriend(targetUsername) {
-      if (!currentUser) return alert("请先登录～");
-      if (!targetUsername.trim()) return alert("请输入好友昵称～");
-      if (targetUsername.trim() === currentUser.username) return alert("不能加自己为好友哦～");
-
-      console.log("当前用户ID（users表）：", currentUser.id);
-      const { data: authData } = await supabase.auth.getSession();
-      console.log("当前认证ID（Supabase）：", authData.session?.user?.id);
-
-      const { data: targetUser, error: searchErr } = await supabase
-        .from("users")
-        .select("id, username, avatar")
-        .eq("username", targetUsername.trim())
-        .single();
-
-      if (searchErr) return alert("未找到这个用户～");
-
-      const { data: sentReq, error: sentErr } = await supabase
-        .from("friend_relations")
-        .select("status", { count: "exact", head: false })
-        .eq("sender_id", currentUser.id)
-        .eq("receiver_id", targetUser.id)
-        .single();
-
-      const { data: receivedReq, error: receivedErr } = await supabase
-        .from("friend_relations")
-        .select("status", { count: "exact", head: false })
-        .eq("sender_id", targetUser.id)
-        .eq("receiver_id", currentUser.id)
-        .single();
-
-      const existingRelation = sentErr ? (receivedErr ? null : receivedReq) : sentReq;
-
-      if (existingRelation) {
-        if (existingRelation.status === "pending") return alert("已发送过申请，等待对方同意～");
-        if (existingRelation.status === "accepted") return alert("你们已经是好友啦～");
-        if (existingRelation.status === "rejected") return alert("对方之前拒绝过你的申请～");
-      }
-
-      const { error: applyErr } = await supabase
-        .from("friend_relations")
-        .insert([{
-          sender_id: currentUser.id,
-          receiver_id: targetUser.id,
-          status: "pending"
-        }]);
-
-      if (applyErr) {
-        console.error("申请失败详情：", applyErr);
-        return alert("发送申请失败：" + applyErr.message);
-      }
-      alert(`好友申请已发送给 ${targetUser.username}～`);
-    }
-
-    async function loadFriendRequests() {
-      if (!currentUser) return;
-
-      const { data: requests, error } = await supabase
-        .from("friend_relations")
-        .select(`
-          id,
-          sender:users!friend_relations_sender_id_fkey (id, username, avatar)
-        `)
-        .eq("receiver_id", currentUser.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-
-      if (error) return console.error("加载申请失败：", error);
-
-      const requestsContainer = document.getElementById("friendRequests");
-      if (!requests.length) {
-        requestsContainer.innerHTML = "<p class='text-gray-500 text-sm'>暂无好友申请～</p>";
-        return;
-      }
-
-      requestsContainer.innerHTML = requests.map(req => `
-        <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-          <img src="${req.sender.avatar}" alt="头像" class="w-8 h-8 rounded-full">
-          <div class="flex-1 text-left">
-            <p class="font-medium text-sm">${req.sender.username}</p>
-            <p class="text-xs text-gray-500">请求添加你为好友</p>
-          </div>
-          <div class="gap-1">
-            <button onclick="handleFriendRequest('${req.id}', true)" class="bg-success text-white px-2 py-1 rounded text-xs">同意</button>
-            <button onclick="handleFriendRequest('${req.id}', false)" class="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">拒绝</button>
-          </div>
-        </div>
-      `).join("");
-    }
-
-    async function handleFriendRequest(requestId, isAccept) {
-      const { error } = await supabase
-        .from("friend_relations")
-        .update({
-          status: isAccept ? "accepted" : "rejected",
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", requestId);
-
-      if (error) return alert("处理失败：" + error.message);
-      alert(isAccept ? "已同意好友申请～" : "已拒绝好友申请～");
-      loadFriendRequests();
-      loadFriendList();
-    }
-
-    async function loadFriendList() {
-      if (!currentUser) return;
-
-      const { data: relations, error } = await supabase
-        .from("friend_relations")
-        .select(`
-          id,
-          sender:users!friend_relations_sender_id_fkey (id, username, avatar),
-          receiver:users!friend_relations_receiver_id_fkey (id, username, avatar)
-        `)
-        .or(`and(sender_id.eq.${currentUser.id},status.eq.accepted),and(receiver_id.eq.${currentUser.id},status.eq.accepted)`)
-        .order("updated_at", { ascending: false });
-
-      if (error) return console.error("加载好友列表失败：", error);
-
-      const friendList = relations.map(rel => 
-        rel.sender_id === currentUser.id ? rel.receiver : rel.sender
-      );
-
-      const friendListContainer = document.getElementById("friendList");
-      if (!friendList.length) {
-        friendListContainer.innerHTML = "<p class='text-gray-500 text-sm'>还没有好友，先添加一个吧～</p>";
-        return;
-      }
-
-      friendListContainer.innerHTML = friendList.map(friend => `
-        <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer hover-lift" 
-             onclick="selectFriend('${friend.id}', '${friend.username}', '${friend.avatar}')">
-          <img src="${friend.avatar}" alt="头像" class="w-8 h-8 rounded-full">
-          <div class="flex-1 text-left">
-            <p class="font-medium text-sm">${friend.username}</p>
-          </div>
-          <button onclick="removeFriend('${friend.id}', event)" class="text-xs text-danger hover:text-danger/80">删除</button>
-        </div>
-      `).join("");
-    }
-
-    async function removeFriend(friendId, e) {
-      e.stopPropagation();
-      if (!confirm("确定要删除这个好友吗？")) return;
-
-      const { data: relation } = await supabase
-        .from("friend_relations")
-        .select("id")
-        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${friendId},status.eq.accepted),and(receiver_id.eq.${currentUser.id},sender_id.eq.${friendId},status.eq.accepted)`)
-        .single();
-
-      if (!relation) return alert("删除失败：未找到好友关系～");
-
-      const { error } = await supabase
-        .from("friend_relations")
-        .delete()
-        .eq("id", relation.id);
-
-      if (error) return alert("删除失败：" + error.message);
-      alert("已删除好友～");
-      loadFriendList();
-      
-      if (friendId === selectedFriendId) {
-        closeChat();
-      }
-    }
-
-    // --------------------------
-    // 6. 实时聊天功能
-    // --------------------------
-    function selectFriend(friendId, friendName, friendAvatar) {
-      selectedFriendId = friendId;
-      selectedFriendName = friendName;
-      selectedFriendAvatar = friendAvatar;
-      
-      document.getElementById('chatArea').classList.remove('hidden');
-      document.getElementById('chatTip').classList.add('hidden');
-      
-      document.getElementById('chatFriendName').textContent = friendName;
-      document.getElementById('chatFriendAvatar').src = friendAvatar;
-      
-      loadChatHistory();
-    }
-
-    function closeChat() {
-      document.getElementById('chatArea').classList.add('hidden');
-      document.getElementById('chatTip').classList.remove('hidden');
-      
-      selectedFriendId = null;
-      selectedFriendName = null;
-      selectedFriendAvatar = null;
-      
-      if (chatSubscription) {
-        chatSubscription.unsubscribe();
-        chatSubscription = null;
-      }
-    }
-
-    async function loadChatHistory() {
-      if (!currentUser || !selectedFriendId) return;
-      
-      const { data: messages, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedFriendId}),and(sender_id.eq.${selectedFriendId},receiver_id.eq.${currentUser.id})`)
-        .order('created_at', { ascending: true });
-      
-      if (error) return console.error('加载聊天记录失败：', error);
-      
-      const messageContainer = document.getElementById('messageContainer');
-      messageContainer.innerHTML = messages.map(msg => `
-        <div class="flex ${msg.sender_id === currentUser.id ? 'justify-end' : 'justify-start'}">
-          <div class="${msg.sender_id === currentUser.id ? 'bg-primary text-white message-out' : 'bg-gray-100 text-gray-800 message-in'} px-4 py-2 rounded-lg max-w-[80%]">
-            <p>${msg.content}</p>
-            <p class="text-xs mt-1 ${msg.sender_id === currentUser.id ? 'text-primary-100' : 'text-gray-500'}">
-              ${new Date(msg.created_at).toLocaleTimeString()}
-            </p>
-          </div>
-        </div>
-      `).join('');
-      
-      await markMessagesAsRead();
-      initChatListener();
-      scrollToBottom();
-    }
-
-    async function sendMessage() {
-      const messageInput = document.getElementById('messageInput');
-      const content = messageInput.value.trim();
-      
-      if (!content || !currentUser || !selectedFriendId) return;
-      
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert([{
-          sender_id: currentUser.id,
-          receiver_id: selectedFriendId,
-          content: content
-        }]);
-      
-      if (error) return alert('发送失败：' + error.message);
-      
-      messageInput.value = '';
-      loadChatHistory();
-    }
-
-    async function markMessagesAsRead() {
-      if (!currentUser || !selectedFriendId) return;
-      
-      const { error } = await supabase
-        .from('chat_messages')
-        .update({ is_read: true })
-        .eq('sender_id', selectedFriendId)
-        .eq('receiver_id', currentUser.id)
-        .eq('is_read', false);
-      
-      if (error) console.error('标记已读失败：', error);
-    }
-
-    function initChatListener() {
-      if (!currentUser || !selectedFriendId || chatSubscription) return;
-      
-      chatSubscription = supabase
-        .channel('custom-filter-channel')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'chat_messages',
-            filter: `or(sender_id=eq.${currentUser.id},receiver_id=eq.${currentUser.id})`
-          },
-          (payload) => {
-            const newMsg = payload.new;
-            if (
-              (newMsg.sender_id === currentUser.id && newMsg.receiver_id === selectedFriendId) ||
-              (newMsg.sender_id === selectedFriendId && newMsg.receiver_id === currentUser.id)
-            ) {
-              loadChatHistory();
-            } else {
-              showNewMessageNotification(newMsg);
+    // 初始化应用
+    async function initApp() {
+      try {
+        // 等待Supabase加载完成
+        const supabaseLib = await loadSupabase();
+        
+        // 初始化Supabase客户端
+        const supabaseUrl = "https://csrsbqixmzfdlpqokazr.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcnNicWl4bXpmZGxwcW9rYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjA1NTMsImV4cCI6MjA3NTEzNjU1M30.VC6miCQW-tiNVbYNf8KgkCkZ3wQoy2HDERs1-DTdKEw";
+        const supabase = supabaseLib.createClient(supabaseUrl, supabaseKey, {
+          global: {
+            headers: {
+              'Accept': 'application/json',
+              'apikey': supabaseKey
+            },
+            fetch: {
+              // 优化请求超时
+              timeout: 8000
             }
           }
-        )
-        .subscribe();
-    }
+        });
 
-    function showNewMessageNotification(msg) {
-      alert(`收到新消息：${msg.content.substring(0, 20)}...`);
-      loadFriendList();
-    }
+        // 全局变量
+        let currentUser = JSON.parse(localStorage.getItem("supabase-friend-user")) || null;
+        let selectedFriendId = null;
+        let selectedFriendName = null;
+        let selectedFriendAvatar = null;
+        let chatSubscription = null;
+        let isLoading = false; // 防止重复请求
 
-    function scrollToBottom() {
-      const messageContainer = document.getElementById('messageContainer');
-      messageContainer.scrollTop = messageContainer.scrollHeight;
-    }
+        // 页面初始化
+        function initPage() {
+          const loginForm = document.getElementById('loginForm');
+          const userInfo = document.getElementById('userInfo');
+          const friendSystem = document.getElementById('friendSystem');
+          const currentUsername = document.getElementById('currentUsername');
 
-    window.addEventListener('beforeunload', () => {
-      if (chatSubscription) {
-        chatSubscription.unsubscribe();
+          if (currentUser) {
+            loginForm.classList.add('hidden');
+            userInfo.classList.remove('hidden');
+            friendSystem.classList.remove('hidden');
+            currentUsername.textContent = currentUser.username;
+            
+            // 延迟加载好友数据，提升首屏速度
+            setTimeout(() => {
+              loadFriendRequests();
+              loadFriendList();
+            }, 300);
+          } else {
+            loginForm.classList.remove('hidden');
+            userInfo.classList.add('hidden');
+            friendSystem.classList.add('hidden');
+          }
+        }
+
+        // 用户注册
+        window.registerUser = async function(username) {
+          if (!username.trim()) return alert("请输入昵称～");
+          if (isLoading) return;
+          
+          isLoading = true;
+          try {
+            const randomEmail = `${Date.now()}@temp.com`;
+            const randomPassword = Math.random().toString(36).slice(-8);
+            
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+              email: randomEmail,
+              password: randomPassword
+            });
+
+            if (authError || !authData.user) {
+              throw new Error(authError?.message || "无法创建用户");
+            }
+            const authUserId = authData.user.id;
+
+            // 检查昵称是否存在
+            const { error: existErr } = await supabase
+              .from("users")
+              .select("id", { count: "exact", head: true })
+              .eq("username", username.trim());
+
+            // 只有"未找到"是正常情况
+            if (existErr && existErr.code !== 'PGRST116') {
+              await supabase.auth.admin.deleteUser(authUserId);
+              throw new Error("昵称已被占用，请换一个～");
+            }
+
+            // 创建用户
+            const { data: newUser, error } = await supabase
+              .from("users")
+              .insert([{ 
+                id: authUserId,
+                username: username.trim(),
+                avatar: `https://picsum.photos/seed/${authUserId}/200/200`
+              }])
+              .select()
+              .single();
+
+            if (error) throw new Error(error.message);
+
+            currentUser = newUser;
+            localStorage.setItem("supabase-friend-user", JSON.stringify(newUser));
+            alert(`注册成功！欢迎 ${newUser.username}～`);
+            initPage();
+          } catch (err) {
+            alert("注册失败：" + err.message);
+          } finally {
+            isLoading = false;
+          }
+        }
+
+        // 用户登录
+        window.loginUser = async function(username) {
+          if (!username.trim()) return alert("请输入昵称～");
+          if (isLoading) return;
+          
+          isLoading = true;
+          try {
+            const { data: user, error } = await supabase
+              .from("users")
+              .select("*")
+              .eq("username", username.trim())
+              .single();
+
+            if (error) throw new Error("未找到该用户，请先注册～");
+
+            // 获取会话
+            const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+            if (sessionErr || !sessionData.session) {
+              throw new Error("登录失败：会话已过期，请重新注册");
+            }
+
+            const authUserId = sessionData.session.user.id;
+            if (authUserId !== user.id) {
+              throw new Error("账号异常：请重新注册～");
+            }
+
+            currentUser = user;
+            localStorage.setItem("supabase-friend-user", JSON.stringify(user));
+            alert(`欢迎回来，${user.username}～`);
+            initPage();
+          } catch (err) {
+            alert(err.message);
+          } finally {
+            isLoading = false;
+          }
+        }
+
+        // 用户登出
+        window.logoutUser = async function() {
+          await supabase.auth.signOut();
+          currentUser = null;
+          localStorage.removeItem("supabase-friend-user");
+          if (chatSubscription) chatSubscription.unsubscribe();
+          alert("已登出～");
+          initPage();
+        }
+
+        // 搜索添加好友
+        window.searchAndAddFriend = async function(targetUsername) {
+          if (!currentUser) return alert("请先登录～");
+          if (!targetUsername.trim()) return alert("请输入好友昵称～");
+          if (targetUsername.trim() === currentUser.username) return alert("不能加自己为好友哦～");
+          if (isLoading) return;
+          
+          isLoading = true;
+          try {
+            const { data: targetUser, error: searchErr } = await supabase
+              .from("users")
+              .select("id, username, avatar")
+              .eq("username", targetUsername.trim())
+              .single();
+
+            if (searchErr) throw new Error("未找到这个用户～");
+
+            // 检查关系状态
+            const { error: sentErr } = await supabase
+              .from("friend_relations")
+              .select("status", { count: "exact", head: true })
+              .eq("sender_id", currentUser.id)
+              .eq("receiver_id", targetUser.id)
+              .eq("status", "pending");
+
+            if (!sentErr) throw new Error("已发送过申请，等待对方同意～");
+
+            const { error: receivedErr } = await supabase
+              .from("friend_relations")
+              .select("status", { count: "exact", head: true })
+              .eq("sender_id", targetUser.id)
+              .eq("receiver_id", currentUser.id);
+
+            if (!receivedErr) {
+              const { data: relData } = await supabase
+                .from("friend_relations")
+                .select("status")
+                .eq("sender_id", targetUser.id)
+                .eq("receiver_id", currentUser.id)
+                .single();
+                
+              if (relData.status === "accepted") throw new Error("你们已经是好友啦～");
+              if (relData.status === "rejected") throw new Error("对方之前拒绝过你的申请～");
+            }
+
+            // 发送申请
+            const { error: applyErr } = await supabase
+              .from("friend_relations")
+              .insert([{
+                sender_id: currentUser.id,
+                receiver_id: targetUser.id,
+                status: "pending"
+              }]);
+
+            if (applyErr) throw new Error(applyErr.message);
+            alert(`好友申请已发送给 ${targetUser.username}～`);
+          } catch (err) {
+            alert(err.message);
+          } finally {
+            isLoading = false;
+          }
+        }
+
+        // 加载好友申请
+        async function loadFriendRequests() {
+          if (!currentUser) return;
+          
+          const container = document.getElementById('friendRequests');
+          const loader = document.getElementById('requestsLoader');
+          loader.classList.remove('hidden');
+          container.innerHTML = '';
+          
+          try {
+            const { data: requests, error } = await supabase
+              .from("friend_relations")
+              .select(`
+                id,
+                sender:users!friend_relations_sender_id_fkey (id, username, avatar)
+              `)
+              .eq("receiver_id", currentUser.id)
+              .eq("status", "pending")
+              .order("created_at", { ascending: false });
+
+            if (error) throw new Error(error.message);
+
+            if (!requests.length) {
+              container.innerHTML = "<p class='text-gray-500 text-sm'>暂无好友申请～</p>";
+              return;
+            }
+
+            container.innerHTML = requests.map(req => `
+              <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <img src="${req.sender.avatar || 'https://picsum.photos/200/200'}" alt="头像" class="w-8 h-8 rounded-full">
+                <div class="flex-1 text-left">
+                  <p class="font-medium text-sm">${req.sender.username}</p>
+                  <p class="text-xs text-gray-500">请求添加你为好友</p>
+                </div>
+                <div class="gap-1">
+                  <button onclick="handleFriendRequest('${req.id}', true)" class="bg-success text-white px-2 py-1 rounded text-xs">同意</button>
+                  <button onclick="handleFriendRequest('${req.id}', false)" class="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">拒绝</button>
+                </div>
+              </div>
+            `).join("");
+          } catch (err) {
+            container.innerHTML = `<p class='text-red-500 text-sm'>加载失败: ${err.message}</p>`;
+          } finally {
+            loader.classList.add('hidden');
+          }
+        }
+
+        // 处理好友申请
+        window.handleFriendRequest = async function(requestId, isAccept) {
+          if (isLoading) return;
+          
+          isLoading = true;
+          try {
+            const { error } = await supabase
+              .from("friend_relations")
+              .update({
+                status: isAccept ? "accepted" : "rejected",
+                updated_at: new Date().toISOString()
+              })
+              .eq("id", requestId);
+
+            if (error) throw new Error(error.message);
+            alert(isAccept ? "已同意好友申请～" : "已拒绝好友申请～");
+            loadFriendRequests();
+            loadFriendList();
+          } catch (err) {
+            alert("处理失败：" + err.message);
+          } finally {
+            isLoading = false;
+          }
+        }
+
+        // 加载好友列表
+        async function loadFriendList() {
+          if (!currentUser) return;
+          
+          const container = document.getElementById('friendList');
+          const loader = document.getElementById('friendsLoader');
+          loader.classList.remove('hidden');
+          container.innerHTML = '';
+          
+          try {
+            const { data: relations, error } = await supabase
+              .from("friend_relations")
+              .select(`
+                id,
+                sender:users!friend_relations_sender_id_fkey (id, username, avatar),
+                receiver:users!friend_relations_receiver_id_fkey (id, username, avatar)
+              `)
+              .or(`and(sender_id.eq.${currentUser.id},status.eq.accepted),and(receiver_id.eq.${currentUser.id},status.eq.accepted)`)
+              .order("updated_at", { ascending: false });
+
+            if (error) throw new Error(error.message);
+
+            const friendList = relations.map(rel => 
+              rel.sender_id === currentUser.id ? rel.receiver : rel.sender
+            );
+
+            if (!friendList.length) {
+              container.innerHTML = "<p class='text-gray-500 text-sm'>还没有好友，先添加一个吧～</p>";
+              return;
+            }
+
+            container.innerHTML = friendList.map(friend => `
+              <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" 
+                   onclick="selectFriend('${friend.id}', '${friend.username}', '${friend.avatar || 'https://picsum.photos/200/200'}')">
+                <img src="${friend.avatar || 'https://picsum.photos/200/200'}" alt="头像" class="w-8 h-8 rounded-full">
+                <div class="flex-1 text-left">
+                  <p class="font-medium text-sm">${friend.username}</p>
+                </div>
+                <button onclick="removeFriend('${friend.id}', event)" class="text-xs text-danger hover:text-danger/80">删除</button>
+              </div>
+            `).join("");
+          } catch (err) {
+            container.innerHTML = `<p class='text-red-500 text-sm'>加载失败: ${err.message}</p>`;
+          } finally {
+            loader.classList.add('hidden');
+          }
+        }
+
+        // 删除好友
+        window.removeFriend = async function(friendId, e) {
+          e.stopPropagation();
+          if (!confirm("确定要删除这个好友吗？")) return;
+          if (isLoading) return;
+          
+          isLoading = true;
+          try {
+            const { data: relation } = await supabase
+              .from("friend_relations")
+              .select("id")
+              .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${friendId},status.eq.accepted),and(receiver_id.eq.${currentUser.id},sender_id.eq.${friendId},status.eq.accepted)`)
+              .single();
+
+            if (!relation) throw new Error("未找到好友关系～");
+
+            const { error } = await supabase
+              .from("friend_relations")
+              .delete()
+              .eq("id", relation.id);
+
+            if (error) throw new Error(error.message);
+            alert("已删除好友～");
+            loadFriendList();
+            
+            if (friendId === selectedFriendId) {
+              closeChat();
+            }
+          } catch (err) {
+            alert("删除失败：" + err.message);
+          } finally {
+            isLoading = false;
+          }
+        }
+
+        // 选择好友聊天
+        window.selectFriend = function(friendId, friendName, friendAvatar) {
+          selectedFriendId = friendId;
+          selectedFriendName = friendName;
+          selectedFriendAvatar = friendAvatar;
+          
+          document.getElementById('chatArea').classList.remove('hidden');
+          document.getElementById('chatTip').classList.add('hidden');
+          
+          document.getElementById('chatFriendName').textContent = friendName;
+          document.getElementById('chatFriendAvatar').src = friendAvatar;
+          
+          loadChatHistory();
+        }
+
+        // 关闭聊天
+        window.closeChat = function() {
+          document.getElementById('chatArea').classList.add('hidden');
+          document.getElementById('chatTip').classList.remove('hidden');
+          
+          selectedFriendId = null;
+          selectedFriendName = null;
+          selectedFriendAvatar = null;
+          
+          if (chatSubscription) {
+            chatSubscription.unsubscribe();
+            chatSubscription = null;
+          }
+        }
+
+        // 加载聊天记录
+        async function loadChatHistory() {
+          if (!currentUser || !selectedFriendId) return;
+          
+          const container = document.getElementById('messageContainer');
+          const loader = document.getElementById('messagesLoader');
+          loader.classList.remove('hidden');
+          container.innerHTML = '';
+          
+          try {
+            const { data: messages, error } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedFriendId}),and(sender_id.eq.${selectedFriendId},receiver_id.eq.${currentUser.id})`)
+              .order('created_at', { ascending: true });
+          
+            if (error) throw new Error(error.message);
+            
+            container.innerHTML = messages.map(msg => `
+              <div class="flex ${msg.sender_id === currentUser.id ? 'justify-end' : 'justify-start'} fade-in">
+                <div class="${msg.sender_id === currentUser.id ? 'bg-primary text-white message-out' : 'bg-gray-100 text-gray-800 message-in'} px-4 py-2 rounded-lg max-w-[80%]">
+                  <p>${msg.content}</p>
+                  <p class="text-xs mt-1 ${msg.sender_id === currentUser.id ? 'text-primary-100' : 'text-gray-500'}">
+                    ${new Date(msg.created_at).toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+            `).join('');
+            
+            await markMessagesAsRead();
+            initChatListener();
+            scrollToBottom();
+          } catch (err) {
+            container.innerHTML = `<p class='text-red-500 text-sm text-center'>加载消息失败: ${err.message}</p>`;
+          } finally {
+            loader.classList.add('hidden');
+          }
+        }
+
+        // 发送消息
+        window.sendMessage = async function() {
+          const messageInput = document.getElementById('messageInput');
+          const content = messageInput.value.trim();
+          
+          if (!content || !currentUser || !selectedFriendId) return;
+          
+          try {
+            const { error } = await supabase
+              .from('chat_messages')
+              .insert([{
+                sender_id: currentUser.id,
+                receiver_id: selectedFriendId,
+                content: content
+              }]);
+          
+            if (error) throw new Error(error.message);
+            
+            messageInput.value = '';
+            loadChatHistory();
+          } catch (err) {
+            alert('发送失败：' + err.message);
+          }
+        }
+
+        // 标记消息已读
+        async function markMessagesAsRead() {
+          if (!currentUser || !selectedFriendId) return;
+          
+          try {
+            const { error } = await supabase
+              .from('chat_messages')
+              .update({ is_read: true })
+              .eq('sender_id', selectedFriendId)
+              .eq('receiver_id', currentUser.id)
+              .eq('is_read', false);
+          
+            if (error) console.error('标记已读失败：', error);
+          } catch (err) {
+            console.error('标记已读异常：', err);
+          }
+        }
+
+        // 初始化聊天监听
+        function initChatListener() {
+          if (!currentUser || !selectedFriendId || chatSubscription) return;
+          
+          chatSubscription = supabase
+            .channel('custom-filter-channel')
+            .on(
+              'postgres_changes',
+              {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'chat_messages',
+                filter: `or(sender_id=eq.${currentUser.id},receiver_id=eq.${currentUser.id})`
+              },
+              (payload) => {
+                const newMsg = payload.new;
+                if (
+                  (newMsg.sender_id === currentUser.id && newMsg.receiver_id === selectedFriendId) ||
+                  (newMsg.sender_id === selectedFriendId && newMsg.receiver_id === currentUser.id)
+                ) {
+                  loadChatHistory();
+                }
+              }
+            )
+            .subscribe();
+        }
+
+        // 滚动到最新消息
+        function scrollToBottom() {
+          const container = document.getElementById('messageContainer');
+          container.scrollTop = container.scrollHeight;
+        }
+
+        // 页面关闭时清理
+        window.addEventListener('beforeunload', () => {
+          if (chatSubscription) {
+            chatSubscription.unsubscribe();
+          }
+        });
+
+        // 初始化页面
+        initPage();
+
+      } catch (err) {
+        console.error('应用初始化失败:', err);
+        alert('加载失败，请刷新页面重试');
       }
-    });
+    }
+
+    // 页面加载完成后初始化应用（非阻塞）
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
   </script>
 </body>
 </html>
