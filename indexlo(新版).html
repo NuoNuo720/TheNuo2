@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>账号登录 - 启动器</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+        <meta name="format-detection" content="telephone=no" />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body{
+                background-color: #f0f7ff;
+                background-image: 
+                    linear-gradient(rgba(52, 152, 219, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(52, 152, 219, 0.05) 1px, transparent 1px);
+                background-size: 20px 20px;
+                font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+                height: 100vh;
+                color: #333;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+            }
+
+            #loader-wrapper {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: #f0f7ff;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                transition: opacity 0.5s ease-out;
+            }
+
+            #loader {
+                width: 60px;
+                height: 60px;
+                border: 5px solid #e6f2ff;
+                border-top: 5px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 20px;
+            }
+
+            #loading-text {
+                color: #3498db;
+                font-size: 16px;
+                letter-spacing: 1px;
+                animation: fade 1.5s ease-in-out infinite alternate;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            @keyframes fade {
+                from { opacity: 0.7; }
+                to { opacity: 1; }
+            }
+
+            .loaded #loader-wrapper {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .launcher-container {
+                width: 800px;
+                height: 500px;
+                background-color: #fff;
+                border-radius: 8px;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #e1e8ed;
+            }
+
+            .launcher-header {
+                height: 50px;
+                background-color: #3498db;
+                color: white;
+                display: flex;
+                align-items: center;
+                padding: 0 20px;
+                font-size: 18px;
+                font-weight: 500;
+                border-bottom: 1px solid #2980b9;
+            }
+
+            .launcher-header .title {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .launcher-header .title i {
+                font-size: 22px;
+            }
+
+            .launcher-body {
+                flex: 1;
+                display: flex;
+            }
+
+            .launcher-sidebar {
+                width: 180px;
+                background-color: #f8fafc;
+                border-right: 1px solid #e1e8ed;
+                padding-top: 20px;
+            }
+
+            .login-type-btn {
+                width: 100%;
+                padding: 12px 20px;
+                background: none;
+                border: none;
+                text-align: left;
+                font-size: 15px;
+                color: #555;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.2s ease;
+            }
+
+            .login-type-btn:hover {
+                background-color: #e6f2ff;
+                color: #3498db;
+            }
+
+            .login-type-btn.active {
+                background-color: #3498db;
+                color: white;
+                border-left: 3px solid #2980b9;
+            }
+
+            .login-type-btn i {
+                width: 20px;
+                text-align: center;
+            }
+
+            .launcher-content {
+                flex: 1;
+                padding: 30px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .login-panel {
+                width: 100%;
+                max-width: 320px;
+                display: none;
+            }
+
+            .login-panel.active {
+                display: block;
+                animation: fadeIn 0.3s ease;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .panel-title {
+                text-align: center;
+                margin-bottom: 25px;
+                color: #3498db;
+                font-size: 20px;
+                font-weight: 500;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .input-group {
+                position: relative;
+                margin-bottom: 18px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 6px;
+                font-weight: 500;
+                color: #555;
+                font-size: 14px;
+            }
+
+            input[type="text"],
+            input[type="password"],
+            input[type="email"] {
+                width: 100%;
+                padding: 11px 14px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+                transition: all 0.2s ease;
+                background-color: #fafafa;
+            }
+
+            input:focus {
+                outline: none;
+                border-color: #3498db;
+                box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+                background-color: white;
+            }
+
+            .toggle-password {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: transparent;
+                border: none;
+                color: #777;
+                cursor: pointer;
+                width: auto;
+                padding: 0;
+                font-size: 1rem;
+                transition: color 0.2s;
+            }
+
+            .toggle-password:hover {
+                color: #3498db;
+                background: transparent;
+            }
+
+            .options {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 25px;
+                font-size: 13px;
+            }
+
+            .checkbox {
+                color: #666;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .checkbox input {
+                width: 15px;
+                height: 15px;
+                cursor: pointer;
+            }
+
+            .link-text {
+                color: #3498db;
+                cursor: pointer;
+                text-decoration: none;
+            }
+
+            .link-text:hover {
+                text-decoration: underline;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 12px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .btn-primary {
+                background-color: #3498db;
+                color: white;
+            }
+
+            .btn-primary:hover:not(:disabled) {
+                background-color: #2980b9;
+            }
+
+            .btn-secondary {
+                background-color: #f1f5f9;
+                color: #333;
+            }
+
+            .btn-secondary:hover:not(:disabled) {
+                background-color: #e2e8f0;
+            }
+
+            .btn:active:not(:disabled) {
+                transform: scale(0.98);
+            }
+
+            .btn:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+
+            .btn-group {
+                display: flex;
+                gap: 10px;
+                margin-top: 15px;
+            }
+
+            .message {
+                text-align: center;
+                margin: 0 0 15px 0;
+                padding: 10px;
+                border-radius: 4px;
+                font-size: 13px;
+                display: none;
+            }
+
+            .error-message {
+                color: #e74c3c;
+                background-color: #fef2f2;
+                border: 1px solid #fee2e2;
+            }
+
+            .success-message {
+                color: #2ecc71;
+                background-color: #f0fdf4;
+                border: 1px solid #dcfce7;
+            }
+
+            .spinner {
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(255,255,255,.3);
+                border-radius: 50%;
+                border-top-color: white;
+                animation: spin 1s ease-in-out infinite;
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            .offline-account-list {
+                margin-top: 15px;
+                border-top: 1px solid #eee;
+                padding-top: 15px;
+            }
+
+            .offline-account-item {
+                display: flex;
+                align-items: center;
+                padding: 8px 10px;
+                border-radius: 4px;
+                background-color: #f8fafc;
+                margin-bottom: 8px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+
+            .offline-account-item:hover {
+                background-color: #e6f2ff;
+            }
+
+            .account-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background-color: #ddd;
+                margin-right: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #666;
+                font-weight: bold;
+            }
+
+            .account-info {
+                flex: 1;
+            }
+
+            .account-name {
+                font-size: 14px;
+                color: #333;
+            }
+
+            .account-type {
+                font-size: 12px;
+                color: #777;
+            }
+
+            .account-actions {
+                color: #999;
+            }
+
+            .account-actions i {
+                cursor: pointer;
+                transition: color 0.2s;
+            }
+
+            .account-actions i:hover {
+                color: #e74c3c;
+            }
+
+            .version-info {
+                font-size: 12px;
+                color: #999;
+                text-align: center;
+                margin-top: 30px;
+            }
+
+            @media (max-width: 820px) {
+                .launcher-container {
+                    width: 95%;
+                    height: auto;
+                    max-height: 90vh;
+                }
+                
+                .launcher-body {
+                    flex-direction: column;
+                }
+                
+                .launcher-sidebar {
+                    width: 100%;
+                    border-right: none;
+                    border-bottom: 1px solid #e1e8ed;
+                    padding: 10px 0;
+                    display: flex;
+                    overflow-x: auto;
+                }
+                
+                .login-type-btn {
+                    flex: 1;
+                    justify-content: center;
+                    white-space: nowrap;
+                }
+                
+                .login-type-btn.active {
+                    border-left: none;
+                    border-bottom: 3px solid #2980b9;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loader-wrapper">
+          <div id="loader"></div>
+          <p id="loading-text">加载启动器...</p >
+        </div>
+
+        <div class="launcher-container">
+            <div class="launcher-header">
+                <div class="title">
+                    <i class="fas fa-rocket"></i>
+                    <span>启动器</span>
+                </div>
+            </div>
+            
+            <div class="launcher-body">
+                <div class="launcher-sidebar">
+                    <button class="login-type-btn active" data-panel="online-login">
+                        <i class="fas fa-globe"></i>
+                        <span>正版登录</span>
+                    </button>
+                    <button class="login-type-btn" data-panel="offline-login">
+                        <i class="fas fa-user"></i>
+                        <span>离线登录</span>
+                    </button>
+                    <button class="login-type-btn" data-panel="account-manager">
+                        <i class="fas fa-cog"></i>
+                        <span>账号管理</span>
+                    </button>
+                </div>
+                
+                <div class="launcher-content">
+                    <!-- 正版登录面板 -->
+                    <div class="login-panel active" id="online-login">
+                        <h3 class="panel-title">正版账号登录</h3>
+                        <div class="error-message message" id="onlineErrorMsg"></div>
+                        <div class="success-message message" id="onlineSuccessMsg"></div>
+                        
+                        <form id="onlineLoginForm">
+                            <div class="input-group">
+                                <label for="onlineUsername">邮箱/用户名</label>
+                                <input type="text" name="onlineUsername" placeholder="请输入正版账号邮箱或用户名" id="onlineUsername" required>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="onlinePassword">密码</label>
+                                <input type="password" name="onlinePassword" placeholder="请输入账号密码" id="onlinePassword" required>
+                                <button type="button" class="toggle-password" id="toggleOnlinePassword">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="options">
+                                <div class="checkbox">
+                                    <input type="checkbox" name="rememberOnline" id="rememberOnline" checked>
+                                    <label for="rememberOnline">记住账号</label>
+                                </div>
+                                <a href="#" class="link-text" id="forgotOnlinePassword">忘记密码?</a>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" id="onlineLoginBtn">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>登录</span>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- 离线登录面板 -->
+                    <div class="login-panel" id="offline-login">
+                        <h3 class="panel-title">离线登录</h3>
+                        <div class="error-message message" id="offlineErrorMsg"></div>
+                        <div class="success-message message" id="offlineSuccessMsg"></div>
+                        
+                        <form id="offlineLoginForm">
+                            <div class="input-group">
+                                <label for="offlineUsername">用户名</label>
+                                <input type="text" name="offlineUsername" placeholder="请输入离线用户名" id="offlineUsername" required>
+                            </div>
+                            
+                            <div class="options">
+                                <div class="checkbox">
+                                    <input type="checkbox" name="rememberOffline" id="rememberOffline" checked>
+                                    <label for="rememberOffline">记住用户名</label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" id="offlineLoginBtn">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>一键登录</span>
+                            </button>
+                            
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary" id="randomUsernameBtn">
+                                    <i class="fas fa-random"></i>
+                                    <span>随机用户名</span>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="offline-account-list" id="offlineAccountList">
+                            <!-- 离线账号列表会通过JS动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 账号管理面板 -->
+                    <div class="login-panel" id="account-manager">
+                        <h3 class="panel-title">账号管理</h3>
+                        <div class="message success-message" id="managerMsg">管理已保存的账号信息</div>
+                        
+                        <div id="savedAccounts">
+                            <!-- 已保存账号会通过JS动态生成 -->
+                        </div>
+                        
+                        <div class="btn-group" style="margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" id="clearAllAccounts">
+                                <i class="fas fa-trash"></i>
+                                <span>清除所有账号</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+        <script>
+            function createTimeoutSignal(ms) {
+                const controller = new AbortController();
+                setTimeout(() => controller.abort(new Error('请求超时')), ms);
+                return controller.signal;
+            }
+            
+            // 加载动画控制
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    document.body.classList.add('loaded');
+                }, 1000);
+            });
+
+            // 切换登录面板
+            document.querySelectorAll('.login-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 移除所有活跃状态
+                    document.querySelectorAll('.login-type-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.login-panel').forEach(panel => panel.classList.remove('active'));
+                    
+                    // 设置当前活跃状态
+                    this.classList.add('active');
+                    const panelId = this.getAttribute('data-panel');
+                    document.getElementById(panelId).classList.add('active');
+                });
+            });
+
+            // 密码显示/隐藏切换
+            function setupPasswordToggle(toggleBtnId, passwordInputId) {
+                const toggleBtn = document.getElementById(toggleBtnId);
+                const passwordInput = document.getElementById(passwordInputId);
+                
+                toggleBtn.addEventListener('click', function() {
+                    const isPassword = passwordInput.type === 'password';
+                    passwordInput.type = isPassword ? 'text' : 'password';
+                    const icon = toggleBtn.querySelector('i');
+                    icon.className = isPassword ? 'fas fa-eye' : 'fas fa-eye-slash';
+                });
+            }
+            
+            setupPasswordToggle('toggleOnlinePassword', 'onlinePassword');
+
+            // 生成随机用户名
+            document.getElementById('randomUsernameBtn').addEventListener('click', function() {
+                const prefixes = ['Steve', 'Alex', 'Player', 'Gamer', 'Mine', 'Craft'];
+                const suffixes = ['Pro', 'Master', 'Legend', 'Expert', 'Hunter', 'Builder'];
+                const randomNum = Math.floor(Math.random() * 1000);
+                
+                const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+                
+                const randomName = `${randomPrefix}${randomSuffix}${randomNum}`;
+                document.getElementById('offlineUsername').value = randomName;
+            });
+
+            // 加载保存的离线账号
+            function loadOfflineAccounts() {
+                const accountList = document.getElementById('offlineAccountList');
+                accountList.innerHTML = '';
+                
+                const savedAccounts = JSON.parse(localStorage.getItem('offlineAccounts') || '[]');
+                
+                if (savedAccounts.length === 0) {
+                    accountList.innerHTML = '<p style="text-align:center; color:#777; font-size:13px;">暂无保存的离线账号</p>';
+                    return;
+                }
+                
+                savedAccounts.forEach((account, index) => {
+                    const accountItem = document.createElement('div');
+                    accountItem.className = 'offline-account-item';
+                    accountItem.innerHTML = `
+                        <div class="account-avatar">${account.username.charAt(0).toUpperCase()}</div>
+                        <div class="account-info">
+                            <div class="account-name">${account.username}</div>
+                            <div class="account-type">离线账号</div>
+                        </div>
+                        <div class="account-actions">
+                            <i class="fas fa-times" data-index="${index}"></i>
+                        </div>
+                    `;
+                    accountList.appendChild(accountItem);
+                    
+                    // 点击账号直接登录
+                    accountItem.addEventListener('click', function(e) {
+                        if (!e.target.closest('.account-actions')) {
+                            document.getElementById('offlineUsername').value = account.username;
+                            document.getElementById('offlineLoginBtn').click();
+                        }
+                    });
+                });
+                
+                // 删除账号
+                document.querySelectorAll('.account-actions i').forEach(icon => {
+                    icon.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const index = parseInt(this.getAttribute('data-index'));
+                        savedAccounts.splice(index, 1);
+                        localStorage.setItem('offlineAccounts', JSON.stringify(savedAccounts));
+                        loadOfflineAccounts();
+                    });
+                });
+            }
+
+            // 加载所有保存的账号（用于账号管理面板）
+            function loadAllSavedAccounts() {
+                const container = document.getElementById('savedAccounts');
+                container.innerHTML = '';
+                
+                // 加载正版账号
+                const onlineAccount = JSON.parse(localStorage.getItem('rememberedOnlineAccount') || 'null');
+                // 加载离线账号
+                const offlineAccounts = JSON.parse(localStorage.getItem('offlineAccounts') || '[]');
+                
+                let hasAccounts = false;
+                
+                if (onlineAccount) {
+                    hasAccounts = true;
+                    const accountItem = document.createElement('div');
+                    accountItem.className = 'offline-account-item';
+                    accountItem.innerHTML = `
+                        <div class="account-avatar"><i class="fas fa-globe"></i></div>
+                        <div class="account-info">
+                            <div class="account-name">${onlineAccount.username}</div>
+                            <div class="account-type">正版账号</div>
+                        </div>
+                        <div class="account-actions">
+                            <i class="fas fa-times" id="removeOnlineAccount"></i>
+                        </div>
+                    `;
+                    container.appendChild(accountItem);
+                    
+                    // 删除正版账号
+                    document.getElementById('removeOnlineAccount').addEventListener('click', function() {
+                        localStorage.removeItem('rememberedOnlineAccount');
+                        loadAllSavedAccounts();
+                    });
+                }
+                
+                if (offlineAccounts.length > 0) {
+                    hasAccounts = true;
+                    offlineAccounts.forEach((account, index) => {
+                        const accountItem = document.createElement('div');
+                        accountItem.className = 'offline-account-item';
+                        accountItem.innerHTML = `
+                            <div class="account-avatar">${account.username.charAt(0).toUpperCase()}</div>
+                            <div class="account-info">
+                                <div class="account-name">${account.username}</div>
+                                <div class="account-type">离线账号</div>
+                            </div>
+                            <div class="account-actions">
+                                <i class="fas fa-times" data-index="${index}"></i>
+                            </div>
+                        `;
+                        container.appendChild(accountItem);
+                        
+                        // 删除离线账号
+                        accountItem.querySelector('.account-actions i').addEventListener('click', function() {
+                            offlineAccounts.splice(index, 1);
+                            localStorage.setItem('offlineAccounts', JSON.stringify(offlineAccounts));
+                            loadAllSavedAccounts();
+                        });
+                    });
+                }
+                
+                if (!hasAccounts) {
+                    container.innerHTML = '<p style="text-align:center; color:#777; font-size:13px;">暂无保存的账号</p>';
+                }
+            }
+
+            // 清除所有账号
+            document.getElementById('clearAllAccounts').addEventListener('click', function() {
+                if (confirm('确定要清除所有保存的账号信息吗？')) {
+                    localStorage.removeItem('rememberedOnlineAccount');
+                    localStorage.removeItem('offlineAccounts');
+                    loadAllSavedAccounts();
+                    loadOfflineAccounts();
+                    
+                    const managerMsg = document.getElementById('managerMsg');
+                    managerMsg.textContent = '所有账号信息已清除';
+                    managerMsg.style.display = 'block';
+                    setTimeout(() => {
+                        managerMsg.style.display = 'none';
+                    }, 2000);
+                }
+            });
+
+            // 初始化页面
+            window.addEventListener('DOMContentLoaded', function() {
+                // 加载保存的正版账号
+                const onlineAccount = JSON.parse(localStorage.getItem('rememberedOnlineAccount') || 'null');
+                if (onlineAccount) {
+                    document.getElementById('onlineUsername').value = onlineAccount.username;
+                }
+                
+                // 加载最近使用的离线用户名
+                const offlineAccount = localStorage.getItem('rememberedOfflineUsername');
+                if (offlineAccount) {
+                    document.getElementById('offlineUsername').value = offlineAccount;
+                }
+                
+                // 加载离线账号列表
+                loadOfflineAccounts();
+                
+                // 加载账号管理列表
+                loadAllSavedAccounts();
+
+                // 处理URL参数
+                const urlParams = new URLSearchParams(window.location.search);
+                const fromRegister = urlParams.get('from') === 'register';
+                const prefillUsername = urlParams.get('username');
+                
+                if (fromRegister && prefillUsername) {
+                    document.getElementById('onlineUsername').value = prefillUsername;
+                    document.getElementById('onlinePassword').focus();
+                    const successMsg = document.getElementById('onlineSuccessMsg');
+                    successMsg.textContent = '注册成功，请登录';
+                    successMsg.style.display = 'block';
+                    setTimeout(() => {
+                        successMsg.style.display = 'none';
+                    }, 3000);
+                }
+            });
+
+            // 正版账号登录处理
+            document.getElementById('onlineLoginForm').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const username = document.getElementById('onlineUsername').value.trim();
+                const password = document.getElementById('onlinePassword').value;
+                const rememberMe = document.getElementById('rememberOnline').checked;
+                const errorMsg = document.getElementById('onlineErrorMsg');
+                const successMsg = document.getElementById('onlineSuccessMsg');
+                const loginBtn = document.getElementById('onlineLoginBtn');
+                
+                errorMsg.style.display = 'none';
+                successMsg.style.display = 'none';
+                
+                if (!username) {
+                    showError(errorMsg, '请输入邮箱或用户名');
+                    document.getElementById('onlineUsername').focus();
+                    return;
+                }
+                if (!password) {
+                    showError(errorMsg, '请输入密码');
+                    document.getElementById('onlinePassword').focus();
+                    return;
+                }
+
+                try {
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = '<span class="spinner"></span><span>登录中...</span>';
+                    
+                    // 正版账号登录API调用
+                    const baseUrl = window.location.origin;
+                    const loginUrl = `${baseUrl}/.netlify/functions/online-login`;
+                    
+                    // 增加重试机制
+                    const maxRetries = 2;
+                    let response;
+                    
+                    for (let i = 0; i <= maxRetries; i++) {
+                        try {
+                            response = await fetch(loginUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ username, password }),
+                                credentials: 'include',
+                                mode: 'cors',
+                                signal: createTimeoutSignal(15000)
+                            });
+                            break;
+                        } catch (error) {
+                            if (i === maxRetries) throw error;
+                            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                        }
+                    }
+
+                    const result = await response.json();
+
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>登录</span>';
+
+                    if (response.ok) {
+                        // 保存账号（如果需要）
+                        if (rememberMe) {
+                            localStorage.setItem('rememberedOnlineAccount', JSON.stringify({
+                                username: username,
+                                savedTime: new Date().getTime()
+                            }));
+                        } else {
+                            localStorage.removeItem('rememberedOnlineAccount');
+                        }
+                        
+                        // 登录成功处理
+                        loginSuccess({
+                            id: result.id,
+                            username: username,
+                            token: result.token,
+                            isPremium: true,
+                            avatar: result.avatar || `https://cravatar.eu/avatar/${username}/200`
+                        });
+                    } else {
+                        const errorText = result.message || '登录失败，请重试';
+                        if (response.status === 401) {
+                            showError(errorMsg, '用户名或密码不正确');
+                        } else if (response.status === 403) {
+                            showError(errorMsg, '账号已被限制登录，请联系管理员');
+                        } else if (response.status === 500) {
+                            showError(errorMsg, '服务器繁忙，请稍后再试');
+                        } else {
+                            showError(errorMsg, errorText);
+                        }
+                    }
+                } catch (error) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>登录</span>';
+                    
+                    if (error.message.includes('请求超时')) {
+                        showError(errorMsg, '网络较慢，请求超时');
+                    } else if (error.message.includes('Failed to fetch')) {
+                        showError(errorMsg, '无法连接到服务器，请检查网络');
+                    } else {
+                        showError(errorMsg, '登录出错：' + error.message);
+                    }
+                    console.error('登录异常：', error);
+                }
+            });
+
+            // 离线登录处理
+            document.getElementById('offlineLoginForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const username = document.getElementById('offlineUsername').value.trim();
+                const rememberMe = document.getElementById('rememberOffline').checked;
+                const errorMsg = document.getElementById('offlineErrorMsg');
+                const successMsg = document.getElementById('offlineSuccessMsg');
+                const loginBtn = document.getElementById('offlineLoginBtn');
+                
+                errorMsg.style.display = 'none';
+                successMsg.style.display = 'none';
+                
+                if (!username) {
+                    showError(errorMsg, '请输入用户名');
+                    document.getElementById('offlineUsername').focus();
+                    return;
+                }
+
+                try {
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = '<span class="spinner"></span><span>登录中...</span>';
+                    
+                    // 保存用户名（如果需要）
+                    if (rememberMe) {
+                        localStorage.setItem('rememberedOfflineUsername', username);
+                        
+                        // 添加到离线账号列表（去重）
+                        let offlineAccounts = JSON.parse(localStorage.getItem('offlineAccounts') || '[]');
+                        const accountExists = offlineAccounts.some(acc => acc.username === username);
+                        
+                        if (!accountExists) {
+                            offlineAccounts.unshift({
+                                username: username,
+                                lastUsed: new Date().getTime()
+                            });
+                            
+                            // 限制最多保存10个账号
+                            if (offlineAccounts.length > 10) {
+                                offlineAccounts = offlineAccounts.slice(0, 10);
+                            }
+                            
+                            localStorage.setItem('offlineAccounts', JSON.stringify(offlineAccounts));
+                            loadOfflineAccounts();
+                        }
+                    }
+                    
+                    // 离线登录成功处理（无需服务器验证）
+                    setTimeout(() => {
+                        loginSuccess({
+                            id: 'offline_' + Date.now(),
+                            username: username,
+                            token: 'offline_' + Math.random().toString(36).substr(2),
+                            isPremium: false,
+                            avatar: `https://cravatar.eu/avatar/${username}/200`
+                        });
+                        
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>一键登录</span>';
+                    }, 800);
+
+                } catch (error) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>一键登录</span>';
+                    showError(errorMsg, '登录出错：' + error.message);
+                    console.error('离线登录异常：', error);
+                }
+            });
+
+            // 忘记密码处理
+            document.getElementById('forgotOnlinePassword').addEventListener('click', function(event) {
+                event.preventDefault();
+                alert('请访问正版账号官方网站进行密码重置');
+            });
+
+            // 登录成功处理函数
+            function loginSuccess(userData) {
+                const currentUser = {
+                    id: userData.id,
+                    username: userData.username,
+                    token: userData.token,
+                    avatar: userData.avatar,
+                    loginTime: new Date().getTime(),
+                    isPremium: userData.isPremium || false,
+                    // 离线账号设置较短的有效期（7天），正版账号使用服务器返回的有效期
+                    expireTime: userData.isPremium ? 
+                        (userData.expireTime || new Date().getTime() + 30 * 24 * 60 * 60 * 1000) :
+                        new Date().getTime() + 7 * 24 * 60 * 60 * 1000
+                };
+                
+                localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
+                
+                // 显示成功消息
+                const successMsg = document.querySelector('.login-panel.active .success-message');
+                successMsg.textContent = `登录成功，欢迎回来 ${userData.username}！`;
+                successMsg.style.display = 'block';
+                
+                // 跳转到主界面
+                setTimeout(() => {
+                    window.location.href = 'indexdaohang.html';
+                }, 1500);
+            }
+
+            // 错误提示显示函数
+            function showError(element, message) {
+                element.textContent = message;
+                element.style.display = 'block';
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 3000);
+            }
+
+            // 键盘操作优化
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        const inputs = Array.from(this.querySelectorAll('input[type="text"], input[type="password"]'));
+                        const emptyInput = inputs.find(input => !input.value.trim());
+                        
+                        if (emptyInput) {
+                            emptyInput.focus();
+                        } else {
+                            this.querySelector('button[type="submit"]').click();
+                        }
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

@@ -242,91 +242,6 @@
                 margin-right: 8px;
             }
 
-            /* 新增离线登录相关样式 */
-            .login-options {
-                display: flex;
-                gap: 10px;
-                margin-bottom: 15px;
-            }
-            
-            .login-tab {
-                flex: 1;
-                padding: 8px;
-                text-align: center;
-                background-color: #f8f9fa;
-                border: 1px solid #ddd;
-                border-radius: 6px 6px 0 0;
-                cursor: pointer;
-                font-size: 0.9rem;
-                transition: all 0.2s ease;
-            }
-            
-            .login-tab.active {
-                background-color: white;
-                border-bottom-color: white;
-                font-weight: 500;
-                color: #007bff;
-            }
-            
-            .tab-content {
-                border: 1px solid #ddd;
-                border-radius: 0 6px 6px 6px;
-                padding: 15px;
-                margin-bottom: 15px;
-            }
-            
-            .tab-pane {
-                display: none;
-            }
-            
-            .tab-pane.active {
-                display: block;
-            }
-            
-            .btn-secondary {
-                background-color: #6c757d;
-                margin-top: 10px;
-            }
-            
-            .btn-secondary:hover {
-                background-color: #5a6268;
-            }
-            
-            .offline-account-list {
-                margin-top: 15px;
-                max-height: 120px;
-                overflow-y: auto;
-                border-top: 1px dashed #eee;
-                padding-top: 10px;
-            }
-            
-            .offline-account-item {
-                padding: 6px 8px;
-                border-radius: 4px;
-                margin-bottom: 5px;
-                background-color: #f8f9fa;
-                font-size: 0.9rem;
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            
-            .offline-account-item:hover {
-                background-color: #e9ecef;
-            }
-            
-            .remove-account {
-                color: #dc3545;
-                cursor: pointer;
-                font-size: 0.8rem;
-                opacity: 0.7;
-            }
-            
-            .remove-account:hover {
-                opacity: 1;
-            }
-
             @media (max-width: 340px) {
                 .container {
                     width: 90%;
@@ -348,64 +263,28 @@
             <div class="error-message" id="errorMsg"></div>
             <div class="success-message" id="successMsg"></div>
             
-            <!-- 新增登录选项标签 -->
-            <div class="login-options">
-                <div class="login-tab active" data-tab="online-login">在线登录</div>
-                <div class="login-tab" data-tab="offline-login">离线登录</div>
-            </div>
-            
-            <!-- 在线登录表单（原有内容） -->
-            <div class="tab-content">
-                <div class="tab-pane active" id="online-login">
-                    <form id="loginForm">
-                        <h2>账号登录</h2>
-                        <label for="username">用户名</label>
-                        <div class="input-group">
-                            <input type="text" name="username" placeholder="请输入用户名/昵称" id="username" required>
-                        </div>
-                        
-                        <label for="password">密码</label>
-                        <div class="input-group">
-                            <input type="password" name="password" placeholder="请输入密码" id="password" required>
-                            <button type="button" class="toggle-password" id="togglePassword">
-                                <i class="fas fa-eye-slash"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="checkbox">
-                            <input type="checkbox" name="rememberMe" id="rememberMe" checked>
-                            <label for="rememberMe">记住我（7天内免登录）</label>
-                        </div>
-                        
-                        <button type="submit" id="loginBtn">登录</button>
-                    </form>
+            <form id="loginForm">
+                <h2>账号登录</h2>
+                <label for="username">用户名</label>
+                <div class="input-group">
+                    <input type="text" name="username" placeholder="请输入用户名/昵称" id="username" required>
                 </div>
                 
-                <!-- 新增离线登录表单 -->
-                <div class="tab-pane" id="offline-login">
-                    <form id="offlineLoginForm">
-                        <h2>离线登录</h2>
-                        <label for="offlineUsername">用户名</label>
-                        <div class="input-group">
-                            <input type="text" name="offlineUsername" placeholder="请输入离线用户名" id="offlineUsername" required>
-                        </div>
-                        
-                        <div class="checkbox">
-                            <input type="checkbox" name="rememberOffline" id="rememberOffline" checked>
-                            <label for="rememberOffline">记住用户名</label>
-                        </div>
-                        
-                        <button type="submit" class="btn-primary" id="offlineLoginBtn">一键登录</button>
-                        <button type="button" class="btn btn-secondary" id="randomUsernameBtn">
-                            <i class="fas fa-random"></i> 随机用户名
-                        </button>
-                        
-                        <div class="offline-account-list" id="offlineAccountList">
-                            <!-- 离线账号列表会通过JS动态生成 -->
-                        </div>
-                    </form>
+                <label for="password">密码</label>
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="请输入密码" id="password" required>
+                    <button type="button" class="toggle-password" id="togglePassword">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
                 </div>
-            </div>
+                
+                <div class="checkbox">
+                    <input type="checkbox" name="rememberMe" id="rememberMe" checked>
+                    <label for="rememberMe">记住我（7天内免登录）</label>
+                </div>
+                
+                <button type="submit" id="loginBtn">登录</button>
+            </form>
             
             <div class='links'>
                 <a href="REGISTER.html" id="registerLink">没有账号？注册新账号</a >
@@ -461,9 +340,6 @@
                     successMsg.textContent = '请输入密码登录';
                     successMsg.style.display = 'block';
                 }
-
-                // 初始化离线登录相关内容
-                initOfflineLogin();
             });
 
             // 4. 链接跳转逻辑
@@ -585,14 +461,13 @@
             // 6. 登录成功处理函数
             function loginSuccess(userData) {
                 const currentUser = {
-                    id: userData._id || userData.id,
+                    id: userData._id,
                     username: userData.username,
                     token: userData.token,
-                    avatar: userData.avatar || `https://cravatar.eu/avatar/${userData.username}/200`,
+                    avatar: userData.avatar || 'https://picsum.photos/200/200',
                     loginTime: new Date().getTime(),
                     isAdmin: userData.isAdmin || false,
-                    isPremium: userData.isPremium || false,
-                    expireTime: userData.tokenExpire || (new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
+                    expireTime: userData.tokenExpire
                 };
                 localStorage.setItem('mainUserInfo', JSON.stringify(currentUser));
     
@@ -630,154 +505,6 @@
                     }
                 }
             });
-
-            // 以下是新增的离线登录功能代码
-            function initOfflineLogin() {
-                // 切换登录标签
-                document.querySelectorAll('.login-tab').forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        const tabId = this.getAttribute('data-tab');
-                        
-                        // 更新标签状态
-                        document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
-                        this.classList.add('active');
-                        
-                        // 更新内容面板
-                        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-                        document.getElementById(tabId).classList.add('active');
-                    });
-                });
-
-                // 加载保存的离线账号
-                loadOfflineAccounts();
-                
-                // 加载最近使用的离线用户名
-                const offlineUsername = localStorage.getItem('rememberedOfflineUsername');
-                if (offlineUsername) {
-                    document.getElementById('offlineUsername').value = offlineUsername;
-                }
-                
-                // 随机用户名功能
-                document.getElementById('randomUsernameBtn').addEventListener('click', function() {
-                    const prefixes = ['Steve', 'Alex', 'Player', 'Gamer', 'Mine', 'Craft'];
-                    const suffixes = ['Pro', 'Master', 'Legend', 'Expert', 'Hunter', 'Builder'];
-                    const randomNum = Math.floor(Math.random() * 1000);
-                    
-                    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-                    const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
-                    
-                    const randomName = `${randomPrefix}${randomSuffix}${randomNum}`;
-                    document.getElementById('offlineUsername').value = randomName;
-                });
-                
-                // 离线登录表单提交
-                document.getElementById('offlineLoginForm').addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    const username = document.getElementById('offlineUsername').value.trim();
-                    const rememberMe = document.getElementById('rememberOffline').checked;
-                    const errorMsg = document.getElementById('errorMsg');
-                    const successMsg = document.getElementById('successMsg');
-                    const loginBtn = document.getElementById('offlineLoginBtn');
-                    
-                    errorMsg.style.display = 'none';
-                    successMsg.style.display = 'none';
-                    
-                    if (!username) {
-                        showError(errorMsg, '请输入用户名');
-                        document.getElementById('offlineUsername').focus();
-                        return;
-                    }
-
-                    try {
-                        loginBtn.disabled = true;
-                        loginBtn.innerHTML = '<span class="spinner"></span> 登录中...';
-                        
-                        // 保存用户名（如果需要）
-                        if (rememberMe) {
-                            localStorage.setItem('rememberedOfflineUsername', username);
-                            
-                            // 添加到离线账号列表（去重）
-                            let offlineAccounts = JSON.parse(localStorage.getItem('offlineAccounts') || '[]');
-                            const accountExists = offlineAccounts.some(acc => acc.username === username);
-                            
-                            if (!accountExists) {
-                                offlineAccounts.unshift({
-                                    username: username,
-                                    lastUsed: new Date().getTime()
-                                });
-                                
-                                // 限制最多保存10个账号
-                                if (offlineAccounts.length > 10) {
-                                    offlineAccounts = offlineAccounts.slice(0, 10);
-                                }
-                                
-                                localStorage.setItem('offlineAccounts', JSON.stringify(offlineAccounts));
-                                loadOfflineAccounts();
-                            }
-                        }
-                        
-                        // 离线登录成功处理（无需服务器验证）
-                        setTimeout(() => {
-                            loginSuccess({
-                                id: 'offline_' + Date.now(),
-                                username: username,
-                                token: 'offline_' + Math.random().toString(36).substr(2),
-                                isPremium: false
-                            });
-                            
-                            loginBtn.disabled = false;
-                            loginBtn.innerHTML = '一键登录';
-                        }, 800);
-
-                    } catch (error) {
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = '一键登录';
-                        showError(errorMsg, '登录出错：' + error.message);
-                        console.error('离线登录异常：', error);
-                    }
-                });
-            }
-            
-            // 加载离线账号列表
-            function loadOfflineAccounts() {
-                const accountList = document.getElementById('offlineAccountList');
-                accountList.innerHTML = '';
-                
-                const savedAccounts = JSON.parse(localStorage.getItem('offlineAccounts') || '[]');
-                
-                if (savedAccounts.length === 0) {
-                    accountList.innerHTML = '<p style="text-align:center; color:#777; font-size:0.85rem; margin-top:10px;">暂无保存的离线账号</p>';
-                    return;
-                }
-                
-                savedAccounts.forEach((account, index) => {
-                    const accountItem = document.createElement('div');
-                    accountItem.className = 'offline-account-item';
-                    accountItem.innerHTML = `
-                        <span>${account.username}</span>
-                        <span class="remove-account" data-index="${index}">
-                            <i class="fas fa-times"></i>
-                        </span>
-                    `;
-                    accountList.appendChild(accountItem);
-                    
-                    // 点击账号直接登录
-                    accountItem.addEventListener('click', function(e) {
-                        if (!e.target.closest('.remove-account')) {
-                            document.getElementById('offlineUsername').value = account.username;
-                            document.getElementById('offlineLoginBtn').click();
-                        }
-                    });
-                    
-                    // 删除账号
-                    accountItem.querySelector('.remove-account').addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        savedAccounts.splice(index, 1);
-                        localStorage.setItem('offlineAccounts', JSON.stringify(savedAccounts));
-                        loadOfflineAccounts();
-                    });
-                });
-            }
         </script>
     </body>
 </html>
