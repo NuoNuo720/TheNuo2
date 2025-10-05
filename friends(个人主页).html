@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>好友聊天系统（修复版）</title>
+    <title>好友聊天系统（增强版）</title>
     <!-- 外部资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 引入表情库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji.css@3.0.1/dist/emoji.min.css">
     
     <!-- Tailwind 配置 -->
     <script>
@@ -19,7 +21,9 @@
                         secondary: '#8b5cf6',
                         accent: '#ec4899',
                         success: '#10b981',
+                        warning: '#f59e0b',
                         danger: '#ef4444',
+                        info: '#3b82f6',
                     }
                 }
             }
@@ -30,8 +34,10 @@
     <style type="text/tailwindcss">
         @layer utilities {
             .status-indicator { @apply absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white; }
-            .status-online { @apply bg-success; }
-            .status-offline { @apply bg-gray-400; }
+            .content-auto { content-visibility: auto; }
+            .chat-bubble-left { @apply bg-gray-100 text-gray-800 rounded-tl-lg rounded-tr-lg rounded-br-lg; }
+            .chat-bubble-right { @apply bg-primary text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg; }
+            .emoji-item { @apply text-2xl cursor-pointer hover:bg-gray-100 rounded p-1 transition-colors; }
         }
         
         @keyframes fadeIn {
@@ -40,119 +46,312 @@
         }
         
         .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+        
+        /* 状态标签样式 */
+        .status-tag {
+            @apply text-xs px-2 py-0.5 rounded-full font-medium;
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-6">
-    <div class="max-w-6xl mx-auto">
-        <!-- 标题区域 -->
-        <header class="text-center mb-8">
-            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary mb-3">
-                <i class="fa fa-comments mr-2"></i>好友聊天系统
-            </h1>
-        </header>
-        
-        <!-- 登录/注册区域 -->
-        <div id="loginSection" class="max-w-md mx-auto mb-8">
-            <div class="bg-white rounded-xl shadow-md p-4">
-                <h2 class="text-xl font-bold mb-4 text-center">请登录/注册</h2>
-                <input type="text" id="username" placeholder="请输入昵称" 
-                       class="w-full px-4 py-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                <div class="flex gap-3">
-                    <button onclick="handleLogin()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+        <!-- 顶部导航栏 -->
+        <header class="bg-white shadow-sm py-3 px-4 md:px-6 sticky top-0 z-30">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                    <i class="fa fa-comments mr-2"></i>好友聊天系统
+                </h1>
+                
+                <!-- 返回导航页面按钮 -->
+                <button onclick="window.location.href='indexdaohang.html'" class="mr-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors hidden md:flex">
+                    <i class="fa fa-home mr-1"></i>返回导航中心
+                </button>
+                
+                <div id="headerUserInfo" class="flex items-center gap-4">
+                    <button id="statusSelectorBtn" class="hidden items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                        <span id="currentStatusText" class="status-tag bg-success text-white">在线</span>
+                        <i class="fa fa-chevron-down text-xs"></i>
+                    </button>
+                    
+                    <button id="profileBtn" class="hidden items-center gap-2 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors">
+                        <img id="headerAvatar" src="https://picsum.photos/200/200" alt="用户头像" class="w-8 h-8 rounded-full">
+                        <span id="headerUsername" class="hidden md:inline font-medium"></span>
+                    </button>
+                    
+                    <button id="loginBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                         <i class="fa fa-sign-in mr-1"></i>登录
                     </button>
-                    <button onclick="handleRegister()" class="flex-1 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors">
-                        <i class="fa fa-user-plus mr-1"></i>注册
-                    </button>
                 </div>
             </div>
-        </div>
-        
-        <!-- 用户信息区域（登录后显示） -->
-        <div id="userInfo" class="hidden text-center mb-6">
-            <div class="inline-flex items-center gap-3 bg-white rounded-full px-6 py-3 shadow-md">
-                <img id="userAvatar" src="https://picsum.photos/200/200" alt="用户头像" class="w-12 h-12 rounded-full">
-                <div class="text-left">
-                    <p>当前登录：<span id="currentUsername" class="font-bold text-primary"></span></p>
-                </div>
-                <button onclick="handleLogout()" class="text-danger hover:underline">
-                    <i class="fa fa-sign-out"></i>
+            
+            <!-- 状态选择下拉框 -->
+            <div id="statusDropdown" class="hidden absolute right-4 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-40">
+                <p class="px-4 py-1 text-xs text-gray-500">选择状态</p>
+                <button onclick="updateStatus('online')" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors">
+                    <span class="status-tag bg-success text-white mr-2">在线</span>在线
+                </button>
+                <button onclick="updateStatus('busy')" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors">
+                    <span class="status-tag bg-danger text-white mr-2">忙碌</span>忙碌
+                </button>
+                <button onclick="updateStatus('away')" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors">
+                    <span class="status-tag bg-warning text-white mr-2">离开</span>离开
+                </button>
+                <button onclick="updateStatus('offline')" class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors">
+                    <span class="status-tag bg-gray-400 text-white mr-2">离线</span>离线
                 </button>
             </div>
-        </div>
+        </header>
         
-        <!-- 主功能区（登录后显示） -->
-        <div id="mainContent" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6">
-            <!-- 左侧：好友管理 -->
-            <div class="space-y-6 md:col-span-1">
-                <!-- 添加好友 -->
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h3 class="font-bold mb-4 flex items-center">
-                        <i class="fa fa-user-plus text-primary mr-2"></i>添加好友
-                    </h3>
-                    <div class="flex gap-2">
-                        <input type="text" id="friendName" placeholder="输入好友昵称" 
-                               class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary">
-                        <button onclick="addFriend()" class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                            <i class="fa fa-paper-plane"></i>
+        <!-- 主内容区 -->
+        <main class="p-4 md:p-6">
+            <!-- 登录/注册区域 -->
+            <div id="loginSection" class="max-w-md mx-auto my-10">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold mb-6 text-center">请登录/注册</h2>
+                    <input type="text" id="username" placeholder="请输入昵称" 
+                           class="w-full px-4 py-3 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    <div class="flex gap-3">
+                        <button onclick="handleLogin()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            <i class="fa fa-sign-in mr-1"></i>登录
                         </button>
-                    </div>
-                </div>
-                
-                <!-- 好友申请 -->
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h3 class="font-bold mb-4 flex items-center">
-                        <i class="fa fa-bell text-accent mr-2"></i>好友申请
-                        <span id="requestCount" class="ml-2 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
-                    </h3>
-                    <div id="friendRequests" class="space-y-3 max-h-48 overflow-y-auto pr-1">
-                        <div class="text-center text-gray-500 py-6">
-                            <i class="fa fa-envelope-o text-2xl mb-2 opacity-30"></i>
-                            <p class="text-sm italic">暂无好友申请</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 好友列表 -->
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h3 class="font-bold mb-4 flex items-center">
-                        <i class="fa fa-users text-secondary mr-2"></i>我的好友
-                    </h3>
-                    <div id="friendsList" class="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto pr-1">
-                        <div class="text-center text-gray-500 py-8">
-                            <i class="fa fa-hand-o-down text-2xl mb-2 opacity-30"></i>
-                            <p class="text-sm italic">暂无好友，添加几个吧！</p>
-                        </div>
+                        <button onclick="handleRegister()" class="flex-1 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors">
+                            <i class="fa fa-user-plus mr-1"></i>注册
+                        </button>
                     </div>
                 </div>
             </div>
             
-            <!-- 右侧：聊天区域 -->
-            <div class="md:col-span-3">
-                <div class="bg-white rounded-xl shadow-md p-4 h-full flex flex-col">
-                    <!-- 聊天标题 -->
-                    <div id="chatHeader" class="border-b pb-4 mb-4">
-                        <h3 class="font-bold text-xl">
-                            <span id="chatWith">选择好友开始聊天</span>
-                        </h3>
+            <!-- 个人主页 -->
+            <div id="profileSection" class="hidden max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6 mb-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h2 class="text-2xl font-bold">个人主页</h2>
+                    <button onclick="switchToChatView()" class="px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                        <i class="fa fa-comments mr-1"></i>返回聊天
+                    </button>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-6 items-center mb-6">
+                    <div class="relative">
+                        <img id="profileAvatar" src="https://picsum.photos/200/200" alt="用户头像" class="w-32 h-32 rounded-full object-cover">
+                        <span id="profileStatusIndicator" class="status-indicator status-online"></span>
                     </div>
                     
-                    <!-- 聊天内容（固定高度，超出滚动） -->
-                    <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-4 p-3 max-h-[400px] bg-gray-50 rounded-xl">
-                        <div class="text-center text-gray-500 py-10">
-                            <i class="fa fa-comment text-3xl mb-3 opacity-20"></i>
-                            <p class="text-sm italic">请从左侧好友列表中选择一位好友开始聊天</p>
+                    <div class="text-center md:text-left">
+                        <h3 id="profileUsername" class="text-xl font-bold mb-1"></h3>
+                        <p id="profileStatusText" class="status-tag bg-success text-white mb-2"></p>
+                        <p class="text-gray-500 text-sm">
+                            <i class="fa fa-clock-o mr-1"></i>最后活跃: <span id="profileLastActive"></span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 个性签名 -->
+                <div class="mb-6">
+                    <h4 class="font-bold mb-2">个性签名</h4>
+                    <p id="profileSignature" class="text-gray-600 italic border-l-4 border-primary pl-3 py-1"></p>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h4 class="font-bold mb-3">修改个人信息</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">昵称</label>
+                            <input type="text" id="newUsername" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
                         </div>
-                    </div>
-                    
-                    <!-- 发送消息区域 -->
-                    <div id="messageInputArea" class="flex gap-2 hidden">
-                        <textarea id="messageText" rows="2" placeholder="输入消息..." class="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"></textarea>
-                        <button onclick="sendMessage()" class="px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">发送</button>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">个性签名</label>
+                            <textarea id="newSignature" rows="2" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" placeholder="添加一句个性签名..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">选择状态</label>
+                            <select id="profileStatusSelector" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                <option value="online">在线</option>
+                                <option value="busy">忙碌</option>
+                                <option value="away">离开</option>
+                                <option value="offline">离线</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="saveProfileChanges()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            <i class="fa fa-save mr-1"></i>保存修改
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+            
+            <!-- 好友主页 -->
+            <div id="friendProfileSection" class="hidden max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6 mb-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h2 class="text-2xl font-bold">好友资料</h2>
+                    <button onclick="switchToChatView()" class="px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                        <i class="fa fa-comments mr-1"></i>返回聊天
+                    </button>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-6 items-center mb-6">
+                    <div class="relative">
+                        <img id="friendProfileAvatar" src="https://picsum.photos/200/200" alt="好友头像" class="w-32 h-32 rounded-full object-cover">
+                        <span id="friendProfileStatusIndicator" class="status-indicator status-online"></span>
+                    </div>
+                    
+                    <div class="text-center md:text-left">
+                        <h3 id="friendProfileUsername" class="text-xl font-bold mb-1"></h3>
+                        <p id="friendProfileStatusText" class="status-tag bg-success text-white mb-2"></p>
+                        <p class="text-gray-500 text-sm">
+                            <i class="fa fa-clock-o mr-1"></i>最后活跃: <span id="friendProfileLastActive"></span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 个性签名 -->
+                <div class="mb-6">
+                    <h4 class="font-bold mb-2">个性签名</h4>
+                    <p id="friendProfileSignature" class="text-gray-600 italic border-l-4 border-primary pl-3 py-1"></p>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <button id="startChatWithFriendBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        <i class="fa fa-comment mr-1"></i>开始聊天
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 聊天界面 -->
+            <div id="chatSection" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- 左侧：好友管理 -->
+                <div class="space-y-6 lg:col-span-1">
+                    <!-- 搜索框 -->
+                    <div class="relative">
+                        <input type="text" placeholder="搜索好友..." 
+                               class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- 添加好友 -->
+                    <div class="bg-white rounded-xl shadow-md p-4">
+                        <h3 class="font-bold mb-4 flex items-center">
+                            <i class="fa fa-user-plus text-primary mr-2"></i>添加好友
+                        </h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="friendName" placeholder="输入好友昵称" 
+                                   class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary">
+                            <button onclick="addFriend()" class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                                <i class="fa fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 好友申请 -->
+                    <div class="bg-white rounded-xl shadow-md p-4">
+                        <h3 class="font-bold mb-4 flex items-center">
+                            <i class="fa fa-bell text-accent mr-2"></i>好友申请
+                            <span id="requestCount" class="ml-2 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                        </h3>
+                        <div id="friendRequests" class="space-y-3 max-h-48 overflow-y-auto pr-1">
+                            <div class="text-center text-gray-500 py-6">
+                                <i class="fa fa-envelope-o text-2xl mb-2 opacity-30"></i>
+                                <p class="text-sm italic">暂无好友申请</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 好友列表 -->
+                    <div class="bg-white rounded-xl shadow-md p-4">
+                        <h3 class="font-bold mb-4 flex items-center">
+                            <i class="fa fa-users text-secondary mr-2"></i>我的好友
+                        </h3>
+                        <div id="friendsList" class="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto pr-1">
+                            <div class="text-center text-gray-500 py-8">
+                                <i class="fa fa-hand-o-down text-2xl mb-2 opacity-30"></i>
+                                <p class="text-sm italic">暂无好友，添加几个吧！</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧：聊天区域 -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-xl shadow-md h-full flex flex-col">
+                        <!-- 聊天标题 -->
+                        <div id="chatHeader" class="border-b p-4 flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="relative hidden md:block">
+                                    <img id="chatFriendAvatar" src="https://picsum.photos/200/200" alt="好友头像" class="w-10 h-10 rounded-full">
+                                    <span id="chatFriendStatus" class="status-indicator status-online"></span>
+                                </div>
+                                <h3 class="font-bold text-xl">
+                                    <span id="chatWith">选择好友开始聊天</span>
+                                </h3>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="switchToProfileView()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                                    <i class="fa fa-user text-gray-600"></i>
+                                </button>
+                                <button id="viewFriendProfileBtn" class="p-2 rounded-full hover:bg-gray-100 transition-colors hidden">
+                                    <i class="fa fa-user-circle text-gray-600"></i>
+                                </button>
+                                <button onclick="handleLogout()" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                                    <i class="fa fa-sign-out text-gray-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 聊天内容（固定高度，超出滚动） -->
+                        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 max-h-[500px] bg-gray-50">
+                            <div class="text-center text-gray-500 py-10">
+                                <i class="fa fa-comment text-3xl mb-3 opacity-20"></i>
+                                <p class="text-sm italic">请从左侧好友列表中选择一位好友开始聊天</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 发送消息区域 -->
+                        <div id="messageInputArea" class="flex flex-col gap-2 p-4 border-t hidden">
+                            <!-- 表情包选择器 -->
+                            <div class="flex gap-2">
+                                <button id="emojiToggleBtn" class="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fa fa-smile-o text-gray-700"></i>
+                                </button>
+                                
+                                <!-- 表情包面板 -->
+                                <div id="emojiPanel" class="hidden absolute bottom-24 left-4 md:left-auto bg-white rounded-lg shadow-lg p-3 border border-gray-200 w-64 max-h-40 overflow-y-auto">
+                                    <div class="grid grid-cols-7 gap-1">
+                                        <!-- 常用表情 -->
+                                        <div class="emoji-item" onclick="insertEmoji('😊')">😊</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😂')">😂</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😍')">😍</div>
+                                        <div class="emoji-item" onclick="insertEmoji('👍')">👍</div>
+                                        <div class="emoji-item" onclick="insertEmoji('❤️')">❤️</div>
+                                        <div class="emoji-item" onclick="insertEmoji('🎉')">🎉</div>
+                                        <div class="emoji-item" onclick="insertEmoji('👏')">👏</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😢')">😢</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😠')">😠</div>
+                                        <div class="emoji-item" onclick="insertEmoji('🤔')">🤔</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😴')">😴</div>
+                                        <div class="emoji-item" onclick="insertEmoji('🤩')">🤩</div>
+                                        <div class="emoji-item" onclick="insertEmoji('🤗')">🤗</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😎')">😎</div>
+                                        <div class="emoji-item" onclick="insertEmoji('🤯')">🤯</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😱')">😱</div>
+                                        <div class="emoji-item" onclick="insertEmoji('🙏')">🙏</div>
+                                        <div class="emoji-item" onclick="insertEmoji('👌')">👌</div>
+                                        <div class="emoji-item" onclick="insertEmoji('🙄')">🙄</div>
+                                        <div class="emoji-item" onclick="insertEmoji('😘')">😘</div>
+                                        <div class="emoji-item" onclick="insertEmoji('👋')">👋</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <textarea id="messageText" rows="2" placeholder="输入消息..." class="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"></textarea>
+                                <button onclick="sendMessage()" class="px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">发送</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
         
         <!-- 加载提示 -->
         <div id="loading" class="hidden fixed inset-0 bg-black/10 flex items-center justify-center z-50">
@@ -167,16 +366,35 @@
         // 全局变量
         let currentUser = null;
         let selectedFriend = null;
+        let viewedFriend = null; // 当前查看的好友
         let supabase = null;
         let chatSubscription = null;
-        let messagePollTimer = null; // 轮询定时器
+        let presenceSubscription = null; // 用于在线状态监听
+        let messagePollTimer = null; // 消息轮询定时器
+        let friendPollTimer = null; // 好友列表和申请轮询定时器
+        
+        // 状态映射表 - 确保每个状态都有完整定义
+        const statusMap = {
+            'online': { text: '在线', class: 'bg-success', indicatorClass: 'status-success' },
+            'busy': { text: '忙碌', class: 'bg-danger', indicatorClass: 'status-danger' },
+            'away': { text: '离开', class: 'bg-warning', indicatorClass: 'status-warning' },
+            'offline': { text: '离线', class: 'bg-gray-400', indicatorClass: 'status-gray-400' }
+        };
+        
+        // 获取安全的状态信息（带默认值）
+        function getSafeStatusInfo(status) {
+            // 如果状态不存在或未定义，返回默认的在线状态
+            if (!status || !statusMap[status]) {
+                return statusMap['online'];
+            }
+            return statusMap[status];
+        }
         
         // DOM元素
         const loginSection = document.getElementById('loginSection');
-        const userInfo = document.getElementById('userInfo');
-        const mainContent = document.getElementById('mainContent');
-        const currentUsernameEl = document.getElementById('currentUsername');
-        const userAvatarEl = document.getElementById('userAvatar');
+        const chatSection = document.getElementById('chatSection');
+        const profileSection = document.getElementById('profileSection');
+        const friendProfileSection = document.getElementById('friendProfileSection');
         const loading = document.getElementById('loading');
         
         // 初始化Supabase客户端
@@ -204,16 +422,95 @@
                 supabase = initSupabaseClient();
                 console.log('Supabase客户端初始化成功');
                 
+                // 绑定表情包按钮事件
+                document.getElementById('emojiToggleBtn').addEventListener('click', toggleEmojiPanel);
+                document.addEventListener('click', (e) => {
+                    const panel = document.getElementById('emojiPanel');
+                    const btn = document.getElementById('emojiToggleBtn');
+                    if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                        panel.classList.add('hidden');
+                    }
+                });
+                
+                // 绑定查看好友资料按钮事件
+                document.getElementById('viewFriendProfileBtn').addEventListener('click', viewSelectedFriendProfile);
+                document.getElementById('startChatWithFriendBtn').addEventListener('click', startChatFromProfile);
+                
+                // 绑定状态选择器事件
+                document.getElementById('statusSelectorBtn').addEventListener('click', toggleStatusDropdown);
+                document.addEventListener('click', (e) => {
+                    const dropdown = document.getElementById('statusDropdown');
+                    const btn = document.getElementById('statusSelectorBtn');
+                    if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+                
                 // 检查本地存储的用户
                 const savedUser = localStorage.getItem('friendSystemUser');
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
-                    showUserInterface();
+                    showChatInterface();
+                    setupPresenceTracking(); // 启动在线状态追踪
+                    startFriendPolling(); // 启动好友列表和申请轮询
+                } else {
+                    // 显示登录按钮，隐藏其他用户相关元素
+                    document.getElementById('loginBtn').classList.remove('hidden');
+                    document.getElementById('statusSelectorBtn').classList.add('hidden');
+                    document.getElementById('profileBtn').classList.add('hidden');
                 }
             } catch (error) {
                 console.error('应用初始化失败:', error);
                 alert('初始化失败: ' + error.message);
             }
+        }
+        
+        // 切换视图
+        function switchToChatView() {
+            profileSection.classList.add('hidden');
+            friendProfileSection.classList.add('hidden');
+            chatSection.classList.remove('hidden');
+        }
+        
+        function switchToProfileView() {
+            chatSection.classList.add('hidden');
+            friendProfileSection.classList.add('hidden');
+            profileSection.classList.remove('hidden');
+            loadProfileData();
+        }
+        
+        // 显示聊天界面
+        function showChatInterface() {
+            if (!currentUser) return;
+            
+            // 更新头部用户信息
+            document.getElementById('headerAvatar').src = currentUser.avatar || 'https://picsum.photos/200/200';
+            document.getElementById('headerUsername').textContent = currentUser.username;
+            updateStatusDisplay(currentUser.status || 'online');
+            
+            // 更新个人主页初始数据
+            document.getElementById('profileAvatar').src = currentUser.avatar || 'https://picsum.photos/200/200';
+            document.getElementById('newUsername').value = currentUser.username;
+            document.getElementById('newSignature').value = currentUser.signature || '';
+            document.getElementById('profileStatusSelector').value = currentUser.status || 'online';
+            
+            // 显示/隐藏元素
+            loginSection.classList.add('hidden');
+            chatSection.classList.remove('hidden');
+            document.getElementById('loginBtn').classList.add('hidden');
+            document.getElementById('statusSelectorBtn').classList.remove('hidden');
+            document.getElementById('statusSelectorBtn').classList.add('flex');
+            document.getElementById('profileBtn').classList.remove('hidden');
+            document.getElementById('profileBtn').classList.add('flex');
+            
+            // 绑定个人主页按钮事件
+            document.getElementById('profileBtn').addEventListener('click', switchToProfileView);
+            
+            // 启动定时更新活跃状态
+            startActiveTimer();
+            // 加载好友申请和好友列表
+            loadFriendRequests();
+            loadFriendsList();
         }
         
         // 注册新用户
@@ -233,13 +530,14 @@
                 
                 if (existingUser) throw new Error('该昵称已被使用');
                 
-                // 创建新用户
+                // 创建新用户（包含默认状态和个性签名字段）
                 const { data: newUser } = await supabase
                     .from('users')
                     .insert([{ 
                         username: username,
                         avatar: `https://picsum.photos/seed/${username}/200`,
-                        status: '在线',
+                        status: 'online', // 默认状态为在线
+                        signature: '', // 默认为空个性签名
                         last_active: new Date()
                     }])
                     .select('*')
@@ -248,7 +546,9 @@
                 currentUser = newUser;
                 localStorage.setItem('friendSystemUser', JSON.stringify(newUser));
                 alert('注册成功！');
-                showUserInterface();
+                showChatInterface();
+                setupPresenceTracking(); // 启动在线状态追踪
+                startFriendPolling(); // 启动好友轮询
             } catch (error) {
                 console.error('注册失败:', error);
                 alert('注册失败: ' + error.message);
@@ -277,7 +577,10 @@
                 // 更新最后活跃时间
                 const { data: updatedUser } = await supabase
                     .from('users')
-                    .update({ last_active: new Date() })
+                    .update({ 
+                        last_active: new Date(),
+                        status: user.status || 'online' // 保持原有状态或设为在线
+                    })
                     .eq('id', user.id)
                     .select('*')
                     .single();
@@ -285,7 +588,9 @@
                 currentUser = updatedUser;
                 localStorage.setItem('friendSystemUser', JSON.stringify(updatedUser));
                 alert('登录成功！');
-                showUserInterface();
+                showChatInterface();
+                setupPresenceTracking(); // 启动在线状态追踪
+                startFriendPolling(); // 启动好友轮询
             } catch (error) {
                 console.error('登录失败:', error);
                 alert('登录失败: ' + error.message);
@@ -294,52 +599,255 @@
             }
         }
         
-        // 用户退出登录
-        function handleLogout() {
-            // 清除轮询定时器
-            if (messagePollTimer) {
-                clearInterval(messagePollTimer);
-                messagePollTimer = null;
-            }
-            
-            // 清除实时监听
-            if (chatSubscription) {
-                supabase.removeChannel(chatSubscription);
-                chatSubscription = null;
-            }
-            
-            currentUser = null;
-            selectedFriend = null;
-            localStorage.removeItem('friendSystemUser');
-            
-            loginSection.classList.remove('hidden');
-            userInfo.classList.add('hidden');
-            mainContent.classList.add('hidden');
-            
-            document.getElementById('chatWith').textContent = '选择好友开始聊天';
-            document.getElementById('messages').innerHTML = 
-                '<div class="text-center text-gray-500 py-10"><i class="fa fa-comment text-3xl mb-3 opacity-20"></i><p class="text-sm italic">请从左侧好友列表中选择一位好友开始聊天</p></div>';
-            document.getElementById('messageInputArea').classList.add('hidden');
-            
-            alert('已退出登录');
-        }
-        
-        // 显示用户主界面
-        function showUserInterface() {
+        // 用户退出登录 - 强制设置为离线状态
+        async function handleLogout() {
             if (!currentUser) return;
             
-            currentUsernameEl.textContent = currentUser.username;
-            userAvatarEl.src = currentUser.avatar || 'https://picsum.photos/200/200';
+            try {
+                showLoading();
+                
+                // 强制更新状态为离线
+                await updateUserStatus(currentUser.id, 'offline');
+                
+                // 清除轮询定时器
+                if (messagePollTimer) {
+                    clearInterval(messagePollTimer);
+                    messagePollTimer = null;
+                }
+                
+                if (friendPollTimer) {
+                    clearInterval(friendPollTimer);
+                    friendPollTimer = null;
+                }
+                
+                // 清除实时监听
+                if (chatSubscription) {
+                    supabase.removeChannel(chatSubscription);
+                    chatSubscription = null;
+                }
+                
+                if (presenceSubscription) {
+                    supabase.removeChannel(presenceSubscription);
+                    presenceSubscription = null;
+                }
+                
+                currentUser = null;
+                selectedFriend = null;
+                viewedFriend = null;
+                localStorage.removeItem('friendSystemUser');
+                
+                // 重置界面
+                loginSection.classList.remove('hidden');
+                chatSection.classList.add('hidden');
+                profileSection.classList.add('hidden');
+                friendProfileSection.classList.add('hidden');
+                document.getElementById('loginBtn').classList.remove('hidden');
+                document.getElementById('statusSelectorBtn').classList.add('hidden');
+                document.getElementById('profileBtn').classList.add('hidden');
+                
+                document.getElementById('chatWith').textContent = '选择好友开始聊天';
+                document.getElementById('messages').innerHTML = 
+                    '<div class="text-center text-gray-500 py-10"><i class="fa fa-comment text-3xl mb-3 opacity-20"></i><p class="text-sm italic">请从左侧好友列表中选择一位好友开始聊天</p></div>';
+                document.getElementById('messageInputArea').classList.add('hidden');
+                document.getElementById('viewFriendProfileBtn').classList.add('hidden');
+                
+                alert('已退出登录');
+            } catch (error) {
+                console.error('退出登录失败:', error);
+                alert('退出失败: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 加载个人主页数据
+        function loadProfileData() {
+            if (!currentUser) return;
             
-            loginSection.classList.add('hidden');
-            userInfo.classList.remove('hidden');
-            mainContent.classList.remove('hidden');
+            document.getElementById('profileUsername').textContent = currentUser.username;
+            document.getElementById('newUsername').value = currentUser.username;
+            document.getElementById('newSignature').value = currentUser.signature || '';
+            document.getElementById('profileStatusSelector').value = currentUser.status || 'online';
+            document.getElementById('profileSignature').textContent = currentUser.signature || '这个人很懒，什么都没留下';
+            updateStatusDisplay(currentUser.status || 'online', 'profileStatusText');
+            document.getElementById('profileLastActive').textContent = formatTimeAgo(new Date(currentUser.last_active));
             
-            // 启动定时更新活跃状态
-            startActiveTimer();
-            // 加载好友申请和好友列表
-            loadFriendRequests();
-            loadFriendsList();
+            // 更新状态指示器
+            const indicator = document.getElementById('profileStatusIndicator');
+            const statusInfo = getSafeStatusInfo(currentUser.status);
+            indicator.className = `status-indicator ${statusInfo.indicatorClass}`;
+        }
+        
+        // 保存个人主页修改 - 包含个性签名
+        async function saveProfileChanges() {
+            if (!currentUser) return;
+            
+            const newUsername = document.getElementById('newUsername').value.trim();
+            const newSignature = document.getElementById('newSignature').value.trim();
+            const newStatus = document.getElementById('profileStatusSelector').value;
+            
+            if (!newUsername) {
+                alert('请输入昵称');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // 检查昵称是否已被使用（排除当前用户）
+                const { data: existingUsers } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('username', newUsername)
+                    .neq('id', currentUser.id);
+                
+                if (existingUsers && existingUsers.length > 0) {
+                    throw new Error('该昵称已被使用');
+                }
+                
+                // 更新用户信息 - 包含个性签名
+                const { data: updatedUser } = await supabase
+                    .from('users')
+                    .update({ 
+                        username: newUsername,
+                        signature: newSignature,
+                        status: newStatus,
+                        last_active: new Date()
+                    })
+                    .eq('id', currentUser.id)
+                    .select('*')
+                    .single();
+                
+                currentUser = updatedUser;
+                localStorage.setItem('friendSystemUser', JSON.stringify(updatedUser));
+                
+                // 更新界面
+                loadProfileData();
+                document.getElementById('headerUsername').textContent = newUsername;
+                updateStatusDisplay(newStatus);
+                
+                alert('信息更新成功');
+            } catch (error) {
+                console.error('更新个人信息失败:', error);
+                alert('更新失败: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 状态下拉框切换
+        function toggleStatusDropdown() {
+            const dropdown = document.getElementById('statusDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        // 更新状态显示
+        function updateStatusDisplay(status, elementId = 'currentStatusText') {
+            const statusInfo = getSafeStatusInfo(status);
+            const element = document.getElementById(elementId);
+            
+            element.className = 'status-tag';
+            element.classList.add(statusInfo.class);
+            element.classList.add('text-white');
+            element.textContent = statusInfo.text;
+        }
+        
+        // 更新用户状态
+        async function updateUserStatus(userId, status) {
+            try {
+                await supabase
+                    .from('users')
+                    .update({ 
+                        status: status,
+                        last_active: new Date()
+                    })
+                    .eq('id', userId);
+                    
+                return true;
+            } catch (error) {
+                console.error('更新状态失败:', error);
+                return false;
+            }
+        }
+        
+        // 切换用户状态
+        async function updateStatus(status) {
+            if (!currentUser) return;
+            
+            const success = await updateUserStatus(currentUser.id, status);
+            if (success) {
+                currentUser.status = status;
+                localStorage.setItem('friendSystemUser', JSON.stringify(currentUser));
+                updateStatusDisplay(status);
+                document.getElementById('statusDropdown').classList.add('hidden');
+                
+                // 更新好友列表中的状态显示
+                if (document.getElementById('friendsList').innerHTML) {
+                    loadFriendsList();
+                }
+            }
+        }
+        
+        // 启动在线状态追踪
+        function setupPresenceTracking() {
+            if (!currentUser || presenceSubscription) return;
+            
+            // 创建在线状态监听通道
+            presenceSubscription = supabase
+                .channel('user_presence')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'users',
+                        filter: 'status=neq.offline' // 监听状态变化
+                    },
+                    (payload) => {
+                        console.log('用户状态变化:', payload);
+                        // 更新好友列表中的状态显示
+                        if (document.getElementById('friendsList').innerHTML) {
+                            loadFriendsList();
+                        }
+                        
+                        // 如果正在聊天的好友状态变化，更新聊天头部
+                        if (selectedFriend && selectedFriend.id === payload.new.id) {
+                            updateChatFriendStatus(payload.new.status);
+                        }
+                        
+                        // 如果正在查看的好友状态变化，更新好友主页
+                        if (viewedFriend && viewedFriend.id === payload.new.id) {
+                            viewedFriend.status = payload.new.status;
+                            viewedFriend.last_active = payload.new.last_active;
+                            loadFriendProfileData();
+                        }
+                    }
+                )
+                .subscribe((status) => {
+                    console.log('在线状态监听状态:', status);
+                });
+        }
+        
+        // 启动好友列表和申请轮询
+        function startFriendPolling() {
+            // 清除旧定时器，避免重复
+            if (friendPollTimer) clearInterval(friendPollTimer);
+            
+            // 每15秒自动刷新好友列表和申请
+            friendPollTimer = setInterval(() => {
+                if (currentUser) {
+                    loadFriendRequests();
+                    loadFriendsList();
+                }
+            }, 15000);
+        }
+        
+        // 更新聊天对象的状态显示
+        function updateChatFriendStatus(status) {
+            const statusInfo = getSafeStatusInfo(status);
+            const indicator = document.getElementById('chatFriendStatus');
+            
+            indicator.className = `status-indicator ${statusInfo.indicatorClass}`;
         }
         
         // 定时更新最后活跃时间
@@ -352,18 +860,28 @@
         async function updateLastActive() {
             if (currentUser) {
                 try {
-                    await supabase
-                        .from('users')
-                        .update({ last_active: new Date() })
-                        .eq('id', currentUser.id);
+                    // 只有在线/忙碌/离开状态才更新活跃时间
+                    if (['online', 'busy', 'away'].includes(currentUser.status)) {
+                        await supabase
+                            .from('users')
+                            .update({ last_active: new Date() })
+                            .eq('id', currentUser.id);
+                    }
                 } catch (error) {
                     console.error('更新活跃时间失败:', error);
                 }
             }
         }
         
-        // 判断用户是否在线（5分钟内有活跃）
+        // 判断用户是否在线（结合状态和活跃时间）
         function isUserOnline(user) {
+            // 如果状态明确是离线，直接返回false
+            if (user.status === 'offline') return false;
+            
+            // 如果状态是在线/忙碌/离开，认为是在线状态
+            if (['online', 'busy', 'away'].includes(user.status)) return true;
+            
+            // 其他情况通过活跃时间判断（5分钟内）
             if (!user.last_active) return false;
             
             const lastActive = new Date(user.last_active);
@@ -373,20 +891,18 @@
             return diffMinutes < 5;
         }
         
-        // 加载好友申请（分步查询，避免关联歧义）
+        // 加载好友申请
         async function loadFriendRequests() {
             if (!currentUser) {
                 console.log('当前用户未登录，无法加载好友申请');
                 return;
             }
             
-            console.log('开始加载好友申请，当前用户ID:', currentUser.id);
-            
             try {
-                // 第一步：先查询所有发给当前用户的待处理申请（只获取ID和申请人ID）
+                // 查询所有发给当前用户的待处理申请
                 const { data: requests, error: requestError } = await supabase
                     .from('friend_relations')
-                    .select('id, sender_id')  // 只查询必要字段，不关联用户表
+                    .select('id, sender_id')
                     .eq('receiver_id', currentUser.id)
                     .eq('status', 'pending')
                     .order('created_at', { ascending: false });
@@ -407,16 +923,16 @@
                     return;
                 }
 
-                // 第二步：提取所有申请人ID，批量查询用户信息
+                // 提取所有申请人ID，批量查询用户信息
                 const senderIds = requests.map(req => req.sender_id);
                 const { data: senders, error: senderError } = await supabase
                     .from('users')
-                    .select('id, username, avatar, last_active')
-                    .in('id', senderIds);  // 批量查询所有申请人信息
+                    .select('id, username, avatar, status, last_active, signature')
+                    .in('id', senderIds);
 
                 if (senderError) throw senderError;
 
-                // 创建用户信息映射表（ID -> 用户信息）
+                // 创建用户信息映射表
                 const senderMap = {};
                 senders.forEach(sender => {
                     senderMap[sender.id] = sender;
@@ -424,13 +940,13 @@
 
                 // 渲染申请列表
                 container.innerHTML = requests.map((req, index) => {
-                    // 从映射表中获取申请人信息（带容错）
                     const sender = senderMap[req.sender_id] || {
                         id: req.sender_id,
                         username: '未知用户',
-                        avatar: 'https://picsum.photos/200/200'
+                        avatar: 'https://picsum.photos/200/200',
+                        status: 'online' // 默认状态
                     };
-                    const isOnline = isUserOnline(sender);
+                    const statusInfo = getSafeStatusInfo(sender.status);
                     
                     return `
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all animate-fadeIn" style="animation-delay: ${index * 0.1}s">
@@ -438,9 +954,14 @@
                                 <div class="relative">
                                     <img src="${sender.avatar}" alt="${sender.username}" 
                                          class="w-10 h-10 rounded-full object-cover">
-                                    <span class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></span>
+                                    <span class="status-indicator ${statusInfo.indicatorClass}"></span>
                                 </div>
-                                <span class="font-medium">${sender.username}</span>
+                                <div>
+                                    <span class="font-medium">${sender.username}</span>
+                                    <p class="text-xs">
+                                        <span class="status-tag ${statusInfo.class} text-white">${statusInfo.text}</span>
+                                    </p>
+                                </div>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="respondToRequest('${req.id}', true)" 
@@ -463,12 +984,12 @@
             }
         }
         
-        // 加载好友列表（分步查询避免关联问题）
+        // 加载好友列表
         async function loadFriendsList() {
             if (!currentUser) return;
             
             try {
-                // 第一步：查询所有已通过的好友关系
+                // 查询所有已通过的好友关系
                 const { data: relations, error: relError } = await supabase
                     .from('friend_relations')
                     .select('id, sender_id, receiver_id')
@@ -494,32 +1015,49 @@
                     }
                 });
                 
-                // 第二步：批量查询好友信息
+                // 批量查询好友信息 - 包含个性签名
                 const { data: friends, error: friendError } = await supabase
                     .from('users')
-                    .select('id, username, avatar, status, last_active')
+                    .select('id, username, avatar, status, last_active, signature')
                     .in('id', Array.from(friendIds));
                 
                 if (friendError) throw friendError;
                 
                 // 渲染好友列表
                 container.innerHTML = friends.map((friend, index) => {
+                    // 确保好友信息存在且状态有效
+                    if (!friend) {
+                        return ''; // 跳过无效好友数据
+                    }
+                    
                     const isOnline = isUserOnline(friend);
+                    // 使用安全的状态信息获取方法
+                    const statusInfo = getSafeStatusInfo(friend.status);
                     
                     return `
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-all animate-fadeIn" 
-                             style="animation-delay: ${index * 0.1}s"
-                             onclick="selectFriendToChat('${friend.id}', '${friend.username}', '${friend.avatar}')">
+                             style="animation-delay: ${index * 0.1}s">
                             <div class="relative mr-3">
                                 <img src="${friend.avatar}" alt="${friend.username}" 
                                      class="w-10 h-10 rounded-full object-cover">
-                                <span class="status-indicator ${isOnline ? 'status-online' : 'status-offline'}"></span>
+                                <span class="status-indicator ${statusInfo.indicatorClass}"></span>
                             </div>
-                            <div>
+                            <div class="flex-1">
                                 <p class="font-medium">${friend.username}</p>
-                                <p class="text-xs text-gray-500">
-                                    ${isOnline ? '在线' : `最后活跃: ${formatTimeAgo(new Date(friend.last_active))}`}
+                                <p class="text-xs">
+                                    <span class="status-tag ${statusInfo.class} text-white">${statusInfo.text}</span>
+                                    ${!isOnline ? ` · 最后活跃: ${formatTimeAgo(new Date(friend.last_active))}` : ''}
                                 </p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="selectFriendToChat('${friend.id}', '${friend.username}', '${friend.avatar}', '${friend.status || 'online'}')" 
+                                        class="p-1.5 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors">
+                                    <i class="fa fa-comment"></i>
+                                </button>
+                                <button onclick="viewFriendProfile('${friend.id}')" 
+                                        class="p-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors">
+                                    <i class="fa fa-user"></i>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -528,6 +1066,74 @@
                 console.error('加载好友列表失败:', error);
                 document.getElementById('friendsList').innerHTML = 
                     `<p class="text-red-500 text-sm text-center py-6">加载失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 查看好友主页
+        async function viewFriendProfile(friendId) {
+            if (!currentUser || !friendId) return;
+            
+            try {
+                showLoading();
+                
+                // 查询好友信息
+                const { data: friend } = await supabase
+                    .from('users')
+                    .select('id, username, avatar, status, last_active, signature')
+                    .eq('id', friendId)
+                    .single();
+                
+                viewedFriend = friend;
+                
+                // 显示好友主页
+                chatSection.classList.add('hidden');
+                profileSection.classList.add('hidden');
+                friendProfileSection.classList.remove('hidden');
+                
+                // 加载好友资料
+                loadFriendProfileData();
+            } catch (error) {
+                console.error('查看好友资料失败:', error);
+                alert('查看失败: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 加载好友资料数据
+        function loadFriendProfileData() {
+            if (!viewedFriend) return;
+            
+            document.getElementById('friendProfileAvatar').src = viewedFriend.avatar || 'https://picsum.photos/200/200';
+            document.getElementById('friendProfileUsername').textContent = viewedFriend.username;
+            document.getElementById('friendProfileSignature').textContent = viewedFriend.signature || '这个人很懒，什么都没留下';
+            updateStatusDisplay(viewedFriend.status || 'online', 'friendProfileStatusText');
+            document.getElementById('friendProfileLastActive').textContent = formatTimeAgo(new Date(viewedFriend.last_active));
+            
+            // 更新状态指示器
+            const indicator = document.getElementById('friendProfileStatusIndicator');
+            const statusInfo = getSafeStatusInfo(viewedFriend.status);
+            indicator.className = `status-indicator ${statusInfo.indicatorClass}`;
+        }
+        
+        // 从好友主页开始聊天
+        function startChatFromProfile() {
+            if (!viewedFriend) return;
+            
+            selectFriendToChat(
+                viewedFriend.id, 
+                viewedFriend.username, 
+                viewedFriend.avatar, 
+                viewedFriend.status || 'online'
+            );
+            
+            switchToChatView();
+        }
+        
+        // 查看当前聊天好友的资料
+        function viewSelectedFriendProfile() {
+            if (selectedFriend) {
+                viewFriendProfile(selectedFriend.id);
             }
         }
         
@@ -542,7 +1148,8 @@
             if (diffMins < 1) return '刚刚';
             if (diffMins < 60) return `${diffMins}分钟前`;
             if (diffHours < 24) return `${diffHours}小时前`;
-            return `${diffDays}天前`;
+            if (diffDays < 7) return `${diffDays}天前`;
+            return date.toLocaleDateString();
         }
         
         // 添加好友
@@ -600,14 +1207,14 @@
             try {
                 showLoading();
                 
-                // 第一步：获取申请信息（包含申请人ID）
+                // 获取申请信息（包含申请人ID）
                 const { data: request } = await supabase
                     .from('friend_relations')
                     .select('sender_id')
                     .eq('id', requestId)
                     .single();
                 
-                // 第二步：获取申请人信息
+                // 获取申请人信息
                 const { data: sender } = await supabase
                     .from('users')
                     .select('username')
@@ -639,19 +1246,31 @@
         }
         
         // 选择好友进行聊天
-        function selectFriendToChat(friendId, friendName, friendAvatar) {
+        function selectFriendToChat(friendId, friendName, friendAvatar, friendStatus) {
             if (friendId === currentUser.id) return;
             
-            selectedFriend = { id: friendId, name: friendName, avatar: friendAvatar };
+            selectedFriend = { 
+                id: friendId, 
+                name: friendName, 
+                avatar: friendAvatar,
+                status: friendStatus
+            };
             
+            // 显示查看好友资料按钮
+            document.getElementById('viewFriendProfileBtn').classList.remove('hidden');
+            
+            // 更新聊天头部信息
             document.getElementById('chatWith').textContent = friendName;
+            document.getElementById('chatFriendAvatar').src = friendAvatar;
+            updateChatFriendStatus(friendStatus);
+            
             document.getElementById('messageInputArea').classList.remove('hidden');
             
             // 加载聊天历史
             loadChatHistory();
-            // 设置聊天监听（保留原有逻辑）
+            // 设置聊天监听
             setupChatListener();
-            // 启动轮询（每3秒刷新一次消息）
+            // 启动轮询
             startMessagePolling();
         }
         
@@ -698,7 +1317,7 @@
             }
         }
         
-        // 渲染消息
+        // 渲染消息 - 支持表情包显示
         function renderMessages(messages) {
             const container = document.getElementById('messages');
             container.innerHTML = '';
@@ -714,8 +1333,9 @@
                 messageEl.className = `flex ${isSent ? 'justify-end' : 'justify-start'} animate-fadeIn`;
                 messageEl.style.animationDelay = `${index * 0.05}s`;
                 
+                // 消息内容直接包含表情符号，现代浏览器会自动渲染
                 messageEl.innerHTML = `
-                    <div class="max-w-[80%] px-4 py-2.5 ${isSent ? 'bg-primary text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg' : 'bg-gray-100 text-gray-800 rounded-tl-lg rounded-tr-lg rounded-br-lg'}">
+                    <div class="max-w-[80%] px-4 py-2.5 ${isSent ? 'chat-bubble-right' : 'chat-bubble-left'}">
                         ${msg.content}
                         <p class="text-xs mt-1 ${isSent ? 'text-blue-100' : 'text-gray-500'} text-right">
                             ${new Date(msg.created_at).toLocaleTimeString()}
@@ -749,6 +1369,8 @@
         
                 if (!error) {
                     document.getElementById('messageText').value = '';
+                    // 关闭表情包面板
+                    document.getElementById('emojiPanel').classList.add('hidden');
                     // 保底刷新
                     setTimeout(loadChatHistory, 300);
                 }
@@ -758,7 +1380,29 @@
             }
         }
         
-        // 设置聊天监听（保留原有逻辑）
+        // 切换表情包面板显示
+        function toggleEmojiPanel() {
+            const panel = document.getElementById('emojiPanel');
+            panel.classList.toggle('hidden');
+        }
+        
+        // 插入表情到消息框
+        function insertEmoji(emoji) {
+            const textarea = document.getElementById('messageText');
+            const cursorPos = textarea.selectionStart;
+            const textBefore = textarea.value.substring(0, cursorPos);
+            const textAfter = textarea.value.substring(cursorPos);
+            
+            // 插入表情
+            textarea.value = textBefore + emoji + textAfter;
+            
+            // 移动光标到表情后面
+            textarea.focus();
+            textarea.selectionStart = cursorPos + emoji.length;
+            textarea.selectionEnd = cursorPos + emoji.length;
+        }
+        
+        // 设置聊天监听
         function setupChatListener() {
             // 先取消现有监听
             if (chatSubscription) {
@@ -789,6 +1433,17 @@
         
         // 页面加载完成后初始化
         window.onload = initApp;
+        
+        // 页面关闭时更新状态为离线
+        window.addEventListener('beforeunload', () => {
+            if (currentUser && ['online', 'busy', 'away'].includes(currentUser.status)) {
+                // 发送状态更新请求（使用beacon确保在页面关闭前发送）
+                const url = `${supabase.url}/rest/v1/users?id=eq.${currentUser.id}`;
+                const body = JSON.stringify({ status: 'offline', last_active: new Date() });
+                
+                navigator.sendBeacon(url, body);
+            }
+        });
     </script>
 </body>
 </html>
