@@ -9,15 +9,15 @@
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Tailwind 配置 - 更丰富的色彩方案 -->
+    <!-- Tailwind 配置 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#6366f1', // 主色调：靛蓝色
-                        secondary: '#8b5cf6', // 辅助色：紫色
-                        accent: '#ec4899', // 强调色：粉色
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        accent: '#ec4899',
                         success: '#10b981',
                         warning: '#f59e0b',
                         danger: '#ef4444',
@@ -100,7 +100,6 @@
         <!-- 登录/注册区域 -->
         <div id="loginSection" class="max-w-md mx-auto mb-8 animate-fadeIn" style="animation-delay: 0.2s">
             <div class="card relative overflow-hidden">
-                <!-- 装饰元素 -->
                 <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full"></div>
                 <div class="absolute -bottom-10 -left-10 w-24 h-24 bg-secondary/10 rounded-full"></div>
                 
@@ -122,10 +121,16 @@
         <div id="userInfo" class="hidden text-center mb-6 animate-fadeIn">
             <div class="inline-flex items-center gap-3 bg-white rounded-full px-6 py-3 shadow-card">
                 <img id="userAvatar" src="https://picsum.photos/200/200" alt="用户头像" class="w-12 h-12 rounded-full border-2 border-primary avatar-pulse">
-                <p class="text-lg font-medium">当前登录：<span id="currentUser" class="font-bold text-primary"></span></p>
+                <div class="text-left">
+                    <p class="text-lg font-medium">当前登录：<span id="currentUser" class="font-bold text-primary"></span></p>
+                    <p id="userSignature" class="text-sm text-gray-500 mt-1">点击编辑个性签名</p>
+                </div>
+                <button id="editProfileBtn" class="ml-2 text-primary hover:text-primary/80">
+                    <i class="fa fa-pencil"></i>
+                </button>
             </div>
-            <button onclick="handleLogout()" class="text-sm text-danger hover:underline mt-2 transition-colors inline-flex items-center gap-1">
-                <i class="fa fa-sign-out"></i> 退出登录
+            <button onclick="handleLogout()" class="text-sm text-danger hover:underline mt-3">
+                <i class="fa fa-sign-out mr-1"></i> 退出登录
             </button>
         </div>
         
@@ -187,7 +192,7 @@
             <!-- 右侧：聊天区域 -->
             <div class="md:col-span-2">
                 <div id="chatSection" class="card h-full flex flex-col">
-                    <!-- 聊天标题 -->
+                    <!-- 聊天标题和搜索框 -->
                     <div id="chatHeader" class="border-b pb-4 mb-4">
                         <h3 class="font-bold text-xl flex items-center">
                             <span class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
@@ -195,6 +200,14 @@
                             </span>
                             <span id="chatWith">选择好友开始聊天</span>
                         </h3>
+                        <!-- 搜索框 -->
+                        <div id="searchContainer" class="mt-2 hidden">
+                            <div class="relative">
+                                <input type="text" id="messageSearch" placeholder="搜索聊天记录..." class="w-full px-3 py-2 pl-8 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <p id="searchTip" class="text-xs text-gray-500 mt-1 hidden">找到 X 条结果</p>
+                        </div>
                     </div>
                     
                     <!-- 聊天内容 -->
@@ -206,13 +219,66 @@
                     </div>
                     
                     <!-- 发送消息区域 -->
-                    <div id="messageInputArea" class="flex gap-3 hidden">
-                        <input type="text" id="messageText" placeholder="输入消息..." 
-                               class="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all shadow-sm">
-                        <button onclick="sendMessage()" class="btn btn-primary">
-                            <i class="fa fa-paper-plane mr-1"></i> 发送
+                    <div id="messageInputArea" class="flex gap-2 hidden">
+                        <textarea id="messageText" rows="2" placeholder="输入消息..." class="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"></textarea>
+                        <!-- 表情包按钮 -->
+                        <button id="emojiBtn" class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                            <i class="fa fa-smile-o text-lg"></i>
                         </button>
+                        <button onclick="sendMessage()" class="btn btn-primary">发送</button>
                     </div>
+                    
+                    <!-- 表情包面板 -->
+                    <div id="emojiPanel" class="hidden absolute bottom-16 left-4 right-4 md:left-auto md:right-4 bg-white rounded-xl shadow-hover p-3 grid grid-cols-8 gap-2 max-h-40 overflow-y-auto">
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😂</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😆</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🥳</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😎</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🥺</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😜</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">👍</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🎉</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🤔</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😋</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😤</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🥴</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😘</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🤩</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🙌</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">💪</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">👏</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😢</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😱</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🤯</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🥰</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">😡</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🤷</span>
+                        <span class="emoji-item text-xl cursor-pointer hover:scale-125 transition-transform">🙏</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 编辑个人资料弹窗 -->
+        <div id="profileModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 animate-fadeIn">
+                <h3 class="text-xl font-bold mb-4 text-primary">编辑个人资料</h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">个性签名</label>
+                    <input type="text" id="editSignature" placeholder="输入个性签名（不超过20字）" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">当前状态</label>
+                    <select id="editStatus" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <option value="在线">在线</option>
+                        <option value="学习中">学习中</option>
+                        <option value="摸鱼中">摸鱼中</option>
+                        <option value="离线">离线</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeProfileModal()" class="btn btn-secondary">取消</button>
+                    <button onclick="saveProfile()" class="btn btn-primary">保存</button>
                 </div>
             </div>
         </div>
@@ -232,6 +298,7 @@
         let selectedFriend = null;
         let supabase = null;
         let chatSubscription = null;
+        let currentMessages = []; // 存储当前聊天的所有消息（用于搜索）
         
         // DOM元素
         const loginSection = document.getElementById('loginSection');
@@ -239,6 +306,7 @@
         const mainContent = document.getElementById('mainContent');
         const currentUserEl = document.getElementById('currentUser');
         const userAvatarEl = document.getElementById('userAvatar');
+        const userSignatureEl = document.getElementById('userSignature');
         const loading = document.getElementById('loading');
         
         // 初始化Supabase客户端
@@ -288,10 +356,88 @@
                     currentUser = JSON.parse(savedUser);
                     showUserInterface();
                 }
+                
+                // 初始化表情包功能
+                initEmoji功能();
+                
+                // 初始化搜索功能
+                initSearch功能();
+                
+                // 初始化个人资料编辑功能
+                initProfileEdit功能();
             } catch (error) {
                 console.error('应用初始化失败:', error);
                 alert('初始化失败: ' + error.message);
             }
+        }
+        
+        // 初始化表情包功能
+        function initEmoji功能() {
+            // 表情包面板显示/隐藏
+            document.getElementById('emojiBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const panel = document.getElementById('emojiPanel');
+                panel.classList.toggle('hidden');
+            });
+            
+            // 点击表情包插入到输入框
+            document.querySelectorAll('.emoji-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const textarea = document.getElementById('messageText');
+                    // 在光标位置插入表情包
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const value = textarea.value;
+                    textarea.value = value.substring(0, start) + item.textContent + value.substring(end);
+                    textarea.focus();
+                });
+            });
+            
+            // 点击页面其他地方关闭表情包面板
+            document.addEventListener('click', () => {
+                document.getElementById('emojiPanel').classList.add('hidden');
+            });
+        }
+        
+        // 初始化搜索功能
+        function initSearch功能() {
+            // 搜索框输入事件（过滤消息）
+            document.getElementById('messageSearch').addEventListener('input', (e) => {
+                const keyword = e.target.value.trim().toLowerCase();
+                const container = document.getElementById('messages');
+                container.innerHTML = '';
+
+                if (!keyword) {
+                    // 无关键词：显示所有消息
+                    renderMessages(currentMessages);
+                    document.getElementById('searchTip').classList.add('hidden');
+                    return;
+                }
+
+                // 有关键词：过滤包含关键词的消息
+                const matchedMessages = currentMessages.filter(msg => 
+                    msg.content.toLowerCase().includes(keyword)
+                );
+
+                // 显示结果
+                renderMessages(matchedMessages);
+                // 显示提示
+                document.getElementById('searchTip').textContent = `找到 ${matchedMessages.length} 条结果`;
+                document.getElementById('searchTip').classList.remove('hidden');
+            });
+        }
+        
+        // 初始化个人资料编辑功能
+        function initProfileEdit功能() {
+            // 打开编辑弹窗
+            document.getElementById('editProfileBtn').addEventListener('click', () => {
+                if (!currentUser) return;
+                
+                // 填充当前用户的签名和状态
+                document.getElementById('editSignature').value = currentUser.signature || '';
+                document.getElementById('editStatus').value = currentUser.status || '在线';
+                document.getElementById('profileModal').classList.remove('hidden');
+            });
         }
         
         // 注册新用户
@@ -326,12 +472,14 @@
                     throw new Error('该昵称已被使用，请更换');
                 }
                 
-                // 创建新用户
+                // 创建新用户（包含默认的签名和状态）
                 const { data: newUser, error } = await supabase
                     .from('users')
                     .insert([{ 
                         username: username,
-                        avatar: `https://picsum.photos/seed/${username}/200`
+                        avatar: `https://picsum.photos/seed/${username}/200`,
+                        signature: '',
+                        status: '在线'
                     }])
                     .select('*')
                     .single();
@@ -398,6 +546,7 @@
         function handleLogout() {
             currentUser = null;
             selectedFriend = null;
+            currentMessages = [];
             localStorage.removeItem('friendSystemUser');
             
             if (chatSubscription) {
@@ -413,6 +562,7 @@
             document.getElementById('messages').innerHTML = 
                 '<div class="text-center text-gray-500 py-10"><i class="fa fa-comment text-3xl mb-3 opacity-20"></i><p class="text-sm italic">请从左侧好友列表中选择一位好友开始聊天</p></div>';
             document.getElementById('messageInputArea').classList.add('hidden');
+            document.getElementById('searchContainer').classList.add('hidden');
             
             alert('已退出登录');
         }
@@ -423,6 +573,7 @@
             
             currentUserEl.textContent = currentUser.username;
             userAvatarEl.src = currentUser.avatar || 'https://picsum.photos/200/200';
+            userSignatureEl.textContent = currentUser.signature || '点击编辑个性签名';
             
             loginSection.classList.add('hidden');
             userInfo.classList.remove('hidden');
@@ -484,7 +635,7 @@
             }
         }
         
-        // 加载好友列表
+        // 加载好友列表（带未读提示和状态显示）
         async function loadFriendsList() {
             if (!currentUser) return;
             
@@ -493,8 +644,8 @@
                     .from('friend_relations')
                     .select(`
                         id,
-                        sender:users!friend_relations_sender_id_fkey (id, username, avatar),
-                        receiver:users!friend_relations_receiver_id_fkey (id, username, avatar)
+                        sender:users!friend_relations_sender_id_fkey (id, username, avatar, status),
+                        receiver:users!friend_relations_receiver_id_fkey (id, username, avatar, status)
                     `)
                     .or(`and(sender_id.eq.${currentUser.id},status.eq.accepted),and(receiver_id.eq.${currentUser.id},status.eq.accepted)`)
                     .order('updated_at', { ascending: false });
@@ -519,6 +670,23 @@
                     }
                 });
                 
+                // 查询当前用户的未读消息（按发送方分组）
+                const { data: unreadMsgs, error: unreadError } = await supabase.rpc('exec_sql', {
+                    sql: `
+                        SELECT sender_id, count(*) as unread_count 
+                        FROM chat_messages 
+                        WHERE receiver_id = $1 AND is_read = false 
+                        GROUP BY sender_id
+                    `,
+                    params: [currentUser.id]
+                });
+                
+                // 把未读数量转成对象（方便匹配）
+                const unreadMap = {};
+                unreadMsgs?.forEach(msg => {
+                    unreadMap[msg.sender_id] = msg.unread_count;
+                });
+                
                 // 渲染好友列表
                 container.innerHTML = friends.map((friend, index) => `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-all animate-fadeIn" 
@@ -528,14 +696,13 @@
                             <img src="${friend.avatar}" alt="${friend.username}" 
                                  class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm avatar-pulse">
                             <div>
-                                <p class="font-medium">${friend.username}</p>
-                                <p class="text-xs text-gray-500">点击聊天</p>
+                                <p class="font-medium">${friend.username}
+                                    ${unreadMap[friend.id] ? `<span class="ml-2 inline-block w-2 h-2 bg-danger rounded-full"></span>` : ''}
+                                </p>
+                                <p class="text-xs text-gray-500">${friend.status || '在线'}</p>
                             </div>
                         </div>
-                        <button onclick="removeFriend('${friend.id}', event)" 
-                                class="text-danger hover:text-danger/80 transition-colors opacity-0 group-hover:opacity-100">
-                            <i class="fa fa-trash-o"></i>
-                        </button>
+                        ${unreadMap[friend.id] ? `<span class="bg-danger/10 text-danger text-xs px-2 py-1 rounded-full">${unreadMap[friend.id]}</span>` : ''}
                     </div>
                 `).join('');
             } catch (error) {
@@ -696,12 +863,13 @@
             
             document.getElementById('chatWith').textContent = `与 ${friendName} 聊天中`;
             document.getElementById('messageInputArea').classList.remove('hidden');
+            document.getElementById('searchContainer').classList.remove('hidden');
             
             loadChatHistory();
             setupChatListener();
         }
         
-        // 加载聊天历史记录
+        // 加载聊天历史记录（带已读状态标记）
         async function loadChatHistory() {
             if (!currentUser || !selectedFriend) return;
             
@@ -712,39 +880,71 @@
                     .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedFriend.id}),and(sender_id.eq.${selectedFriend.id},receiver_id.eq.${currentUser.id})`)
                     .order('created_at', { ascending: true });
                 
-                const container = document.getElementById('messages');
-                container.innerHTML = '';
+                // 保存到全局变量（用于搜索）
+                currentMessages = messages || [];
                 
-                if (error || !messages?.length) {
-                    container.innerHTML = '<div class="text-center text-gray-500 py-10"><i class="fa fa-comment-o text-3xl mb-3 opacity-20"></i><p class="text-sm italic">暂无聊天记录，开始对话吧！</p></div>';
-                    return;
+                renderMessages(currentMessages);
+                
+                // 标记已读：当前用户是接收方，且消息未读
+                if (messages.length > 0) {
+                    const unreadIds = messages
+                        .filter(msg => msg.receiver_id === currentUser.id && !msg.is_read)
+                        .map(msg => msg.id); // 收集未读消息的ID
+
+                    if (unreadIds.length > 0) {
+                        await supabase
+                            .from('chat_messages')
+                            .update({ is_read: true })
+                            .in('id', unreadIds); // 批量设为已读
+                        
+                        // 刷新好友列表的未读提示
+                        loadFriendsList();
+                    }
                 }
-                
-                // 显示每条消息
-                messages.forEach((msg, index) => {
-                    const isSent = msg.sender_id === currentUser.id;
-                    const messageEl = document.createElement('div');
-                    messageEl.className = `flex ${isSent ? 'justify-end' : 'justify-start'} animate-fadeIn`;
-                    messageEl.style.animationDelay = `${index * 0.05}s`;
-                    messageEl.innerHTML = `
-                        <div class="${isSent ? 'message-out' : 'message-in'} px-4 py-3 max-w-[80%] shadow-sm">
-                            <p>${msg.content}</p>
-                            <p class="text-xs mt-1 ${isSent ? 'text-blue-100' : 'text-gray-500'}">
-                                ${new Date(msg.created_at).toLocaleTimeString()}
-                            </p>
-                        </div>
-                    `;
-                    container.appendChild(messageEl);
-                });
-                
-                // 滚动到底部
-                container.scrollTop = container.scrollHeight;
                 
             } catch (error) {
                 console.error('加载聊天记录失败:', error);
                 document.getElementById('messages').innerHTML = 
                     `<p class="text-red-500 text-sm text-center py-6">加载消息失败: ${error.message}</p>`;
             }
+        }
+        
+        // 渲染消息（复用函数）
+        function renderMessages(messages) {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+
+            if (messages.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-10"><i class="fa fa-comment-o text-3xl mb-3 opacity-20"></i><p class="text-sm italic">暂无聊天记录，开始对话吧！</p></div>';
+                return;
+            }
+
+            messages.forEach((msg, index) => {
+                const isSent = msg.sender_id === currentUser.id;
+                const messageEl = document.createElement('div');
+                messageEl.className = `flex ${isSent ? 'justify-end' : 'justify-start'} animate-fadeIn`;
+                messageEl.style.animationDelay = `${index * 0.05}s`;
+                
+                // 已读状态显示（只针对发送的消息）
+                const readStatus = isSent ? 
+                    (msg.is_read ? '<span class="ml-2 text-xs text-gray-400"><i class="fa fa-check-circle"></i></span>' : '') : 
+                    '';
+                
+                messageEl.innerHTML = `
+                    <div class="${isSent ? 'message-out' : 'message-in'} px-4 py-3 max-w-[80%] shadow-sm">
+                        <p>${msg.content}</p>
+                        <div class="flex items-center justify-end mt-1">
+                            <p class="text-xs ${isSent ? 'text-blue-100' : 'text-gray-500'}">
+                                ${new Date(msg.created_at).toLocaleTimeString()}
+                            </p>
+                            ${readStatus}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(messageEl);
+            });
+
+            container.scrollTop = container.scrollHeight;
         }
         
         // 发送消息
@@ -766,7 +966,7 @@
                         sender_id: currentUser.id,
                         receiver_id: selectedFriend.id,
                         content: messageText,
-                        is_read: false
+                        is_read: false // 新消息默认未读
                     }]);
                 
                 if (error) throw new Error(error.message);
@@ -824,10 +1024,12 @@
                 // 如果正在和该好友聊天，关闭聊天界面
                 if (selectedFriend && selectedFriend.id === friendId) {
                     selectedFriend = null;
+                    currentMessages = [];
                     document.getElementById('chatWith').textContent = '选择好友开始聊天';
                     document.getElementById('messages').innerHTML = 
                         '<div class="text-center text-gray-500 py-10"><i class="fa fa-comment text-3xl mb-3 opacity-20"></i><p class="text-sm italic">请从左侧好友列表中选择一位好友开始聊天</p></div>';
                     document.getElementById('messageInputArea').classList.add('hidden');
+                    document.getElementById('searchContainer').classList.add('hidden');
                     
                     if (chatSubscription) {
                         chatSubscription.unsubscribe();
@@ -842,6 +1044,51 @@
                 alert('删除失败: ' + error.message);
             } finally {
                 hideLoading();
+            }
+        }
+        
+        // 关闭个人资料编辑弹窗
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+        
+        // 保存个人资料
+        async function saveProfile() {
+            const newSignature = document.getElementById('editSignature').value.trim();
+            const newStatus = document.getElementById('editStatus').value;
+
+            // 验证签名长度
+            if (newSignature.length > 20) {
+                alert('个性签名不能超过20字哦～');
+                return;
+            }
+
+            try {
+                // 更新users表
+                const { data, error } = await supabase
+                    .from('users')
+                    .update({
+                        signature: newSignature,
+                        status: newStatus
+                    })
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (error) throw new Error(error.message);
+
+                // 更新本地用户信息
+                currentUser.signature = newSignature;
+                currentUser.status = newStatus;
+                // 刷新界面显示
+                userSignatureEl.textContent = newSignature || '点击编辑个性签名';
+                alert('资料保存成功！');
+                closeProfileModal();
+                
+                // 刷新好友列表中的状态显示
+                loadFriendsList();
+            } catch (error) {
+                console.error('保存资料失败:', error);
+                alert('保存失败，请稍后再试～');
             }
         }
         
