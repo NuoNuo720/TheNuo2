@@ -1081,6 +1081,7 @@
                                 <span>系统功能</span>
                             </a>
                         </li>
+                        
                     </ul>
                 </div>
 
@@ -1088,6 +1089,12 @@
                 <div class="sidebar-section">
                     <h3 class="sidebar-title">快速访问</h3>
                     <ul class="sidebar-menu">
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="openFriendsSeries(event)">
+                                <i class="fas fa-users"></i>
+                                <span>好友列表</span>
+                            </a>
+                        </li>
                         <li class="sidebar-item">
                             <a href="#" class="sidebar-link" onclick="openEventsModal()">
                                 <i class="fas fa-calendar-alt"></i>
@@ -1224,7 +1231,7 @@
                         <p class="card-desc">匿名表白，勇敢说爱</p>
                     </div>
                     <!-- 用户中心分类 -->
-                    <div class="nav-card category-user" onclick="navigateTo('friends(个人主页).html')">
+                    <div class="nav-card category-user" onclick="openFriendsSeries()">
                         <div class="card-icon">
                             <i class="fas fa-users"></i>
                         </div>
@@ -1375,6 +1382,31 @@
                     </div>
                     <h3 class="card-title">English[Go Over]</h3>
                     <p class="card-desc">月考限时复习模式</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 好友登录方式选择模态框 -->
+    <div class="modal" id="friendsModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeFriendsModal()">&times;</span>
+            <h2 class="profile-title">选择登录方式</h2>
+            <div class="series-select-grid">
+                <div class="series-select-item" onclick="navigateTo('friends(密码更新).html')">
+                    <div class="card-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3 class="card-title">正版登录(测试阶段)</h3>
+                    <p class="card-desc">使用邮箱登录，安全可靠</p>
+                </div>
+                <div class="series-select-item" onclick="navigateTo('friends.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3 class="card-title">离线登录</h3>
+                    <p class="card-desc">创建用户名，直接聊天
+(请规范您的行为 若您多次未经允许登入他人账号中 接到反馈后半猫诺丷会第一时间封禁您的IP)</p>
                 </div>
             </div>
         </div>
@@ -1542,31 +1574,35 @@
             'learning': '学习系列',
             'tools': '实用工具',
             'user': '用户中心',
-            'system': '系统功能'
+            'system': '系统功能',
+            'friends': '好友列表'
         };
         const currentCategoryTitle = document.getElementById('currentCategoryTitle');
         const navCards = document.querySelectorAll('.nav-card');
 
         sidebarLinks.forEach(link => {
             link.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                // 更新活跃状态
-                sidebarLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                
-                // 更新标题
-                const category = link.getAttribute('data-category');
-                currentCategoryTitle.textContent = categoryTitles[category] || '所有功能';
-                
-                // 过滤卡片显示
-                navCards.forEach(card => {
-                    if (category === 'all' || card.classList.contains(`category-${category}`)) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
+                // 如果是好友列表链接，不执行默认的分类切换逻辑
+                if (link.getAttribute('data-category') !== 'friends') {
+                    e.preventDefault();
+                    
+                    // 更新活跃状态
+                    sidebarLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    // 更新标题
+                    const category = link.getAttribute('data-category');
+                    currentCategoryTitle.textContent = categoryTitles[category] || '所有功能';
+                    
+                    // 过滤卡片显示
+                    navCards.forEach(card => {
+                        if (category === 'all' || card.classList.contains(`category-${category}`)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                }
             });
         });
 
@@ -1628,6 +1664,16 @@
 
         function closeLearningModal() {
             closeModal('learningModal');
+        }
+
+        // 好友登录方式选择模态框控制
+        function openFriendsSeries(event) {
+            if (event) event.preventDefault();
+            openModal('friendsModal');
+        }
+
+        function closeFriendsModal() {
+            closeModal('friendsModal');
         }
 
         // 活动中心模态框
