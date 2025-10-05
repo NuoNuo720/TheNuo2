@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语选修一第一次月考知识点总结</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-md sticky top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-primary">
+                <i class="fa fa-book mr-2"></i>英语选修一知识点总结
+            </h1>
+            <a href="indexdaohang.html" class="bg-accent hover:bg-amber-600 text-white font-medium py-2 px-4 rounded-lg shadow transition-all flex items-center">
+                <i class="fa fa-home mr-2"></i>返回导航页
+            </a>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 考试概览 -->
+        <section class="mb-12 bg-white rounded-xl shadow-lg p-6 md:p-8">
+            <h2 class="text-[clamp(1.25rem,2.5vw,1.75rem)] font-bold text-dark mb-4 border-b-2 border-primary pb-2">
+                <i class="fa fa-info-circle mr-2 text-primary"></i>第一次月考概览
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-blue-50 p-5 rounded-lg">
+                    <h3 class="font-semibold text-lg mb-2 text-primary">考试范围</h3>
+                    <p>主要考察英语选修一第1-2单元的内容，包括核心词汇、重点句型、语法点及相关阅读写作技能。</p>
+                </div>
+                <div class="bg-green-50 p-5 rounded-lg">
+                    <h3 class="font-semibold text-lg mb-2 text-secondary">考试重点</h3>
+                    <p>侧重考查学生对时态语态的掌握、从句的运用、核心词汇辨析及阅读理解能力。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 知识点卡片容器 -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- 核心词汇卡片 -->
+            <section class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fa fa-language mr-2"></i>核心词汇
+                    </h2>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-lg mb-3 text-gray-700">Unit 1 重点词汇</h3>
+                    <ul class="space-y-2 mb-4">
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>frustration</strong> n. 挫折；失望</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>overcome</strong> vt. 克服；战胜</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>motivate</strong> vt. 激励；激发</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>persistence</strong> n. 坚持；毅力</span>
+                        </li>
+                    </ul>
+                    
+                    <h3 class="font-semibold text-lg mb-3 text-gray-700">Unit 2 重点词汇</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>distinguish</strong> vt. 区分；辨别</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>associate</strong> vt. 联想；联系</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>acquire</strong> vt. 获得；取得</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-circle text-xs text-primary mt-1.5 mr-2"></i>
+                            <span><strong>adequate</strong> adj. 足够的；适当的</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 重点句型卡片 -->
+            <section class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-secondary text-white p-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fa fa-comment mr-2"></i>重点句型
+                    </h2>
+                </div>
+                <div class="p-5">
+                    <ul class="space-y-4">
+                        <li>
+                            <p class="font-medium">It's + adj. + that 从句</p>
+                            <p class="text-gray-600 text-sm">It's important that we (should) learn from our mistakes.</p>
+                        </li>
+                        <li>
+                            <p class="font-medium">so/such ... that ...</p>
+                            <p class="text-gray-600 text-sm">He was so tired that he fell asleep immediately.</p>
+                        </li>
+                        <li>
+                            <p class="font-medium">There's no doubt that ...</p>
+                            <p class="text-gray-600 text-sm">There's no doubt that practice makes perfect.</p>
+                        </li>
+                        <li>
+                            <p class="font-medium">分词作状语</p>
+                            <p class="text-gray-600 text-sm">Having finished his homework, he started to watch TV.</p>
+                        </li>
+                        <li>
+                            <p class="font-medium">as引导的让步状语从句</p>
+                            <p class="text-gray-600 text-sm">Young as he is, he knows a lot about English.</p>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 语法点卡片 -->
+            <section class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-accent text-white p-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fa fa-cogs mr-2"></i>语法要点
+                    </h2>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-lg mb-3 text-gray-700">动词时态</h3>
+                    <ul class="space-y-2 mb-4">
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-accent mr-2"></i>
+                            <span>现在完成时与一般过去时的区别</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-accent mr-2"></i>
+                            <span>将来完成时的用法</span>
+                        </li>
+                    </ul>
+                    
+                    <h3 class="font-semibold text-lg mb-3 text-gray-700">从句</h3>
+                    <ul class="space-y-2 mb-4">
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-accent mr-2"></i>
+                            <span>定语从句关系代词的选用</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-accent mr-2"></i>
+                            <span>状语从句的连接词</span>
+                        </li>
+                    </ul>
+                    
+                    <h3 class="font-semibold text-lg mb-3 text-gray-700">非谓语动词</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-accent mr-2"></i>
+                            <span>现在分词与过去分词的区别</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-accent mr-2"></i>
+                            <span>不定式作状语的用法</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 阅读理解技巧卡片 -->
+            <section class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-purple-500 text-white p-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fa fa-book mr-2"></i>阅读理解技巧
+                    </h2>
+                </div>
+                <div class="p-5">
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fa fa-lightbulb-o text-purple-500 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">主旨大意题</p>
+                                <p class="text-gray-600 text-sm">注意首尾段和每段首尾句，寻找主题句</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-lightbulb-o text-purple-500 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">细节理解题</p>
+                                <p class="text-gray-600 text-sm">带着问题找答案，注意关键词定位</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-lightbulb-o text-purple-500 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">推理判断题</p>
+                                <p class="text-gray-600 text-sm">根据原文信息合理推断，不主观臆断</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-lightbulb-o text-purple-500 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">词义猜测题</p>
+                                <p class="text-gray-600 text-sm">结合上下文语境，利用同义、反义关系猜测</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 写作指导卡片 -->
+            <section class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-red-500 text-white p-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fa fa-pencil mr-2"></i>写作指导
+                    </h2>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-lg mb-3 text-gray-700">应用文写作</h3>
+                    <p class="text-gray-600 mb-3">本次月考可能涉及建议信或演讲稿，注意格式规范和语气恰当。</p>
+                    
+                    <h3 class="font-semibold text-lg mb-3 text-gray-700">写作技巧</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-red-500 mr-2 mt-1"></i>
+                            <span>合理分段，每段表达一个中心思想</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-red-500 mr-2 mt-1"></i>
+                            <span>使用连接词使文章逻辑清晰</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-red-500 mr-2 mt-1"></i>
+                            <span>句式多样，避免简单句堆砌</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-red-500 mr-2 mt-1"></i>
+                            <span>注意时态一致和主谓一致</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 易错点提示卡片 -->
+            <section class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-gray-700 text-white p-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fa fa-exclamation-triangle mr-2"></i>易错点提示
+                    </h2>
+                </div>
+                <div class="p-5">
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fa fa-times-circle text-gray-700 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">时态混用</p>
+                                <p class="text-gray-600 text-sm">特别是现在完成时与一般过去时的错误使用</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-times-circle text-gray-700 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">冠词遗漏或误用</p>
+                                <p class="text-gray-600 text-sm">尤其注意可数名词单数前的冠词使用</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-times-circle text-gray-700 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">主谓不一致</p>
+                                <p class="text-gray-600 text-sm">当主语为集合名词或不定代词时容易出错</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-times-circle text-gray-700 mr-2 mt-1"></i>
+                            <div>
+                                <p class="font-medium">介词搭配错误</p>
+                                <p class="text-gray-600 text-sm">如depend on, consist of等固定搭配</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 备考建议 -->
+        <section class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-12">
+            <h2 class="text-[clamp(1.25rem,2.5vw,1.75rem)] font-bold text-dark mb-4 border-b-2 border-primary pb-2">
+                <i class="fa fa-graduation-cap mr-2 text-primary"></i>备考建议
+            </h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="border border-blue-100 rounded-lg p-5 hover:border-primary transition-colors">
+                    <div class="text-primary text-2xl mb-3">
+                        <i class="fa fa-repeat"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2">强化记忆</h3>
+                    <p class="text-gray-600">每天坚持背诵核心词汇和短语，利用艾宾浩斯记忆法定期复习，巩固记忆效果。</p>
+                </div>
+                <div class="border border-blue-100 rounded-lg p-5 hover:border-primary transition-colors">
+                    <div class="text-primary text-2xl mb-3">
+                        <i class="fa fa-pencil-square-o"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2">多做练习</h3>
+                    <p class="text-gray-600">针对语法薄弱点进行专项练习，完成课后习题和模拟试题，提高解题能力。</p>
+                </div>
+                <div class="border border-blue-100 rounded-lg p-5 hover:border-primary transition-colors">
+                    <div class="text-primary text-2xl mb-3">
+                        <i class="fa fa-comments"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2">注重应用</h3>
+                    <p class="text-gray-600">尝试用所学词汇和句型进行造句和写作练习，提高语言运用能力和应试技巧。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 返回导航页按钮（固定在底部方便访问） -->
+        <div class="fixed bottom-6 right-6 z-40">
+            <a href="indexdaohang.html" class="bg-accent hover:bg-amber-600 text-white font-medium py-3 px-6 rounded-full shadow-lg transition-all flex items-center">
+                <i class="fa fa-arrow-left mr-2"></i>返回导航页
+            </a>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>英语选修一第一次月考知识点总结 &copy; 2023</p>
+            <p class="text-gray-400 text-sm mt-2">祝考试顺利，取得优异成绩！</p>
+        </div>
+    </footer>
+
+    <script>
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('py-2');
+                header.classList.remove('py-4');
+            } else {
+                header.classList.add('py-4');
+                header.classList.remove('py-2');
+            }
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
