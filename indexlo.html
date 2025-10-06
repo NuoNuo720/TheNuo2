@@ -259,6 +259,7 @@
                 cursor: pointer;
                 font-size: 0.9rem;
                 transition: all 0.2s ease;
+                position: relative;
             }
             
             .login-tab.active {
@@ -266,6 +267,23 @@
                 border-bottom-color: white;
                 font-weight: 500;
                 color: #007bff;
+            }
+            
+            /* 新增推荐标识样式 */
+            .recommended-tag {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background-color: #ff5722;
+                color: white;
+                font-size: 0.7rem;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
             }
             
             .tab-content {
@@ -348,10 +366,13 @@
             <div class="error-message" id="errorMsg"></div>
             <div class="success-message" id="successMsg"></div>
             
-            <!-- 新增登录选项标签 -->
+            <!-- 新增登录选项标签 - 添加了推荐标识 -->
             <div class="login-options">
                 <div class="login-tab active" data-tab="online-login">在线登录</div>
-                <div class="login-tab" data-tab="offline-login">离线登录</div>
+                <div class="login-tab" data-tab="offline-login">
+                    离线登录
+                    <span class="recommended-tag">荐</span>
+                </div>
             </div>
             
             <!-- 在线登录表单（原有内容） -->
@@ -631,7 +652,7 @@
                 }
             });
 
-            // 以下是新增的离线登录功能代码
+            // 离线登录功能代码
             function initOfflineLogin() {
                 // 切换登录标签
                 document.querySelectorAll('.login-tab').forEach(tab => {

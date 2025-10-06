@@ -44,6 +44,24 @@
             .game-container {
                 perspective: 1000px;
             }
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border-width: 0;
+            }
+            .animate-slide-in {
+                animation: slideIn 0.3s ease-out forwards;
+            }
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
         }
         
         @keyframes float {
@@ -98,6 +116,9 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-neutral to-slate-900 text-white min-h-screen font-sans overflow-x-hidden">
+    <!-- 屏幕阅读器状态通知 -->
+    <div aria-live="polite" class="sr-only" id="statusAnnouncer"></div>
+    
     <!-- 游戏容器 -->
     <div class="container mx-auto px-3 py-4 max-w-6xl">
         <!-- 游戏标题 -->
@@ -122,7 +143,7 @@
                 <i class="fa fa-clock-o text-green-400 mr-2"></i>
                 <span>剩余时间: <span id="timer" class="font-bold">30</span>s</span>
             </div>
-            <button id="restartBtn" class="bg-primary hover:bg-primary/80 transition-colors px-3 py-2 rounded-lg flex items-center text-sm">
+            <button id="restartBtn" class="bg-primary hover:bg-primary/80 transition-colors px-3 py-2 rounded-lg flex items-center text-sm" aria-label="重启当前关卡">
                 <i class="fa fa-refresh mr-1"></i> 重启系统
             </button>
         </div>
@@ -149,6 +170,10 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 成就通知容器 -->
+        <div id="achievementContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs"></div>
+        
         <!-- 游戏区域 - 自适应高度 -->
         <div id="gameArea" class="game-container relative bg-slate-900/60 backdrop-blur-sm rounded-xl overflow-hidden border-2 border-slate-700 mb-4 transition-opacity duration-500" style="height: clamp(300px, 50vh, 500px);">
             <!-- 电子 -->
@@ -167,19 +192,19 @@
         <div class="bg-slate-800/70 backdrop-blur-sm rounded-lg p-3 mb-4">
             <h3 class="text-center text-base font-semibold mb-2">电场控制中心</h3>
             <div class="flex justify-center gap-3 md:gap-6 flex-wrap">
-                <button id="leftFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn">
+                <button id="leftFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn" aria-label="应用左电场，电子向右移动">
                     <i class="fa fa-arrow-left text-field text-2xl mb-1 control-icon"></i>
                     <span>左电场</span>
                 </button>
-                <button id="rightFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn">
+                <button id="rightFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn" aria-label="应用右电场，电子向左移动">
                     <i class="fa fa-arrow-right text-field text-2xl mb-1 control-icon"></i>
                     <span>右电场</span>
                 </button>
-                <button id="upFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn">
+                <button id="upFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn" aria-label="应用上电场，电子向下移动">
                     <i class="fa fa-arrow-up text-field text-2xl mb-1 control-icon"></i>
                     <span>上电场</span>
                 </button>
-                <button id="downFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn">
+                <button id="downFieldBtn" class="bg-slate-700 hover:bg-slate-600 transition-all px-6 py-3 rounded-lg field-glow flex flex-col items-center control-btn" aria-label="应用下电场，电子向上移动">
                     <i class="fa fa-arrow-down text-field text-2xl mb-1 control-icon"></i>
                     <span>下电场</span>
                 </button>
@@ -199,6 +224,11 @@
                 </div>
             </div>
         </div>
+    </div>
+    
+    <!-- 移动设备虚拟摇杆 -->
+    <div id="virtualJoystick" class="fixed bottom-20 left-6 w-24 h-24 bg-slate-800/50 rounded-full backdrop-blur-sm z-40 hidden">
+        <div id="joystickHandle" class="absolute w-12 h-12 bg-primary rounded-full electron-glow left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
     </div>
     
     <script>
@@ -234,7 +264,84 @@
             isPlaying: false,
             gameLoop: null,
             minObstacleDistance: 80,
-            baseObstacleSize: 36
+            baseObstacleSize: 36,
+            consecutiveLevels: 0, // 连续完成的关卡数，用于成就系统
+            currentLevelTime: 0,  // 当前关卡用时
+            levelStartTime: 0     // 关卡开始时间
+        };
+        
+        // 成就系统
+        const achievements = {
+            list: [
+                { id: 'first_win', name: '初次成功', description: '完成第一关', completed: false, points: 100 },
+                { id: 'speed_run', name: '闪电速度', description: '10秒内完成一关', completed: false, points: 200 },
+                { id: 'perfect', name: '完美操作', description: '用少于5步完成关卡', completed: false, points: 150 },
+                { id: 'survivor', name: '生存大师', description: '连续完成5关', completed: false, points: 300 }
+            ],
+            
+            checkConditions(levelStats) {
+                // 检查各项成就条件
+                if (levelStats.level === 1 && levelStats.success) {
+                    this.unlock('first_win');
+                }
+                
+                if (levelStats.timeTaken < 10 && levelStats.success) {
+                    this.unlock('speed_run');
+                }
+                
+                if (levelStats.moves < 5 && levelStats.success) {
+                    this.unlock('perfect');
+                }
+                
+                if (levelStats.consecutiveLevels >= 5 && levelStats.success) {
+                    this.unlock('survivor');
+                }
+            },
+            
+            unlock(id) {
+                const achievement = this.list.find(a => a.id === id);
+                if (achievement && !achievement.completed) {
+                    achievement.completed = true;
+                    gameState.score += achievement.points;
+                    elements.scoreDisplay.textContent = gameState.score;
+                    this.showNotification(achievement);
+                    this.save();
+                    announceStatus(`解锁成就: ${achievement.name}，获得${achievement.points}分`);
+                }
+            },
+            
+            showNotification(achievement) {
+                const container = document.getElementById('achievementContainer');
+                const notification = document.createElement('div');
+                notification.className = 'bg-green-500 text-white p-3 rounded-lg animate-slide-in shadow-lg';
+                notification.innerHTML = `
+                    <h3 class="font-bold">解锁成就: ${achievement.name}</h3>
+                    <p class="text-sm">${achievement.description} +${achievement.points}分</p>
+                `;
+                container.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                    setTimeout(() => notification.remove(), 500);
+                }, 3000);
+            },
+            
+            save() {
+                try {
+                    localStorage.setItem('electronAdventureAchievements', JSON.stringify(this.list));
+                } catch (e) {
+                    console.error('无法保存成就:', e);
+                }
+            },
+            
+            load() {
+                try {
+                    const saved = localStorage.getItem('electronAdventureAchievements');
+                    if (saved) this.list = JSON.parse(saved);
+                } catch (e) {
+                    console.error('无法加载成就:', e);
+                }
+            }
         };
         
         // 排行榜相关函数
@@ -407,11 +514,30 @@
             messageModal: document.getElementById('messageModal'),
             modalTitle: document.getElementById('modalTitle'),
             modalMessage: document.getElementById('modalMessage'),
-            modalBtn: document.getElementById('modalBtn')
+            modalBtn: document.getElementById('modalBtn'),
+            statusAnnouncer: document.getElementById('statusAnnouncer')
         };
+        
+        // 屏幕阅读器通知
+        function announceStatus(message) {
+            elements.statusAnnouncer.textContent = '';
+            // 使用setTimeout确保屏幕阅读器能捕捉到文本变化
+            setTimeout(() => {
+                elements.statusAnnouncer.textContent = message;
+            }, 100);
+        }
         
         // 初始化游戏
         function initGame() {
+            // 增强错误处理
+            enhanceErrorHandling();
+            
+            // 检查浏览器支持
+            checkBrowserSupport();
+            
+            // 初始化成就系统
+            achievements.load();
+            
             // 初始化排行榜
             console.log('初始化排行榜...');
             rankingSystem.init();
@@ -434,6 +560,9 @@
                 elements.upFieldBtn,
                 elements.downFieldBtn
             ];
+            
+            // 增强按钮反馈
+            enhanceButtonFeedback();
             
             // 添加事件监听器
             elements.leftFieldBtn.addEventListener('click', () => applyField('left'));
@@ -468,6 +597,8 @@
                 if (gameState.isPlaying) {
                     setRandomTargetPosition();
                 }
+                // 调整虚拟摇杆显示
+                adjustVirtualJoystick();
             });
             
             // 排行榜按钮事件
@@ -480,6 +611,9 @@
             document.getElementById('closeRankingBtn').addEventListener('click', () => {
                 document.getElementById('rankingModal').classList.add('hidden');
             });
+            
+            // 添加虚拟摇杆（移动设备）
+            addVirtualJoystick();
             
             // 开始第一关
             showMessage('能量系统紧急告警', 
@@ -650,10 +784,18 @@
             }, 1000);
         }
         
-        // 创建电场视觉效果
+        // 创建电场视觉效果（使用对象池优化）
         function createFieldEffect(direction) {
-            const fieldEffect = document.createElement('div');
-            fieldEffect.className = 'absolute bg-field/20 field-glow transition-opacity duration-500';
+            // 复用现有元素而非每次创建新元素
+            let fieldEffect = document.querySelector('.field-effect.hidden');
+            if (!fieldEffect) {
+                fieldEffect = document.createElement('div');
+                fieldEffect.className = 'field-effect absolute bg-field/20 field-glow transition-opacity duration-500';
+                gameState.gameArea.appendChild(fieldEffect);
+            } else {
+                fieldEffect.classList.remove('hidden');
+                fieldEffect.style.opacity = '1';
+            }
             
             // 根据方向设置电场效果的位置和大小
             if (direction === 'left') {
@@ -678,15 +820,11 @@
                 fieldEffect.style.bottom = '0';
             }
             
-            gameState.gameArea.appendChild(fieldEffect);
-            
             // 电场效果显示时间
             setTimeout(() => {
                 fieldEffect.style.opacity = '0';
                 setTimeout(() => {
-                    if (fieldEffect.parentNode) {
-                        gameState.gameArea.removeChild(fieldEffect);
-                    }
+                    fieldEffect.classList.add('hidden');
                 }, 500);
             }, 500);
         }
@@ -708,27 +846,81 @@
             const electronCenterX = gameState.electron.x + gameState.electron.size/2;
             const electronCenterY = gameState.electron.y + gameState.electron.size/2;
             
-            // 检查与质子的碰撞
-            for (let i = 0; i < gameState.protons.length; i++) {
-                const proton = gameState.protons[i];
-                const dx = Math.abs(electronCenterX - (proton.x + proton.size/2));
-                const dy = Math.abs(electronCenterY - (proton.y + proton.size/2));
-                
-                if (dx < (gameState.electron.size + proton.size)/2 && dy < (gameState.electron.size + proton.size)/2) {
-                    gameOver('碰撞质子！', '电子与质子相互吸引发生碰撞');
-                    return;
+            // 使用空间分区优化碰撞检测
+            checkProtonCollisionWithSpatialPartition(electronCenterX, electronCenterY);
+            checkTrapCollisionWithSpatialPartition(electronCenterX, electronCenterY);
+        }
+        
+        // 使用空间分区优化质子碰撞检测
+        function checkProtonCollisionWithSpatialPartition(electronCenterX, electronCenterY) {
+            const gridSize = 100;
+            const grid = {};
+            
+            // 初始化网格
+            gameState.protons.forEach(proton => {
+                const gridX = Math.floor(proton.x / gridSize);
+                const gridY = Math.floor(proton.y / gridSize);
+                const key = `${gridX},${gridY}`;
+                if (!grid[key]) grid[key] = [];
+                grid[key].push(proton);
+            });
+            
+            // 检测时只检查电子所在网格及相邻网格
+            const electronGridX = Math.floor(electronCenterX / gridSize);
+            const electronGridY = Math.floor(electronCenterY / gridSize);
+            
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const key = `${electronGridX + dx},${electronGridY + dy}`;
+                    if (grid[key]) {
+                        // 只检查这些质子
+                        grid[key].forEach(proton => {
+                            const dx = Math.abs(electronCenterX - (proton.x + proton.size/2));
+                            const dy = Math.abs(electronCenterY - (proton.y + proton.size/2));
+                            
+                            if (dx < (gameState.electron.size + proton.size)/2 && dy < (gameState.electron.size + proton.size)/2) {
+                                gameOver('碰撞质子！', '电子与质子相互吸引发生碰撞');
+                                return;
+                            }
+                        });
+                    }
                 }
             }
+        }
+        
+        // 使用空间分区优化陷阱碰撞检测
+        function checkTrapCollisionWithSpatialPartition(electronCenterX, electronCenterY) {
+            const gridSize = 100;
+            const grid = {};
             
-            // 检查与陷阱的碰撞
-            for (let i = 0; i < gameState.traps.length; i++) {
-                const trap = gameState.traps[i];
-                const dx = Math.abs(electronCenterX - (trap.x + trap.size/2));
-                const dy = Math.abs(electronCenterY - (trap.y + trap.size/2));
-                
-                if (dx < (gameState.electron.size + trap.size)/2 && dy < (gameState.electron.size + trap.size)/2) {
-                    gameOver('触发电场陷阱！', '电子进入了不稳定的电场区域');
-                    return;
+            // 初始化网格
+            gameState.traps.forEach(trap => {
+                const gridX = Math.floor(trap.x / gridSize);
+                const gridY = Math.floor(trap.y / gridSize);
+                const key = `${gridX},${gridY}`;
+                if (!grid[key]) grid[key] = [];
+                grid[key].push(trap);
+            });
+            
+            // 检测时只检查电子所在网格及相邻网格
+            const electronGridX = Math.floor(electronCenterX / gridSize);
+            const electronGridY = Math.floor(electronCenterY / gridSize);
+            
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const key = `${electronGridX + dx},${electronGridY + dy}`;
+                    if (grid[key]) {
+                        // 只检查这些陷阱
+                        grid[key].forEach(trap => {
+                            const dx = Math.abs(electronCenterX - (trap.x + trap.size/2));
+                            const dy = Math.abs(electronCenterY - (trap.y + trap.size/2));
+                            
+                            if (dx < (gameState.electron.size + trap.size)/2 && dy < (gameState.electron.size + trap.size)/2) {
+                                gameOver('触发电场陷阱！', '电子进入了不稳定的电场区域');
+                                return;
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -867,27 +1059,41 @@
             }
         }
         
-        // 根据屏幕尺寸调整障碍物数量
+        // 根据屏幕尺寸和玩家表现调整障碍物数量
         function getObstacleCount() {
-            let protonCount, trapCount;
+            // 计算玩家表现因子
+            const performanceFactor = gameState.score / Math.max(gameState.moves, 1);
+            
+            // 基础障碍物数量
+            let baseObstacles = Math.min(5, Math.floor(gameState.level / 2));
+            
+            // 根据表现调整
+            if (performanceFactor > 100) {
+                baseObstacles += 1; // 表现好，增加难度
+            } else if (performanceFactor < 30) {
+                baseObstacles = Math.max(1, baseObstacles - 1); // 表现差，降低难度
+            }
             
             // 小屏幕减少障碍物数量
             if (window.innerWidth < 640) {
-                protonCount = Math.min(1 + Math.floor(gameState.level / 4), 3);
-                trapCount = Math.min(0 + Math.floor((gameState.level - 3) / 5), 1);
+                return {
+                    protonCount: Math.min(1 + Math.floor(baseObstacles / 2), 3),
+                    trapCount: Math.min(0 + Math.floor((baseObstacles - 3) / 5), 1)
+                };
             } else {
                 // 大屏幕正常数量
-                protonCount = Math.min(2 + Math.floor(gameState.level / 2), 6);
-                trapCount = Math.min(1 + Math.floor((gameState.level - 1) / 3), 4);
+                return {
+                    protonCount: Math.min(2 + Math.floor(baseObstacles / 2), 6),
+                    trapCount: Math.min(1 + Math.floor((baseObstacles - 1) / 3), 4)
+                };
             }
-            
-            return { protonCount, trapCount };
         }
         
         // 开始关卡
         function startLevel() {
             // 重置游戏状态
             gameState.moves = 0;
+            gameState.levelStartTime = Date.now(); // 记录关卡开始时间
             gameState.timeLeft = 30 + (gameState.level - 1) * 5;
             resetElectronPosition();
             setRandomTargetPosition();
@@ -895,6 +1101,8 @@
             // 更新显示
             elements.levelDisplay.textContent = gameState.level;
             elements.timerDisplay.textContent = gameState.timeLeft;
+            
+            announceStatus(`开始第${gameState.level}关，剩余时间${gameState.timeLeft}秒`);
             
             // 根据屏幕尺寸获取障碍物数量并创建
             const { protonCount, trapCount } = getObstacleCount();
@@ -924,28 +1132,31 @@
             }, 1000);
             
             // 启动游戏循环
-            if (gameState.gameLoop) {
-                cancelAnimationFrame(gameState.gameLoop);
-            }
-            gameState.gameLoop = requestAnimationFrame(gameLoop); 
+            startGameLoop();
             
             gameState.isPlaying = true;
         }
         
-        let lastFrameTime = 0;
-        const maxFps = 30; // 限制帧率平衡性能
-        const frameInterval = 1000 / maxFps;
-        
-        // 游戏主循环
-        function gameLoop(timestamp) {
-            if (!timestamp) timestamp = performance.now();
-            if (timestamp - lastFrameTime < frameInterval) {
-                gameState.gameLoop = requestAnimationFrame(gameLoop);
-                return;
-            }
-            lastFrameTime = timestamp;
+        // 使用requestAnimationFrame优化游戏循环
+        function startGameLoop() {
+            if (gameState.gameLoop) cancelAnimationFrame(gameState.gameLoop);
             
-            updateElectronPosition();
+            let lastFrameTime = 0;
+            const maxFps = 30; // 限制帧率平衡性能
+            const frameInterval = 1000 / maxFps;
+            
+            const gameLoop = (timestamp) => {
+                if (!timestamp) timestamp = performance.now();
+                if (timestamp - lastFrameTime < frameInterval) {
+                    gameState.gameLoop = requestAnimationFrame(gameLoop);
+                    return;
+                }
+                lastFrameTime = timestamp;
+                
+                updateElectronPosition();
+                gameState.gameLoop = requestAnimationFrame(gameLoop);
+            };
+            
             gameState.gameLoop = requestAnimationFrame(gameLoop);
         }
         
@@ -961,6 +1172,10 @@
             
             gameState.isPlaying = false;
             
+            // 计算关卡用时
+            gameState.currentLevelTime = Math.round((Date.now() - gameState.levelStartTime) / 1000);
+            gameState.consecutiveLevels++; // 增加连续关卡计数
+            
             // 计算得分
             const timeBonus = gameState.timeLeft * 10;
             const movePenalty = Math.min(gameState.moves * 5, 100);
@@ -969,6 +1184,15 @@
             
             // 更新显示
             elements.scoreDisplay.textContent = gameState.score;
+            
+            // 检查成就
+            achievements.checkConditions({
+                level: gameState.level,
+                success: true,
+                moves: gameState.moves,
+                timeTaken: gameState.currentLevelTime,
+                consecutiveLevels: gameState.consecutiveLevels
+            });
             
             // 关卡过渡动画
             elements.gameArea.style.opacity = '0.5';
@@ -992,6 +1216,8 @@
                 levelMessage = `第${gameState.level - 1}阶段修复完成，系统能量提升！`;
             }
             
+            announceStatus(`第${gameState.level - 1}关完成，获得${levelScore}分，总分${gameState.score}分`);
+            
             // 恢复游戏区域透明度并显示消息
             setTimeout(() => {
                 elements.gameArea.style.opacity = '1';
@@ -1013,6 +1239,9 @@
             gameState.timerInterval = null;
             gameState.gameLoop = null;
             
+            // 重置连续关卡计数
+            gameState.consecutiveLevels = 0;
+            
             // 失败原因说明
             let failReason = '';
             if (title === '碰撞质子！') {
@@ -1027,6 +1256,8 @@
             console.log('游戏结束，添加分数:', gameState.score);
             const added = rankingSystem.addScore(gameState.score);
             console.log('分数添加结果:', added ? '成功' : '失败');
+            
+            announceStatus(`${title}，最终得分${gameState.score}分`);
             
             showMessage(
                 `系统修复失败`,
@@ -1050,6 +1281,7 @@
             // 重置游戏状态
             gameState.level = 1;
             gameState.score = 0;
+            gameState.consecutiveLevels = 0;
             gameState.minObstacleDistance = window.innerWidth < 640 ? 60 : 80;
             
             // 更新显示
@@ -1067,6 +1299,148 @@
             elements.modalMessage.innerHTML = message;
             elements.modalBtn.textContent = buttonText;
             elements.messageModal.classList.remove('hidden');
+        }
+        
+        // 增强按钮反馈
+        function enhanceButtonFeedback() {
+            gameState.fieldButtons.forEach(btn => {
+                // 按钮按下视觉反馈
+                btn.addEventListener('mousedown', () => {
+                    btn.classList.add('scale-95', 'bg-slate-600');
+                });
+                
+                btn.addEventListener('mouseup', () => {
+                    btn.classList.remove('scale-95', 'bg-slate-600');
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    btn.classList.remove('scale-95', 'bg-slate-600');
+                });
+                
+                // 触摸设备支持
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    btn.classList.add('scale-95', 'bg-slate-600');
+                });
+                
+                btn.addEventListener('touchend', () => {
+                    btn.classList.remove('scale-95', 'bg-slate-600');
+                });
+                
+                // 添加触觉反馈（如果支持）
+                btn.addEventListener('click', () => {
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(50);
+                    }
+                });
+            });
+        }
+        
+        // 为移动设备添加虚拟摇杆
+        function addVirtualJoystick() {
+            const joystickContainer = document.getElementById('virtualJoystick');
+            const joystickHandle = document.getElementById('joystickHandle');
+            
+            // 根据屏幕尺寸决定是否显示
+            adjustVirtualJoystick();
+            
+            let isDragging = false;
+            const centerX = 12; // 容器宽度的一半 (24/2)
+            const centerY = 12; // 容器高度的一半 (24/2)
+            const maxDistance = 40;
+            
+            // 触摸事件处理
+            joystickContainer.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                e.preventDefault();
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (!isDragging || !gameState.isPlaying) return;
+                
+                const rect = joystickContainer.getBoundingClientRect();
+                const touchX = e.touches[0].clientX - rect.left;
+                const touchY = e.touches[0].clientY - rect.top;
+                
+                const dx = touchX - centerX;
+                const dy = touchY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 限制在最大距离内
+                const limitedDistance = Math.min(distance, maxDistance);
+                const angle = Math.atan2(dy, dx);
+                
+                // 更新摇杆位置
+                joystickHandle.style.left = `${centerX + Math.cos(angle) * limitedDistance}px`;
+                joystickHandle.style.top = `${centerY + Math.sin(angle) * limitedDistance}px`;
+                
+                // 确定方向并应用电场
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    applyField(dx > 0 ? 'right' : 'left');
+                } else {
+                    applyField(dy > 0 ? 'down' : 'up');
+                }
+            });
+            
+            document.addEventListener('touchend', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    // 重置摇杆位置
+                    joystickHandle.style.left = '50%';
+                    joystickHandle.style.top = '50%';
+                }
+            });
+        }
+        
+        // 根据屏幕尺寸调整虚拟摇杆显示
+        function adjustVirtualJoystick() {
+            const joystick = document.getElementById('virtualJoystick');
+            if (window.innerWidth < 640) {
+                joystick.classList.remove('hidden');
+            } else {
+                joystick.classList.add('hidden');
+            }
+        }
+        
+        // 增强错误处理
+        function enhanceErrorHandling() {
+            // 捕获全局错误
+            window.addEventListener('error', (e) => {
+                console.error('游戏错误:', e);
+                showMessage('游戏错误', '游戏发生错误，将尝试恢复', '重新开始', () => {
+                    restartGame();
+                });
+            });
+        }
+        
+        // 检查浏览器特性支持
+        function checkBrowserSupport() {
+            const unsupportedFeatures = [];
+            
+            if (!window.requestAnimationFrame) {
+                unsupportedFeatures.push('高级动画支持');
+            }
+            
+            try {
+                if (typeof localStorage === 'undefined') {
+                    unsupportedFeatures.push('本地存储');
+                } else {
+                    // 测试localStorage是否可用
+                    const testKey = 'test_' + Date.now();
+                    localStorage.setItem(testKey, 'test');
+                    localStorage.removeItem(testKey);
+                }
+            } catch (e) {
+                unsupportedFeatures.push('本地存储');
+            }
+            
+            if (unsupportedFeatures.length > 0) {
+                showMessage(
+                    '浏览器兼容性警告',
+                    `您的浏览器可能不支持以下功能: ${unsupportedFeatures.join(', ')}，游戏体验可能受影响`,
+                    '继续'
+                );
+            }
         }
         
         // 初始化游戏
