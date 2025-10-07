@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>网页版Minecraft（像素纹理版）</title>
+    <!-- 使用稳定的Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; touch-action: none; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        /* 方块颜色选择器 */
+        .color-picker {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px;
+        }
+        .color-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid white;
+            cursor: pointer;
+            background-size: cover;
+        }
+        .color-btn.active { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; }
+        /* 暂停/重启按钮（右上角） */
+        .game-controls {
+            position: fixed; top: 20px; right: 20px;
+            display: flex; gap: 10px;
+        }
+        .game-btn {
+            padding: 8px 16px; border-radius: 4px;
+            background: rgba(0,0,0,0.7); color: white; border: none;
+            font-size: 16px; cursor: pointer;
+        }
+        /* 暂停弹窗 */
+        .pause-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center;
+            z-index: 100;
+        }
+        .pause-content {
+            color: white; text-align: center;
+        }
+        .pause-title { font-size: 32px; margin-bottom: 20px; }
+        .resume-btn {
+            padding: 10px 24px; border-radius: 4px;
+            background: #4CAF50; color: white; border: none;
+            font-size: 18px; cursor: pointer;
+        }
+        /* 移动端控制区 */
+        .mobile-controls {
+            position: fixed; bottom: 20px; width: 100%;
+            display: flex; justify-content: space-between; padding: 0 20px;
+            box-sizing: border-box;
+        }
+        .direction-group {
+            display: grid;
+            grid-template-areas:
+                ". up ."
+                "left down right";
+            gap: 8px;
+        }
+        .jump-btn {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: rgba(0,0,0,0.5); color: white; border: 2px solid white;
+            font-size: 24px;
+        }
+        .dir-btn {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: rgba(0,0,0,0.5); color: white; border: none;
+            font-size: 22px;
+        }
+        #up { grid-area: up; }
+        #down { grid-area: down; }
+        #left { grid-area: left; }
+        #right { grid-area: right; }
+        /* 性能提示 */
+        .performance-tip {
+            position: fixed; top: 20px; left: 20px;
+            background: rgba(0,0,0,0.7); color: white; padding: 8px 12px;
+            border-radius: 4px; font-size: 14px;
+            z-index: 90;
+        }
+        /* 第一人称UI */
+        .crosshair {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            pointer-events: none;
+            z-index: 80;
+        }
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .crosshair::before {
+            width: 2px; height: 10px;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .crosshair::after {
+            width: 10px; height: 2px;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        /* 物品栏 */
+        .inventory {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 5px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px;
+            border-radius: 4px;
+            z-index: 80;
+        }
+        .inventory-slot {
+            width: 40px; height: 40px;
+            border: 2px solid #555;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.1);
+            background-size: cover;
+        }
+        .inventory-slot.active {
+            border-color: #ffd700;
+        }
+        /* 昼夜指示器 */
+        .time-indicator {
+            position: fixed; top: 20px; right: 180px;
+            background: rgba(0,0,0,0.7); color: white; padding: 8px 12px;
+            border-radius: 4px; font-size: 14px;
+            z-index: 90;
+        }
+    </style>
+</head>
+<body>
+    <div class="performance-tip">提示：如果卡顿，可降低浏览器窗口大小提升性能</div>
+    <div class="time-indicator" id="timeIndicator">白天</div>
+    
+    <!-- 第一人称UI - 十字准星 -->
+    <div class="crosshair"></div>
+    
+    <!-- 第一人称UI - 物品栏 -->
+    <div class="inventory">
+        <div class="inventory-slot active" data-slot="0" style="background-image: url('https://picsum.photos/id/106/40/40');"></div>
+        <div class="inventory-slot" data-slot="1" style="background-image: url('https://picsum.photos/id/133/40/40');"></div>
+        <div class="inventory-slot" data-slot="2" style="background-image: url('https://picsum.photos/id/152/40/40');"></div>
+        <div class="inventory-slot" data-slot="3" style="background-image: url('https://picsum.photos/id/177/40/40');"></div>
+        <div class="inventory-slot" data-slot="4"></div>
+        <div class="inventory-slot" data-slot="5"></div>
+        <div class="inventory-slot" data-slot="6"></div>
+        <div class="inventory-slot" data-slot="7"></div>
+        <div class="inventory-slot" data-slot="8"></div>
+    </div>
+    
+    <!-- 方块颜色选择器 -->
+    <div class="color-picker">
+        <div class="color-btn active" style="background-image: url('https://picsum.photos/id/106/40/40');" data-type="grass"></div>
+        <div class="color-btn" style="background-image: url('https://picsum.photos/id/133/40/40');" data-type="dirt"></div>
+        <div class="color-btn" style="background-image: url('https://picsum.photos/id/152/40/40');" data-type="stone"></div>
+        <div class="color-btn" style="background-image: url('https://picsum.photos/id/177/40/40');" data-type="water"></div>
+    </div>
+
+    <!-- 游戏控制按钮 -->
+    <div class="game-controls">
+        <button class="game-btn" id="pauseBtn">暂停</button>
+        <button class="game-btn" id="restartBtn">重启</button>
+        <button class="game-btn" id="lowQualityBtn">低画质</button>
+        <button class="game-btn" id="toggleTexturesBtn">关闭纹理</button>
+    </div>
+
+    <!-- 移动端控制区 -->
+    <div class="mobile-controls">
+        <div class="direction-group">
+            <button class="dir-btn" id="up">↑</button>
+            <button class="dir-btn" id="down">↓</button>
+            <button class="dir-btn" id="left">←</button>
+            <button class="dir-btn" id="right">→</button>
+        </div>
+        <button class="jump-btn" id="jump">跳</button>
+    </div>
+
+    <!-- 暂停弹窗 -->
+    <div class="pause-modal" id="pauseModal">
+        <div class="pause-content">
+            <div class="pause-title">游戏已暂停</div>
+            <button class="resume-btn" id="resumeBtn">继续游戏</button>
+        </div>
+    </div>
+
+<script>
+    // 性能优化配置
+    const performanceSettings = {
+        quality: 'high', // high, low
+        shadowQuality: true,
+        blockCount: 150, // 限制最大方块数量
+        entityCount: 5, // 限制生物数量
+        useTextures: true // 是否使用纹理
+    };
+
+    // 纹理管理系统 - 预加载和缓存纹理
+    const textureManager = {
+        loader: new THREE.TextureLoader(),
+        textures: {},
+        loadingCount: 0,
+        loadedCount: 0,
+        
+        // 定义方块纹理
+        blockTextures: {
+            grass: {
+                top: 'https://picsum.photos/id/106/16/16',
+                bottom: 'https://picsum.photos/id/133/16/16',
+                side: 'https://picsum.photos/id/108/16/16'
+            },
+            dirt: {
+                all: 'https://picsum.photos/id/133/16/16'
+            },
+            stone: {
+                all: 'https://picsum.photos/id/152/16/16'
+            },
+            water: {
+                all: 'https://picsum.photos/id/177/16/16'
+            }
+        },
+        
+        // 生物纹理
+        entityTextures: {
+            sheep: 'https://picsum.photos/id/237/16/16',
+            pig: 'https://picsum.photos/id/197/16/16',
+            cow: 'https://picsum.photos/id/200/16/16',
+            chicken: 'https://picsum.photos/id/211/16/16'
+        },
+        
+        // 加载所有纹理
+        loadAll: function() {
+            const self = this;
+            this.loadingCount = 0;
+            this.loadedCount = 0;
+            
+            // 加载方块纹理
+            Object.keys(this.blockTextures).forEach(blockType => {
+                const textures = this.blockTextures[blockType];
+                
+                if (textures.all) {
+                    // 六个面使用相同纹理
+                    this.loadingCount++;
+                    this.loader.load(textures.all, function(texture) {
+                        self.setupTexture(texture);
+                        self.textures[blockType] = {
+                            all: texture
+                        };
+                        self.loadedCount++;
+                    });
+                } else {
+                    // 不同面使用不同纹理
+                    this.textures[blockType] = {};
+                    
+                    Object.keys(textures).forEach(face => {
+                        this.loadingCount++;
+                        this.loader.load(textures[face], function(texture) {
+                            self.setupTexture(texture);
+                            self.textures[blockType][face] = texture;
+                            self.loadedCount++;
+                        });
+                    });
+                }
+            });
+            
+            // 加载生物纹理
+            Object.keys(this.entityTextures).forEach(entityType => {
+                this.loadingCount++;
+                this.loader.load(this.entityTextures[entityType], function(texture) {
+                    self.setupTexture(texture);
+                    self.textures[entityType] = texture;
+                    self.loadedCount++;
+                });
+            });
+        },
+        
+        // 设置纹理属性（像素风格）
+        setupTexture: function(texture) {
+            texture.magFilter = THREE.NearestFilter; // 放大时使用最近邻过滤，保持像素感
+            texture.minFilter = THREE.NearestMipmapNearestFilter; // 缩小时也保持像素感
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        },
+        
+        // 检查是否所有纹理都已加载
+        isAllLoaded: function() {
+            return this.loadedCount >= this.loadingCount && this.loadingCount > 0;
+        },
+        
+        // 获取方块材质
+        getBlockMaterial: function(blockType) {
+            if (!performanceSettings.useTextures || !this.textures[blockType]) {
+                // 如果不使用纹理或纹理未加载，返回纯色材质
+                const colors = {
+                    grass: 0x32CD32,
+                    dirt: 0x8B4513,
+                    stone: 0xA9A9A9,
+                    water: 0x1E90FF
+                };
+                return new THREE.MeshStandardMaterial({ 
+                    color: colors[blockType] || 0xFFFFFF 
+                });
+            }
+            
+            const textures = this.textures[blockType];
+            const materials = [];
+            
+            // 为方块的6个面创建材质 (右、左、上、下、前、后)
+            if (textures.all) {
+                // 所有面使用相同纹理
+                const material = new THREE.MeshStandardMaterial({ map: textures.all });
+                for (let i = 0; i < 6; i++) {
+                    materials.push(material);
+                }
+            } else {
+                // 不同面使用不同纹理
+                materials.push(new THREE.MeshStandardMaterial({ map: textures.side })); // 右
+                materials.push(new THREE.MeshStandardMaterial({ map: textures.side })); // 左
+                materials.push(new THREE.MeshStandardMaterial({ map: textures.top })); // 上
+                materials.push(new THREE.MeshStandardMaterial({ map: textures.bottom })); // 下
+                materials.push(new THREE.MeshStandardMaterial({ map: textures.side })); // 前
+                materials.push(new THREE.MeshStandardMaterial({ map: textures.side })); // 后
+            }
+            
+            return materials;
+        },
+        
+        // 获取生物材质
+        getEntityMaterial: function(entityType) {
+            if (!performanceSettings.useTextures || !this.textures[entityType]) {
+                // 如果不使用纹理，返回纯色材质
+                const colors = {
+                    sheep: 0xFFFFFF,
+                    pig: 0xFF6347,
+                    cow: 0x000000,
+                    chicken: 0xFFD700
+                };
+                return new THREE.MeshStandardMaterial({ 
+                    color: colors[entityType] || 0xFFA500 
+                });
+            }
+            
+            return new THREE.MeshStandardMaterial({ 
+                map: this.textures[entityType] 
+            });
+        }
+    };
+
+    // 游戏时间系统（昼夜交替）
+    const timeSystem = {
+        time: 0, // 0-24000 模拟一天
+        dayLength: 60000, // 一天的毫秒数
+        lastUpdate: Date.now(),
+        
+        update: function() {
+            const now = Date.now();
+            const delta = now - this.lastUpdate;
+            this.lastUpdate = now;
+            
+            // 更新时间
+            this.time = (this.time + (delta / this.dayLength) * 24000) % 24000;
+            
+            // 更新指示器
+            const timeIndicator = document.getElementById('timeIndicator');
+            if (this.time < 12000) {
+                timeIndicator.textContent = `白天 ${Math.floor(this.time / 1000)}`;
+            } else if (this.time < 18000) {
+                timeIndicator.textContent = `黄昏 ${Math.floor((this.time - 12000) / 1000)}`;
+            } else if (this.time < 23000) {
+                timeIndicator.textContent = `夜晚 ${Math.floor((this.time - 18000) / 1000)}`;
+            } else {
+                timeIndicator.textContent = `黎明 ${Math.floor((this.time - 23000) / 1000)}`;
+            }
+            
+            return this.time;
+        },
+        
+        isDay: function() {
+            return this.time < 12000 || this.time > 23000;
+        }
+    };
+
+    // 检查Three.js是否加载成功
+    if (typeof THREE === 'undefined') {
+        alert('Three.js库加载失败，请检查网络连接或尝试刷新页面');
+    } else {
+        // 预加载纹理
+        textureManager.loadAll();
+        
+        // 1. 基础场景配置
+        const scene = new THREE.Scene();
+        
+        // 2. 昼夜交替的天空颜色
+        function updateSkyColor() {
+            let skyColor;
+            if (timeSystem.time < 12000) { // 白天
+                skyColor = new THREE.Color(0x87CEEB);
+            } else if (timeSystem.time < 14000) { // 日落
+                skyColor = new THREE.Color(0xFF7F50).lerp(new THREE.Color(0x1E3B6E), (timeSystem.time - 12000) / 2000);
+            } else if (timeSystem.time < 22000) { // 夜晚
+                skyColor = new THREE.Color(0x0A1128);
+            } else { // 日出
+                skyColor = new THREE.Color(0x1E3B6E).lerp(new THREE.Color(0x87CEEB), (timeSystem.time - 22000) / 2000);
+            }
+            scene.background = skyColor;
+            
+            // 调整光照强度
+            const lightIntensity = timeSystem.isDay() ? 0.8 : 0.2;
+            directionalLight.intensity = lightIntensity;
+            ambientLight.intensity = timeSystem.isDay() ? 0.3 : 0.1;
+        }
+        
+        // 2. 相机和渲染器
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 800);
+        
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: performanceSettings.quality === 'high',
+            powerPreference: "high-performance"
+        });
+        
+        // 根据性能设置调整分辨率
+        function setRendererSize() {
+            const scale = performanceSettings.quality === 'low' ? 0.7 : 1;
+            renderer.setSize(window.innerWidth * scale, window.innerHeight * scale);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        }
+        setRendererSize();
+        
+        document.body.appendChild(renderer.domElement);
+
+        // 3. 游戏状态管理
+        let isGamePaused = false;
+        const pauseModal = document.getElementById('pauseModal');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const lowQualityBtn = document.getElementById('lowQualityBtn');
+        const toggleTexturesBtn = document.getElementById('toggleTexturesBtn');
+
+        // 4. 角色配置
+        const playerSpeed = 0.12;
+        const jumpForce = 0.3;
+        const gravity = 0.015;
+        const initialPlayerPos = new THREE.Vector3(0, 1.5, 5);
+        let playerPosition = new THREE.Vector3().copy(initialPlayerPos);
+        let playerVelocity = new THREE.Vector3(0, 0, 0);
+        let isOnGround = true;
+        let groundCheckCounter = 0;
+        camera.position.copy(playerPosition);
+
+        // 5. 光照配置
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 10);
+        
+        directionalLight.castShadow = performanceSettings.shadowQuality;
+        if (performanceSettings.shadowQuality) {
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            directionalLight.shadow.camera.near = 1;
+            directionalLight.shadow.camera.far = 30;
+        }
+        scene.add(directionalLight);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+
+        // 6. 方块核心逻辑
+        const geometry = new THREE.BoxGeometry();
+        let selectedBlockType = 'grass';
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const groundRaycaster = new THREE.Raycaster();
+        let allBlocks = [];
+
+        // 添加方块
+        function addBlock(position) {
+            if (allBlocks.length >= performanceSettings.blockCount) {
+                return null;
+            }
+            
+            // 获取方块材质（带纹理）
+            const materials = textureManager.getBlockMaterial(selectedBlockType);
+            const cube = new THREE.Mesh(geometry, materials);
+            cube.position.copy(position);
+            cube.castShadow = performanceSettings.shadowQuality;
+            cube.receiveShadow = performanceSettings.shadowQuality;
+            cube.name = 'block';
+            cube.userData.type = selectedBlockType; // 存储方块类型
+            scene.add(cube);
+            allBlocks.push(cube);
+            return cube;
+        }
+
+        // 删除方块
+        function removeBlock(cube) {
+            scene.remove(cube);
+            allBlocks = allBlocks.filter(block => block !== cube);
+        }
+
+        // 清空所有方块
+        function clearAllBlocks() {
+            allBlocks.forEach(block => scene.remove(block));
+            allBlocks = [];
+        }
+
+        // 获取随机方块类型
+        function getRandomBlockType() {
+            const types = ['grass', 'dirt', 'stone', 'water'];
+            return types[Math.floor(Math.random() * types.length)];
+        }
+
+        // 检测角色是否在地面
+        function checkIsOnGround() {
+            groundCheckCounter = (groundCheckCounter + 1) % 3;
+            if (groundCheckCounter !== 0) return isOnGround;
+            
+            const rayOrigin = new THREE.Vector3(playerPosition.x, playerPosition.y - 0.7, playerPosition.z);
+            const rayDirection = new THREE.Vector3(0, -1, 0);
+            groundRaycaster.set(rayOrigin, rayDirection);
+            groundRaycaster.far = 0.6;
+
+            const intersects = groundRaycaster.intersectObjects(allBlocks);
+            isOnGround = intersects.length > 0;
+            return isOnGround;
+        }
+
+        // 7. 鼠标控制优化 - 隐藏鼠标并通过移动控制视角
+        let mouseSensitivity = 0.002;
+        let isPointerLocked = false;
+
+        // 请求指针锁定
+        function lockPointer() {
+            if (!isPointerLocked) {
+                renderer.domElement.requestPointerLock = 
+                    renderer.domElement.requestPointerLock ||
+                    renderer.domElement.mozRequestPointerLock ||
+                    renderer.domElement.webkitRequestPointerLock;
+                
+                renderer.domElement.requestPointerLock();
+                document.body.style.cursor = 'none';
+            }
+        }
+
+        // 释放指针锁定
+        function unlockPointer() {
+            if (isPointerLocked) {
+                document.exitPointerLock = 
+                    document.exitPointerLock ||
+                    document.mozExitPointerLock ||
+                    document.webkitExitPointerLock;
+                
+                document.exitPointerLock();
+                document.body.style.cursor = '';
+            }
+        }
+
+        // 指针锁定事件监听
+        document.addEventListener('pointerlockchange', lockChangeHandler, false);
+        document.addEventListener('mozpointerlockchange', lockChangeHandler, false);
+        document.addEventListener('webkitpointerlockchange', lockChangeHandler, false);
+
+        function lockChangeHandler() {
+            if (document.pointerLockElement === renderer.domElement ||
+                document.mozPointerLockElement === renderer.domElement ||
+                document.webkitPointerLockElement === renderer.domElement) {
+                // 指针被锁定
+                document.addEventListener('mousemove', handleMouseMove, false);
+                isPointerLocked = true;
+            } else {
+                // 指针未被锁定
+                document.removeEventListener('mousemove', handleMouseMove, false);
+                isPointerLocked = false;
+            }
+        }
+
+        // 处理鼠标移动 - 控制视角
+        function handleMouseMove(event) {
+            if (isGamePaused) return;
+            
+            const movementX = event.movementX || 0;
+            const movementY = event.movementY || 0;
+
+            // 水平旋转 (Y轴)
+            cameraRotation.y -= movementX * mouseSensitivity;
+            
+            // 垂直旋转 (X轴) - 限制上下视角
+            cameraRotation.x = Math.max(-1.5, Math.min(0.5, cameraRotation.x - movementY * mouseSensitivity));
+            
+            // 应用旋转
+            camera.rotation.y = cameraRotation.y;
+            camera.rotation.x = cameraRotation.x;
+        }
+
+        // 点击游戏画面锁定鼠标
+        renderer.domElement.addEventListener('click', () => {
+            if (!isGamePaused && !isPointerLocked) {
+                lockPointer();
+            }
+        });
+
+        // 8. 点击/触摸事件处理
+        function setMousePosition(e) {
+            if(isGamePaused) return;
+            if(e.type === 'touchmove' || e.type === 'touchstart') {
+                mouse.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+            } else {
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            }
+        }
+
+        function handleClick(e) {
+            if(isGamePaused) return;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(allBlocks);
+
+            if(intersects.length > 0) {
+                const hitBlock = intersects[0].object;
+                const hitPoint = intersects[0].point;
+                const normal = intersects[0].face.normal;
+
+                const placePosition = new THREE.Vector3(
+                    Math.round(hitPoint.x + normal.x * 0.5),
+                    Math.round(hitPoint.y + normal.y * 0.5),
+                    Math.round(hitPoint.z + normal.z * 0.5)
+                );
+
+                if((e.type === 'click' && e.button === 0) || (e.type === 'touchend' && e.touches.length === 0)) {
+                    addBlock(placePosition);
+                } else if((e.type === 'contextmenu') || (e.type === 'touchend' && e.touches.length === 1)) {
+                    removeBlock(hitBlock);
+                    if(e.type === 'contextmenu') e.preventDefault();
+                }
+            }
+        }
+
+        // 绑定点击/触摸事件
+        window.addEventListener('click', (e) => { setMousePosition(e); handleClick(e); });
+        window.addEventListener('contextmenu', (e) => { setMousePosition(e); handleClick(e); });
+        window.addEventListener('touchstart', (e) => { setMousePosition(e); });
+        window.addEventListener('touchmove', (e) => { setMousePosition(e); });
+        window.addEventListener('touchend', (e) => { handleClick(e); });
+
+        // 9. 方块类型选择和物品栏事件
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(isGamePaused) return;
+                document.querySelector('.color-btn.active').classList.remove('active');
+                btn.classList.add('active');
+                selectedBlockType = btn.dataset.type;
+            });
+        });
+
+        // 物品栏点击事件
+        document.querySelectorAll('.inventory-slot').forEach(slot => {
+            slot.addEventListener('click', () => {
+                if(isGamePaused) return;
+                document.querySelector('.inventory-slot.active').classList.remove('active');
+                slot.classList.add('active');
+                // 这里可以添加切换物品的逻辑
+            });
+        });
+
+        // 10. 控制按键绑定
+        const keys = { 
+            ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, 
+            Escape: false, Jump: false 
+        };
+
+        // PC键盘控制
+        window.addEventListener('keydown', (e) => {
+            if(keys[e.code] !== undefined) keys[e.code] = true;
+            if(e.code === 'Escape') togglePause();
+            if(e.code === 'Space') keys.Jump = true;
+            
+            // 数字键切换物品栏
+            if (e.code >= 'Digit1' && e.code <= 'Digit9') {
+                const slotIndex = parseInt(e.code.replace('Digit', '')) - 1;
+                document.querySelectorAll('.inventory-slot').forEach((slot, index) => {
+                    slot.classList.toggle('active', index === slotIndex);
+                });
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            if(keys[e.code] !== undefined) keys[e.code] = false;
+            if(e.code === 'Space') keys.Jump = false;
+        });
+
+        // 移动端方向键事件
+        document.getElementById('up').addEventListener('touchstart', () => { if(!isGamePaused) keys.ArrowUp = true; });
+        document.getElementById('up').addEventListener('touchend', () => { keys.ArrowUp = false; });
+        document.getElementById('down').addEventListener('touchstart', () => { if(!isGamePaused) keys.ArrowDown = true; });
+        document.getElementById('down').addEventListener('touchend', () => { keys.ArrowDown = false; });
+        document.getElementById('left').addEventListener('touchstart', () => { if(!isGamePaused) keys.ArrowLeft = true; });
+        document.getElementById('left').addEventListener('touchend', () => { keys.ArrowLeft = false; });
+        document.getElementById('right').addEventListener('touchstart', () => { if(!isGamePaused) keys.ArrowRight = true; });
+        document.getElementById('right').addEventListener('touchend', () => { keys.ArrowRight = false; });
+
+        // 移动端跳跃键事件
+        document.getElementById('jump').addEventListener('touchstart', () => { if(!isGamePaused) keys.Jump = true; });
+        document.getElementById('jump').addEventListener('touchend', () => { keys.Jump = false; });
+
+        // 11. 角色移动逻辑
+        function updatePlayerPosition() {
+            if(isGamePaused) return;
+
+            checkIsOnGround();
+
+            // 跳跃处理
+            if(keys.Jump && isOnGround) {
+                playerVelocity.y = jumpForce;
+                isOnGround = false;
+            }
+
+            // 重力应用
+            playerVelocity.y -= gravity;
+
+            // 水平移动
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            direction.y = 0;
+            direction.normalize();
+
+            if(keys.ArrowUp) {
+                playerPosition.x += direction.x * playerSpeed;
+                playerPosition.z += direction.z * playerSpeed;
+            }
+            if(keys.ArrowDown) {
+                playerPosition.x -= direction.x * playerSpeed;
+                playerPosition.z -= direction.z * playerSpeed;
+            }
+            
+            const leftX = -direction.z;
+            const leftZ = direction.x;
+            if(keys.ArrowLeft) {
+                playerPosition.x += leftX * playerSpeed;
+                playerPosition.z += leftZ * playerSpeed;
+            }
+            if(keys.ArrowRight) {
+                playerPosition.x -= leftX * playerSpeed;
+                playerPosition.z -= leftZ * playerSpeed;
+            }
+
+            // 应用垂直速度
+            playerPosition.y += playerVelocity.y;
+
+            // 防止角色掉入地下
+            if(playerPosition.y < 0.7) {
+                playerPosition.y = 0.7;
+                playerVelocity.y = 0;
+                isOnGround = true;
+            }
+
+            // 更新相机位置
+            camera.position.copy(playerPosition);
+        }
+
+        // 12. 移动端触摸旋转
+        let touchStart = { x: 0, y: 0 };
+        let cameraRotation = { x: -0.3, y: 0 };
+        const initialCameraRotation = { x: -0.3, y: 0 };
+        camera.rotation.x = cameraRotation.x;
+        camera.rotation.y = cameraRotation.y;
+        let rotationUpdateCounter = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            if(isGamePaused || isPointerLocked) return;
+            touchStart.x = e.touches[0].clientX;
+            touchStart.y = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if(isGamePaused || isPointerLocked) return;
+            
+            rotationUpdateCounter = (rotationUpdateCounter + 1) % 2;
+            if (rotationUpdateCounter !== 0) return;
+            
+            const touchMove = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            const deltaX = (touchMove.x - touchStart.x) * 0.003;
+            const deltaY = (touchMove.y - touchStart.y) * 0.003;
+
+            cameraRotation.y -= deltaX;
+            cameraRotation.x = Math.max(-1.5, Math.min(0.5, cameraRotation.x - deltaY));
+            camera.rotation.y = cameraRotation.y;
+            camera.rotation.x = cameraRotation.x;
+
+            touchStart.x = touchMove.x;
+            touchStart.y = touchMove.y;
+        });
+
+        // 13. 生物系统（带纹理）
+        class Entity {
+            constructor(position) {
+                // 随机选择生物类型
+                this.types = ['sheep', 'pig', 'cow', 'chicken'];
+                this.type = this.types[Math.floor(Math.random() * this.types.length)];
+                
+                // 根据生物类型选择不同大小
+                let size = 0.8;
+                if (this.type === 'sheep') size = 0.9;
+                if (this.type === 'chicken') size = 0.7;
+                
+                this.geometry = new THREE.BoxGeometry(size, size, size);
+                this.material = textureManager.getEntityMaterial(this.type);
+                this.mesh = new THREE.Mesh(this.geometry, this.material);
+                this.mesh.position.copy(position);
+                this.mesh.position.y = size / 2; // 让生物底部与地面对齐
+                this.mesh.castShadow = performanceSettings.shadowQuality;
+                this.mesh.name = 'entity';
+                scene.add(this.mesh);
+                
+                // 根据生物类型设置速度
+                this.speed = 0.02 + Math.random() * 0.03;
+                if (this.type === 'chicken') this.speed += 0.01;
+                if (this.type === 'sheep') this.speed -= 0.01;
+                
+                this.direction = new THREE.Vector3(
+                    (Math.random() - 0.5) * 2,
+                    0,
+                    (Math.random() - 0.5) * 2
+                ).normalize();
+                
+                this.changeDirectionInterval = Math.random() * 3000 + 2000; // 2-5秒随机改变方向
+                this.lastDirectionChange = Date.now();
+            }
+            
+            update() {
+                if (isGamePaused) return;
+                
+                // 随机改变方向
+                const now = Date.now();
+                if (now - this.lastDirectionChange > this.changeDirectionInterval) {
+                    this.direction = new THREE.Vector3(
+                        (Math.random() - 0.5) * 2,
+                        0,
+                        (Math.random() - 0.5) * 2
+                    ).normalize();
+                    this.lastDirectionChange = now;
+                    this.changeDirectionInterval = Math.random() * 3000 + 2000;
+                }
+                
+                // 移动生物
+                this.mesh.position.x += this.direction.x * this.speed;
+                this.mesh.position.z += this.direction.z * this.speed;
+                
+                // 限制生物活动范围
+                const range = 15;
+                if (this.mesh.position.x < -range) this.mesh.position.x = range;
+                if (this.mesh.position.x > range) this.mesh.position.x = -range;
+                if (this.mesh.position.z < -range) this.mesh.position.z = range;
+                if (this.mesh.position.z > range) this.mesh.position.z = -range;
+            }
+            
+            remove() {
+                scene.remove(this.mesh);
+            }
+        }
+
+        let entities = [];
+        
+        // 生成生物
+        function spawnEntities(count) {
+            // 先清除现有生物
+            entities.forEach(entity => entity.remove());
+            entities = [];
+            
+            // 生成新生物
+            for (let i = 0; i < count; i++) {
+                const pos = new THREE.Vector3(
+                    (Math.random() - 0.5) * 10,
+                    0,
+                    (Math.random() - 0.5) * 10
+                );
+                entities.push(new Entity(pos));
+            }
+        }
+
+        // 14. 暂停/继续功能
+        function togglePause() {
+            isGamePaused = !isGamePaused;
+            if(isGamePaused) {
+                pauseModal.style.display = 'flex';
+                pauseBtn.textContent = '继续';
+                unlockPointer(); // 暂停时释放鼠标
+            } else {
+                pauseModal.style.display = 'none';
+                pauseBtn.textContent = '暂停';
+                lockPointer(); // 继续时锁定鼠标
+            }
+        }
+
+        // 15. 切换画质功能
+        function toggleQuality() {
+            performanceSettings.quality = performanceSettings.quality === 'high' ? 'low' : 'high';
+            performanceSettings.shadowQuality = performanceSettings.quality === 'high';
+            
+            setRendererSize();
+            renderer.antialias = performanceSettings.quality === 'high';
+            
+            // 更新阴影设置
+            directionalLight.castShadow = performanceSettings.shadowQuality;
+            allBlocks.forEach(block => {
+                block.castShadow = performanceSettings.shadowQuality;
+                block.receiveShadow = performanceSettings.shadowQuality;
+            });
+            
+            entities.forEach(entity => {
+                entity.mesh.castShadow = performanceSettings.shadowQuality;
+            });
+            
+            lowQualityBtn.textContent = performanceSettings.quality === 'high' ? '低画质' : '高画质';
+        }
+
+        // 16. 切换纹理功能
+        function toggleTextures() {
+            performanceSettings.useTextures = !performanceSettings.useTextures;
+            toggleTexturesBtn.textContent = performanceSettings.useTextures ? '关闭纹理' : '开启纹理';
+            
+            // 更新所有方块材质
+            allBlocks.forEach(block => {
+                block.material = textureManager.getBlockMaterial(block.userData.type);
+            });
+            
+            // 更新所有生物材质
+            entities.forEach(entity => {
+                entity.mesh.material = textureManager.getEntityMaterial(entity.type);
+            });
+        }
+
+        // 17. 重启功能
+        function restartGame() {
+            isGamePaused = false;
+            pauseModal.style.display = 'none';
+            pauseBtn.textContent = '暂停';
+
+            // 重置角色
+            playerPosition.copy(initialPlayerPos);
+            camera.position.copy(playerPosition);
+            cameraRotation = { ...initialCameraRotation };
+            camera.rotation.x = cameraRotation.x;
+            camera.rotation.y = cameraRotation.y;
+            
+            playerVelocity = new THREE.Vector3(0, 0, 0);
+            isOnGround = true;
+
+            // 重置方块和生物
+            generateTerrain();
+            spawnEntities(performanceSettings.entityCount);
+
+            // 重置时间
+            timeSystem.time = 0;
+            updateSkyColor();
+
+            // 重置按键
+            for(let key in keys) keys[key] = false;
+
+            // 重置方块类型选择器
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.dataset.type === 'grass') btn.classList.add('active');
+            });
+            selectedBlockType = 'grass';
+            
+            // 重置物品栏
+            document.querySelectorAll('.inventory-slot').forEach((slot, index) => {
+                slot.classList.toggle('active', index === 0);
+            });
+            
+            // 锁定鼠标
+            lockPointer();
+        }
+
+        // 生成初始地形
+        function generateTerrain() {
+            clearAllBlocks();
+            for(let x = -5; x < 6; x++) {
+                for(let z = -5; z < 6; z++) {
+                    const pos = new THREE.Vector3(x, 0, z);
+                    const blockType = getRandomBlockType();
+                    const materials = textureManager.getBlockMaterial(blockType);
+                    const cube = new THREE.Mesh(geometry, materials);
+                    cube.position.copy(pos);
+                    cube.castShadow = performanceSettings.shadowQuality;
+                    cube.receiveShadow = performanceSettings.shadowQuality;
+                    cube.name = 'block';
+                    cube.userData.type = blockType;
+                    scene.add(cube);
+                    allBlocks.push(cube);
+                }
+            }
+            addBlock(new THREE.Vector3(2, 1, 3));
+            addBlock(new THREE.Vector3(4, 1, 5));
+        }
+
+        // 18. 绑定按钮事件
+        pauseBtn.addEventListener('click', togglePause);
+        resumeBtn.addEventListener('click', togglePause);
+        restartBtn.addEventListener('click', restartGame);
+        lowQualityBtn.addEventListener('click', toggleQuality);
+        toggleTexturesBtn.addEventListener('click', toggleTextures);
+
+        // 19. 窗口自适应
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            setRendererSize();
+        });
+
+        // 20. 渲染循环
+        let lastRenderTime = 0;
+        const minFrameTime = 1000 / 60;
+        
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+            
+            if (timestamp - lastRenderTime < minFrameTime) {
+                return;
+            }
+            
+            lastRenderTime = timestamp;
+            
+            // 确保纹理加载完成后再更新游戏状态
+            if (textureManager.isAllLoaded() || timestamp > 5000) { // 5秒后即使纹理未加载也继续
+                // 更新游戏时间和天空颜色
+                timeSystem.update();
+                updateSkyColor();
+                
+                // 更新生物
+                entities.forEach(entity => entity.update());
+                
+                // 更新玩家位置
+                updatePlayerPosition();
+            }
+            
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+
+        // 初始化游戏
+        generateTerrain();
+        spawnEntities(performanceSettings.entityCount);
+        lockPointer(); // 初始锁定鼠标
+        animate(0);
+    }
+</script>
+</body>
+</html>
+    
