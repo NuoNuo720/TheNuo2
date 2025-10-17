@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>自由电子冒险5：量子粒子碰撞</title>
     <style>
+        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -86,6 +87,35 @@
             box-shadow: 0 0 20px rgba(76, 201, 240, 0.3);
         }
         
+        /* 场效果覆盖层 */
+        .field-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .electric-overlay {
+            background: linear-gradient(90deg, rgba(76, 201, 240, 0.1) 2px, transparent 2px);
+            background-size: 20px 20px;
+        }
+        
+        .magnetic-overlay {
+            background: radial-gradient(circle, rgba(247, 37, 133, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .electric-active .electric-overlay,
+        .magnetic-active .magnetic-overlay {
+            opacity: 1;
+        }
+        
+        /* 其余样式保持不变 */
         .score-board {
             position: absolute;
             top: -100px;
@@ -346,12 +376,25 @@
     </style>
 </head>
 <body>
+    <!-- 音效元素 -->
+    <audio id="synthesizeSound" preload="auto">
+        <source src="sounds/synthesize.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="annihilateSound" preload="auto">
+        <source src="sounds/annihilate.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="electricFieldSound" preload="auto">
+        <source src="sounds/electric.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="magneticFieldSound" preload="auto">
+        <source src="sounds/magnetic.mp3" type="audio/mpeg">
+    </audio>
+    
     <div class="main-menu" id="mainMenu">
         <h1>自由电子冒险5</h1>
         <h2>量子粒子碰撞</h2>
         <button class="menu-btn" id="startBtn">开始游戏</button>
         <button class="menu-btn" id="instructionsBtn">游戏说明</button>
-        <!-- 新增返回导航页按钮 -->
         <button class="menu-btn" id="backToNavBtn">返回导航页</button>
     </div>
     
@@ -371,8 +414,11 @@
     </div>
     
     <div class="game-container" id="gameContainer">
+        <!-- 场效果覆盖层 -->
+        <div class="field-overlay electric-overlay"></div>
+        <div class="field-overlay magnetic-overlay"></div>
+        
         <button class="back-to-menu" id="backToMenu">主菜单</button>
-        <!-- 新增重新开始按钮 -->
         <button class="back-to-menu" id="restartDuringGameBtn" style="left: 20%;">重新开始</button>
         
         <div class="score-board">
@@ -409,6 +455,12 @@
     </div>
 
     <script>
+        // 获取音效元素
+        const synthesizeSound = document.getElementById('synthesizeSound');
+        const annihilateSound = document.getElementById('annihilateSound');
+        const electricFieldSound = document.getElementById('electricFieldSound');
+        const magneticFieldSound = document.getElementById('magneticFieldSound');
+        
         // 获取元素
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -419,8 +471,8 @@
         const instructions = document.getElementById('instructions');
         const closeInstructions = document.getElementById('closeInstructions');
         const backToMenuBtn = document.getElementById('backToMenu');
-        const restartDuringGameBtn = document.getElementById('restartDuringGameBtn'); // 新增
-        const backToNavBtn = document.getElementById('backToNavBtn'); // 新增
+        const restartDuringGameBtn = document.getElementById('restartDuringGameBtn');
+        const backToNavBtn = document.getElementById('backToNavBtn');
         const topBoundaryWarning = document.getElementById('topBoundaryWarning');
         const timeWarning = document.getElementById('timeWarning');
         const cooldownIndicator = document.getElementById('cooldownIndicator');
@@ -488,11 +540,44 @@
                 this.velocityY = 0; // 垂直速度
                 this.rotation = 0; // 旋转角度（用于磁场效果）
                 this.rotationSpeed = 0; // 旋转速度
+                this.gravity = 0.1 + (level * 0.02); // 重力加速度，等级越高重力越大
+            }
+            
+            // 检查下方是否有支撑
+            hasSupport() {
+                // 检查底部边界
+                if (this.y + this.size/2 + 5 >= canvas.height - 60) {
+                    return true;
+                }
+                
+                // 检查其他粒子
+                for (const other of particles) {
+                    if (other !== this && (!other.falling || other.locked)) {
+                        // 水平方向重叠
+                        const horizontalOverlap = Math.abs(this.x - other.x) < (this.size + other.size) / 2 * 0.9;
+                        // 垂直方向在下方
+                        const verticalPosition = other.y - (this.y + this.size / 2) < this.size / 2 + 5 && 
+                                                other.y - (this.y + this.size / 2) > 0;
+                        
+                        if (horizontalOverlap && verticalPosition) {
+                            return true;
+                        }
+                    }
+                }
+                
+                return false;
             }
             
             update() {
                 // 脉动效果动画
                 this.pulse = (this.pulse + this.pulseSpeed) % Math.PI;
+                
+                // 时刻检查下方是否有支撑，如果没有则开始下落
+                if (this.locked && !this.hasSupport()) {
+                    this.locked = false;
+                    this.falling = true;
+                    this.velocityY = 0; // 重置垂直速度
+                }
                 
                 // 锁定状态的粒子不再下落
                 if (this.locked) {
@@ -518,66 +603,121 @@
                             this.y = canvas.height - 60 - this.size/2;
                             this.velocityY = -this.velocityY * 0.5;
                         }
+                        
+                        // 速度足够小时再次检查支撑
+                        if (Math.abs(this.velocityX) < 0.3 && Math.abs(this.velocityY) < 0.3) {
+                            if (this.hasSupport()) {
+                                this.locked = true;
+                            } else {
+                                this.falling = true;
+                            }
+                        }
                     }
-                    return; // 锁定状态直接返回，不执行下落逻辑
+                    return;
                 }
                 
                 if (this.falling) {
-                    // 基础下落
-                    let fallDistance = this.speed * gameSpeed * 1.2;
-                    let canFall = true;
-                    const nextY = this.y + fallDistance;
+                    // 应用重力加速度
+                    this.velocityY += this.gravity * gameSpeed;
                     
-                    // 检测下落路径碰撞
+                    // 计算下一位置
+                    let nextX = this.x + this.velocityX;
+                    let nextY = this.y + this.velocityY;
+                    let canMove = true;
+                    
+                    // 检测水平碰撞
                     for (const other of particles) {
                         if (other !== this && (!other.falling || other.locked)) {
-                            const horizontalOverlap = Math.abs(this.x - other.x) < (this.size + other.size) / 2;
-                            const verticalDistance = other.y - (nextY + this.size / 2);
-                            
-                            if (horizontalOverlap && verticalDistance < this.size / 2 && verticalDistance > 0) {
-                                this.y = other.y - (this.size + other.size) / 2;
-                                this.falling = false;
-                                this.locked = true; // 落到其他粒子上时锁定
-                                canFall = false;
+                            // 检查水平方向碰撞
+                            if (Math.abs(nextX - other.x) < (this.size + other.size) / 2 &&
+                                Math.abs(this.y - other.y) < (this.size + other.size) / 2 * 0.7) {
+                                
+                                // 左侧碰撞
+                                if (nextX < other.x) {
+                                    nextX = other.x - (this.size + other.size) / 2;
+                                } 
+                                // 右侧碰撞
+                                else {
+                                    nextX = other.x + (this.size + other.size) / 2;
+                                }
+                                
+                                this.velocityX = -this.velocityX * 0.5;
+                                canMove = false;
                                 break;
                             }
                         }
                     }
                     
-                    if (canFall) {
-                        this.y = nextY;
-                        
-                        // 电场影响
-                        if (fieldActive) {
-                            if (this.type === 'positive') {
-                                this.x += 0.3 * gameSpeed;
-                            } else {
-                                this.x -= 0.3 * gameSpeed;
+                    // 检测垂直碰撞（下方是否有物体）
+                    let landed = false;
+                    for (const other of particles) {
+                        if (other !== this && (!other.falling || other.locked)) {
+                            const horizontalOverlap = Math.abs(nextX - other.x) < (this.size + other.size) / 2;
+                            const verticalDistance = other.y - (nextY + this.size / 2);
+                            
+                            if (horizontalOverlap && verticalDistance < this.size / 2 && verticalDistance > 0) {
+                                nextY = other.y - (this.size + other.size) / 2;
+                                this.velocityY = 0;
+                                landed = true;
+                                canMove = false;
+                                break;
                             }
                         }
+                    }
+                    
+                    // 检测底部边界
+                    if (nextY + this.size/2 > canvas.height - 60) {
+                        nextY = canvas.height - 60 - this.size/2;
+                        this.velocityY = 0;
+                        landed = true;
+                        canMove = false;
+                    }
+                    
+                    // 更新位置
+                    this.x = nextX;
+                    this.y = nextY;
+                    
+                    // 应用电场影响（增强效果）
+                    if (fieldActive) {
+                        // 电场力随粒子等级增加
+                        const fieldStrength = 0.05 + (this.level * 0.01);
+                        this.velocityX += (this.type === 'positive' ? fieldStrength : -fieldStrength) * gameSpeed * 2;
                         
-                        // 磁场影响 - 旋转并产生曲线运动
-                        if (magneticFieldActive) {
-                            this.rotationSpeed = this.type === 'positive' ? 0.05 : -0.05;
-                            this.rotation += this.rotationSpeed;
-                            
-                            // 基于旋转角度改变水平速度
-                            this.velocityX += Math.cos(this.rotation) * 0.05;
+                        // 为粒子添加电场影响的视觉效果
+                        this.pulseSpeed = 0.15 + Math.random() * 0.05; // 加快脉动
+                    } else {
+                        // 恢复正常脉动速度
+                        if (this.pulseSpeed > 0.1) {
+                            this.pulseSpeed = 0.05 + Math.random() * 0.05;
                         }
+                    }
+                    
+                    // 应用磁场影响 - 增强旋转效果
+                    if (magneticFieldActive) {
+                        // 磁场力随粒子等级增加
+                        const magneticStrength = 0.08 + (this.level * 0.02);
+                        this.rotationSpeed = this.type === 'positive' ? magneticStrength : -magneticStrength;
+                        this.rotation += this.rotationSpeed;
                         
-                        // 应用水平速度
-                        this.x += this.velocityX;
+                        // 更强的曲线运动效果
+                        this.velocityX += Math.cos(this.rotation) * 0.08;
+                        this.velocityY += Math.sin(this.rotation) * 0.04;
                         
-                        // 边界检测
-                        if (this.x - this.size/2 < 0) this.x = this.size/2;
-                        if (this.x + this.size/2 > canvas.width) this.x = canvas.width - this.size/2;
-                        
-                        // 底部检测
-                        if (this.y + this.size/2 > canvas.height - 60) {
-                            this.y = canvas.height - 60 - this.size/2;
-                            this.falling = false;
-                            this.locked = true; // 落到地面时锁定
-                        }
+                        // 磁场中的特殊脉动效果
+                        this.pulseSpeed = 0.2 + Math.random() * 0.1;
+                    }
+                    
+                    // 如果着陆了，检查是否需要锁定
+                    if (landed) {
+                        this.falling = false;
+                        // 短暂延迟后锁定，确保有时间处理可能的位置调整
+                        setTimeout(() => {
+                            if (this.hasSupport()) {
+                                this.locked = true;
+                            } else {
+                                this.falling = true;
+                            }
+                        }, 100);
                     }
                 } else {
                     // 未锁定但已停止下落的粒子
@@ -603,25 +743,47 @@
                             this.velocityY = -this.velocityY * 0.5;
                         }
                         
-                        // 当速度足够小时锁定粒子
+                        // 当速度足够小时检查支撑
                         if (Math.abs(this.velocityX) < 0.3 && Math.abs(this.velocityY) < 0.3) {
-                            this.locked = true;
+                            if (this.hasSupport()) {
+                                this.locked = true;
+                            } else {
+                                this.falling = true;
+                            }
                         }
                     } else {
-                        // 速度为零时直接锁定
-                        this.locked = true;
+                        // 速度为零时检查支撑
+                        if (this.hasSupport()) {
+                            this.locked = true;
+                        } else {
+                            this.falling = true;
+                        }
                     }
                 }
             }
             
             draw() {
-                // 绘制粒子光晕
-                const glowSize = this.size * (1 + Math.sin(this.pulse) * 0.1);
+                // 绘制粒子光晕，场激活时增强效果
+                const baseGlow = this.size * (1 + Math.sin(this.pulse) * 0.1);
+                const glowSize = fieldActive || magneticFieldActive ? baseGlow * 1.5 : baseGlow;
+                
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, glowSize/2, 0, Math.PI * 2);
-                ctx.fillStyle = this.type === 'positive' ? 
-                    `rgba(76, 201, 240, ${0.3 + Math.sin(this.pulse) * 0.1})` : 
-                    `rgba(247, 37, 133, ${0.3 + Math.sin(this.pulse) * 0.1})`;
+                
+                // 场激活时的特殊光晕颜色
+                if (fieldActive) {
+                    ctx.fillStyle = this.type === 'positive' ? 
+                        `rgba(76, 201, 240, ${0.4 + Math.sin(this.pulse) * 0.2})` : 
+                        `rgba(76, 201, 240, ${0.3 + Math.sin(this.pulse) * 0.15})`;
+                } else if (magneticFieldActive) {
+                    ctx.fillStyle = this.type === 'positive' ? 
+                        `rgba(247, 37, 133, ${0.3 + Math.sin(this.pulse) * 0.15})` : 
+                        `rgba(247, 37, 133, ${0.4 + Math.sin(this.pulse) * 0.2})`;
+                } else {
+                    ctx.fillStyle = this.type === 'positive' ? 
+                        `rgba(76, 201, 240, ${0.3 + Math.sin(this.pulse) * 0.1})` : 
+                        `rgba(247, 37, 133, ${0.3 + Math.sin(this.pulse) * 0.1})`;
+                }
                 ctx.fill();
                 
                 // 绘制粒子主体
@@ -688,18 +850,22 @@
                 otherParticle.x += nx * overlap * correctionFactor;
                 otherParticle.y += ny * overlap * correctionFactor;
                 
-                this.velocityX = -nx * 0.8;
-                this.velocityY = -ny * 0.8;
-                otherParticle.velocityX = nx * 0.8;
-                otherParticle.velocityY = ny * 0.8;
+                // 碰撞后给予适当的反弹力
+                const bounceForce = 1.2;
+                this.velocityX = -nx * bounceForce;
+                this.velocityY = -ny * bounceForce;
+                otherParticle.velocityX = nx * bounceForce;
+                otherParticle.velocityY = ny * bounceForce;
                 
                 // 碰撞后解锁粒子，允许移动调整
                 this.locked = false;
+                this.falling = !this.hasSupport(); // 碰撞后检查是否需要下落
                 otherParticle.locked = false;
+                otherParticle.falling = !otherParticle.hasSupport();
             }
         }
         
-        // 重置游戏状态（新增功能核心函数）
+        // 重置游戏状态
         function resetGame() {
             particles = [];
             score = 0;
@@ -719,6 +885,7 @@
             timeWarning.style.display = 'none';
             fieldIndicator.className = 'field-active-indicator';
             cooldownIndicator.style.display = 'none';
+            gameContainer.classList.remove('electric-active', 'magnetic-active');
             
             // 更新下一个粒子
             updateNextParticle();
@@ -759,20 +926,35 @@
             nextParticlePreview.style.height = (20 + (nextParticleLevel - 1) * 10) + 'px';
         }
         
-        // 光子湮灭效果
+        // 增强的光子湮灭效果
         function drawPhotonEffect(x, y) {
-            for (let i = 0; i < 20; i++) {
+            // 创建强光效果
+            for (let i = 0; i < 30; i++) {
                 setTimeout(() => {
+                    // 中心光球
                     ctx.beginPath();
-                    ctx.arc(x, y, 5 + i * 2, 0, Math.PI * 2);
-                    const alpha = 1 - i * 0.05;
+                    ctx.arc(x, y, 5 + i * 3, 0, Math.PI * 2);
+                    const alpha = 1 - i * 0.03;
                     ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
                     ctx.fill();
                     
-                    // 绘制光线
-                    for (let j = 0; j < 8; j++) {
-                        const angle = (j * Math.PI / 4) + (i * 0.1);
-                        const length = 10 + i * 3;
+                    // 彩色光环
+                    ctx.beginPath();
+                    ctx.arc(x, y, 15 + i * 2.5, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(76, 201, 240, ${alpha * 0.7})`;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 25 + i * 2, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(247, 37, 133, ${alpha * 0.5})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // 放射状光线
+                    for (let j = 0; j < 12; j++) {
+                        const angle = (j * Math.PI / 6) + (i * 0.05);
+                        const length = 20 + i * 4;
                         const endX = x + Math.cos(angle) * length;
                         const endY = y + Math.sin(angle) * length;
                         
@@ -783,7 +965,7 @@
                         ctx.lineWidth = 2;
                         ctx.stroke();
                     }
-                }, i * 20);
+                }, i * 15);
             }
         }
         
@@ -829,6 +1011,10 @@
                             
                             particles = particles.filter(p => p !== p1 && p !== p2);
                             drawPhotonEffect(annihilationX, annihilationY);
+                            
+                            // 播放湮灭音效
+                            annihilateSound.currentTime = 0;
+                            annihilateSound.play().catch(e => console.log("无法播放音效:", e));
                             
                             const points = chargeSum * 10;
                             score += points;
@@ -912,12 +1098,17 @@
                         
                         // 合成的新粒子直接锁定，不下落
                         newParticle.falling = false;
-                        newParticle.locked = true;
+                        newParticle.locked = newParticle.hasSupport(); // 检查是否有支撑
                         newParticle.y = newY;
                         particles.push(newParticle);
                         
                         // 合成效果和得分
                         drawSynthesisEffect(newX, newY, newLevel, p1.type);
+                        
+                        // 播放合成音效
+                        synthesizeSound.currentTime = 0;
+                        synthesizeSound.play().catch(e => console.log("无法播放音效:", e));
+                        
                         score += newLevel * 10;
                         scoreElement.textContent = score;
                         maxParticleLevel = Math.max(maxParticleLevel, newLevel);
@@ -939,13 +1130,28 @@
             const size = 20 + (level - 1) * 10;
             const color = type === 'positive' ? 'rgba(76, 201, 240, ' : 'rgba(247, 37, 133, ';
             
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 setTimeout(() => {
                     ctx.beginPath();
-                    ctx.arc(x, y, size * (0.2 + i * 0.05), 0, Math.PI * 2);
-                    ctx.fillStyle = `${color}${1 - i * 0.07})`;
+                    ctx.arc(x, y, size * (0.2 + i * 0.07), 0, Math.PI * 2);
+                    ctx.fillStyle = `${color}${1 - i * 0.05})`;
                     ctx.fill();
-                }, i * 30);
+                    
+                    // 合成时的脉冲光线
+                    for (let j = 0; j < 8; j++) {
+                        const angle = j * Math.PI / 4;
+                        const length = size * (0.3 + i * 0.05);
+                        const endX = x + Math.cos(angle) * length;
+                        const endY = y + Math.sin(angle) * length;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = `${color}${1 - i * 0.05})`;
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
+                }, i * 20);
             }
         }
         
@@ -1020,6 +1226,7 @@
                 if (fieldTimer >= fieldDuration) {
                     fieldActive = false;
                     fieldIndicator.className = 'field-active-indicator';
+                    gameContainer.classList.remove('electric-active');
                     fieldTimer = 0;
                 } else {
                     fieldIndicator.className = 'field-active-indicator electric-active';
@@ -1033,6 +1240,7 @@
                 if (fieldTimer >= magneticFieldDuration) {
                     magneticFieldActive = false;
                     fieldIndicator.className = 'field-active-indicator';
+                    gameContainer.classList.remove('magnetic-active');
                     fieldTimer = 0;
                 } else {
                     fieldIndicator.className = 'field-active-indicator magnetic-active';
@@ -1059,7 +1267,7 @@
         startBtn.addEventListener('click', () => {
             mainMenu.style.display = 'none';
             gameContainer.style.display = 'block';
-            resetGame(); // 开始新游戏时重置状态
+            resetGame();
             gameLoop();
         });
         
@@ -1074,13 +1282,11 @@
         backToMenuBtn.addEventListener('click', () => {
             gameContainer.style.display = 'none';
             mainMenu.style.display = 'block';
-            gameOver = true; // 回到菜单时结束当前游戏
+            gameOver = true;
         });
         
-        // 新增：游戏中重新开始按钮
         restartDuringGameBtn.addEventListener('click', resetGame);
         
-        // 新增：返回导航页按钮
         backToNavBtn.addEventListener('click', () => {
             window.location.href = 'indexdaohang.html';
         });
@@ -1090,23 +1296,34 @@
             gameLoop();
         });
         
-        // 电场按钮
+        // 电场按钮 - 增强效果
         fieldBtn.addEventListener('click', () => {
             if (!fieldActive && !magneticFieldActive) {
                 fieldActive = true;
                 fieldTimer = 0;
+                gameContainer.classList.add('electric-active');
+                gameContainer.classList.remove('magnetic-active');
+                
+                // 播放电场音效
+                electricFieldSound.currentTime = 0;
+                electricFieldSound.play().catch(e => console.log("无法播放音效:", e));
             }
         });
         
-        // 磁场按钮
+        // 磁场按钮 - 增强效果
         magneticBtn.addEventListener('click', () => {
             if (!magneticFieldActive && !fieldActive) {
                 magneticFieldActive = true;
                 fieldTimer = 0;
+                gameContainer.classList.add('magnetic-active');
+                gameContainer.classList.remove('electric-active');
+                
+                // 播放磁场音效
+                magneticFieldSound.currentTime = 0;
+                magneticFieldSound.play().catch(e => console.log("无法播放音效:", e));
             }
         });
         
-        // 点击画布释放粒子
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
