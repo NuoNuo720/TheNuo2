@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自由电子冒险5：电容粒子合成</title>
+    <title>自由电子冒险5：量子粒子碰撞</title>
     <style>
         * {
             margin: 0;
@@ -18,14 +18,13 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
             font-family: 'Arial', sans-serif;
             overflow: hidden;
             color: white;
             padding: 20px;
         }
         
-        /* 主页面样式 */
         .main-menu {
             position: relative;
             width: 90vmin;
@@ -37,8 +36,8 @@
         .main-menu h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
-            color: #e94560;
-            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+            color: #4cc9f0;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
         }
         
         .main-menu h2 {
@@ -63,12 +62,11 @@
         }
         
         .menu-btn:hover {
-            background-color: rgba(233, 69, 96, 0.8);
+            background-color: rgba(76, 201, 240, 0.8);
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
         
-        /* 游戏容器 */
         .game-container {
             position: relative;
             width: 90vmin;
@@ -82,27 +80,25 @@
         #gameCanvas {
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, #1a2a6c 0%, #16213e 100%);
-            border: 4px solid #e94560;
+            background: radial-gradient(circle at center, #1b263b 0%, #0d1b2a 100%);
+            border: 4px solid #4cc9f0;
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+            box-shadow: 0 0 20px rgba(76, 201, 240, 0.3);
         }
         
-        /* 分数面板 */
         .score-board {
             position: absolute;
-            top: -80px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
+            top: -100px;
+            right: 10px;
             color: #ffffff;
             font-size: 1.2rem;
             text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
             padding: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
         }
         
-        /* 控制按钮 */
         .controls {
             position: absolute;
             bottom: -70px;
@@ -110,6 +106,7 @@
             right: 0;
             display: flex;
             justify-content: center;
+            gap: 20px;
         }
         
         .control-btn {
@@ -132,11 +129,15 @@
         }
         
         .electric-field {
-            background: linear-gradient(135deg, #ffd166 0%, #f7b733 100%);
-            color: #333;
+            background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+            color: white;
         }
         
-        /* 释放冷却提示 */
+        .magnetic-field {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+            color: white;
+        }
+        
         .cooldown-indicator {
             position: absolute;
             bottom: -100px;
@@ -147,7 +148,6 @@
             display: none;
         }
         
-        /* 游戏结束界面 */
         .game-over {
             position: absolute;
             top: 0;
@@ -168,8 +168,8 @@
         .game-over h2 {
             font-size: 2rem;
             margin-bottom: 20px;
-            color: #e94560;
-            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+            color: #4cc9f0;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
         }
         
         .game-over p {
@@ -194,12 +194,10 @@
             transform: scale(1.05);
         }
         
-        /* 下一个粒子预览 */
         .next-particle {
             position: absolute;
-            top: -140px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: -100px;
+            left: 10px;
             color: white;
             text-align: center;
             background-color: rgba(0, 0, 0, 0.3);
@@ -215,7 +213,6 @@
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
         
-        /* 顶部边界警告效果 */
         .top-boundary-warning {
             position: absolute;
             top: 60px;
@@ -227,7 +224,6 @@
             z-index: 4;
         }
         
-        /* 玩法说明 */
         .instructions {
             position: absolute;
             top: 0;
@@ -245,7 +241,7 @@
         }
         
         .instructions h2 {
-            color: #e94560;
+            color: #4cc9f0;
             margin-bottom: 20px;
         }
         
@@ -265,11 +261,11 @@
             cursor: pointer;
         }
         
-        /* 返回主菜单按钮 */
         .back-to-menu {
             position: absolute;
-            top: -80px;
-            left: 10px;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
             padding: 5px 15px;
             background-color: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -280,36 +276,59 @@
         }
         
         .back-to-menu:hover {
-            background-color: rgba(233, 69, 96, 0.5);
+            background-color: rgba(76, 201, 240, 0.5);
         }
         
-        /* 时间警告显示 */
         .time-warning {
             position: absolute;
             top: 30px;
             left: 50%;
             transform: translateX(-50%);
-            color: #e94560;
+            color: #4cc9f0;
             font-size: 1.2rem;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(233, 69, 96, 0.8);
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.8);
             display: none;
             z-index: 4;
+        }
+        
+        .field-active-indicator {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9rem;
+            padding: 3px 10px;
+            border-radius: 10px;
+            display: none;
+            z-index: 4;
+        }
+        
+        .electric-active {
+            background-color: rgba(76, 201, 240, 0.3);
+            color: #4cc9f0;
+            display: block;
+        }
+        
+        .magnetic-active {
+            background-color: rgba(247, 37, 133, 0.3);
+            color: #f72585;
+            display: block;
         }
         
         @media (max-width: 600px) {
             .score-board {
                 font-size: 1rem;
-                top: -70px;
+                top: -90px;
             }
             
             .next-particle {
-                top: -120px;
+                top: -90px;
                 font-size: 0.9rem;
             }
             
             .back-to-menu {
-                top: -70px;
+                top: -90px;
             }
             
             .game-over h2 {
@@ -327,32 +346,34 @@
     </style>
 </head>
 <body>
-    <!-- 主页面 -->
     <div class="main-menu" id="mainMenu">
         <h1>自由电子冒险5</h1>
-        <h2>电容粒子合成</h2>
+        <h2>量子粒子碰撞</h2>
         <button class="menu-btn" id="startBtn">开始游戏</button>
         <button class="menu-btn" id="instructionsBtn">游戏说明</button>
+        <!-- 新增返回导航页按钮 -->
+        <button class="menu-btn" id="backToNavBtn">返回导航页</button>
     </div>
     
-    <!-- 玩法说明 -->
     <div class="instructions" id="instructions">
         <h2>游戏玩法</h2>
         <p>1. 点击屏幕任意位置释放下一个随机带电粒子（有释放间隔）</p>
         <p>2. 粒子会受到重力影响向下运动</p>
         <p>3. 点击"E"按钮激活电场，正电粒子向右偏移，负电粒子向左偏移</p>
-        <p>4. 两个相同类型和等级的粒子碰撞会合成更高等级的粒子</p>
-        <p>5. 正电荷（红色）和负电荷（蓝色）相互作用规则：</p>
+        <p>4. 点击"M"按钮激活磁场，使粒子旋转并改变方向</p>
+        <p>5. 两个相同类型和等级的粒子碰撞会合成更高等级的粒子</p>
+        <p>6. 正电荷（蓝色）和负电荷（粉色）相互作用规则：</p>
         <p>   - 电荷量之和为10的倍数：湮灭成光子消失（优先级高）</p>
-        <p>   - 电荷量之和为3的倍数：相互弹开</p>
-        <p>6. 合成或湮灭粒子可获得分数，等级越高分数越多</p>
-        <p>7. 当粒子触碰顶部边界并持续3.5423秒，游戏结束</p>
+        <p>   - 电荷量之和为3：相互弹开</p>
+        <p>7. 合成或湮灭粒子可获得分数，等级越高分数越多</p>
+        <p>8. 当粒子触碰顶部边界并持续3.5423秒，游戏结束</p>
         <button class="close-btn" id="closeInstructions">关闭</button>
     </div>
     
-    <!-- 游戏容器 -->
     <div class="game-container" id="gameContainer">
         <button class="back-to-menu" id="backToMenu">主菜单</button>
+        <!-- 新增重新开始按钮 -->
+        <button class="back-to-menu" id="restartDuringGameBtn" style="left: 20%;">重新开始</button>
         
         <div class="score-board">
             <div>得分: <span id="score">0</span></div>
@@ -364,19 +385,19 @@
             <div id="nextParticlePreview"></div>
         </div>
         
-        <!-- 顶部边界警告线 -->
         <div class="top-boundary-warning" id="topBoundaryWarning"></div>
         
-        <!-- 时间警告显示 -->
         <div class="time-warning" id="timeWarning">0.0秒</div>
+        
+        <div class="field-active-indicator" id="fieldIndicator"></div>
         
         <canvas id="gameCanvas"></canvas>
         
         <div class="controls">
             <button class="control-btn electric-field" id="fieldBtn">E</button>
+            <button class="control-btn magnetic-field" id="magneticBtn">M</button>
         </div>
         
-        <!-- 释放冷却提示 -->
         <div class="cooldown-indicator" id="cooldownIndicator">等待释放...</div>
         
         <div class="game-over" id="gameOver">
@@ -398,11 +419,13 @@
         const instructions = document.getElementById('instructions');
         const closeInstructions = document.getElementById('closeInstructions');
         const backToMenuBtn = document.getElementById('backToMenu');
+        const restartDuringGameBtn = document.getElementById('restartDuringGameBtn'); // 新增
+        const backToNavBtn = document.getElementById('backToNavBtn'); // 新增
         const topBoundaryWarning = document.getElementById('topBoundaryWarning');
         const timeWarning = document.getElementById('timeWarning');
         const cooldownIndicator = document.getElementById('cooldownIndicator');
+        const fieldIndicator = document.getElementById('fieldIndicator');
         
-        // 游戏元素
         const scoreElement = document.getElementById('score');
         const highScoreElement = document.getElementById('highScore');
         const gameOverElement = document.getElementById('gameOver');
@@ -410,6 +433,7 @@
         const maxLevelElement = document.getElementById('maxLevel');
         const restartBtn = document.getElementById('restartBtn');
         const fieldBtn = document.getElementById('fieldBtn');
+        const magneticBtn = document.getElementById('magneticBtn');
         const nextParticlePreview = document.getElementById('nextParticlePreview');
         
         // 设置画布尺寸
@@ -419,13 +443,15 @@
         // 游戏状态
         let particles = [];
         let score = 0;
-        let highScore = localStorage.getItem('particleHighScore') || 0;
+        let highScore = localStorage.getItem('quantumHighScore') || 0;
         let gameOver = false;
         let maxParticleLevel = 0;
         let gameSpeed = 1;
         let fieldActive = false;
+        let magneticFieldActive = false;
         let fieldTimer = 0;
-        let fieldDuration = 300; // 电场效果持续帧数
+        let fieldDuration = 250; // 电场效果持续帧数
+        let magneticFieldDuration = 200; // 磁场效果持续帧数
         let nextParticleType = 'positive';
         let nextParticleLevel = 1;
         
@@ -442,7 +468,7 @@
         // 更新高分显示
         highScoreElement.textContent = highScore;
         
-        // 粒子类（改进碰撞检测和相互作用）
+        // 粒子类
         class Particle {
             constructor(x, type, level = 1) {
                 this.x = x;
@@ -451,66 +477,139 @@
                 this.level = level;
                 this.charge = level; // 电荷量等于等级
                 this.size = 20 + (level - 1) * 10;
-                this.speed = 1 + (level - 1) * 0.2;
+                this.speed = 2 + (level - 1) * 0.5; // 下落速度
                 this.falling = true;
-                // 颜色调整：正电荷为红色，负电荷为蓝色
-                this.color = type === 'positive' ? '#ff3b30' : '#007aff';
+                this.locked = false; // 落地锁定状态
+                this.color = type === 'positive' ? '#4cc9f0' : '#f72585';
                 this.textColor = 'white';
-                this.pulse = 0; // 用于粒子脉动效果
+                this.pulse = 0; // 脉动效果
                 this.pulseSpeed = 0.05 + Math.random() * 0.05;
-                this.velocityX = 0; // 水平速度，用于碰撞后的移动
+                this.velocityX = 0; // 水平速度
                 this.velocityY = 0; // 垂直速度
+                this.rotation = 0; // 旋转角度（用于磁场效果）
+                this.rotationSpeed = 0; // 旋转速度
             }
             
             update() {
                 // 脉动效果动画
                 this.pulse = (this.pulse + this.pulseSpeed) % Math.PI;
                 
-                if (this.falling) {
-                    // 基础下落
-                    this.y += this.speed * gameSpeed * 0.7;
-                    
-                    // 电场影响
-                    if (fieldActive) {
-                        if (this.type === 'positive') {
-                            this.x += 0.3 * gameSpeed;
-                        } else {
-                            this.x -= 0.3 * gameSpeed;
-                        }
-                    }
-                    
-                    // 边界检测
-                    if (this.x - this.size/2 < 0) this.x = this.size/2;
-                    if (this.x + this.size/2 > canvas.width) this.x = canvas.width - this.size/2;
-                    
-                    // 底部检测
-                    if (this.y + this.size/2 > canvas.height - 60) {
-                        this.y = canvas.height - 60 - this.size/2;
-                        this.falling = false;
-                    }
-                } else {
-                    // 已落地粒子的微小移动，用于碰撞后调整位置
+                // 锁定状态的粒子不再下落
+                if (this.locked) {
+                    // 仅处理位置调整，不处理下落
                     if (Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1) {
                         this.x += this.velocityX;
                         this.y += this.velocityY;
                         
                         // 减速
-                        this.velocityX *= 0.9;
-                        this.velocityY *= 0.9;
+                        this.velocityX *= 0.95;
+                        this.velocityY *= 0.95;
                         
                         // 边界检测
                         if (this.x - this.size/2 < 0) {
                             this.x = this.size/2;
-                            this.velocityX = -this.velocityX * 0.5; // 反弹
+                            this.velocityX = -this.velocityX * 0.5;
                         }
                         if (this.x + this.size/2 > canvas.width) {
                             this.x = canvas.width - this.size/2;
-                            this.velocityX = -this.velocityX * 0.5; // 反弹
+                            this.velocityX = -this.velocityX * 0.5;
                         }
                         if (this.y + this.size/2 > canvas.height - 60) {
                             this.y = canvas.height - 60 - this.size/2;
-                            this.velocityY = -this.velocityY * 0.5; // 反弹
+                            this.velocityY = -this.velocityY * 0.5;
                         }
+                    }
+                    return; // 锁定状态直接返回，不执行下落逻辑
+                }
+                
+                if (this.falling) {
+                    // 基础下落
+                    let fallDistance = this.speed * gameSpeed * 1.2;
+                    let canFall = true;
+                    const nextY = this.y + fallDistance;
+                    
+                    // 检测下落路径碰撞
+                    for (const other of particles) {
+                        if (other !== this && (!other.falling || other.locked)) {
+                            const horizontalOverlap = Math.abs(this.x - other.x) < (this.size + other.size) / 2;
+                            const verticalDistance = other.y - (nextY + this.size / 2);
+                            
+                            if (horizontalOverlap && verticalDistance < this.size / 2 && verticalDistance > 0) {
+                                this.y = other.y - (this.size + other.size) / 2;
+                                this.falling = false;
+                                this.locked = true; // 落到其他粒子上时锁定
+                                canFall = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (canFall) {
+                        this.y = nextY;
+                        
+                        // 电场影响
+                        if (fieldActive) {
+                            if (this.type === 'positive') {
+                                this.x += 0.3 * gameSpeed;
+                            } else {
+                                this.x -= 0.3 * gameSpeed;
+                            }
+                        }
+                        
+                        // 磁场影响 - 旋转并产生曲线运动
+                        if (magneticFieldActive) {
+                            this.rotationSpeed = this.type === 'positive' ? 0.05 : -0.05;
+                            this.rotation += this.rotationSpeed;
+                            
+                            // 基于旋转角度改变水平速度
+                            this.velocityX += Math.cos(this.rotation) * 0.05;
+                        }
+                        
+                        // 应用水平速度
+                        this.x += this.velocityX;
+                        
+                        // 边界检测
+                        if (this.x - this.size/2 < 0) this.x = this.size/2;
+                        if (this.x + this.size/2 > canvas.width) this.x = canvas.width - this.size/2;
+                        
+                        // 底部检测
+                        if (this.y + this.size/2 > canvas.height - 60) {
+                            this.y = canvas.height - 60 - this.size/2;
+                            this.falling = false;
+                            this.locked = true; // 落到地面时锁定
+                        }
+                    }
+                } else {
+                    // 未锁定但已停止下落的粒子
+                    if (Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1) {
+                        this.x += this.velocityX;
+                        this.y += this.velocityY;
+                        
+                        // 减速
+                        this.velocityX *= 0.95;
+                        this.velocityY *= 0.95;
+                        
+                        // 边界检测
+                        if (this.x - this.size/2 < 0) {
+                            this.x = this.size/2;
+                            this.velocityX = -this.velocityX * 0.5;
+                        }
+                        if (this.x + this.size/2 > canvas.width) {
+                            this.x = canvas.width - this.size/2;
+                            this.velocityX = -this.velocityX * 0.5;
+                        }
+                        if (this.y + this.size/2 > canvas.height - 60) {
+                            this.y = canvas.height - 60 - this.size/2;
+                            this.velocityY = -this.velocityY * 0.5;
+                        }
+                        
+                        // 当速度足够小时锁定粒子
+                        if (Math.abs(this.velocityX) < 0.3 && Math.abs(this.velocityY) < 0.3) {
+                            this.locked = true;
+                        }
+                    } else {
+                        // 速度为零时直接锁定
+                        this.locked = true;
                     }
                 }
             }
@@ -521,19 +620,23 @@
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, glowSize/2, 0, Math.PI * 2);
                 ctx.fillStyle = this.type === 'positive' ? 
-                    `rgba(255, 59, 48, ${0.3 + Math.sin(this.pulse) * 0.1})` : 
-                    `rgba(0, 122, 255, ${0.3 + Math.sin(this.pulse) * 0.1})`;
+                    `rgba(76, 201, 240, ${0.3 + Math.sin(this.pulse) * 0.1})` : 
+                    `rgba(247, 37, 133, ${0.3 + Math.sin(this.pulse) * 0.1})`;
                 ctx.fill();
                 
                 // 绘制粒子主体
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                if (magneticFieldActive) {
+                    ctx.rotate(this.rotation);
+                }
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size/2, 0, Math.PI * 2);
-                // 渐变色填充
+                ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
                 const gradient = ctx.createRadialGradient(
-                    this.x - this.size/6, this.y - this.size/6, 0,
-                    this.x, this.y, this.size/2
+                    -this.size/6, -this.size/6, 0,
+                    0, 0, this.size/2
                 );
-                gradient.addColorStop(0, this.type === 'positive' ? '#ffffff' : '#e0f7fa');
+                gradient.addColorStop(0, this.type === 'positive' ? '#e0f7fa' : '#ffeef2');
                 gradient.addColorStop(1, this.color);
                 ctx.fillStyle = gradient;
                 ctx.fill();
@@ -548,69 +651,87 @@
                 ctx.fillStyle = this.textColor;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(this.charge, this.x, this.y);
+                ctx.fillText(this.charge, 0, 0);
                 
                 // 绘制电荷符号
                 ctx.font = 'bold ' + (this.size/3) + 'px Arial';
-                ctx.fillText(this.type === 'positive' ? '+' : '-', this.x + this.size/4, this.y - this.size/4);
+                ctx.fillText(this.type === 'positive' ? '+' : '-', this.size/4, -this.size/4);
+                
+                ctx.restore();
             }
             
-            // 精确的碰撞检测
             checkCollision(otherParticle) {
-                // 计算两个粒子之间的距离
                 const dx = this.x - otherParticle.x;
                 const dy = this.y - otherParticle.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                // 碰撞半径总和
                 const collisionRadius = (this.size + otherParticle.size) / 2;
                 
-                return distance < collisionRadius;
+                return distance < collisionRadius * 1.1;
             }
             
-            // 处理碰撞响应
             resolveCollision(otherParticle) {
-                // 只有已落地的粒子才处理碰撞响应
-                if (this.falling || otherParticle.falling) return;
+                if (this.falling && !this.locked || otherParticle.falling && !otherParticle.locked) return;
                 
-                // 计算碰撞法线
                 const dx = otherParticle.x - this.x;
                 const dy = otherParticle.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                // 防止除以零
                 if (distance === 0) return;
                 
-                // 归一化法线
                 const nx = dx / distance;
                 const ny = dy / distance;
-                
-                // 计算重叠量
                 const overlap = (this.size + otherParticle.size) / 2 - distance;
                 
-                // 分离粒子
-                const correctionFactor = 0.5; // 各承担一半的分离
+                const correctionFactor = 0.5;
                 this.x -= nx * overlap * correctionFactor;
                 this.y -= ny * overlap * correctionFactor;
                 otherParticle.x += nx * overlap * correctionFactor;
                 otherParticle.y += ny * overlap * correctionFactor;
                 
-                // 应用反弹力
                 this.velocityX = -nx * 0.8;
                 this.velocityY = -ny * 0.8;
                 otherParticle.velocityX = nx * 0.8;
                 otherParticle.velocityY = ny * 0.8;
+                
+                // 碰撞后解锁粒子，允许移动调整
+                this.locked = false;
+                otherParticle.locked = false;
             }
         }
         
-        // 生成新粒子（使用随机类型和等级）
+        // 重置游戏状态（新增功能核心函数）
+        function resetGame() {
+            particles = [];
+            score = 0;
+            gameOver = false;
+            maxParticleLevel = 0;
+            gameSpeed = 1;
+            fieldActive = false;
+            magneticFieldActive = false;
+            fieldTimer = 0;
+            boundaryContactStartTime = null;
+            currentContactDuration = 0;
+            canReleaseParticle = true;
+            
+            // 更新UI
+            scoreElement.textContent = score;
+            gameOverElement.style.display = 'none';
+            timeWarning.style.display = 'none';
+            fieldIndicator.className = 'field-active-indicator';
+            cooldownIndicator.style.display = 'none';
+            
+            // 更新下一个粒子
+            updateNextParticle();
+        }
+        
+        // 生成新粒子
         function spawnParticle(x) {
             if (gameOver || !canReleaseParticle) return;
             
             const particle = new Particle(x, nextParticleType, nextParticleLevel);
             particles.push(particle);
             
-            // 更新下一个粒子（随机生成）
+            // 更新下一个粒子
             updateNextParticle();
             
             // 记录释放时间并设置冷却
@@ -618,37 +739,28 @@
             canReleaseParticle = false;
             cooldownIndicator.style.display = 'block';
             
-            // 冷却结束后允许再次释放
             setTimeout(() => {
                 canReleaseParticle = true;
                 cooldownIndicator.style.display = 'none';
             }, releaseCooldown);
         }
         
-        // 更新下一个粒子（随机生成类型和等级）
+        // 更新下一个粒子预览
         function updateNextParticle() {
-            // 随机决定下一个粒子类型
             nextParticleType = Math.random() > 0.5 ? 'positive' : 'negative';
             
-            // 随机决定等级：等级1-3，低等级概率更高
+            // 随机等级：1-3
             const rand = Math.random();
-            if (rand < 0.7) {
-                nextParticleLevel = 1;
-            } else if (rand < 0.9) {
-                nextParticleLevel = 2;
-            } else {
-                nextParticleLevel = 3;
-            }
+            nextParticleLevel = rand < 0.7 ? 1 : (rand < 0.9 ? 2 : 3);
             
-            // 更新预览
-            nextParticlePreview.style.backgroundColor = nextParticleType === 'positive' ? '#ff3b30' : '#007aff';
+            // 更新预览样式
+            nextParticlePreview.style.backgroundColor = nextParticleType === 'positive' ? '#4cc9f0' : '#f72585';
             nextParticlePreview.style.width = (20 + (nextParticleLevel - 1) * 10) + 'px';
             nextParticlePreview.style.height = (20 + (nextParticleLevel - 1) * 10) + 'px';
         }
         
-        // 处理光子湮灭效果
+        // 光子湮灭效果
         function drawPhotonEffect(x, y) {
-            // 绘制闪烁的光子效果
             for (let i = 0; i < 20; i++) {
                 setTimeout(() => {
                     ctx.beginPath();
@@ -675,59 +787,49 @@
             }
         }
         
-        // 检查并处理所有粒子碰撞
+        // 处理所有碰撞
         function handleCollisions() {
-            // 先处理湮灭（最高优先级）
-            if (checkAnnihilation()) return;
+            let hasCollision = false;
             
-            // 再处理合成
-            if (checkCombinations()) return;
+            if (checkAnnihilation()) hasCollision = true;
+            if (checkCombinations()) hasCollision = true;
+            if (checkRepulsion()) hasCollision = true;
             
-            // 然后处理弹开（当电荷量之和为3的倍数）
-            if (checkRepulsion()) return;
-            
-            // 最后处理普通碰撞（防止堆积）
-            const settledParticles = particles.filter(p => !p.falling);
-            
-            for (let i = 0; i < settledParticles.length; i++) {
-                for (let j = i + 1; j < settledParticles.length; j++) {
-                    const p1 = settledParticles[i];
-                    const p2 = settledParticles[j];
-                    
-                    if (p1.checkCollision(p2)) {
-                        // 处理碰撞响应，分离粒子
-                        p1.resolveCollision(p2);
+            // 处理普通碰撞
+            if (!hasCollision) {
+                const settledParticles = particles.filter(p => !p.falling || p.locked);
+                for (let i = 0; i < settledParticles.length; i++) {
+                    for (let j = i + 1; j < settledParticles.length; j++) {
+                        const p1 = settledParticles[i];
+                        const p2 = settledParticles[j];
+                        
+                        if (p1.checkCollision(p2)) {
+                            p1.resolveCollision(p2);
+                        }
                     }
                 }
             }
         }
         
-        // 检查并处理湮灭（电荷量之和为10的倍数）
+        // 湮灭检测
         function checkAnnihilation() {
-            const settledParticles = particles.filter(p => !p.falling);
+            const allParticles = [...particles];
             
-            for (let i = 0; i < settledParticles.length; i++) {
-                for (let j = i + 1; j < settledParticles.length; j++) {
-                    const p1 = settledParticles[i];
-                    const p2 = settledParticles[j];
+            for (let i = 0; i < allParticles.length; i++) {
+                for (let j = i + 1; j < allParticles.length; j++) {
+                    const p1 = allParticles[i];
+                    const p2 = allParticles[j];
                     
-                    // 不同类型电荷才可能湮灭
                     if (p1.type !== p2.type && p1.checkCollision(p2)) {
-                        const chargeSum = p1.charge + p2.charge;
+                        const chargeSum = Math.abs(p1.charge) + Math.abs(p2.charge);
                         
-                        // 电荷量之和为10的倍数
                         if (chargeSum % 10 === 0) {
-                            // 计算湮灭位置
                             const annihilationX = (p1.x + p2.x) / 2;
                             const annihilationY = (p1.y + p2.y) / 2;
                             
-                            // 移除两个粒子
                             particles = particles.filter(p => p !== p1 && p !== p2);
-                            
-                            // 绘制光子湮灭效果
                             drawPhotonEffect(annihilationX, annihilationY);
                             
-                            // 湮灭得分（电荷和的10倍）
                             const points = chargeSum * 10;
                             score += points;
                             scoreElement.textContent = score;
@@ -741,30 +843,31 @@
             return false;
         }
         
-        // 检查并处理弹开（电荷量之和为3的倍数）
+        // 弹开检测
         function checkRepulsion() {
-            const settledParticles = particles.filter(p => !p.falling);
+            const allParticles = [...particles];
             
-            for (let i = 0; i < settledParticles.length; i++) {
-                for (let j = i + 1; j < settledParticles.length; j++) {
-                    const p1 = settledParticles[i];
-                    const p2 = settledParticles[j];
+            for (let i = 0; i < allParticles.length; i++) {
+                for (let j = i + 1; j < allParticles.length; j++) {
+                    const p1 = allParticles[i];
+                    const p2 = allParticles[j];
                     
-                    if (p1.checkCollision(p2)) {
-                        const chargeSum = p1.charge + p2.charge;
+                    if (p1.type !== p2.type && p1.checkCollision(p2)) {
+                        const chargeSum = Math.abs(p1.charge) + Math.abs(p2.charge);
                         
-                        // 电荷量之和为3的倍数
-                        if (chargeSum % 3 === 0) {
-                            // 计算碰撞法线
+                        if (chargeSum === 3) {
+                            // 弹开时强制停止下落并解锁
+                            p1.falling = false;
+                            p2.falling = false;
+                            p1.locked = false;
+                            p2.locked = false;
+                            
                             const dx = p2.x - p1.x;
                             const dy = p2.y - p1.y;
-                            const distance = Math.sqrt(dx * dx + dy * dy) || 1; // 防止除以零
-                            
-                            // 归一化法线
+                            const distance = Math.sqrt(dx * dx + dy * dy) || 1;
                             const nx = dx / distance;
                             const ny = dy / distance;
                             
-                            // 应用较强的排斥力
                             const repelForce = 1.5;
                             p1.velocityX = -nx * repelForce;
                             p1.velocityY = -ny * repelForce;
@@ -780,48 +883,50 @@
             return false;
         }
         
-        // 检查合成可能性
+        // 合成检测
         function checkCombinations() {
-            const settledParticles = particles.filter(p => !p.falling);
+            const particlesCopy = [...particles];
             
-            for (let i = 0; i < settledParticles.length; i++) {
-                for (let j = i + 1; j < settledParticles.length; j++) {
-                    const p1 = settledParticles[i];
-                    const p2 = settledParticles[j];
+            for (let i = 0; i < particlesCopy.length; i++) {
+                for (let j = i + 1; j < particlesCopy.length; j++) {
+                    const p1 = particlesCopy[i];
+                    const p2 = particlesCopy[j];
                     
-                    // 相同类型和等级的粒子可以合成
+                    const p1Exists = particles.includes(p1);
+                    const p2Exists = particles.includes(p2);
+                    if (!p1Exists || !p2Exists) continue;
+                    
                     if (p1.type === p2.type && p1.level === p2.level && p1.checkCollision(p2)) {
-                        // 移除两个粒子
+                        // 停止原粒子下落
+                        p1.falling = false;
+                        p2.falling = false;
+                        
+                        // 移除旧粒子
                         particles = particles.filter(p => p !== p1 && p !== p2);
                         
-                        // 创建新的更高等级粒子
+                        // 创建新粒子
                         const newLevel = p1.level + 1;
                         const newX = (p1.x + p2.x) / 2;
                         const newY = (p1.y + p2.y) / 2;
-                        
                         const newParticle = new Particle(newX, p1.type, newLevel);
+                        
+                        // 合成的新粒子直接锁定，不下落
                         newParticle.falling = false;
+                        newParticle.locked = true;
                         newParticle.y = newY;
                         particles.push(newParticle);
                         
-                        // 合成动画效果
+                        // 合成效果和得分
                         drawSynthesisEffect(newX, newY, newLevel, p1.type);
-                        
-                        // 更新分数
-                        const points = newLevel * 10;
-                        score += points;
+                        score += newLevel * 10;
                         scoreElement.textContent = score;
-                        
-                        // 更新最大粒子等级
-                        if (newLevel > maxParticleLevel) {
-                            maxParticleLevel = newLevel;
-                        }
+                        maxParticleLevel = Math.max(maxParticleLevel, newLevel);
                         
                         // 提高游戏速度
                         gameSpeed = 1 + (score / 2000) * 0.5;
                         if (gameSpeed > 1.8) gameSpeed = 1.8;
                         
-                        return true; // 一次只处理一个合成
+                        return true;
                     }
                 }
             }
@@ -832,20 +937,19 @@
         // 合成效果动画
         function drawSynthesisEffect(x, y, level, type) {
             const size = 20 + (level - 1) * 10;
-            const color = type === 'positive' ? '#ff3b30' : '#007aff';
+            const color = type === 'positive' ? 'rgba(76, 201, 240, ' : 'rgba(247, 37, 133, ';
             
-            // 绘制合成时的爆炸效果
             for (let i = 0; i < 15; i++) {
                 setTimeout(() => {
                     ctx.beginPath();
                     ctx.arc(x, y, size * (0.2 + i * 0.05), 0, Math.PI * 2);
-                    ctx.fillStyle = `${color}${Math.floor(255 - i * 17).toString(16).padStart(2, '0')}`;
+                    ctx.fillStyle = `${color}${1 - i * 0.07})`;
                     ctx.fill();
                 }, i * 30);
             }
         }
         
-        // 检查边界接触和游戏结束
+        // 边界接触检测
         function checkBoundaryContact() {
             const topBoundary = 80;
             let anyParticleTouching = false;
@@ -860,41 +964,35 @@
                 }
             }
             
-            // 更新接触时间
             if (anyParticleTouching) {
                 if (boundaryContactStartTime === null) {
                     boundaryContactStartTime = Date.now();
                 } else {
                     currentContactDuration = Date.now() - boundaryContactStartTime;
-                    
-                    // 更新警告显示
                     const seconds = (currentContactDuration / 1000).toFixed(1);
                     timeWarning.textContent = `${seconds}秒`;
                     timeWarning.style.display = 'block';
                     
-                    // 边界警告线动画效果
                     const intensity = Math.min(1, currentContactDuration / gameOverThreshold);
-                    topBoundaryWarning.style.backgroundColor = `rgba(233, 69, 96, ${intensity})`;
-                    topBoundaryWarning.style.boxShadow = `0 0 ${10 * intensity}px rgba(233, 69, 96, ${intensity})`;
                     
-                    // 检查是否达到结束阈值
+                    // 更新边界警告颜色
+                    topBoundaryWarning.style.backgroundColor = `rgba(247, 37, 133, ${intensity})`;
+                    
+                    // 检查游戏结束条件
                     if (currentContactDuration >= gameOverThreshold) {
-                        return true;
+                        endGame();
                     }
                 }
             } else {
-                // 没有接触，重置计时器
+                // 重置边界接触状态
                 boundaryContactStartTime = null;
                 currentContactDuration = 0;
                 timeWarning.style.display = 'none';
                 topBoundaryWarning.style.backgroundColor = 'transparent';
-                topBoundaryWarning.style.boxShadow = 'none';
             }
-            
-            return false;
         }
         
-        // 游戏结束处理
+        // 结束游戏
         function endGame() {
             gameOver = true;
             gameOverElement.style.display = 'flex';
@@ -904,164 +1002,65 @@
             // 更新高分
             if (score > highScore) {
                 highScore = score;
-                localStorage.setItem('particleHighScore', highScore);
+                localStorage.setItem('quantumHighScore', highScore);
                 highScoreElement.textContent = highScore;
             }
-            
-            // 隐藏警告
-            timeWarning.style.display = 'none';
-            topBoundaryWarning.style.backgroundColor = 'transparent';
-            topBoundaryWarning.style.boxShadow = 'none';
-            cooldownIndicator.style.display = 'none';
         }
         
-        // 重置游戏
-        function resetGame() {
-            particles = [];
-            score = 0;
-            gameOver = false;
-            maxParticleLevel = 0;
-            gameSpeed = 1;
-            fieldActive = false;
-            fieldTimer = 0;
-            boundaryContactStartTime = null;
-            currentContactDuration = 0;
-            canReleaseParticle = true;
-            lastReleaseTime = 0;
-            
-            scoreElement.textContent = score;
-            gameOverElement.style.display = 'none';
-            timeWarning.style.display = 'none';
-            topBoundaryWarning.style.backgroundColor = 'transparent';
-            topBoundaryWarning.style.boxShadow = 'none';
-            cooldownIndicator.style.display = 'none';
-            
-            updateNextParticle();
-        }
-        
-        // 绘制电容器极板和背景效果（优化电场线方向）
-        function drawCapacitor() {
-            // 绘制背景网格
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.lineWidth = 1;
-            const gridSize = 30;
-            for (let x = 0; x < canvas.width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-            
-            // 顶部极板
-            const topGradient = ctx.createLinearGradient(0, 60, 0, 70);
-            topGradient.addColorStop(0, '#e94560');
-            topGradient.addColorStop(1, '#ff6b6b');
-            ctx.fillStyle = topGradient;
-            ctx.fillRect(0, 60, canvas.width, 10);
-            
-            // 底部极板
-            const bottomGradient = ctx.createLinearGradient(0, canvas.height - 50, 0, canvas.height - 40);
-            bottomGradient.addColorStop(0, '#e94560');
-            bottomGradient.addColorStop(1, '#ff6b6b');
-            ctx.fillStyle = bottomGradient;
-            ctx.fillRect(0, canvas.height - 50, canvas.width, 10);
-            
-            // 极板符号（明确电场方向）
-            ctx.font = '20px Arial';
-            ctx.fillStyle = 'white';
-            ctx.fillText('+', canvas.width - 30, 60);  // 右侧为正
-            ctx.fillText('-', 20, 60);                 // 左侧为负
-            
-            // 电场线 (优化方向显示：从正极指向负极)
-            if (fieldActive) {
-                ctx.strokeStyle = 'rgba(255, 209, 102, 0.7)';
-                ctx.lineWidth = 2;
-                
-                // 从右侧正极板向左弯曲的电场线
-                for (let i = 0; i < 8; i++) {
-                    const startX = canvas.width - 60 - i * 50;
-                    if (startX < 60) break;
-                    
-                    ctx.beginPath();
-                    ctx.setLineDash([5, 3]);
-                    ctx.moveTo(startX, 70);
-                    
-                    // 贝塞尔曲线控制点，使电场线从右向左弯曲
-                    const controlX1 = startX - 30;
-                    const controlY1 = 70 + i * 20;
-                    const controlX2 = startX - 60 - i * 10;
-                    const controlY2 = canvas.height / 2;
-                    const endX = 60 + i * 30;
-                    const endY = canvas.height - 60;
-                    
-                    ctx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, endX, endY);
-                    ctx.stroke();
-                }
-                
-                // 电场激活时的极板发光效果（正极更亮）
-                ctx.shadowColor = 'rgba(255, 209, 102, 0.8)';
-                ctx.shadowBlur = 15;
-                ctx.fillStyle = 'transparent';
-                ctx.fillRect(0, 60, canvas.width, 10);
-                ctx.fillRect(0, canvas.height - 50, canvas.width, 10);
-                ctx.shadowBlur = 0;
-            }
-        }
-        
-        // 游戏循环
+        // 游戏主循环
         function gameLoop() {
+            if (gameOver) return;
+            
             // 清空画布
-            ctx.fillStyle = '#16213e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 绘制电容器
-            drawCapacitor();
-            
-            if (!gameOver) {
-                // 更新电场状态
-                if (fieldActive) {
-                    fieldTimer++;
-                    if (fieldTimer >= fieldDuration) {
-                        fieldActive = false;
-                        fieldTimer = 0;
-                    }
-                }
-                
-                // 检查冷却状态
-                if (!canReleaseParticle && Date.now() - lastReleaseTime >= releaseCooldown) {
-                    canReleaseParticle = true;
-                    cooldownIndicator.style.display = 'none';
-                }
-                
-                // 更新所有粒子
-                for (const particle of particles) {
-                    particle.update();
-                    particle.draw();
-                }
-                
-                // 处理碰撞（包括湮灭、合成、弹开和物理碰撞）
-                handleCollisions();
-                
-                // 检查边界接触和游戏结束
-                if (checkBoundaryContact()) {
-                    endGame();
+            // 更新电场状态
+            if (fieldActive) {
+                fieldTimer++;
+                if (fieldTimer >= fieldDuration) {
+                    fieldActive = false;
+                    fieldIndicator.className = 'field-active-indicator';
+                    fieldTimer = 0;
+                } else {
+                    fieldIndicator.className = 'field-active-indicator electric-active';
+                    fieldIndicator.textContent = `电场激活中 (${Math.ceil((fieldDuration - fieldTimer) / 60)}s)`;
                 }
             }
+            
+            // 更新磁场状态
+            if (magneticFieldActive) {
+                fieldTimer++;
+                if (fieldTimer >= magneticFieldDuration) {
+                    magneticFieldActive = false;
+                    fieldIndicator.className = 'field-active-indicator';
+                    fieldTimer = 0;
+                } else {
+                    fieldIndicator.className = 'field-active-indicator magnetic-active';
+                    fieldIndicator.textContent = `磁场激活中 (${Math.ceil((magneticFieldDuration - fieldTimer) / 60)}s)`;
+                }
+            }
+            
+            // 更新和绘制所有粒子
+            for (const particle of particles) {
+                particle.update();
+                particle.draw();
+            }
+            
+            // 处理碰撞
+            handleCollisions();
+            
+            // 检查边界接触
+            checkBoundaryContact();
             
             requestAnimationFrame(gameLoop);
         }
         
-        // 事件监听 - 页面导航
+        // 事件监听器
         startBtn.addEventListener('click', () => {
             mainMenu.style.display = 'none';
             gameContainer.style.display = 'block';
-            resetGame();
+            resetGame(); // 开始新游戏时重置状态
+            gameLoop();
         });
         
         instructionsBtn.addEventListener('click', () => {
@@ -1075,43 +1074,47 @@
         backToMenuBtn.addEventListener('click', () => {
             gameContainer.style.display = 'none';
             mainMenu.style.display = 'block';
+            gameOver = true; // 回到菜单时结束当前游戏
         });
         
-        // 事件监听 - 鼠标点击释放粒子
+        // 新增：游戏中重新开始按钮
+        restartDuringGameBtn.addEventListener('click', resetGame);
+        
+        // 新增：返回导航页按钮
+        backToNavBtn.addEventListener('click', () => {
+            window.location.href = 'indexdaohang.html';
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+            gameLoop();
+        });
+        
+        // 电场按钮
+        fieldBtn.addEventListener('click', () => {
+            if (!fieldActive && !magneticFieldActive) {
+                fieldActive = true;
+                fieldTimer = 0;
+            }
+        });
+        
+        // 磁场按钮
+        magneticBtn.addEventListener('click', () => {
+            if (!magneticFieldActive && !fieldActive) {
+                magneticFieldActive = true;
+                fieldTimer = 0;
+            }
+        });
+        
+        // 点击画布释放粒子
         canvas.addEventListener('click', (e) => {
-            if (gameOver) return;
-            
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             spawnParticle(x);
         });
         
-        // 事件监听 - 电场按钮
-        fieldBtn.addEventListener('click', () => {
-            if (gameOver || fieldActive) return;
-            
-            fieldActive = true;
-            fieldTimer = 0;
-        });
-        
-        restartBtn.addEventListener('click', resetGame);
-        
-        // 移动端触摸支持
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (gameOver) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = touch.clientX - rect.left;
-            spawnParticle(x);
-        }, { passive: false });
-        
         // 初始化下一个粒子预览
         updateNextParticle();
-        
-        // 开始游戏循环
-        gameLoop();
     </script>
 </body>
 </html>
