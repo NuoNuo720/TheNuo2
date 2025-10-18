@@ -120,13 +120,11 @@
     <div class="container">
         <h1>自由电子冒险 - 账号中心</h1>
         
-        <!-- 切换标签 -->
         <div class="tab-container">
             <div class="tab active" onclick="window.switchTab('register')">注册</div>
             <div class="tab" onclick="window.switchTab('login')">登录</div>
         </div>
         
-        <!-- 注册表单 -->
         <div id="register" class="form-container active">
             <div class="form-group">
                 <label for="regUsername">用户名（3-20位，唯一）</label>
@@ -147,7 +145,6 @@
             <div id="regMessage" class="message"></div>
         </div>
         
-        <!-- 登录表单 -->
         <div id="login" class="form-container">
             <div class="form-group">
                 <label for="loginUsername">用户名</label>
@@ -165,34 +162,85 @@
         </div>
     </div>
 
-    <!-- 工具库 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcrypt.js/2.4.3/bcrypt.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.33.1/supabase.umd.min.js"></script>
+    <!-- 加载bcrypt -->
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2"></script>
 
-    <!-- 核心逻辑 -->
+    <!-- 动态加载Supabase（使用简洁CDN格式） -->
     <script>
-        // 全局变量存储supabase客户端
+        // 简洁版CDN（自动使用最新2.x版本）
+        const SUPABASE_CDN_MAIN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        const SUPABASE_CDN_FALLBACK = "https://unpkg.com/@supabase/supabase-js@2";
+
+        // 动态加载函数
+        function loadSupabase(cdnUrl) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = cdnUrl;
+                script.onload = () => {
+                    console.log(`Supabase加载成功 (${cdnUrl})`);
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error(`Supabase加载失败 (${cdnUrl})`);
+                    reject(new Error(`CDN加载失败: ${cdnUrl}`));
+                };
+                document.body.appendChild(script);
+            });
+        }
+
+        // 双CDN加载机制
+        async function loadSupabaseWithFallback() {
+            try {
+                await loadSupabase(SUPABASE_CDN_MAIN);
+            } catch (err) {
+                console.log('主CDN失败，尝试备用CDN...');
+                await loadSupabase(SUPABASE_CDN_FALLBACK);
+            }
+        }
+
+        // 全局变量
         let supabaseClient = null;
 
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', async function() {
+        // 初始化
+        async function initApp() {
             try {
-                // 初始化Supabase
+                await loadSupabaseWithFallback();
+
+                if (typeof window.supabase === 'undefined') {
+                    throw new Error('Supabase库未正确加载');
+                }
+
+                // 初始化客户端
                 const SUPABASE_URL = "https://yroilmvcnqfqbnzywjtj.supabase.co";
                 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyb2lsbXZjbnFmcWJuenl3anRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjEzNzQsImV4cCI6MjA3NjI5NzM3NH0.2Alv7b3ahjGoJV8wP1SL6J0TdngBVoHnWeEaCAiB4ts";
                 
-                if (!window.supabase) {
-                    throw new Error('Supabase库未加载成功');
-                }
-                
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                console.log('Supabase初始化成功');
-            } catch (err) {
-                showGlobalMessage('初始化失败：' + err.message, 'error');
-            }
-        });
+                showGlobalMessage('服务初始化成功', 'success');
+                setTimeout(() => document.querySelector('.message.success')?.remove(), 2000);
 
-        // 切换标签（暴露到window）
+            } catch (err) {
+                showGlobalMessage('初始化失败：' + err.message + '，请点击重试', 'error');
+                const retryBtn = document.createElement('button');
+                retryBtn.textContent = '重试加载';
+                retryBtn.style.marginTop = '10px';
+                retryBtn.style.padding = '8px 16px';
+                retryBtn.style.backgroundColor = '#64c8ff';
+                retryBtn.style.border = 'none';
+                retryBtn.style.borderRadius = '4px';
+                retryBtn.style.color = 'white';
+                retryBtn.style.cursor = 'pointer';
+                retryBtn.onclick = () => {
+                    document.querySelector('.message.error').remove();
+                    initApp();
+                };
+                document.querySelector('.message.error').appendChild(retryBtn);
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // 切换标签
         window.switchTab = function(tabId) {
             document.querySelectorAll('.form-container').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -219,7 +267,7 @@
             }
         }
 
-        // 显示消息提示
+        // 显示消息
         function showMessage(elementId, text, type) {
             const el = document.getElementById(elementId);
             el.textContent = text;
@@ -227,10 +275,10 @@
             el.classList.add(type);
         }
 
-        // 注册功能（暴露到window）
+        // 注册功能
         window.handleRegister = async function(isOffline) {
             if (!supabaseClient) {
-                showMessage('regMessage', '服务未初始化，请刷新页面', 'error');
+                showMessage('regMessage', '服务未初始化，请等待加载完成或点击重试', 'error');
                 return;
             }
 
@@ -246,7 +294,7 @@
             if (!deviceId) return;
 
             try {
-                // 检查设备用户数量（最多3个）
+                // 检查设备用户数量
                 const { count } = await supabaseClient
                     .from('game_users')
                     .select('id', { count: 'exact' })
@@ -270,7 +318,7 @@
                     authUserId = authData.user.id;
                 }
 
-                // 保存用户到数据库
+                // 保存用户
                 const { error } = await supabaseClient
                     .from('game_users')
                     .insert([{
@@ -290,10 +338,10 @@
             }
         }
 
-        // 登录功能（暴露到window）
+        // 登录功能
         window.handleLogin = async function(isOffline) {
             if (!supabaseClient) {
-                showMessage('loginMessage', '服务未初始化，请刷新页面', 'error');
+                showMessage('loginMessage', '服务未初始化，请等待加载完成或点击重试', 'error');
                 return;
             }
 
@@ -303,7 +351,7 @@
             if (!username || !password) return showMessage('loginMessage', '请输入用户名和密码', 'error');
 
             try {
-                // 查询用户信息
+                // 查询用户
                 const { data: user, error } = await supabaseClient
                     .from('game_users')
                     .select('*')
@@ -329,7 +377,7 @@
                     if (authErr) return showMessage('loginMessage', '密码错误', 'error');
                 }
 
-                // 保存登录状态并跳转
+                // 保存状态并跳转
                 localStorage.setItem('currentUser', JSON.stringify({
                     id: user.id,
                     username: user.username,
@@ -343,7 +391,7 @@
             }
         }
 
-        // 全局错误提示
+        // 全局消息提示
         function showGlobalMessage(text, type) {
             const div = document.createElement('div');
             div.className = `message ${type}`;
@@ -353,6 +401,7 @@
             div.style.left = '50%';
             div.style.transform = 'translateX(-50%)';
             div.style.zIndex = '1000';
+            div.style.padding = '10px 20px';
             document.body.appendChild(div);
         }
     </script>
