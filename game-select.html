@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自由电子冒险：量子维度合集</title>
     <style>
+        /* 保持原有样式不变 */
         * {
             margin: 0;
             padding: 0;
@@ -435,185 +436,210 @@
         </div>
     </div>
 
-    <!-- 替换为更稳定的supabase CDN（关键修复） -->
+    <!-- 工具库（放在body底部确保加载顺序） -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.33.1/supabase.umd.min.js"></script>
 
+    <!-- 核心逻辑（确保在库加载后执行） -->
     <script>
-        // 已预设你的Supabase信息
-        const SUPABASE_URL = "https://yroilmvcnqfqbnzywjtj.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyb2lsbXZjbnFmcWJuenl3anRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjEzNzQsImV4cCI6MjA3NjI5NzM3NH0.2Alv7b3ahjGoJV8wP1SL6J0TdngBVoHnWeEaCAiB4ts";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // 等待所有库加载完成后再初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 已预设你的Supabase信息
+            const SUPABASE_URL = "https://yroilmvcnqfqbnzywjtj.supabase.co";
+            const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyb2lsbXZjbnFmcWJuenl3anRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjEzNzQsImV4cCI6MjA3NjI5NzM3NH0.2Alv7b3ahjGoJV8wP1SL6J0TdngBVoHnWeEaCAiB4ts";
+            
+            // 验证Supabase是否加载成功
+            if (window.supabase) {
+                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                initApp(supabase); // 初始化应用
+            } else {
+                showGlobalMessage('Supabase库加载失败，请刷新页面重试', 'error');
+            }
+        });
 
-        let currentUser = null;
+        // 初始化应用逻辑
+        function initApp(supabase) {
+            let currentUser = null;
 
-        // 页面加载时检查登录状态
-        window.onload = function() {
+            // 页面加载时检查登录状态
             checkLoginStatus();
-        };
 
-        // 检查登录状态（未登录则跳转）
-        async function checkLoginStatus() {
-            const userStr = localStorage.getItem('currentUser');
-            if (!userStr) {
+            // 检查登录状态（未登录则跳转）
+            async function checkLoginStatus() {
+                const userStr = localStorage.getItem('currentUser');
+                if (!userStr) {
+                    window.location.href = 'login-register.html';
+                    return;
+                }
+
+                currentUser = JSON.parse(userStr);
+                document.getElementById('usernameDisplay').textContent = `当前用户：${currentUser.username}`;
+                loadGameProgress();
+            }
+
+            // 退出登录
+            window.logout = function() {
+                localStorage.removeItem('currentUser');
+                if (!currentUser.isOffline) {
+                    supabase.auth.signOut();
+                }
                 window.location.href = 'login-register.html';
-                return;
             }
 
-            currentUser = JSON.parse(userStr);
-            document.getElementById('usernameDisplay').textContent = `当前用户：${currentUser.username}`;
-            loadGameProgress();
-        }
+            // 加载游戏进度和解锁状态
+            async function loadGameProgress() {
+                let progressData = [];
 
-        // 退出登录
-        function logout() {
-            localStorage.removeItem('currentUser');
-            if (!currentUser.isOffline) {
-                supabase.auth.signOut();
-            }
-            window.location.href = 'login-register.html';
-        }
-
-        // 加载游戏进度和解锁状态
-        async function loadGameProgress() {
-            let progressData = [];
-
-            if (currentUser.isOffline) {
-                // 离线用户：从localStorage加载
-                progressData = JSON.parse(localStorage.getItem(`offlineProgress_${currentUser.id}`) || '[]');
-            } else {
-                // 正版用户：从Supabase加载
-                const { data } = await supabase
-                    .from('game_progress')
-                    .select('*')
-                    .eq('user_id', currentUser.id);
-                progressData = data || [];
-            }
-
-            // 初始化进度数据（如果为空）
-            if (progressData.length === 0) {
-                progressData = [
-                    { chapter: 1, passed: false, score: 0, extra_data: {} },
-                    { chapter: 2, passed: false, score: 0, extra_data: {} },
-                    { chapter: 3, passed: false, score: 0, extra_data: {} },
-                    { chapter: 4, passed: false, score: 0, extra_data: {} },
-                    { chapter: 5, passed: false, score: 0, extra_data: {} }
-                ];
-                saveGameProgress(progressData);
-            }
-
-            // 更新章节解锁状态
-            for (let i = 2; i <= 5; i++) {
-                const prevChapterPassed = progressData.find(item => item.chapter === i - 1)?.passed || false;
-                const card = document.getElementById(`card${i}`);
-                const hint = document.getElementById(`hint${i}`);
-                
-                if (prevChapterPassed) {
-                    card.classList.remove('locked');
-                    hint.style.display = 'none';
+                if (currentUser.isOffline) {
+                    // 离线用户：从localStorage加载
+                    progressData = JSON.parse(localStorage.getItem(`offlineProgress_${currentUser.id}`) || '[]');
                 } else {
-                    card.classList.add('locked');
-                    hint.style.display = 'block';
-                }
-            }
-
-            // 更新游戏档案
-            updateRecordDisplay(progressData);
-        }
-
-        // 检查章节是否解锁
-        function checkChapterLock(chapter, url, chapterName) {
-            const card = document.getElementById(`card${chapter}`);
-            if (card.classList.contains('locked')) {
-                alert(document.getElementById(`hint${chapter}`).textContent);
-                return;
-            }
-            jumpToGame(url, chapter, chapterName);
-        }
-
-        // 跳转至游戏
-        function jumpToGame(url, chapter, chapterName) {
-            localStorage.setItem('lastGameUrl', url);
-            localStorage.setItem('lastChapter', chapterName);
-            localStorage.setItem('lastChapterIndex', chapter);
-            window.open(url, '_self');
-        }
-
-        // 继续上次游戏
-        function continueLastGame() {
-            const lastUrl = localStorage.getItem('lastGameUrl');
-            const lastChapter = localStorage.getItem('lastChapter');
-            if (lastUrl && lastChapter) {
-                if (confirm(`是否继续上次的进度：${lastChapter}？`)) {
-                    window.open(lastUrl, '_self');
-                }
-            } else {
-                alert('未检测到历史进度，将为你跳转到序章·电子启蒙');
-                jumpToGame('https://thenuo2.netlify.app/e(finally).html', 1, '序章·电子启蒙');
-            }
-        }
-
-        // 弹窗控制
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // 更新游戏档案显示
-        function updateRecordDisplay(progressData) {
-            // 序章·电子启蒙
-            const chapter1 = progressData.find(item => item.chapter === 1) || {};
-            document.getElementById('record1').textContent = chapter1.passed ? '已通关' : '未通关';
-            document.getElementById('score1').textContent = chapter1.score || 0;
-            document.getElementById('time1').textContent = chapter1.extra_data?.time || '--';
-
-            // 第一章·量子危机
-            const chapter2 = progressData.find(item => item.chapter === 2) || {};
-            document.getElementById('record2').textContent = chapter2.passed ? '已通关' : '未通关';
-            document.getElementById('fragment2').textContent = `${chapter2.extra_data?.fragments || 0}/3`;
-            document.getElementById('time2').textContent = chapter2.extra_data?.time || '--';
-
-            // 第二章·维度守护
-            const chapter3 = progressData.find(item => item.chapter === 3) || {};
-            document.getElementById('record3').textContent = chapter3.passed ? '已通关' : '未通关';
-            document.getElementById('dimension3').textContent = `${chapter3.extra_data?.dimensions || 0}/10`;
-            document.getElementById('particle3').textContent = chapter3.extra_data?.particles || 0;
-
-            // 第三章·双粒协作
-            const chapter4 = progressData.find(item => item.chapter === 4) || {};
-            document.getElementById('record4').textContent = chapter4.passed ? '已通关' : '未通关';
-            document.getElementById('entanglement4').textContent = `${chapter4.extra_data?.entanglement || 0}%`;
-            document.getElementById('energy4').textContent = chapter4.extra_data?.energy || 0;
-
-            // 终章·宇宙平衡
-            const chapter5 = progressData.find(item => item.chapter === 5) || {};
-            document.getElementById('record5').textContent = chapter5.passed ? '已通关' : '未通关';
-            document.getElementById('score5').textContent = chapter5.score || 0;
-            document.getElementById('level5').textContent = chapter5.extra_data?.level || 0;
-        }
-
-        // 保存游戏进度（修复语法错误：闭合函数）
-        function saveGameProgress(progressData) {
-            if (currentUser.isOffline) {
-                localStorage.setItem(`offlineProgress_${currentUser.id}`, JSON.stringify(progressData));
-            } else {
-                progressData.forEach(item => {
-                    supabase
+                    // 正版用户：从Supabase加载
+                    const { data } = await supabase
                         .from('game_progress')
-                        .upsert([{
-                            user_id: currentUser.id,
-                            chapter: item.chapter,
-                            passed: item.passed,
-                            score: item.score,
-                            extra_data: item.extra_data,
-                            updated_at: new Date()
-                        }])
-                        .eq('user_id', currentUser.id)
-                        .eq('chapter', item.chapter);
-                });
+                        .select('*')
+                        .eq('user_id', currentUser.id);
+                    progressData = data || [];
+                }
+
+                // 初始化进度数据（如果为空）
+                if (progressData.length === 0) {
+                    progressData = [
+                        { chapter: 1, passed: false, score: 0, extra_data: {} },
+                        { chapter: 2, passed: false, score: 0, extra_data: {} },
+                        { chapter: 3, passed: false, score: 0, extra_data: {} },
+                        { chapter: 4, passed: false, score: 0, extra_data: {} },
+                        { chapter: 5, passed: false, score: 0, extra_data: {} }
+                    ];
+                    saveGameProgress(progressData);
+                }
+
+                // 更新章节解锁状态
+                for (let i = 2; i <= 5; i++) {
+                    const prevChapterPassed = progressData.find(item => item.chapter === i - 1)?.passed || false;
+                    const card = document.getElementById(`card${i}`);
+                    const hint = document.getElementById(`hint${i}`);
+                    
+                    if (prevChapterPassed) {
+                        card.classList.remove('locked');
+                        hint.style.display = 'none';
+                    } else {
+                        card.classList.add('locked');
+                        hint.style.display = 'block';
+                    }
+                }
+
+                // 更新游戏档案
+                updateRecordDisplay(progressData);
             }
+
+            // 检查章节是否解锁
+            window.checkChapterLock = function(chapter, url, chapterName) {
+                const card = document.getElementById(`card${chapter}`);
+                if (card.classList.contains('locked')) {
+                    alert(document.getElementById(`hint${chapter}`).textContent);
+                    return;
+                }
+                jumpToGame(url, chapter, chapterName);
+            }
+
+            // 跳转至游戏
+            window.jumpToGame = function(url, chapter, chapterName) {
+                localStorage.setItem('lastGameUrl', url);
+                localStorage.setItem('lastChapter', chapterName);
+                localStorage.setItem('lastChapterIndex', chapter);
+                window.open(url, '_self');
+            }
+
+            // 继续上次游戏
+            window.continueLastGame = function() {
+                const lastUrl = localStorage.getItem('lastGameUrl');
+                const lastChapter = localStorage.getItem('lastChapter');
+                if (lastUrl && lastChapter) {
+                    if (confirm(`是否继续上次的进度：${lastChapter}？`)) {
+                        window.open(lastUrl, '_self');
+                    }
+                } else {
+                    alert('未检测到历史进度，将为你跳转到序章·电子启蒙');
+                    jumpToGame('https://thenuo2.netlify.app/e(finally).html', 1, '序章·电子启蒙');
+                }
+            }
+
+            // 弹窗控制
+            window.openModal = function(modalId) {
+                document.getElementById(modalId).style.display = 'flex';
+            }
+
+            window.closeModal = function(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+
+            // 更新游戏档案显示
+            function updateRecordDisplay(progressData) {
+                // 序章·电子启蒙
+                const chapter1 = progressData.find(item => item.chapter === 1) || {};
+                document.getElementById('record1').textContent = chapter1.passed ? '已通关' : '未通关';
+                document.getElementById('score1').textContent = chapter1.score || 0;
+                document.getElementById('time1').textContent = chapter1.extra_data?.time || '--';
+
+                // 第一章·量子危机
+                const chapter2 = progressData.find(item => item.chapter === 2) || {};
+                document.getElementById('record2').textContent = chapter2.passed ? '已通关' : '未通关';
+                document.getElementById('fragment2').textContent = `${chapter2.extra_data?.fragments || 0}/3`;
+                document.getElementById('time2').textContent = chapter2.extra_data?.time || '--';
+
+                // 第二章·维度守护
+                const chapter3 = progressData.find(item => item.chapter === 3) || {};
+                document.getElementById('record3').textContent = chapter3.passed ? '已通关' : '未通关';
+                document.getElementById('dimension3').textContent = `${chapter3.extra_data?.dimensions || 0}/10`;
+                document.getElementById('particle3').textContent = chapter3.extra_data?.particles || 0;
+
+                // 第三章·双粒协作
+                const chapter4 = progressData.find(item => item.chapter === 4) || {};
+                document.getElementById('record4').textContent = chapter4.passed ? '已通关' : '未通关';
+                document.getElementById('entanglement4').textContent = `${chapter4.extra_data?.entanglement || 0}%`;
+                document.getElementById('energy4').textContent = chapter4.extra_data?.energy || 0;
+
+                // 终章·宇宙平衡
+                const chapter5 = progressData.find(item => item.chapter === 5) || {};
+                document.getElementById('record5').textContent = chapter5.passed ? '已通关' : '未通关';
+                document.getElementById('score5').textContent = chapter5.score || 0;
+                document.getElementById('level5').textContent = chapter5.extra_data?.level || 0;
+            }
+
+            // 保存游戏进度
+            function saveGameProgress(progressData) {
+                if (currentUser.isOffline) {
+                    localStorage.setItem(`offlineProgress_${currentUser.id}`, JSON.stringify(progressData));
+                } else {
+                    progressData.forEach(item => {
+                        supabase
+                            .from('game_progress')
+                            .upsert([{
+                                user_id: currentUser.id,
+                                chapter: item.chapter,
+                                passed: item.passed,
+                                score: item.score,
+                                extra_data: item.extra_data,
+                                updated_at: new Date()
+                            }])
+                            .eq('user_id', currentUser.id)
+                            .eq('chapter', item.chapter);
+                    });
+                }
+            }
+        }
+
+        // 全局错误提示
+        function showGlobalMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = text;
+            div.style.position = 'fixed';
+            div.style.top = '20px';
+            div.style.left = '50%';
+            div.style.transform = 'translateX(-50%)';
+            div.style.zIndex = '1000';
+            document.body.appendChild(div);
         }
     </script>
 </body>
