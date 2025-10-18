@@ -122,8 +122,8 @@
         
         <!-- 切换标签 -->
         <div class="tab-container">
-            <div class="tab active" onclick="switchTab('register')">注册</div>
-            <div class="tab" onclick="switchTab('login')">登录</div>
+            <div class="tab active" onclick="window.switchTab('register')">注册</div>
+            <div class="tab" onclick="window.switchTab('login')">登录</div>
         </div>
         
         <!-- 注册表单 -->
@@ -141,8 +141,8 @@
                 <input type="email" id="regEmail" placeholder="example@mail.com">
             </div>
             <div class="btn-group">
-                <button onclick="handleRegister(false)">注册正版账号</button>
-                <button class="offline-btn" onclick="handleRegister(true)">注册离线账号</button>
+                <button onclick="window.handleRegister(false)">注册正版账号</button>
+                <button class="offline-btn" onclick="window.handleRegister(true)">注册离线账号</button>
             </div>
             <div id="regMessage" class="message"></div>
         </div>
@@ -158,175 +158,188 @@
                 <input type="password" id="loginPassword" placeholder="请输入密码" required>
             </div>
             <div class="btn-group">
-                <button onclick="handleLogin(false)">正版账号登录</button>
-                <button class="offline-btn" onclick="handleLogin(true)">离线账号登录</button>
+                <button onclick="window.handleLogin(false)">正版账号登录</button>
+                <button class="offline-btn" onclick="window.handleLogin(true)">离线账号登录</button>
             </div>
             <div id="loginMessage" class="message"></div>
         </div>
     </div>
 
-    <!-- 工具库（放在body底部确保加载顺序） -->
+    <!-- 工具库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bcrypt.js/2.4.3/bcrypt.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.33.1/supabase.umd.min.js"></script>
 
-    <!-- 核心逻辑（确保在库加载后执行） -->
+    <!-- 核心逻辑 -->
     <script>
-        // 等待所有库加载完成后再初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            // 已预设你的Supabase信息
-            const SUPABASE_URL = "https://yroilmvcnqfqbnzywjtj.supabase.co";
-            const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyb2lsbXZjbnFmcWJuenl3anRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjEzNzQsImV4cCI6MjA3NjI5NzM3NH0.2Alv7b3ahjGoJV8wP1SL6J0TdngBVoHnWeEaCAiB4ts";
-            
-            // 验证Supabase是否加载成功
-            if (window.supabase) {
-                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                initApp(supabase); // 初始化应用
-            } else {
-                showGlobalMessage('Supabase库加载失败，请刷新页面重试', 'error');
+        // 全局变量存储supabase客户端
+        let supabaseClient = null;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // 初始化Supabase
+                const SUPABASE_URL = "https://yroilmvcnqfqbnzywjtj.supabase.co";
+                const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyb2lsbXZjbnFmcWJuenl3anRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjEzNzQsImV4cCI6MjA3NjI5NzM3NH0.2Alv7b3ahjGoJV8wP1SL6J0TdngBVoHnWeEaCAiB4ts";
+                
+                if (!window.supabase) {
+                    throw new Error('Supabase库未加载成功');
+                }
+                
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('Supabase初始化成功');
+            } catch (err) {
+                showGlobalMessage('初始化失败：' + err.message, 'error');
             }
         });
 
-        // 初始化应用逻辑
-        function initApp(supabase) {
-            // 切换表单标签
-            window.switchTab = function(tabId) {
-                document.querySelectorAll('.form-container').forEach(el => el.classList.remove('active'));
-                document.getElementById(tabId).classList.add('active');
-                document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.tab').forEach(el => {
-                    if (el.getAttribute('onclick').includes(tabId)) el.classList.add('active');
-                });
-                document.getElementById('regMessage').classList.remove('success', 'error');
-                document.getElementById('loginMessage').classList.remove('success', 'error');
-            }
+        // 切换标签（暴露到window）
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.form-container').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => {
+                if (el.getAttribute('onclick').includes(tabId)) el.classList.add('active');
+            });
+            document.getElementById('regMessage').classList.remove('success', 'error');
+            document.getElementById('loginMessage').classList.remove('success', 'error');
+        }
 
-            // 获取设备ID
-            function getDeviceId() {
-                try {
-                    let deviceId = localStorage.getItem('gameDeviceId');
-                    if (!deviceId) {
-                        deviceId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-                        localStorage.setItem('gameDeviceId', deviceId);
-                    }
-                    return deviceId;
-                } catch (err) {
-                    showMessage('regMessage', '获取设备信息失败，请刷新页面重试', 'error');
-                    return null;
+        // 获取设备ID
+        function getDeviceId() {
+            try {
+                let deviceId = localStorage.getItem('gameDeviceId');
+                if (!deviceId) {
+                    deviceId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                    localStorage.setItem('gameDeviceId', deviceId);
                 }
+                return deviceId;
+            } catch (err) {
+                showMessage('regMessage', '获取设备信息失败，请刷新页面重试', 'error');
+                return null;
+            }
+        }
+
+        // 显示消息提示
+        function showMessage(elementId, text, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = text;
+            el.classList.remove('success', 'error');
+            el.classList.add(type);
+        }
+
+        // 注册功能（暴露到window）
+        window.handleRegister = async function(isOffline) {
+            if (!supabaseClient) {
+                showMessage('regMessage', '服务未初始化，请刷新页面', 'error');
+                return;
             }
 
-            // 显示消息提示
-            window.showMessage = function(elementId, text, type) {
-                const el = document.getElementById(elementId);
-                el.textContent = text;
-                el.classList.remove('success', 'error');
-                el.classList.add(type);
-            }
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const email = document.getElementById('regEmail').value.trim();
 
-            // 注册功能
-            window.handleRegister = async function(isOffline) {
-                const username = document.getElementById('regUsername').value.trim();
-                const password = document.getElementById('regPassword').value;
-                const email = document.getElementById('regEmail').value.trim();
+            if (!username) return showMessage('regMessage', '请输入用户名', 'error');
+            if (password.length < 6) return showMessage('regMessage', '密码至少需要6位', 'error');
+            if (!isOffline && !email) return showMessage('regMessage', '正版用户请输入邮箱', 'error');
 
-                if (!username) return showMessage('regMessage', '请输入用户名', 'error');
-                if (password.length < 6) return showMessage('regMessage', '密码至少需要6位', 'error');
-                if (!isOffline && !email) return showMessage('regMessage', '正版用户请输入邮箱', 'error');
+            const deviceId = getDeviceId();
+            if (!deviceId) return;
 
-                const deviceId = getDeviceId();
-                if (!deviceId) return;
+            try {
+                // 检查设备用户数量（最多3个）
+                const { count } = await supabaseClient
+                    .from('game_users')
+                    .select('id', { count: 'exact' })
+                    .eq('device_id', deviceId);
+                if (count >= 3) return showMessage('regMessage', '当前设备最多只能创建3个账号', 'error');
 
-                try {
-                    // 检查设备用户数量（最多3个）
-                    const { count } = await supabase
-                        .from('game_users')
-                        .select('id', { count: 'exact' })
-                        .eq('device_id', deviceId);
-                    if (count >= 3) return showMessage('regMessage', '当前设备最多只能创建3个账号', 'error');
+                // 检查用户名唯一性
+                const { count: nameCount } = await supabaseClient
+                    .from('game_users')
+                    .select('id', { count: 'exact' })
+                    .eq('username', username);
+                if (nameCount > 0) return showMessage('regMessage', '该用户名已被使用，请更换', 'error');
 
-                    // 检查用户名唯一性
-                    const { count: nameCount } = await supabase
-                        .from('game_users')
-                        .select('id', { count: 'exact' })
-                        .eq('username', username);
-                    if (nameCount > 0) return showMessage('regMessage', '该用户名已被使用，请更换', 'error');
+                // 密码加密
+                const passwordHash = await bcrypt.hash(password, 10);
 
-                    // 密码加密
-                    const passwordHash = await bcrypt.hash(password, 10);
-
-                    let authUserId = null;
-                    if (!isOffline) {
-                        const { data: authData, error: authErr } = await supabase.auth.signUp({ email, password });
-                        if (authErr) return showMessage('regMessage', '邮箱注册失败：' + authErr.message, 'error');
-                        authUserId = authData.user.id;
-                    }
-
-                    // 保存用户到数据库
-                    const { error } = await supabase
-                        .from('game_users')
-                        .insert([{
-                            device_id: deviceId,
-                            username,
-                            password_hash: passwordHash,
-                            is_offline: isOffline,
-                            auth_user_id: authUserId
-                        }]);
-                    if (error) return showMessage('regMessage', '注册失败：' + error.message, 'error');
-
-                    showMessage('regMessage', '注册成功！请登录', 'success');
-                    setTimeout(() => switchTab('login'), 1500);
-
-                } catch (err) {
-                    showMessage('regMessage', '注册出错：' + err.message, 'error');
+                let authUserId = null;
+                if (!isOffline) {
+                    const { data: authData, error: authErr } = await supabaseClient.auth.signUp({ email, password });
+                    if (authErr) return showMessage('regMessage', '邮箱注册失败：' + authErr.message, 'error');
+                    authUserId = authData.user.id;
                 }
+
+                // 保存用户到数据库
+                const { error } = await supabaseClient
+                    .from('game_users')
+                    .insert([{
+                        device_id: deviceId,
+                        username,
+                        password_hash: passwordHash,
+                        is_offline: isOffline,
+                        auth_user_id: authUserId
+                    }]);
+                if (error) return showMessage('regMessage', '注册失败：' + error.message, 'error');
+
+                showMessage('regMessage', '注册成功！请登录', 'success');
+                setTimeout(() => window.switchTab('login'), 1500);
+
+            } catch (err) {
+                showMessage('regMessage', '注册出错：' + err.message, 'error');
+            }
+        }
+
+        // 登录功能（暴露到window）
+        window.handleLogin = async function(isOffline) {
+            if (!supabaseClient) {
+                showMessage('loginMessage', '服务未初始化，请刷新页面', 'error');
+                return;
             }
 
-            // 登录功能
-            window.handleLogin = async function(isOffline) {
-                const username = document.getElementById('loginUsername').value.trim();
-                const password = document.getElementById('loginPassword').value;
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
 
-                if (!username || !password) return showMessage('loginMessage', '请输入用户名和密码', 'error');
+            if (!username || !password) return showMessage('loginMessage', '请输入用户名和密码', 'error');
 
-                try {
-                    // 查询用户信息
-                    const { data: user, error } = await supabase
-                        .from('game_users')
-                        .select('*')
-                        .eq('username', username)
-                        .eq('is_offline', isOffline)
+            try {
+                // 查询用户信息
+                const { data: user, error } = await supabaseClient
+                    .from('game_users')
+                    .select('*')
+                    .eq('username', username)
+                    .eq('is_offline', isOffline)
+                    .single();
+                if (error || !user) return showMessage('loginMessage', '未找到该账号，请检查类型', 'error');
+
+                // 验证密码
+                if (isOffline) {
+                    const isMatch = await bcrypt.compare(password, user.password_hash);
+                    if (!isMatch) return showMessage('loginMessage', '密码错误', 'error');
+                } else {
+                    const { data: authData } = await supabaseClient
+                        .from('auth.users')
+                        .select('email')
+                        .eq('id', user.auth_user_id)
                         .single();
-                    if (error || !user) return showMessage('loginMessage', '未找到该账号，请检查类型', 'error');
-
-                    // 验证密码
-                    if (isOffline) {
-                        const isMatch = await bcrypt.compare(password, user.password_hash);
-                        if (!isMatch) return showMessage('loginMessage', '密码错误', 'error');
-                    } else {
-                        const { data: authData } = await supabase
-                            .from('auth.users')
-                            .select('email')
-                            .eq('id', user.auth_user_id)
-                            .single();
-                        const { error: authErr } = await supabase.auth.signInWithPassword({
-                            email: authData.email,
-                            password
-                        });
-                        if (authErr) return showMessage('loginMessage', '密码错误', 'error');
-                    }
-
-                    // 保存登录状态并跳转
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        id: user.id,
-                        username: user.username,
-                        isOffline
-                    }));
-                    showMessage('loginMessage', '登录成功，正在进入游戏...', 'success');
-                    setTimeout(() => window.location.href = 'game-select.html', 1500);
-
-                } catch (err) {
-                    showMessage('loginMessage', '登录出错：' + err.message, 'error');
+                    const { error: authErr } = await supabaseClient.auth.signInWithPassword({
+                        email: authData.email,
+                        password
+                    });
+                    if (authErr) return showMessage('loginMessage', '密码错误', 'error');
                 }
+
+                // 保存登录状态并跳转
+                localStorage.setItem('currentUser', JSON.stringify({
+                    id: user.id,
+                    username: user.username,
+                    isOffline
+                }));
+                showMessage('loginMessage', '登录成功，正在进入游戏...', 'success');
+                setTimeout(() => window.location.href = 'game-select.html', 1500);
+
+            } catch (err) {
+                showMessage('loginMessage', '登录出错：' + err.message, 'error');
             }
         }
 
