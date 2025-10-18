@@ -264,48 +264,48 @@
     </style>
 </head>
 <body>
-    <!-- 用户信息栏（登录后显示） -->
+    <!-- 用户信息栏 -->
     <div class="user-info">
         <span id="usernameDisplay">未登录</span>
         <button class="logout-btn" onclick="logout()">退出登录</button>
     </div>
 
-    <!-- 启动页主文案 -->
+    <!-- 主标题 -->
     <div class="main-title">
         <h1>自由电子冒险：量子维度合集</h1>
         <p>从基础电场到宇宙平衡，你的每一次操控，都在改写维度命运——选择章节，续写电子的量子传奇！</p>
     </div>
 
-    <!-- 代次选择卡片 -->
+    <!-- 游戏代次选择 -->
     <div class="game-cards">
-        <!-- 1代卡片（默认解锁） -->
+        <!-- 1代（默认解锁） -->
         <div class="card" onclick="jumpToGame('https://thenuo2.netlify.app/e(finally).html', 1, '序章·电子启蒙')">
             <h2>序章·电子启蒙</h2>
             <p class="desc">首次触碰电场的瞬间，你成为了电子的引导者。30秒限时挑战，是应对风暴的第一课。</p>
             <span class="status">新手必玩·基础操作教学 | 已解锁技能：电场方向控制</span>
         </div>
-        <!-- 2代卡片（完成1代解锁） -->
+        <!-- 2代（完成1代解锁） -->
         <div class="card" id="card2" onclick="checkChapterLock(2, 'https://thenuo2.netlify.app/freee2.html', '第一章·量子危机')">
             <h2>第一章·量子危机</h2>
             <p class="desc">量子风暴突袭，能量核心濒临崩溃。收集3块量子碎片，在45秒内修复系统，揭开风暴背后的真相。</p>
             <span class="status">解锁维度概念·新增Z轴控制 | 已解锁技能：反粒子探测</span>
             <div class="lock-hint" id="hint2" style="display: none;">需完成序章·电子启蒙才能解锁</div>
         </div>
-        <!-- 3代卡片（完成2代解锁） -->
+        <!-- 3代（完成2代解锁） -->
         <div class="card" id="card3" onclick="checkChapterLock(3, 'https://thenuo2.netlify.app/freee3.html', '第二章·维度守护')">
             <h2>第二章·维度守护</h2>
             <p class="desc">10个平行宇宙正在崩塌，熵增军团的先遣队已抵达经典物理维度。击败5个维度守卫，收集本源粒子。</p>
             <span class="status">多维度穿梭·粒子组合初体验 | 已解锁技能：重力免疫</span>
             <div class="lock-hint" id="hint3" style="display: none;">需完成第一章·量子危机才能解锁</div>
         </div>
-        <!-- 4代卡片（完成3代解锁） -->
+        <!-- 4代（完成3代解锁） -->
         <div class="card" id="card4" onclick="checkChapterLock(4, 'https://thenuo2.netlify.app/freee4.html', '第三章·双粒协作')">
             <h2>第三章·双粒协作</h2>
             <p class="desc">量子纠缠赋予你操控双粒子的能力——WASD控制电子，方向键控制正电子，同步率100%时释放共振脉冲！</p>
             <span class="status">双角色协作·共振能量积累 | 已解锁技能：量子脉冲</span>
             <div class="lock-hint" id="hint4" style="display: none;">需完成第二章·维度守护才能解锁</div>
         </div>
-        <!-- 5代卡片（完成4代解锁） -->
+        <!-- 5代（完成4代解锁） -->
         <div class="card" id="card5" onclick="checkChapterLock(5, 'https://thenuo2.netlify.app/freee5.html', '终章·宇宙平衡')">
             <h2>终章·宇宙平衡</h2>
             <p class="desc">前四章收集的所有粒子与能量，将在此刻汇聚。碰撞、合成、湮灭...当平衡核心诞生时，维度命运被改写。</p>
@@ -314,7 +314,7 @@
         </div>
     </div>
 
-    <!-- 底部功能按钮 -->
+    <!-- 功能按钮 -->
     <div class="btn-group">
         <button class="btn" onclick="openModal('storyModal')">剧情回顾</button>
         <button class="btn" onclick="openModal('recordModal')">游戏档案</button>
@@ -435,16 +435,15 @@
         </div>
     </div>
 
-    <!-- 引入工具库 -->
+    <!-- 工具库 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.33.1/dist/umd/supabase.min.js"></script>
 
     <script>
-        // 初始化Supabase（替换为你的项目信息）
+        // 已预设你的Supabase信息
         const SUPABASE_URL = "https://yroilmvcnqfqbnzywjtj.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyb2lsbXZjbnFmcWJuenl3anRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjEzNzQsImV4cCI6MjA3NjI5NzM3NH0.2Alv7b3ahjGoJV8wP1SL6J0TdngBVoHnWeEaCAiB4ts";
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 当前登录用户信息
         let currentUser = null;
 
         // 页面加载时检查登录状态
@@ -452,34 +451,29 @@
             checkLoginStatus();
         };
 
-        // 检查登录状态（未登录则跳转回登录页）
+        // 检查登录状态（未登录则跳转）
         async function checkLoginStatus() {
             const userStr = localStorage.getItem('currentUser');
             if (!userStr) {
-                // 未登录，跳转到登录页
-                window.location.href = 'FreeE-.html';
+                window.location.href = 'login-register.html';
                 return;
             }
 
             currentUser = JSON.parse(userStr);
-            // 显示用户名
             document.getElementById('usernameDisplay').textContent = `当前用户：${currentUser.username}`;
-
-            // 加载游戏进度和解锁状态
             loadGameProgress();
         }
 
         // 退出登录
         function logout() {
             localStorage.removeItem('currentUser');
-            // 正版用户同时退出Supabase Auth
             if (!currentUser.isOffline) {
                 supabase.auth.signOut();
             }
-            window.location.href = 'FreeE-.html';
+            window.location.href = 'login-register.html';
         }
 
-        // 加载游戏进度和章节解锁状态
+        // 加载游戏进度和解锁状态
         async function loadGameProgress() {
             let progressData = [];
 
@@ -507,28 +501,26 @@
                 saveGameProgress(progressData);
             }
 
-            // 更新章节解锁状态（1代默认解锁，后续章节需完成前一章）
+            // 更新章节解锁状态
             for (let i = 2; i <= 5; i++) {
                 const prevChapterPassed = progressData.find(item => item.chapter === i - 1)?.passed || false;
                 const card = document.getElementById(`card${i}`);
                 const hint = document.getElementById(`hint${i}`);
                 
                 if (prevChapterPassed) {
-                    // 已解锁
                     card.classList.remove('locked');
                     hint.style.display = 'none';
                 } else {
-                    // 未解锁
                     card.classList.add('locked');
                     hint.style.display = 'block';
                 }
             }
 
-            // 更新游戏档案显示
+            // 更新游戏档案
             updateRecordDisplay(progressData);
         }
 
-        // 检查章节是否解锁，解锁则跳转
+        // 检查章节是否解锁
         function checkChapterLock(chapter, url, chapterName) {
             const card = document.getElementById(`card${chapter}`);
             if (card.classList.contains('locked')) {
@@ -538,9 +530,8 @@
             jumpToGame(url, chapter, chapterName);
         }
 
-        // 跳转至游戏并记录进度
+        // 跳转至游戏
         function jumpToGame(url, chapter, chapterName) {
-            // 记录上次游玩的章节
             localStorage.setItem('lastGameUrl', url);
             localStorage.setItem('lastChapter', chapterName);
             localStorage.setItem('lastChapterIndex', chapter);
@@ -606,10 +597,8 @@
         // 保存游戏进度（供游戏页面调用）
         function saveGameProgress(progressData) {
             if (currentUser.isOffline) {
-                // 离线用户：保存到localStorage
                 localStorage.setItem(`offlineProgress_${currentUser.id}`, JSON.stringify(progressData));
             } else {
-                // 正版用户：保存到Supabase
                 progressData.forEach(item => {
                     supabase
                         .from('game_progress')
