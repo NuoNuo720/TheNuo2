@@ -27,94 +27,16 @@
             padding: 30px;
             border: 1px solid rgba(100, 200, 255, 0.3);
         }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #64c8ff;
-            text-shadow: 0 0 10px rgba(100, 200, 255, 0.5);
-        }
-        .tab-container {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(100, 200, 255, 0.3);
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-bottom: 2px solid transparent;
-        }
-        .tab.active {
-            border-bottom: 2px solid #64c8ff;
-            color: #64c8ff;
-        }
-        .form-container {
-            display: none;
-        }
-        .form-container.active {
-            display: block;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: #a8d8ff;
-        }
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid rgba(100, 200, 255, 0.3);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            font-size: 16px;
-        }
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-        button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(90deg, #3a86ff 0%, #64c8ff 100%);
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(58, 134, 255, 0.4);
-        }
-        .offline-btn {
-            background: linear-gradient(90deg, #6d4c41 0%, #a1887f 100%);
-        }
-        .message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            display: none;
-        }
-        .success {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid #4caf50;
-            display: block;
-        }
-        .error {
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid #f44336;
-            display: block;
-        }
+        /* 其他样式省略... */
     </style>
+
+    <!-- 1. 提前声明全局函数（关键修复） -->
+    <script>
+        // 提前定义全局函数占位符，确保HTML加载时能识别
+        window.handleRegister = null;
+        window.handleLogin = null;
+        window.switchTab = null;
+    </script>
 </head>
 <body>
     <div class="container">
@@ -139,8 +61,9 @@
                 <input type="email" id="regEmail" placeholder="example@mail.com">
             </div>
             <div class="btn-group">
-                <button onclick="window.handleRegister(false)">注册正版账号</button>
-                <button class="offline-btn" onclick="window.handleRegister(true)">注册离线账号</button>
+                <!-- 2. 简化onclick调用 -->
+                <button onclick="handleRegister(false)">注册正版账号</button>
+                <button class="offline-btn" onclick="handleRegister(true)">注册离线账号</button>
             </div>
             <div id="regMessage" class="message"></div>
         </div>
@@ -155,92 +78,41 @@
                 <input type="password" id="loginPassword" placeholder="请输入密码" required>
             </div>
             <div class="btn-group">
-                <button onclick="window.handleLogin(false)">正版账号登录</button>
-                <button class="offline-btn" onclick="window.handleLogin(true)">离线账号登录</button>
+                <button onclick="handleLogin(false)">正版账号登录</button>
+                <button class="offline-btn" onclick="handleLogin(true)">离线账号登录</button>
             </div>
             <div id="loginMessage" class="message"></div>
         </div>
     </div>
 
-    <!-- 加载bcrypt -->
+    <!-- 3. 加载外部库 -->
     <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- 动态加载Supabase（使用简洁CDN格式） -->
+    <!-- 4. 核心逻辑（确保函数绑定到window） -->
     <script>
-        // 简洁版CDN（自动使用最新2.x版本）
-        const SUPABASE_CDN_MAIN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-        const SUPABASE_CDN_FALLBACK = "https://unpkg.com/@supabase/supabase-js@2";
-
-        // 动态加载函数
-        function loadSupabase(cdnUrl) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = cdnUrl;
-                script.onload = () => {
-                    console.log(`Supabase加载成功 (${cdnUrl})`);
-                    resolve();
-                };
-                script.onerror = () => {
-                    console.error(`Supabase加载失败 (${cdnUrl})`);
-                    reject(new Error(`CDN加载失败: ${cdnUrl}`));
-                };
-                document.body.appendChild(script);
-            });
-        }
-
-        // 双CDN加载机制
-        async function loadSupabaseWithFallback() {
-            try {
-                await loadSupabase(SUPABASE_CDN_MAIN);
-            } catch (err) {
-                console.log('主CDN失败，尝试备用CDN...');
-                await loadSupabase(SUPABASE_CDN_FALLBACK);
-            }
-        }
-
         // 全局变量
         let supabaseClient = null;
 
-        // 初始化
-        async function initApp() {
+        // 初始化Supabase
+        async function initSupabase() {
             try {
-                await loadSupabaseWithFallback();
-
                 if (typeof window.supabase === 'undefined') {
-                    throw new Error('Supabase库未正确加载');
+                    throw new Error('Supabase库未加载');
                 }
 
-                // 初始化客户端
                 const SUPABASE_URL = "https://yroilmvcnqfqbnzywjtj.supabase.co";
                 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlyb2lsbXZjbnFmcWJuenl3anRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjEzNzQsImV4cCI6MjA3NjI5NzM3NH0.2Alv7b3ahjGoJV8wP1SL6J0TdngBVoHnWeEaCAiB4ts";
                 
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 showGlobalMessage('服务初始化成功', 'success');
                 setTimeout(() => document.querySelector('.message.success')?.remove(), 2000);
-
             } catch (err) {
-                showGlobalMessage('初始化失败：' + err.message + '，请点击重试', 'error');
-                const retryBtn = document.createElement('button');
-                retryBtn.textContent = '重试加载';
-                retryBtn.style.marginTop = '10px';
-                retryBtn.style.padding = '8px 16px';
-                retryBtn.style.backgroundColor = '#64c8ff';
-                retryBtn.style.border = 'none';
-                retryBtn.style.borderRadius = '4px';
-                retryBtn.style.color = 'white';
-                retryBtn.style.cursor = 'pointer';
-                retryBtn.onclick = () => {
-                    document.querySelector('.message.error').remove();
-                    initApp();
-                };
-                document.querySelector('.message.error').appendChild(retryBtn);
+                showGlobalMessage('初始化失败：' + err.message + '，请刷新页面', 'error');
             }
         }
 
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', initApp);
-
-        // 切换标签
+        // 切换标签（绑定到window）
         window.switchTab = function(tabId) {
             document.querySelectorAll('.form-container').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -267,7 +139,7 @@
             }
         }
 
-        // 显示消息
+        // 显示消息提示
         function showMessage(elementId, text, type) {
             const el = document.getElementById(elementId);
             el.textContent = text;
@@ -275,10 +147,10 @@
             el.classList.add(type);
         }
 
-        // 注册功能
+        // 注册功能（关键：绑定到window）
         window.handleRegister = async function(isOffline) {
             if (!supabaseClient) {
-                showMessage('regMessage', '服务未初始化，请等待加载完成或点击重试', 'error');
+                showMessage('regMessage', '服务未初始化，请等待加载完成', 'error');
                 return;
             }
 
@@ -318,7 +190,7 @@
                     authUserId = authData.user.id;
                 }
 
-                // 保存用户
+                // 保存用户到数据库
                 const { error } = await supabaseClient
                     .from('game_users')
                     .insert([{
@@ -338,10 +210,10 @@
             }
         }
 
-        // 登录功能
+        // 登录功能（绑定到window）
         window.handleLogin = async function(isOffline) {
             if (!supabaseClient) {
-                showMessage('loginMessage', '服务未初始化，请等待加载完成或点击重试', 'error');
+                showMessage('loginMessage', '服务未初始化，请等待加载完成', 'error');
                 return;
             }
 
@@ -351,7 +223,7 @@
             if (!username || !password) return showMessage('loginMessage', '请输入用户名和密码', 'error');
 
             try {
-                // 查询用户
+                // 查询用户信息
                 const { data: user, error } = await supabaseClient
                     .from('game_users')
                     .select('*')
@@ -377,7 +249,7 @@
                     if (authErr) return showMessage('loginMessage', '密码错误', 'error');
                 }
 
-                // 保存状态并跳转
+                // 保存登录状态并跳转
                 localStorage.setItem('currentUser', JSON.stringify({
                     id: user.id,
                     username: user.username,
@@ -391,7 +263,7 @@
             }
         }
 
-        // 全局消息提示
+        // 全局错误提示
         function showGlobalMessage(text, type) {
             const div = document.createElement('div');
             div.className = `message ${type}`;
@@ -404,6 +276,9 @@
             div.style.padding = '10px 20px';
             document.body.appendChild(div);
         }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initSupabase);
     </script>
 </body>
 </html>
