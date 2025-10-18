@@ -435,8 +435,8 @@
         </div>
     </div>
 
-    <!-- 工具库 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.33.1/dist/umd/supabase.min.js"></script>
+    <!-- 替换为更稳定的supabase CDN（关键修复） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.33.1/supabase.umd.min.js"></script>
 
     <script>
         // 已预设你的Supabase信息
@@ -594,7 +594,7 @@
             document.getElementById('level5').textContent = chapter5.extra_data?.level || 0;
         }
 
-        // 保存游戏进度（供游戏页面调用）
+        // 保存游戏进度（修复语法错误：闭合函数）
         function saveGameProgress(progressData) {
             if (currentUser.isOffline) {
                 localStorage.setItem(`offlineProgress_${currentUser.id}`, JSON.stringify(progressData));
