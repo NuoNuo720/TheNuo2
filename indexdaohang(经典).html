@@ -15,12 +15,13 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* 深色模式切换 */
+        /* 深色模式切换 - 强化冬日配色 */
         :root {
-            --bg-color: #f0f4f8;
+            --bg-color: #f8f9fa;
             --text-color: #333;
             --card-bg: white;
-            --navbar-bg: #333;
+            --navbar-bg: #2c3e50;
+            --sidebar-bg: #fafbfc;
             --primary-color: #3498db;
             --primary-dark: #2980b9;
             --accent-color: #9b59b6;
@@ -30,18 +31,201 @@
             --border-color: #ddd;
             --light-bg: #f9f9f9;
             --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            /* 冬日暖阳主题色 */
+            --winter-sun: #ffd166;      /* 暖阳黄 */
+            --winter-night: #1a365d;    /* 雪夜蓝 */
+            --winter-snow: #ffffff;     /* 雪花白 */
+            --winter-red: #e63946;      /* 圣诞红 */
+            --winter-gold: #ffb703;     /* 礼物金 */
+            --winter-gradient-light: linear-gradient(120deg, rgba(255,240,200,0.2), rgba(255,210,100,0.1));
+            --winter-gradient-dark: linear-gradient(120deg, rgba(30,50,80,0.5), rgba(20,40,70,0.8));
         }
         
         body.dark-mode {
-            --bg-color: #1a1a2e;
+            --bg-color: #121a29;
             --text-color: #f0f4f8;
-            --card-bg: #252a41;
-            --navbar-bg: #16213e;
+            --card-bg: #1e293b;
+            --navbar-bg: #0f172a;
+            --sidebar-bg: #1e293b;
             --border-color: #4a5568;
-            --light-bg: #323851;
-            --shadow: 0 4px 15px rgba(0,0,0,0.2);
+            --light-bg: #273449;
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         
+        /* ========== 冬日核心视觉优化 ========== */
+        /* 雪花/星星动效容器（分层动效） */
+        .snow-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        /* 全局背景 - 冬日暖阳/雪夜渐变 */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 0;
+            line-height: 1.6;
+            overflow: hidden;
+            /* 冬日多层背景：渐变+纹理+主色 */
+            background: 
+                var(--winter-gradient-light),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%239C92AC' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"),
+                var(--bg-color);
+        }
+
+        body.dark-mode {
+            background: 
+                var(--winter-gradient-dark),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%234a5568' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"),
+                var(--bg-color);
+        }
+
+        /* 顶部标题栏 - 冬日暖光装饰 */
+        header {
+            text-align: center;
+            padding: 15px 0;
+            background: linear-gradient(90deg, var(--winter-night), var(--navbar-bg));
+            color: white;
+            box-shadow: 0 2px 20px rgba(255,210,100,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--winter-sun), var(--winter-gold), var(--winter-sun));
+        }
+
+        /* 页脚 - 雪夜装饰 */
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            color: #ffd166;
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-color);
+            background: linear-gradient(90deg, var(--navbar-bg), var(--winter-night));
+            position: relative;
+        }
+
+        footer::before {
+            content: '❄️ 冬日限定版 ❄️';
+            display: block;
+            font-size: 0.7rem;
+            margin-bottom: 5px;
+            color: var(--winter-snow);
+        }
+
+        /* ========== 卡片装饰 - 积雪+礼物盒 ========== */
+        .nav-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            /* 卡片积雪边框 */
+            border-top: 3px solid var(--winter-snow);
+            /* 暖光阴影 */
+            box-shadow: 0 4px 20px rgba(255,210,100,0.08);
+        }
+
+        /* 卡片积雪效果 */
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--winter-snow), rgba(255,255,255,0.8));
+            border-radius: 12px 12px 0 0;
+            z-index: 1;
+            transform: scaleX(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        /* 卡片礼物盒装饰（右下角） */
+        .nav-card::after {
+            content: '🎁';
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 18px;
+            opacity: 0.3;
+            transform: scale(0.8) rotate(-10deg);
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .nav-card:hover::after {
+            opacity: 0.8;
+            transform: scale(1) rotate(0deg);
+        }
+
+        .nav-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(255,210,100,0.15);
+            border-color: var(--winter-gold);
+        }
+
+        .nav-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        /* 热门卡片特殊装饰 */
+        .nav-card.hot-game {
+            border-color: var(--winter-red);
+        }
+
+        .nav-card.hot-game::before {
+            background: linear-gradient(90deg, var(--winter-red), var(--winter-sun));
+        }
+
+        .nav-card.hot-game::after {
+            content: '🎄';
+            font-size: 20px;
+        }
+
+        /* 卡片图标冬日效果 */
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            transition: transform 0.3s ease, text-shadow 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .nav-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+            text-shadow: 0 0 15px rgba(255,210,100,0.5);
+        }
+
+        .nav-card.hot-game .card-icon {
+            color: var(--winter-red);
+        }
+
+        /* ========== 原有样式全部保留（以下无修改） ========== */
         .theme-toggle {
             background: transparent;
             border: none;
@@ -97,12 +281,13 @@
         .update-notice {
             text-align: center;
             padding: 10px;
-            background-color: var(--light-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
+            background-color: rgba(255,240,200,0.1);
+            border: 1px solid var(--winter-gold);
+            border-radius: 8px;
             margin: 0 auto 20px;
             max-width: 800px;
             transition: opacity 0.5s ease, transform 0.5s ease;
+            backdrop-filter: blur(5px);
         }
         
         .close-update {
@@ -115,75 +300,148 @@
         .close-update:hover {
             color: var(--danger-color);
         }
-        
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            min-height: 100vh;
-            padding: 0;
-            line-height: 1.6;
-        }
 
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 20px 0;
+        .app-container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
         }
 
         h1 {
-            color: var(--text-color);
-            margin-bottom: 10px;
-            font-size: 2.2rem;
-            position: relative;
+            color: white;
+            margin-bottom: 5px;
+            font-size: 1.8rem;
             display: inline-block;
-        }
-
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 10%;
-            width: 80%;
-            height: 3px;
-            background-color: var(--primary-color);
-            border-radius: 3px;
+            text-shadow: 0 0 10px rgba(255,210,100,0.5);
         }
 
         .subtitle {
-            color: #667580;
-            font-size: 1.1rem;
+            color: #ffd166;
+            font-size: 0.9rem;
             max-width: 600px;
             margin: 0 auto;
+            text-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
 
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 220px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            /* 侧边栏冬日装饰 */
+            background: linear-gradient(180deg, var(--sidebar-bg), rgba(255,240,200,0.05));
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding: 0 15px;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #ffb703;
+            margin-bottom: 12px;
+            padding-left: 10px;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-item {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255,210,100,0.1);
+            color: var(--winter-gold);
+        }
+
+        .sidebar-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 0 10px rgba(52,152,219,0.3);
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* 主内容区 */
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            /* 内容区背景毛玻璃 */
+            backdrop-filter: blur(5px);
+        }
+
+        .content-header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            color: var(--text-color);
+            text-shadow: 0 0 8px rgba(255,210,100,0.1);
+        }
+
+        .search-bar {
+            width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 15px 8px 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background-color: rgba(255,255,255,0.05);
+            color: var(--text-color);
+            backdrop-filter: blur(5px);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ffb703;
+        }
+
+        /* 游戏卡片网格 */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
-            padding: 20px 0;
-        }
-
-        .nav-card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid transparent;
-            opacity: 0;
-            transform: translateY(20px);
-            position: relative;
-            overflow: hidden;
-            user-select: none;
-            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            padding: 10px 0;
         }
         
         /* 触摸反馈效果 */
@@ -193,54 +451,29 @@
             opacity: 0.9;
         }
 
-        .nav-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .nav-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            border-color: var(--primary-color);
-        }
-
-        .nav-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .card-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-            transition: transform 0.3s ease;
-        }
-
-        .nav-card:hover .card-icon {
-            transform: scale(1.1) rotate(5deg);
-        }
-
         .card-title {
-            font-size: 1.4rem;
-            margin-bottom: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
             color: var(--text-color);
             transition: color 0.3s ease;
+            position: relative;
+            z-index: 2;
         }
 
         .nav-card:hover .card-title {
-            color: var(--primary-color);
+            color: var(--winter-gold);
+        }
+
+        .nav-card.hot-game:hover .card-title {
+            color: var(--winter-red);
         }
 
         .card-desc {
             color: #7f8c8d;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             line-height: 1.5;
+            position: relative;
+            z-index: 2;
         }
 
         /* 热门游戏标识 */
@@ -248,7 +481,7 @@
             position: absolute;
             top: -10px;
             right: -10px;
-            background-color: var(--danger-color);
+            background-color: var(--winter-red);
             color: white;
             width: 40px;
             height: 40px;
@@ -257,89 +490,82 @@
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1;
-        }
-        
-        /* 热门游戏卡片特殊样式 */
-        .nav-card.hot-game {
-            border-color: var(--danger-color);
-        }
-        
-        .nav-card.hot-game .card-icon {
-            color: var(--danger-color);
-        }
-        
-        .nav-card.hot-game:hover .card-title {
-            color: var(--danger-color);
-        }
-        
-        .nav-card.hot-game::before {
-            background: linear-gradient(90deg, var(--danger-color), var(--warning-color));
+            box-shadow: 0 2px 10px rgba(231,76,60,0.3);
+            z-index: 2;
         }
 
-        footer {
-            text-align: center;
-            margin-top: 60px;
-            color: #95a5a6;
-            font-size: 0.9rem;
-            padding: 20px 0;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .navbar {
-            width: 100%;
-            background-color: var(--navbar-bg);
-            padding: 15px 20px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .navbar-title {
-            color: white;
-            font-size: 1.2em;
-            font-weight: bold;
+        /* 用户信息样式 - 优化版本 */
+        .user-profile {
+            padding: 15px;
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .navbar-title i {
-            font-size: 1.4em;
-        }
-
-        .user-area {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: white;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            background: rgba(255,240,200,0.05);
+            border-radius: 8px;
+            margin: 0 10px 20px;
         }
 
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid white;
+            background: linear-gradient(135deg, var(--winter-gold), var(--winter-red));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(255,210,100,0.2);
+        }
+
+        .user-avatar.logged {
+            background: linear-gradient(135deg, var(--primary-color), var(--winter-red));
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
         }
 
         .user-avatar:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255,210,100,0.5);
+        }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .avatar-initial {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        .user-info {
+            flex: 1;
         }
 
         .username {
-            white-space: nowrap;
             font-weight: 500;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--winter-gold);
+        }
+
+        .user-status {
+            font-size: 0.8rem;
+            color: var(--success-color);
         }
 
         .logout-btn, .btn {
@@ -355,20 +581,26 @@
             gap: 5px;
         }
 
+        .logout-btn {
+            margin-top: 10px;
+            display: none;
+        }
+
         .logout-btn:hover, .btn:hover {
-            background: #777;
+            background: var(--winter-night);
             transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(255,210,100,0.2);
         }
 
         .login-link {
-            color: white;
+            color: var(--winter-gold);
             text-decoration: none;
             transition: color 0.2s;
         }
 
         .login-link:hover {
             text-decoration: underline;
-            color: var(--primary-color);
+            color: var(--winter-sun);
         }
 
         /* 模态框样式 */
@@ -379,7 +611,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0,0,0,0.7);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -387,6 +619,7 @@
             transition: opacity 0.3s ease;
             overflow-y: auto;
             padding: 20px 0;
+            backdrop-filter: blur(5px);
         }
 
         .modal.active {
@@ -396,14 +629,15 @@
         .modal-content {
             background-color: var(--card-bg);
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 12px;
             width: 90%;
             max-width: 600px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 30px rgba(255,210,100,0.2);
             position: relative;
             transform: translateY(20px);
             transition: transform 0.3s ease;
             color: var(--text-color);
+            border-top: 4px solid var(--winter-gold);
         }
 
         .modal.active .modal-content {
@@ -416,13 +650,13 @@
             right: 20px;
             font-size: 1.5rem;
             cursor: pointer;
-            color: #666;
+            color: #ffb703;
             transition: color 0.2s, transform 0.2s;
         }
 
         .close-modal:hover {
-            color: var(--danger-color);
-            transform: rotate(90deg);
+            color: var(--winter-red);
+            transform: rotate(90deg) scale(1.2);
         }
 
         .profile-title {
@@ -430,6 +664,18 @@
             margin-bottom: 25px;
             color: var(--text-color);
             font-size: 1.5rem;
+            text-shadow: 0 0 8px rgba(255,210,100,0.1);
+            position: relative;
+        }
+
+        .profile-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--winter-gold), var(--winter-red));
+            margin: 10px auto 0;
+            border-radius: 2px;
         }
 
         /* 系列选择模态框特殊样式 */
@@ -450,12 +696,14 @@
             background-color: var(--light-bg);
             user-select: none;
             -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+            border-top: 3px solid var(--winter-snow);
         }
         
         .series-select-item:hover {
-            background-color: rgba(52, 152, 219, 0.1);
-            border-color: var(--primary-color);
+            background-color: rgba(255,210,100,0.1);
+            border-color: var(--winter-gold);
             transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(255,210,100,0.1);
         }
         
         .series-select-item .card-icon {
@@ -480,7 +728,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--primary-color);
+            color: var(--winter-gold);
         }
 
         .profile-value {
@@ -489,9 +737,10 @@
             border: 1px solid var(--border-color);
             border-radius: 5px;
             font-size: 1rem;
-            background-color: var(--light-bg);
+            background-color: rgba(255,255,255,0.05);
             word-break: break-all;
             color: var(--text-color);
+            backdrop-filter: blur(5px);
         }
 
         .avatar-upload-section {
@@ -506,13 +755,14 @@
             object-fit: cover;
             margin: 0 auto 15px;
             display: block;
-            border: 3px solid var(--primary-color);
+            border: 3px solid var(--winter-gold);
             transition: box-shadow 0.3s ease;
             cursor: pointer;
+            box-shadow: 0 0 20px rgba(255,210,100,0.2);
         }
 
         .avatar-preview:hover {
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+            box-shadow: 0 0 30px rgba(255,210,100,0.5);
         }
 
         .upload-btn {
@@ -526,11 +776,13 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--winter-gold));
         }
 
         .upload-btn:hover {
             background-color: var(--primary-dark);
             transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(255,210,100,0.3);
         }
 
         .save-btn {
@@ -548,11 +800,13 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
+            background: linear-gradient(90deg, var(--success-color), var(--winter-gold));
         }
 
         .save-btn:hover {
             background-color: #27ae60;
             transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(255,210,100,0.3);
         }
 
         #avatarInput {
@@ -568,6 +822,7 @@
             border-radius: 5px;
             display: none;
             animation: fadeIn 0.3s ease;
+            border: 1px solid var(--winter-red);
         }
 
         .success-message {
@@ -579,6 +834,7 @@
             border-radius: 5px;
             display: none;
             animation: fadeIn 0.3s ease;
+            border: 1px solid var(--winter-gold);
         }
 
         @keyframes fadeIn {
@@ -591,16 +847,17 @@
             bottom: 20px;
             right: 20px;
             padding: 15px 20px;
-            background-color: var(--primary-color);
+            background: linear-gradient(90deg, var(--primary-color), var(--winter-night));
             color: white;
-            border-radius: 5px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            box-shadow: 0 3px 20px rgba(255,210,100,0.2);
             transform: translateX(120%);
             transition: transform 0.3s ease;
             z-index: 1000;
             display: flex;
             align-items: center;
             gap: 10px;
+            border-left: 4px solid var(--winter-gold);
         }
 
         .notification.show {
@@ -608,11 +865,13 @@
         }
 
         .notification.success {
-            background-color: var(--success-color);
+            background: linear-gradient(90deg, var(--success-color), var(--winter-night));
+            border-left: 4px solid var(--winter-sun);
         }
 
         .notification.error {
-            background-color: var(--danger-color);
+            background: linear-gradient(90deg, var(--danger-color), var(--winter-night));
+            border-left: 4px solid var(--winter-red);
         }
 
         /* 活动、商城、任务相关样式 */
@@ -622,20 +881,22 @@
             margin-bottom: 15px;
             border: 1px solid var(--border-color);
             transition: all 0.3s ease;
-            background-color: var(--light-bg);
+            background-color: rgba(255,255,255,0.05);
+            backdrop-filter: blur(5px);
         }
         
         .event-item:hover, .shop-item:hover, .task-item:hover {
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 5px 20px rgba(255,210,100,0.1);
+            border-color: var(--winter-gold);
         }
         
         .event-item {
-            border-left: 4px solid var(--danger-color);
+            border-left: 4px solid var(--winter-red);
         }
         
         .shop-item {
-            border-left: 4px solid var(--warning-color);
+            border-left: 4px solid var(--winter-gold);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -650,32 +911,36 @@
         
         .event-date, .task-difficulty {
             font-size: 0.85rem;
-            color: #7f8c8d;
+            color: #ffb703;
             margin-bottom: 5px;
         }
         
         .shop-price {
-            color: var(--danger-color);
+            color: var(--winter-red);
             font-weight: bold;
+            text-shadow: 0 0 5px rgba(231,76,60,0.1);
         }
         
         .redeem-btn, .complete-btn {
-            background-color: var(--primary-color);
+            background: linear-gradient(90deg, var(--primary-color), var(--winter-gold));
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 3px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.2s;
         }
         
         .redeem-btn:hover, .complete-btn:hover {
-            background-color: var(--primary-dark);
+            background: linear-gradient(90deg, var(--primary-dark), var(--winter-sun));
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(255,210,100,0.2);
         }
         
         .task-reward {
-            color: var(--success-color);
+            color: var(--winter-gold);
             font-weight: 500;
+            text-shadow: 0 0 5px rgba(255,183,3,0.1);
         }
         
         /* 状态标签样式 */
@@ -689,12 +954,14 @@
         
         .status-active {
             background-color: rgba(46, 204, 113, 0.1);
-            color: var(--success-color);
+            color: var(--winter-gold);
+            border: 1px solid var(--winter-gold);
         }
         
         .status-inactive {
             background-color: rgba(231, 76, 60, 0.1);
-            color: var(--danger-color);
+            color: var(--winter-red);
+            border: 1px solid var(--winter-red);
         }
         
         /* 加载状态指示器 */
@@ -704,7 +971,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -712,6 +979,7 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
+            backdrop-filter: blur(5px);
         }
         
         .loading-overlay.active {
@@ -722,9 +990,9 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
+            border: 5px solid rgba(255,210,100,0.3);
             border-radius: 50%;
-            border-top-color: white;
+            border-top-color: var(--winter-gold);
             animation: spin 1s ease-in-out infinite;
         }
         
@@ -740,12 +1008,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7);
             z-index: 1001;
             align-items: center;
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s ease;
+            backdrop-filter: blur(5px);
         }
         
         .confirm-modal.active {
@@ -759,6 +1028,8 @@
             width: 90%;
             max-width: 400px;
             text-align: center;
+            border-top: 4px solid var(--winter-red);
+            box-shadow: 0 5px 20px rgba(255,210,100,0.2);
         }
         
         .confirm-buttons {
@@ -778,43 +1049,67 @@
         }
         
         .confirm-cancel {
-            background-color: #95a5a6;
+            background: linear-gradient(90deg, #95a5a6, var(--winter-night));
             color: white;
         }
         
         .confirm-cancel:hover {
-            background-color: #7f8c8d;
+            background: linear-gradient(90deg, #7f8c8d, var(--winter-night));
+            box-shadow: 0 0 10px rgba(255,210,100,0.1);
         }
         
         .confirm-ok {
-            background-color: var(--danger-color);
+            background: linear-gradient(90deg, var(--winter-red), var(--winter-gold));
             color: white;
         }
         
         .confirm-ok:hover {
-            background-color: #c0392b;
+            background: linear-gradient(90deg, #c0392b, var(--winter-sun));
+            box-shadow: 0 0 10px rgba(255,210,100,0.2);
         }
 
         @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 0;
+            }
+            
+            .sidebar-title, .sidebar-link span {
+                display: none;
+            }
+            
+            .sidebar-link {
+                justify-content: center;
+                padding: 12px;
+            }
+            
+            .user-profile {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px 5px;
+            }
+            
+            .user-info {
+                display: none;
+            }
+            
             .card-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 20px;
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
             }
 
             h1 {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
             }
 
-            .navbar-title {
-                font-size: 1rem;
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
-
-            .username {
-                display: none;
-            }
-
-            .user-area {
-                gap: 10px;
+            
+            .search-bar {
+                width: 100%;
             }
             
             .title-badge {
@@ -836,24 +1131,20 @@
 
         @media (max-width: 480px) {
             .card-grid {
-                grid-template-columns: 1fr;
-            }
-
-            header {
-                margin-bottom: 20px;
+                grid-template-columns: 1fr 1fr;
             }
 
             .nav-card {
-                padding: 20px 15px;
+                padding: 15px 10px;
             }
 
             .card-icon {
-                font-size: 36px;
-                margin-bottom: 15px;
+                font-size: 30px;
+                margin-bottom: 10px;
             }
 
             .card-title {
-                font-size: 1.2rem;
+                font-size: 1rem;
             }
             
             .series-select-grid {
@@ -869,6 +1160,10 @@
             .shop-item > div:last-child, .task-item > div:last-child {
                 align-self: flex-end;
             }
+            
+            footer::before {
+                content: '❄️ 冬日版 ❄️';
+            }
         }
         
         /* 页面过渡动画 */
@@ -878,7 +1173,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: var(--bg-color);
+            background: linear-gradient(120deg, var(--winter-night), var(--bg-color));
             z-index: 9999;
             transform: translateY(100%);
             transition: transform 0.5s ease;
@@ -887,9 +1182,27 @@
         .page-transition.active {
             transform: translateY(0);
         }
+
+        /* ========== 雪花动效动画 ========== */
+        @keyframes snowfall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes starfall {
+            0% { transform: translateY(0) rotate(0deg) scale(0.5); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg) scale(1); opacity: 0; }
+        }
     </style>
 </head>
 <body>
+    <!-- 雪花动效容器 -->
+    <div class="snow-container" id="snowContainer"></div>
+
     <!-- 页面过渡动画层 -->
     <div class="page-transition" id="pageTransition"></div>
     
@@ -910,201 +1223,303 @@
         </div>
     </div>
 
-    <!-- 导航栏（含用户信息区域） -->
-    <div class="navbar">
-        <div class="navbar-title">
-            <i class="fas fa-compass"></i>
-            多功能导航中心
-        </div>
-        <div class="user-area" id="userArea">
-            <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式">
-                <i class="fas fa-moon"></i>
-            </button>
-            <a href="indexlo.html" class="login-link">登录/注册</a>
-        </div>
-    </div>
+    <div class="app-container">
+        <!-- 顶部标题栏 -->
+        <header>
+            <h1>多功能导航中心</h1>
+            <p class="subtitle">探索各种实用工具和有趣功能，提升您的在线体验 | 冬日限定版</p>
+        </header>
 
-    <!-- 上次更新时间提示 -->
-    <div id="updateNotice" class="update-notice">
-        <p>上次更新: <span id="lastUpdateTime">2025-09-19</span> | <a href="versions.html" style="color: var(--primary-color);">查看更新内容</a> | <span class="close-update" onclick="closeUpdateNotice()">×</span></p>
-    </div>
-
-    <header>
-        <h1>功能导航中心</h1>
-        <p class="subtitle">探索各种实用工具和有趣功能，提升您的在线体验</p>
-    </header>
-
-    <div class="error-message" id="errorMsg"></div>
-    <div class="success-message" id="successMsg"></div>
-
-    <div class="container">
-        <!-- 游戏娱乐分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-gamepad"></i> 游戏娱乐
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('24gameinformation.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-gamepad"></i>
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 侧边栏导航 -->
+            <div class="sidebar">
+                <!-- 用户信息 - 优化版本 -->
+                <div class="user-profile">
+                    <div class="user-avatar" id="userAvatar" onclick="document.getElementById('avatarInput').click()">
+                        <img src="" alt="用户头像" class="avatar-img">
+                        <span class="avatar-initial">U</span>
                     </div>
-                    <h2 class="card-title">小游戏合集</h2>
-                    <p class="card-desc">Interesting Games</p>
+                    <input type="file" id="avatarInput" accept="image/*">
+                    <div class="user-info">
+                        <div class="username" id="userName">游客用户</div>
+                        <div class="user-status"><i class="fas fa-circle"></i> <span id="loginStatus">未登录</span></div>
+                    </div>
+                    <a href="indexlo.html" class="login-link" id="loginLink">登录/注册</a>
+                    <button class="logout-btn" id="logoutBtn" onclick="confirmLogout()">
+                        <i class="fas fa-sign-out-alt"></i> 退出登录
+                    </button>
                 </div>
-                
-                <!-- 自由电子系列模块入口 -->
-                <div class="nav-card hot-game" onclick="openFreeElectronSeries()">
-                    <div class="hot-tag">
-                        <i class="fas fa-fire"></i>
-                    </div>
-                    <div class="card-icon">
-                        <i class="fas fa-gamepad"></i>
-                    </div>
-                    <h2 class="card-title">自由电子冒险</h2>
-                    <p class="card-desc">自由电子冒险系列！</p>
+
+                <!-- 导航菜单 -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">主菜单</h3>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link active" data-category="all">
+                                <i class="fas fa-home"></i>
+                                <span>主页</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="games">
+                                <i class="fas fa-gamepad"></i>
+                                <span>游戏娱乐</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="learning">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span>学习系列</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="tools">
+                                <i class="fas fa-tools"></i>
+                                <span>实用工具</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="user">
+                                <i class="fas fa-user-circle"></i>
+                                <span>用户中心</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" data-category="system">
+                                <i class="fas fa-cog"></i>
+                                <span>系统功能</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-                
-                <!-- 派对游戏 -->
-                <div class="nav-card hot-game" onclick="navigateTo('简易蛋仔.html')">
-                    <div class="hot-tag">
-                        <i class="fas fa-fire"></i>
+
+                <!-- 快速访问 -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">快速访问</h3>
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="openFriendsSeries(event)">
+                                <i class="fas fa-users"></i>
+                                <span>好友列表</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="openEventsModal()">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>活动中心</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="openTasksModal()">
+                                <i class="fas fa-tasks"></i>
+                                <span>每日任务</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link" onclick="navigateTo('versions.html')">
+                                <i class="fas fa-newspaper"></i>
+                                <span>更新公告</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 主题切换 -->
+                <div class="sidebar-section" style="margin-top: auto;">
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item">
+                            <button class="sidebar-link theme-toggle" id="themeToggle" title="切换深色/浅色模式">
+                                <i class="fas fa-moon"></i>
+                                <span>切换主题</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="content-area">
+                <!-- 上次更新时间提示 -->
+                <div id="updateNotice" class="update-notice">
+                    <p>上次更新: <span id="lastUpdateTime">2025-10-17</span> | <a href="versions.html" style="color: var(--winter-gold);">查看更新内容</a> | <span class="close-update" onclick="closeUpdateNotice()">×</span></p>
+                </div>
+
+                <div class="content-header">
+                    <h2 class="content-title" id="currentCategoryTitle">所有功能</h2>
+                    <div class="search-bar">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="搜索功能...">
                     </div>
-                    <div class="card-icon">
-                        <i class="fas fa-users-gear"></i>
+                </div>
+
+                <div class="error-message" id="errorMsg"></div>
+                <div class="success-message" id="successMsg"></div>
+
+                <!-- 所有功能卡片 -->
+                <div class="card-grid">
+                    <!-- 游戏娱乐分类 -->
+                    <div class="nav-card category-games" onclick="navigateTo('24gameinformation.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <h2 class="card-title">小游戏合集</h2>
+                        <p class="card-desc">Interesting Games</p>
                     </div>
-                    <h2 class="card-title">派对游戏</h2>
-                    <p class="card-desc">随机游戏，挑战全能</p>
+                    
+                    <!-- 自由电子系列模块入口 -->
+                    <div class="nav-card hot-game category-games" onclick="openFreeElectronSeries()">
+                        <div class="hot-tag">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <h2 class="card-title">自由电子冒险</h2>
+                        <p class="card-desc">自由电子冒险系列！</p>
+                    </div>
+                    
+                    <!-- 派对游戏 -->
+                    <div class="nav-card hot-game category-games" onclick="navigateTo('简易蛋仔.html')">
+                        <div class="hot-tag">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-users-gear"></i>
+                        </div>
+                        <h2 class="card-title">派对游戏</h2>
+                        <p class="card-desc">随机游戏，挑战全能</p>
+                    </div>
+
+                    <div class="nav-card category-games" onclick="navigateTo('PVZ.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <h2 class="card-title">PVZ(学生时代)</h2>
+                        <p class="card-desc">初步测试版!</p>
+                    </div>
+
+                    <!-- 学习系列分类 -->
+                    <div class="nav-card category-learning" onclick="openLearningSeries()">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h2 class="card-title">English words</h2>
+                        <p class="card-desc">英语单词学习工具</p>
+                    </div>
+                    
+                    <div class="nav-card category-learning" onclick="navigateTo('Exam.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h2 class="card-title">学业水平考试</h2>
+                        <p class="card-desc">半猫试卷</p>
+                    </div>
+                    <div class="nav-card category-learning" onclick="navigateTo('根号.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-square-root-variable"></i>
+                        </div>
+                        <h2 class="card-title">数学根号器</h2>
+                        <p class="card-desc">迅速计算平方根</p>
+                    </div>
+                    
+
+                    <!-- 实用工具分类 -->
+                    <div class="nav-card category-tools" onclick="navigateTo('knowledge.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h2 class="card-title">百宝箱</h2>
+                        <p class="card-desc">半猫小知识丷</p>
+                    </div>
+
+                    <div class="nav-card category-tools" onclick="navigateTo('diaochawenjuan.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-poll"></i>
+                        </div>
+                        <h2 class="card-title">调查问卷</h2>
+                        <p class="card-desc">提交实时反馈，有机会获取限定称号</p>
+                    </div>
+                    <div class="nav-card category-tools" onclick="navigateTo('confession-wall.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-poll"></i>
+                        </div>
+                        <h2 class="card-title">匿名表白墙</h2>
+                        <p class="card-desc">匿名表白，勇敢说爱</p>
+                    </div>
+                    <!-- 用户中心分类 -->
+                    <div class="nav-card category-user" onclick="openFriendsSeries()">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h2 class="card-title">好友列表</h2>
+                        <p class="card-desc">管理你的好友和联系人，一起互动</p>
+                    </div>
+
+                    <div class="nav-card category-user" onclick="openEventsModal()">
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h2 class="card-title">活动中心</h2>
+                        <p class="card-desc">参与限时活动，赢取丰厚奖励</p>
+                    </div>
+
+                    <div class="nav-card category-user" onclick="openShopModal()">
+                        <div class="card-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <h2 class="card-title">积分商城</h2>
+                        <p class="card-desc">使用积分兑换各种精美道具</p>
+                    </div>
+
+                    <div class="nav-card category-user" onclick="openTasksModal()">
+                        <div class="card-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h2 class="card-title">每日任务</h2>
+                        <p class="card-desc">完成任务获取积分和特殊奖励</p>
+                    </div>
+
+                    <!-- 系统功能分类 -->
+                    <div class="nav-card category-system" onclick="navigateTo('help.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-poll"></i>
+                        </div>
+                        <h2 class="card-title">帮助中心</h2>
+                        <p class="card-desc">Help</p>
+                    </div>
+
+                    <div class="nav-card category-system" onclick="navigateTo('versions.html')">
+                        <div class="card-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <h2 class="card-title">更新公告</h2>
+                        <p class="card-desc">查看最新版本更新内容和功能预告</p>
+                    </div>
+                    
+                    <div class="nav-card category-system" onclick="showComingSoonNotice()">
+                        <div class="card-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h2 class="card-title">更多功能</h2>
+                        <p class="card-desc">持续更新中，即将上线更多实用工具</p>
+                    </div>
+                    
+                    <div class="nav-card category-system" onclick="confirmAction('确定要进入管理员页面吗？', 'gotoAdminLogin')">
+                        <div class="card-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h2 class="card-title">我是管理员?</h2>
+                        <p class="card-desc">管理员特殊功能登录页面...</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 学习系列分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-graduation-cap"></i> 学习系列
-            </h2>
-            <div class="card-grid">
-                <!-- 学习系列模块入口 -->
-                <div class="nav-card" onclick="openLearningSeries()">
-                    <div class="card-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <h2 class="card-title">English words</h2>
-                    <p class="card-desc">英语单词学习工具</p>
-                </div>
-               <div class="nav-card" onclick="navigateTo('Exam.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <h2 class="card-title">学业水平考试</h2>
-                    <p class="card-desc">半猫试卷</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 实用工具分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-tools"></i> 实用工具
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('knowledge.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <h2 class="card-title">百宝箱</h2>
-                    <p class="card-desc">半猫小知识丷</p>
-                </div>
-
-                <div class="nav-card" onclick="navigateTo('diaochawenjuan.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-poll"></i>
-                    </div>
-                    <h2 class="card-title">调查问卷</h2>
-                    <p class="card-desc">提交实时反馈，有机会获取限定称号</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 用户中心分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-user-circle"></i> 用户中心
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('friends.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h2 class="card-title">好友列表</h2>
-                    <p class="card-desc">管理你的好友和联系人，一起互动(目前有bug 等待修复中...)</p>
-                </div>
-
-                <div class="nav-card" onclick="openEventsModal()">
-                    <div class="card-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <h2 class="card-title">活动中心</h2>
-                    <p class="card-desc">参与限时活动，赢取丰厚奖励</p>
-                </div>
-
-                <div class="nav-card" onclick="openShopModal()">
-                    <div class="card-icon">
-                        <i class="fas fa-shopping-bag"></i>
-                    </div>
-                    <h2 class="card-title">积分商城</h2>
-                    <p class="card-desc">使用积分兑换各种精美道具</p>
-                </div>
-
-                <div class="nav-card" onclick="openTasksModal()">
-                    <div class="card-icon">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <h2 class="card-title">每日任务</h2>
-                    <p class="card-desc">完成任务获取积分和特殊奖励</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 系统功能分类 -->
-        <div class="category-section">
-            <h2 class="category-title">
-                <i class="fas fa-cog"></i> 系统功能
-            </h2>
-            <div class="card-grid">
-                <div class="nav-card" onclick="navigateTo('help.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-poll"></i>
-                    </div>
-                    <h2 class="card-title">帮助中心</h2>
-                    <p class="card-desc">Help</p>
-                </div>
-
-                <div class="nav-card" onclick="navigateTo('versions.html')">
-                    <div class="card-icon">
-                        <i class="fas fa-newspaper"></i>
-                    </div>
-                    <h2 class="card-title">更新公告</h2>
-                    <p class="card-desc">查看最新版本更新内容和功能预告</p>
-                </div>
-                
-                <div class="nav-card" onclick="showComingSoonNotice()">
-                    <div class="card-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <h2 class="card-title">更多功能</h2>
-                    <p class="card-desc">持续更新中，即将上线更多实用工具</p>
-                </div>
-                
-                <div class="nav-card" onclick="confirmAction('确定要进入管理员页面吗？', 'gotoAdminLogin')">
-                    <div class="card-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <h2 class="card-title">我是管理员?</h2>
-                    <p class="card-desc">管理员特殊功能登录页面...</p>
-                </div>
-            </div>
-        </div>
+        <!-- 底部状态栏 -->
+        <footer>
+            <p>© 2025 多功能导航中心 | 版本 v6.3.0</p>
+        </footer>
     </div>
 
     <!-- 自由电子系列选择模态框 -->
@@ -1137,13 +1552,36 @@
                     <p class="card-desc">自由电子冒险之旅！</p>
                 </div>
                 
-                <div class="series-select-item" onclick="showDisabledNotice('自由电子冒险4')">
+                <div class="series-select-item" onclick="navigateTo('freee4.html')">
                     <div class="card-icon">
                         <i class="fas fa-gamepad"></i>
                     </div>
                     <h3 class="card-title">自由电子冒险4</h3>
-                    <p class="card-desc">即将上线，敬请期待！</p>
+                    <p class="card-desc">自由电子冒险之旅！</p>
                 </div>
+            </div>
+            <div class="series-select-item" onclick="navigateTo('freee5.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3 class="card-title">自由电子冒险5</h3>
+                    <p class="card-desc">自由电子冒险之旅！</p>
+                
+            </div>
+            <div class="series-select-item" onclick="showDisabledNotice('自由电子冒险6')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3 class="card-title">自由电子冒险6</h3>
+                    <p class="card-desc">即将上线，敬请期待！</p>
+                
+            </div>
+            <div class="series-select-item" onclick="navigateTo('FreeE-.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3 class="card-title">共研服</h3>
+                    <p class="card-desc">请勿点入 半猫诺丷测试中...</p>
             </div>
         </div>
     </div>
@@ -1166,520 +1604,583 @@
                     <div class="card-icon">
                         <i class="fas fa-spell-check"></i>
                     </div>
-                    <h3 class="card-title">English words 2nd</h3>
-                    <p class="card-desc">高二选修一专属模式[限定]</p>
+                    <h3 class="card-title">English words 2</h3>
+                    <p class="card-desc">进阶版单词学习与测试</p>
+                </div>
+            </div>
+            <div class="series-select-item" onclick="navigateTo('words3.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-spell-check"></i>
+                    </div>
+                    <h3 class="card-title">English[Go Over]</h3>
+                    <p class="card-desc">月考限时复习模式</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 好友登录方式选择模态框 -->
+    <div class="modal" id="friendsModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeFriendsModal()">&times;</span>
+            <h2 class="profile-title">选择登录方式</h2>
+            <div class="series-select-grid">
+                <div class="series-select-item" onclick="navigateTo('friends(Password).html')">
+                    <div class="card-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3 class="card-title">正版登录(测试阶段)</h3>
+                    <p class="card-desc">使用邮箱登录，安全可靠</p>
+                </div>
+                <div class="series-select-item" onclick="navigateTo('friends.html')">
+                    <div class="card-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3 class="card-title">离线登录</h3>
+                    <p class="card-desc">创建用户名，直接聊天
+(请规范您的行为 若您多次未经允许登入他人账号中 接到反馈后半猫诺丷会第一时间封禁您的IP)</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 个人信息模态框 -->
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeProfileModal()">&times;</span>
-            <h2 class="profile-title">个人信息</h2>
-            
-            <div class="avatar-upload-section">
-                <img id="modalAvatar" class="avatar-preview" src="" alt="用户头像" onclick="document.getElementById('avatarInput').click()">
-                <button class="upload-btn">
-                    <i class="fas fa-upload"></i> 更换头像
-                </button>
-                <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatarUpload(event)">
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">当前称号</label>
-                <div id="titleDisplay" class="profile-value">暂无称号</div>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">称号管理</label>
-                <button class="upload-btn" onclick="navigateTo('title-manage.html')">
-                    <i class="fas fa-trophy"></i> 查看/管理我的称号
-                </button>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">用户名</label>
-                <div id="usernameDisplay" class="profile-value"></div>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">登录时间</label>
-                <div id="loginTimeDisplay" class="profile-value"></div>
-            </div>
-            
-            <div class="profile-section">
-                <label class="profile-label">账号状态</label>
-                <div id="accountStatus" class="profile-value">正常</div>
-            </div>
-
-            <!-- 积分显示 -->
-            <div class="profile-section">
-                <label class="profile-label">我的积分</label>
-                <div id="userPoints" class="profile-value">0</div>
-            </div>
-            
-            <button class="save-btn" onclick="saveAvatar()">
-                <i class="fas fa-save"></i> 保存头像
-            </button>
-        </div>
-    </div>
-
-    <!-- 活动模态框 -->
+    <!-- 活动中心模态框 -->
     <div class="modal" id="eventsModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <span class="close-modal" onclick="closeEventsModal()">&times;</span>
             <h2 class="profile-title">活动中心</h2>
-            <div class="announcement-content">
-                <!-- 活动内容将通过JavaScript动态加载 -->
+            
+            <div class="event-item">
+                <div class="event-date"><i class="far fa-calendar"></i> 长期有效</div>
+                <h3>新手成长计划</h3>
+                <p>新用户完成指定任务，即可获得新手大礼包和专属称号</p>
             </div>
-            <button class="save-btn" onclick="closeEventsModal()">
-                <i class="fas fa-check"></i> 关闭
-            </button>
+            
+            <div class="event-item">
+                <div class="event-date"><i class="far fa-calendar"></i> 每周更新</div>
+                <h3>周末狂欢</h3>
+                <p>周末期间所有游戏积分翻倍，任务奖励提升50%</p>
+            </div>
         </div>
     </div>
 
+    <!-- 积分商城模态框 -->
     <div class="modal" id="shopModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <span class="close-modal" onclick="closeShopModal()">&times;</span>
             <h2 class="profile-title">积分商城</h2>
-            <div class="announcement-content">
-                <div class="shop-item">
-                    <div>
-                        <h3>初级称号礼盒</h3>
-                        <p>随机获得一个初级称号</p>
-                    </div>
-                    <div>
-                        <span class="shop-price">50积分</span>
-                        <button class="redeem-btn" onclick="confirmAction('确定要兑换初级称号礼盒吗？', 'redeemItem', ['初级称号礼盒', 50])">兑换</button>
-                    </div>
+            
+            <div class="shop-item">
+                <div>
+                    <h3>限定头像框 <span class="status-badge status-active">可兑换</span></h3>
+                    <p>精美限定头像框，彰显你的独特身份</p>
                 </div>
-                <div class="shop-item">
-                    <div>
-                        <h3>中级称号礼盒</h3>
-                        <p>随机获得一个中级称号</p>
-                    </div>
-                    <div>
-                        <span class="shop-price">150积分</span>
-                        <button class="redeem-btn" onclick="confirmAction('确定要兑换中级称号礼盒吗？', 'redeemItem', ['中级称号礼盒', 150])">兑换</button>
-                    </div>
-                </div>
-                <div class="shop-item">
-                    <div>
-                        <h3>高级称号礼盒</h3>
-                        <p>随机获得一个高级称号</p>
-                    </div>
-                    <div>
-                        <span class="shop-price">300积分</span>
-                        <button class="redeem-btn" onclick="confirmAction('确定要兑换高级称号礼盒吗？', 'redeemItem', ['高级称号礼盒', 300])">兑换</button>
-                    </div>
+                <div>
+                    <span class="shop-price">500积分</span>
+                    <button class="redeem-btn" onclick="showNotification('兑换成功！', 'success')">兑换</button>
                 </div>
             </div>
-            <button class="save-btn" onclick="closeShopModal()">
-                <i class="fas fa-check"></i> 关闭
-            </button>
+            
+            <div class="shop-item">
+                <div>
+                    <h3>游戏道具包 <span class="status-badge status-active">可兑换</span></h3>
+                    <p>包含多种游戏内实用道具，助你轻松通关</p>
+                </div>
+                <div>
+                    <span class="shop-price">300积分</span>
+                    <button class="redeem-btn" onclick="showNotification('兑换成功！', 'success')">兑换</button>
+                </div>
+            </div>
+            
+            <div class="shop-item">
+                <div>
+                    <h3>高级会员体验7天 <span class="status-badge status-inactive">积分不足</span></h3>
+                    <p>体验高级会员专属功能和特权</p>
+                </div>
+                <div>
+                    <span class="shop-price">1000积分</span>
+                    <button class="redeem-btn" disabled onclick="showNotification('积分不足，无法兑换', 'error')">兑换</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- 每日任务模态框 -->
     <div class="modal" id="tasksModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <span class="close-modal" onclick="closeTasksModal()">&times;</span>
             <h2 class="profile-title">每日任务</h2>
-            <div class="announcement-content">
-                <div class="task-item">
-                    <div>
-                        <h3>每日登录</h3>
-                        <p class="task-difficulty">难度：简单</p>
-                        <p>每天登录一次系统</p>
-                        <p class="task-reward">奖励：10积分</p>
-                    </div>
-                    <button class="complete-btn" onclick="confirmAction('确定要领取每日登录奖励吗？', 'completeTask', ['每日登录', 10])">领取</button>
+            
+            <div class="task-item">
+                <div>
+                    <div class="task-difficulty"><i class="fas fa-star"></i> 简单</div>
+                    <h3>登录系统</h3>
+                    <p>每日登录一次即可完成</p>
+                    <p class="task-reward"><i class="fas fa-coins"></i> 奖励: 50积分</p>
                 </div>
-                <div class="task-item">
-                    <div>
-                        <h3>完成一次问卷调查</h3>
-                        <p class="task-difficulty">难度：中等</p>
-                        <p>提交一份有效的调查问卷</p>
-                        <p class="task-reward">奖励：50积分 + 限定称号</p>
-                    </div>
-                    <button class="complete-btn" onclick="confirmAction('确定要标记此任务为完成吗？', 'completeTask', ['完成一次问卷调查', 50])">完成</button>
-                </div>
-                <div class="task-item">
-                    <div>
-                        <h3>游玩任意小游戏</h3>
-                        <p class="task-difficulty">难度：简单</p>
-                        <p>从游戏合集选择并游玩一款游戏</p>
-                        <p class="task-reward">奖励：20积分</p>
-                    </div>
-                    <button class="complete-btn" onclick="confirmAction('确定要标记此任务为完成吗？', 'completeTask', ['游玩任意小游戏', 20])">完成</button>
+                <div>
+                    <button class="complete-btn" onclick="showNotification('任务已完成，奖励已发放', 'success')">完成</button>
                 </div>
             </div>
-            <button class="save-btn" onclick="closeTasksModal()">
-                <i class="fas fa-check"></i> 关闭
-            </button>
+            
+            <div class="task-item">
+                <div>
+                    <div class="task-difficulty"><i class="fas fa-star"></i><i class="fas fa-star"></i> 中等</div>
+                    <h3>体验一款游戏</h3>
+                    <p>任意游戏体验时间超过5分钟</p>
+                    <p class="task-reward"><i class="fas fa-coins"></i> 奖励: 100积分</p>
+                </div>
+                <div>
+                    <button class="complete-btn" onclick="showNotification('任务已完成，奖励已发放', 'success')">完成</button>
+                </div>
+            </div>
+            
+            <div class="task-item">
+                <div>
+                    <div class="task-difficulty"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i> 困难</div>
+                    <h3>邀请好友</h3>
+                    <p>成功邀请一位新用户注册</p>
+                    <p class="task-reward"><i class="fas fa-coins"></i> 奖励: 500积分 + 限定称号</p>
+                </div>
+                <div>
+                    <button class="complete-btn" disabled>未完成</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="notification" id="notification">
-        <i class="fas fa-info-circle"></i>
-        <span id="notificationText"></span>
-    </div>
-
-    <footer>
-        <p>© 2025 多功能导航中心 | 持续更新中</p>
-    </footer>
-
     <script>
-        // 全局变量控制重复点击
-        let isProcessing = false;
-        let confirmedAction = null;
-        let confirmedParams = [];
-        
-        // 页面加载完成后执行
-        document.addEventListener('DOMContentLoaded', function() {
-            // 初始化卡片动画
-            setTimeout(() => {
-                const cards = document.querySelectorAll('.nav-card');
-                cards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, 100 * index);
-                });
-            }, 100);
+        // 雪花动效核心函数 - 冬日氛围强化版
+        function createSnow() {
+            const snowContainer = document.getElementById('snowContainer');
+            const isMobile = window.innerWidth < 768;
+            const snowCount = isMobile ? 25 : 50; // 移动端25个，PC端50个，更密集
             
-            // 检查深色模式偏好
-            if (localStorage.getItem('darkMode') === 'true' || 
-                (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                enableDarkMode();
+            // 清空原有雪花
+            snowContainer.innerHTML = '';
+            
+            // 生成雪花/星星混合动效
+            for (let i = 0; i < snowCount; i++) {
+                const snowFlake = document.createElement('div');
+                const isStar = Math.random() > 0.7; // 30%概率是星星（暖光点缀）
+                
+                // 随机样式
+                const size = Math.random() * 10 + 5; // 雪花大小5-15px
+                const posX = Math.random() * 100; // 水平位置
+                const animationDuration = Math.random() * 20 + 10; // 下落时长10-30秒
+                const delay = Math.random() * 20; // 延迟0-20秒
+                const opacity = Math.random() * 0.8 + 0.2; // 透明度0.2-1
+                const blur = Math.random() * 2; // 模糊效果
+                
+                // 设置雪花样式
+                snowFlake.style.position = 'absolute';
+                snowFlake.style.left = `${posX}%`;
+                snowFlake.style.top = '-20px';
+                snowFlake.style.width = `${size}px`;
+                snowFlake.style.height = `${size}px`;
+                snowFlake.style.borderRadius = isStar ? '0' : '50%';
+                snowFlake.style.backgroundColor = isStar ? '#ffd166' : '#ffffff'; // 星星是暖阳黄，雪花是白色
+                snowFlake.style.opacity = opacity;
+                snowFlake.style.filter = `blur(${blur}px)`;
+                snowFlake.style.zIndex = '1';
+                snowFlake.style.pointerEvents = 'none';
+                
+                // 动画设置
+                snowFlake.style.animation = `${isStar ? 'starfall' : 'snowfall'} ${animationDuration}s linear ${delay}s infinite`;
+                
+                // 星星额外样式
+                if (isStar) {
+                    snowFlake.style.content = '★';
+                    snowFlake.style.color = '#ffd166';
+                    snowFlake.style.fontSize = `${size}px`;
+                    snowFlake.style.backgroundColor = 'transparent';
+                }
+                
+                snowContainer.appendChild(snowFlake);
+            }
+        }
+
+        // 用户信息管理模块 - 优化版本
+        function initUserInfo() {
+            // 尝试从localStorage获取用户信息
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+            const userNameEl = document.getElementById('userName');
+            const userStatusEl = document.getElementById('loginStatus');
+            const userAvatarEl = document.getElementById('userAvatar');
+            const loginLink = document.getElementById('loginLink');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const avatarImg = document.querySelector('.avatar-img');
+            const avatarInitial = document.querySelector('.avatar-initial');
+            
+            if (userInfo && userInfo.username) {
+                // 登录状态：显示用户名和个性化头像
+                const username = decodeURIComponent(userInfo.username);
+                userNameEl.textContent = username;
+                userStatusEl.textContent = '已登录';
+                userAvatarEl.classList.add('logged');
+                
+                // 切换显示登录/退出按钮
+                loginLink.style.display = 'none';
+                logoutBtn.style.display = 'flex';
+                
+                // 加载用户头像
+                if (userInfo.avatar) {
+                    avatarImg.src = userInfo.avatar;
+                    avatarImg.style.display = 'block';
+                    avatarInitial.style.display = 'none';
+                } else {
+                    // 没有自定义头像时显示用户名首字母
+                    avatarImg.style.display = 'none';
+                    avatarInitial.style.display = 'block';
+                    avatarInitial.textContent = username.charAt(0).toUpperCase();
+                }
             } else {
-                disableDarkMode();
+                // 未登录状态：默认提示
+                userNameEl.textContent = '游客用户';
+                userStatusEl.textContent = '未登录';
+                userAvatarEl.classList.remove('logged');
+                
+                // 切换按钮显示
+                loginLink.style.display = 'block';
+                logoutBtn.style.display = 'none';
+                
+                // 重置头像
+                avatarImg.src = '';
+                avatarImg.style.display = 'none';
+                avatarInitial.style.display = 'block';
+                avatarInitial.textContent = 'U';
+            }
+        }
+
+        // 头像上传处理
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 检查用户是否已登录
+            const userInfoStr = localStorage.getItem('mainUserInfo');
+            const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+            
+            if (!userInfo || !userInfo.username) {
+                showNotification('请先登录再上传头像', 'error');
+                return;
             }
             
-            // 初始化更新提示显示逻辑
-            initUpdateNoticeDisplay();
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                showNotification('请选择图片文件', 'error');
+                return;
+            }
+            
+            // 预览并保存头像
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // 更新用户信息
+                userInfo.avatar = event.target.result;
+                localStorage.setItem('mainUserInfo', JSON.stringify(userInfo));
+                
+                // 更新头像显示
+                const avatarImg = document.querySelector('.avatar-img');
+                const avatarInitial = document.querySelector('.avatar-initial');
+                avatarImg.src = event.target.result;
+                avatarImg.style.display = 'block';
+                avatarInitial.style.display = 'none';
+                
+                showNotification('头像更新成功', 'success');
+            };
+            reader.readAsDataURL(file);
         });
-        
+
+        // 确认退出登录
+        function confirmLogout() {
+            confirmAction(
+                '确认退出',
+                'logout',
+                '确定要退出登录吗？您的部分数据可能会丢失。'
+            );
+        }
+
+        // 执行退出登录
+        function performLogout() {
+            // 清除用户信息
+            localStorage.removeItem('mainUserInfo');
+            
+            // 更新UI
+            initUserInfo();
+            
+            showNotification('已成功退出登录', 'success');
+        }
+
         // 深色模式切换
-        document.getElementById('themeToggle').addEventListener('click', function() {
-            if (document.body.classList.contains('dark-mode')) {
-                disableDarkMode();
-            } else {
-                enableDarkMode();
-            }
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // 检查本地存储的主题偏好
+        if (localStorage.getItem('darkMode') === 'true' || 
+            (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
         });
-        
-        function enableDarkMode() {
-            document.body.classList.add('dark-mode');
-            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i>';
-            localStorage.setItem('darkMode', 'true');
-        }
-        
-        function disableDarkMode() {
-            document.body.classList.remove('dark-mode');
-            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-moon"></i>';
-            localStorage.setItem('darkMode', 'false');
-        }
-        
-        // 导航跳转功能 - 添加加载状态和过渡动画
+
+        // 侧边栏导航切换
+        const sidebarLinks = document.querySelectorAll('.sidebar-link[data-category]');
+        const categoryTitles = {
+            'all': '所有功能',
+            'games': '游戏娱乐',
+            'learning': '学习系列',
+            'tools': '实用工具',
+            'user': '用户中心',
+            'system': '系统功能',
+            'friends': '好友列表'
+        };
+        const currentCategoryTitle = document.getElementById('currentCategoryTitle');
+        const navCards = document.querySelectorAll('.nav-card');
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                // 如果是好友列表链接，不执行默认的分类切换逻辑
+                if (link.getAttribute('data-category') !== 'friends') {
+                    e.preventDefault();
+                    
+                    // 更新活跃状态
+                    sidebarLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    // 更新标题
+                    const category = link.getAttribute('data-category');
+                    currentCategoryTitle.textContent = categoryTitles[category] || '所有功能';
+                    
+                    // 过滤卡片显示
+                    navCards.forEach(card => {
+                        if (category === 'all' || card.classList.contains(`category-${category}`)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        });
+
+        // 搜索功能
+        const searchInput = document.querySelector('.search-input');
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            navCards.forEach(card => {
+                const title = card.querySelector('.card-title').textContent.toLowerCase();
+                const desc = card.querySelector('.card-desc').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || desc.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // 页面导航
         function navigateTo(url) {
-            if (isProcessing) return;
-            isProcessing = true;
-            
-            // 显示加载状态
-            document.getElementById('loadingOverlay').classList.add('active');
-            
-            // 页面过渡动画
-            const transition = document.getElementById('pageTransition');
-            transition.classList.add('active');
-            
-            // 延迟跳转，确保动画效果可见
+            showLoading();
             setTimeout(() => {
                 window.location.href = url;
-            }, 300);
-        }
-        
-        // 打开自由电子系列模态框
-        function openFreeElectronSeries() {
-            if (isProcessing) return;
-            document.getElementById('freeElectronModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('freeElectronModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭自由电子系列模态框
-        function closeFreeElectronModal() {
-            const modal = document.getElementById('freeElectronModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开学习系列模态框
-        function openLearningSeries() {
-            if (isProcessing) return;
-            document.getElementById('learningModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('learningModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭学习系列模态框
-        function closeLearningModal() {
-            const modal = document.getElementById('learningModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开活动模态框
-        function openEventsModal() {
-            if (isProcessing) return;
-            document.getElementById('eventsModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('eventsModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭活动模态框
-        function closeEventsModal() {
-            const modal = document.getElementById('eventsModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开商城模态框
-        function openShopModal() {
-            if (isProcessing) return;
-            document.getElementById('shopModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('shopModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭商城模态框
-        function closeShopModal() {
-            const modal = document.getElementById('shopModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 打开任务模态框
-        function openTasksModal() {
-            if (isProcessing) return;
-            document.getElementById('tasksModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('tasksModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭任务模态框
-        function closeTasksModal() {
-            const modal = document.getElementById('tasksModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        
-        // 关闭更新提示
-        function closeUpdateNotice() {
-            const notice = document.getElementById('updateNotice');
-            notice.style.opacity = '0';
-            notice.style.transform = 'translateY(-20px)';
-            
-            // 7天后再次显示
-            localStorage.setItem('updateNoticeHidden', Date.now().toString());
-            
-            setTimeout(() => {
-                notice.style.display = 'none';
             }, 500);
         }
-        
-        // 初始化更新提示显示逻辑
-        function initUpdateNoticeDisplay() {
-            const lastHidden = localStorage.getItem('updateNoticeHidden');
-            const notice = document.getElementById('updateNotice');
-            
-            // 如果用户没有关闭过提示，或者距离上次关闭已超过7天，则显示
-            if (!lastHidden || new Date().getTime() - parseInt(lastHidden) > 7 * 24 * 60 * 60 * 1000) {
-                notice.style.display = 'block';
-                
-                // 5秒后自动淡出，避免打扰
-                setTimeout(() => {
-                    notice.style.opacity = '0';
-                    notice.style.transform = 'translateY(-20px)';
-                    setTimeout(() => {
-                        notice.style.display = 'none';
-                    }, 500);
-                }, 5000);
-            } else {
-                notice.style.display = 'none';
-            }
+
+        // 模态框控制
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
         }
-        
-        // 显示即将上线通知
-        function showComingSoonNotice() {
-            showNotification('该功能即将上线，敬请期待！', 'info');
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
         }
-        
-        // 显示功能未开放通知
-        function showDisabledNotice(featureName) {
-            showNotification(`${featureName} 尚未开放，敬请期待！`, 'info');
+
+        // 自由电子系列模态框
+        function openFreeElectronSeries() {
+            openModal('freeElectronModal');
         }
-        
+
+        function closeFreeElectronModal() {
+            closeModal('freeElectronModal');
+        }
+
+        // 学习系列模态框
+        function openLearningSeries() {
+            openModal('learningModal');
+        }
+
+        function closeLearningModal() {
+            closeModal('learningModal');
+        }
+
+        // 好友登录方式选择模态框控制
+        function openFriendsSeries(event) {
+            if (event) event.preventDefault();
+            openModal('friendsModal');
+        }
+
+        function closeFriendsModal() {
+            closeModal('friendsModal');
+        }
+
+        // 活动中心模态框
+        function openEventsModal() {
+            openModal('eventsModal');
+        }
+
+        function closeEventsModal() {
+            closeModal('eventsModal');
+        }
+
+        // 积分商城模态框
+        function openShopModal() {
+            openModal('shopModal');
+        }
+
+        function closeShopModal() {
+            closeModal('shopModal');
+        }
+
+        // 每日任务模态框
+        function openTasksModal() {
+            openModal('tasksModal');
+        }
+
+        function closeTasksModal() {
+            closeModal('tasksModal');
+        }
+
+        // 关闭更新提示
+        function closeUpdateNotice() {
+            const updateNotice = document.getElementById('updateNotice');
+            updateNotice.style.opacity = '0';
+            updateNotice.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                updateNotice.style.display = 'none';
+            }, 500);
+            localStorage.setItem('hideUpdateNotice', 'true');
+        }
+
+        // 检查是否需要显示更新提示
+        if (localStorage.getItem('hideUpdateNotice') === 'true') {
+            document.getElementById('updateNotice').style.display = 'none';
+        }
+
         // 显示通知
         function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
             
-            // 移除之前的类型类
-            notification.classList.remove('success', 'error');
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
             
-            // 添加新类型类和图标
-            if (type === 'success') {
-                notification.classList.add('success');
-                notification.innerHTML = `<i class="fas fa-check-circle"></i><span id="notificationText">${message}</span>`;
-            } else if (type === 'error') {
-                notification.classList.add('error');
-                notification.innerHTML = `<i class="fas fa-exclamation-circle"></i><span id="notificationText">${message}</span>`;
-            } else {
-                notification.innerHTML = `<i class="fas fa-info-circle"></i><span id="notificationText">${message}</span>`;
-            }
+            notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+            document.body.appendChild(notification);
             
-            notificationText.textContent = message;
-            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
             
-            // 3秒后自动隐藏
             setTimeout(() => {
                 notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
             }, 3000);
         }
+
+        // 显示即将上线提示
+        function showComingSoonNotice() {
+            showNotification('该功能正在开发中，即将上线，敬请期待！', 'info');
+        }
+
+        // 显示已禁用提示
+        function showDisabledNotice(featureName) {
+            showNotification(`${featureName} 目前尚未开放，敬请期待！`, 'info');
+        }
+
+        // 加载状态
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // 确认对话框
+        let confirmedAction = null;
         
-        // 管理员登录
+        function confirmAction(title, action, message = '') {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            confirmedAction = action;
+            const confirmModal = document.getElementById('confirmModal');
+            confirmModal.style.display = 'flex';
+            setTimeout(() => {
+                confirmModal.classList.add('active');
+            }, 10);
+        }
+        
+        function closeConfirmModal() {
+            const confirmModal = document.getElementById('confirmModal');
+            confirmModal.classList.remove('active');
+            setTimeout(() => {
+                confirmModal.style.display = 'none';
+                confirmedAction = null;
+            }, 300);
+        }
+        
+        function executeConfirmedAction() {
+            if (confirmedAction === 'gotoAdminLogin') {
+                navigateTo('adminlogin.html');
+            } else if (confirmedAction === 'logout') {
+                performLogout();
+            }
+            closeConfirmModal();
+        }
+
+        // 管理员登录页面跳转
         function gotoAdminLogin() {
             navigateTo('adminlogin.html');
         }
-        
-        // 头像上传处理
-        function handleAvatarUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('modalAvatar').src = e.target.result;
-                    showNotification('头像预览已更新，点击保存按钮生效', 'info');
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-        
-        // 保存头像
-        function saveAvatar() {
-            // 模拟保存操作
-            showLoading();
-            setTimeout(() => {
-                hideLoading();
-                showNotification('头像更新成功！', 'success');
-                closeProfileModal();
-            }, 1000);
-        }
-        
-        // 显示加载状态
-        function showLoading() {
-            isProcessing = true;
-            document.getElementById('loadingOverlay').classList.add('active');
-        }
-        
-        // 隐藏加载状态
-        function hideLoading() {
-            isProcessing = false;
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }
-        
-        // 兑换物品
-        function redeemItem(itemName, points) {
-            showLoading();
-            // 模拟兑换操作
-            setTimeout(() => {
-                hideLoading();
-                showNotification(`成功兑换 ${itemName}，消耗 ${points} 积分`, 'success');
-                // 这里可以添加更新积分的逻辑
-            }, 1000);
-        }
-        
-        // 完成任务
-        function completeTask(taskName, points) {
-            showLoading();
-            // 模拟完成任务操作
-            setTimeout(() => {
-                hideLoading();
-                showNotification(`成功完成 ${taskName}，获得 ${points} 积分`, 'success');
-                // 这里可以添加更新积分和任务状态的逻辑
-            }, 1000);
-        }
-        
-        // 打开确认对话框
-        function confirmAction(title, action, params = []) {
-            if (isProcessing) return;
+
+        // 页面加载完成后执行
+        window.addEventListener('load', () => {
+            // 初始化雪花动效（强化版）
+            createSnow();
+            // 初始化用户信息
+            initUserInfo();
             
-            document.getElementById('confirmTitle').textContent = title;
-            confirmedAction = action;
-            confirmedParams = params;
+            // 隐藏加载状态
+            hideLoading();
             
-            document.getElementById('confirmModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('confirmModal').classList.add('active');
-            }, 10);
-        }
-        
-        // 关闭确认对话框
-        function closeConfirmModal() {
-            const modal = document.getElementById('confirmModal');
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.style.display = 'none';
-                confirmedAction = null;
-                confirmedParams = [];
-            }, 300);
-        }
-        
-        // 执行确认的操作
-        function executeConfirmedAction() {
-            if (confirmedAction && typeof window[confirmedAction] === 'function') {
-                // 关闭确认框
-                closeConfirmModal();
-                
-                // 执行相应操作
-                window[confirmedAction](...confirmedParams);
-            }
-        }
-        
-        // 关闭所有模态框的通用方法
-        function closeAllModals() {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                modal.classList.remove('active');
+            // 初始化卡片动画
+            const cards = document.querySelectorAll('.nav-card');
+            cards.forEach((card, index) => {
                 setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 300);
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 + index * 100);
             });
-        }
-        
-        // 点击模态框外部关闭
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                closeAllModals();
-            }
-        }
+        });
     </script>
 </body>
 </html>

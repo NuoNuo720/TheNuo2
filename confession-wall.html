@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>匿名表白墙</title>
+  <title>2025元旦 · 匿名心愿墙</title>
   
   <!-- 关键样式资源优先加载 -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- 非关键资源异步加载 -->
-  
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <!-- 更换为正确的Supabase SDK链接 -->
+  <!-- 引入图标库 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 截图功能（可选） -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   
   <!-- 资源加载错误处理 -->
   <script>
@@ -45,12 +45,12 @@
         extend: {
           colors: {
             primary: '#ff4d6d',
-            secondary: '#f7f7f7',
-            accent: '#ffe0e9',
-            tag1: '#4f46e5', // 暗恋
-            tag2: '#10b981', // 感谢
-            tag3: '#f59e0b', // 道歉
-            tag4: '#ef4444', // 热恋
+            newyear: {
+              red: '#e63946',
+              gold: '#fca311',
+              green: '#457b9d',
+              purple: '#7209b7'
+            }
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -92,12 +92,23 @@
         42% { transform: scale(1.1); }
         70% { transform: scale(1); }
       }
+      @keyframes firework {
+        0% { transform: scale(0); opacity: 1; }
+        50% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(2); opacity: 0; }
+      }
+      @keyframes float {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.5; }
+        90% { opacity: 0.5; }
+        100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+      }
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-pink-50 to-purple-50 min-h-screen font-sans">
-  <!-- 粒子背景容器 -->
-  <div id="particles-container" class="fixed inset-0 pointer-events-none z-0 opacity-30"></div>
+<body class="bg-gradient-to-br from-red-50 to-yellow-50 min-h-screen font-sans">
+  <!-- 粒子/烟花背景容器 -->
+  <div id="particles-container" class="fixed inset-0 pointer-events-none z-0 opacity-40"></div>
   
   <div class="container mx-auto px-4 py-8 max-w-3xl relative z-10">
     <!-- 返回导航按钮 -->
@@ -108,43 +119,65 @@
       </a>
     </div>
     
-    <!-- 页面标题 -->
+    <!-- 页面标题 + 元旦倒计时 -->
     <header class="text-center mb-10">
-      <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary mb-2">
-        <i class="fa fa-heart text-primary animate-pulse"></i> 匿名表白墙
-      </h1>
-      <p class="text-gray-600">说出那些藏在心底的话</p>
+      <div class="flex justify-center items-center gap-3 mb-2">
+        <span class="text-newyear-red text-2xl">🎇</span>
+        <h1 class="text-[clamp(2rem,5vw,3rem)] font-bold text-newyear-red mb-2">
+          2025元旦 · 匿名心愿墙
+        </h1>
+        <span class="text-newyear-gold text-2xl">🎆</span>
+      </div>
+      <!-- 元旦倒计时 -->
+      <div id="countdown" class="bg-newyear-red/10 text-newyear-red px-4 py-2 rounded-lg inline-block mb-3">
+        距离2025元旦还有：<span id="countdown-text">0天0时0分0秒</span>
+      </div>
+      <p class="text-gray-600">把新年祝福/心愿说给想告诉的人～</p>
     </header>
     
     <!-- 表白输入区域 -->
     <div class="bg-white rounded-xl p-6 mb-8 card-shadow hover-lift">
-      <!-- 标签选择 -->
+      <!-- 元旦专属标签选择 -->
       <div class="mb-4">
         <p class="text-sm text-gray-600 mb-2">选择类型：</p>
         <div class="flex flex-wrap gap-2">
           <label class="inline-flex items-center px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-100 transition-colors">
-            <input type="radio" name="confessionType" value="暗恋" class="sr-only peer" checked>
-            <span class="peer-checked:bg-tag1 peer-checked:text-white rounded-full px-3 py-1 transition-colors">暗恋</span>
+            <input type="radio" name="confessionType" value="新年祝福" class="sr-only peer" checked>
+            <span class="peer-checked:bg-newyear-red peer-checked:text-white rounded-full px-3 py-1 transition-colors">新年祝福</span>
           </label>
           <label class="inline-flex items-center px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-100 transition-colors">
-            <input type="radio" name="confessionType" value="感谢" class="sr-only peer">
-            <span class="peer-checked:bg-tag2 peer-checked:text-white rounded-full px-3 py-1 transition-colors">感谢</span>
+            <input type="radio" name="confessionType" value="跨年心愿" class="sr-only peer">
+            <span class="peer-checked:bg-newyear-gold peer-checked:text-white rounded-full px-3 py-1 transition-colors">跨年心愿</span>
           </label>
           <label class="inline-flex items-center px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-100 transition-colors">
-            <input type="radio" name="confessionType" value="道歉" class="sr-only peer">
-            <span class="peer-checked:bg-tag3 peer-checked:text-white rounded-full px-3 py-1 transition-colors">道歉</span>
+            <input type="radio" name="confessionType" value="感谢陪伴" class="sr-only peer">
+            <span class="peer-checked:bg-newyear-green peer-checked:text-white rounded-full px-3 py-1 transition-colors">感谢陪伴</span>
           </label>
           <label class="inline-flex items-center px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-100 transition-colors">
-            <input type="radio" name="confessionType" value="热恋" class="sr-only peer">
-            <span class="peer-checked:bg-tag4 peer-checked:text-white rounded-full px-3 py-1 transition-colors">热恋</span>
+            <input type="radio" name="confessionType" value="偷偷许愿" class="sr-only peer">
+            <span class="peer-checked:bg-newyear-purple peer-checked:text-white rounded-full px-3 py-1 transition-colors">偷偷许愿</span>
           </label>
+        </div>
+        <!-- 班级选择 -->
+        <div class="mt-4">
+          <p class="text-sm text-gray-600 mb-2">选择班级（选填）：</p>
+          <select id="classSelect" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-newyear-red/50 focus:border-newyear-red outline-none text-sm">
+            <option value="">全部班级</option>
+            <option value="初一(1)班">初一(1)班</option>
+            <option value="初一(2)班">初一(2)班</option>
+            <option value="初二(1)班">初二(1)班</option>
+            <option value="初二(2)班">初二(2)班</option>
+            <option value="初三(1)班">初三(1)班</option>
+            <option value="初三(2)班">初三(2)班</option>
+            <option value="教师组">教师组</option>
+          </select>
         </div>
       </div>
       
       <textarea 
         id="confessionInput" 
-        placeholder="在这里写下你的表白，大胆说出你的心意吧..." 
-        class="w-full h-32 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none resize-none"
+        placeholder="在这里写下你的新年祝福/心愿，大胆说出你的心意吧..." 
+        class="w-full h-32 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-newyear-red/50 focus:border-newyear-red transition-all outline-none resize-none"
         maxlength="500"
       ></textarea>
       <div class="flex justify-between mt-2">
@@ -158,15 +191,14 @@
           </button>
           <button 
             id="submitBtn" 
-            class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
+            class="bg-newyear-red hover:bg-newyear-red/90 text-white px-6 py-2 rounded-lg transition-all flex items-center gap-2 font-medium"
           >
-            <i class="fa fa-paper-plane"></i> 发布表白
+            <i class="fa fa-paper-plane"></i> 发布祝福
           </button>
         </div>
       </div>
     </div>
     
-    <!-- 其他部分保持不变 -->
     <!-- 筛选和搜索区域 -->
     <div class="bg-white rounded-xl p-4 mb-6 card-shadow">
       <div class="flex flex-col sm:flex-row gap-3">
@@ -175,16 +207,27 @@
           <input 
             type="text" 
             id="searchInput" 
-            placeholder="搜索表白内容..." 
-            class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-sm"
+            placeholder="搜索新年祝福..." 
+            class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-newyear-red/50 focus:border-newyear-red transition-all outline-none text-sm"
           >
         </div>
-        <select id="filterSelect" class="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none text-sm">
+        <select id="filterSelect" class="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-newyear-red/50 focus:border-newyear-red outline-none text-sm">
           <option value="all">全部类型</option>
-          <option value="暗恋">只看暗恋</option>
-          <option value="感谢">只看感谢</option>
-          <option value="道歉">只看道歉</option>
-          <option value="热恋">只看热恋</option>
+          <option value="新年祝福">只看新年祝福</option>
+          <option value="跨年心愿">只看跨年心愿</option>
+          <option value="感谢陪伴">只看感谢陪伴</option>
+          <option value="偷偷许愿">只看偷偷许愿</option>
+        </select>
+        <!-- 新增班级筛选 -->
+        <select id="classFilterSelect" class="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-newyear-red/50 focus:border-newyear-red outline-none text-sm">
+          <option value="all">全部班级</option>
+          <option value="初一(1)班">初一(1)班</option>
+          <option value="初一(2)班">初一(2)班</option>
+          <option value="初二(1)班">初二(1)班</option>
+          <option value="初二(2)班">初二(2)班</option>
+          <option value="初三(1)班">初三(1)班</option>
+          <option value="初三(2)班">初三(2)班</option>
+          <option value="教师组">教师组</option>
         </select>
       </div>
     </div>
@@ -195,7 +238,7 @@
     <!-- 表白列表 -->
     <div class="mb-6">
       <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <i class="fa fa-comments text-primary mr-2"></i> 表白列表
+        <i class="fa fa-comments text-newyear-red mr-2"></i> 元旦心愿列表
         <span id="confessionCount" class="ml-2 text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">0条</span>
       </h2>
       <div id="confessionsList" class="space-y-4">
@@ -206,12 +249,12 @@
         
         <!-- 空状态 -->
         <div id="emptyState" class="hidden text-center py-16">
-          <div class="w-24 h-24 mx-auto mb-4 text-primary/30">
-            <i class="fa fa-heart-o text-[100px]"></i>
+          <div class="w-24 h-24 mx-auto mb-4 text-newyear-red/30">
+            <i class="fa fa-gift text-[100px]"></i>
           </div>
-          <p class="text-gray-500 mb-6">还没有表白呢</p>
-          <button id="emptyStateBtn" class="bg-primary/10 hover:bg-primary/20 text-primary px-6 py-2 rounded-lg transition-all">
-            发布第一条表白
+          <p class="text-gray-500 mb-6">还没有新年祝福呢</p>
+          <button id="emptyStateBtn" class="bg-newyear-red/10 hover:bg-newyear-red/20 text-newyear-red px-6 py-2 rounded-lg transition-all">
+            发布第一条新年祝福
           </button>
         </div>
       </div>
@@ -219,15 +262,15 @@
     
     <!-- 页脚 -->
     <footer class="text-center text-gray-500 text-sm mt-12 pb-6">
-      <p>匿名表白，勇敢说爱 <i class="fa fa-heart text-primary"></i></p>
-      <p class="mt-1">文明发言，友善交流</p>
+      <p>2025元旦快乐 🎉 匿名祝福，勇敢说爱 <i class="fa fa-heart text-newyear-red"></i></p>
+      <p class="mt-1">文明发言，友善交流 | 分享给同学/老师一起玩吧～</p>
     </footer>
   </div>
 
   <script>
     // 全局变量
-    let supabase;
     let allConfessions = [];
+    let supabaseClient;
     
     // DOM 元素缓存
     const elements = {
@@ -242,7 +285,10 @@
       statusMessage: document.getElementById('statusMessage'),
       searchInput: document.getElementById('searchInput'),
       filterSelect: document.getElementById('filterSelect'),
-      emptyStateBtn: document.getElementById('emptyStateBtn')
+      classFilterSelect: document.getElementById('classFilterSelect'),
+      classSelect: document.getElementById('classSelect'),
+      emptyStateBtn: document.getElementById('emptyStateBtn'),
+      countdownText: document.getElementById('countdown-text')
     };
     
     // 初始化应用
@@ -254,11 +300,14 @@
         // 设置事件监听
         setupEventListeners();
         
-        // 加载表白数据
+        // 加载祝福数据
         loadConfessions();
         
-        // 创建粒子背景
-        createParticles();
+        // 创建元旦粒子背景
+        createNewYearParticles();
+        
+        // 初始化元旦倒计时
+        initCountdown();
       } catch (error) {
         console.error('初始化失败:', error);
         showStatus('应用初始化失败，请刷新页面重试', true);
@@ -276,10 +325,10 @@
         throw new Error('Supabase SDK未加载成功');
       }
       
-      supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+      supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
     }
     
-    // 其余JavaScript代码保持不变
+    // 设置事件监听
     function setupEventListeners() {
       // 字符计数
       elements.confessionInput.addEventListener('input', updateCharCount);
@@ -290,17 +339,19 @@
       // 空状态按钮
       elements.emptyStateBtn.addEventListener('click', focusInput);
       
-      // 提交表白
+      // 提交祝福
       elements.submitBtn.addEventListener('click', submitConfession);
       
       // 搜索和筛选
       elements.searchInput.addEventListener('input', debounce(applyFilters, 300));
       elements.filterSelect.addEventListener('change', applyFilters);
+      elements.classFilterSelect.addEventListener('change', applyFilters);
       
       // 初始化字符计数
       updateCharCount();
     }
     
+    // 防抖函数
     function debounce(func, wait) {
       let timeout;
       return function(...args) {
@@ -309,6 +360,7 @@
       };
     }
     
+    // 更新字符计数
     function updateCharCount() {
       const count = elements.confessionInput.value.length;
       elements.charCount.textContent = `${count}/500`;
@@ -317,16 +369,20 @@
       elements.charCount.classList.toggle('text-red-500', count >= 500);
     }
     
+    // 清空输入
     function clearInput() {
       elements.confessionInput.value = '';
+      elements.classSelect.value = '';
       updateCharCount();
     }
     
+    // 聚焦输入框
     function focusInput() {
       elements.confessionInput.focus();
       elements.confessionInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     
+    // 显示状态提示
     function showStatus(message, isError = false) {
       elements.statusMessage.textContent = message;
       elements.statusMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
@@ -342,15 +398,19 @@
       }, 3000);
     }
     
+    // 获取选中的类型
     function getSelectedType() {
       const selected = document.querySelector('input[name="confessionType"]:checked');
-      return selected ? selected.value : '暗恋';
+      return selected ? selected.value : '新年祝福';
     }
     
+    // 提交祝福
     async function submitConfession() {
       const content = elements.confessionInput.value.trim();
+      const className = elements.classSelect.value;
+      
       if (!content) {
-        showStatus('请输入表白内容', true);
+        showStatus('请输入新年祝福内容', true);
         return;
       }
       
@@ -360,35 +420,45 @@
       elements.submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 发布中...';
       
       try {
-        const { data, error } = await supabase
-          .from('confessions')
-          .insert([{ content, type }])
+        const { data, error } = await supabaseClient
+          .from('newyear_confessions') // 元旦专属表名
+          .insert([{ 
+            content, 
+            type, 
+            class: className || null,
+            likes: 0,
+            created_at: new Date().toISOString()
+          }])
           .select();
           
         if (error) throw error;
         
         clearInput();
-        showStatus('表白发布成功！');
+        showStatus('新年祝福发布成功！🎊', false);
+        // 弹出新年签
+        showNewYearCard();
         loadConfessions();
       } catch (error) {
         console.error('提交失败:', error);
         showStatus('发布失败，请稍后再试', true);
       } finally {
         elements.submitBtn.disabled = false;
-        elements.submitBtn.innerHTML = '<i class="fa fa-paper-plane"></i> 发布表白';
+        elements.submitBtn.innerHTML = '<i class="fa fa-paper-plane"></i> 发布祝福';
       }
     }
     
+    // 获取标签样式
     function getTagClass(type) {
       switch(type) {
-        case '暗恋': return 'bg-tag1 text-white';
-        case '感谢': return 'bg-tag2 text-white';
-        case '道歉': return 'bg-tag3 text-white';
-        case '热恋': return 'bg-tag4 text-white';
+        case '新年祝福': return 'bg-newyear-red text-white';
+        case '跨年心愿': return 'bg-newyear-gold text-white';
+        case '感谢陪伴': return 'bg-newyear-green text-white';
+        case '偷偷许愿': return 'bg-newyear-purple text-white';
         default: return 'bg-gray-200 text-gray-800';
       }
     }
     
+    // 格式化时间
     function formatTime(createdAt) {
       const date = new Date(createdAt);
       return date.toLocaleString('zh-CN', {
@@ -400,6 +470,7 @@
       });
     }
     
+    // 渲染祝福列表
     function renderConfessions(confessions) {
       elements.confessionsList.innerHTML = '';
       
@@ -416,23 +487,33 @@
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl p-5 card-shadow hover-lift fade-in';
         card.innerHTML = `
-          <div class="flex justify-between items-start mb-3">
+          <div class="flex justify-between items-start mb-3 flex-wrap gap-2">
             <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${getTagClass(confession.type)}">
               ${confession.type}
             </span>
+            ${confession.class ? `<span class="text-xs bg-gray-100 px-2 py-1 rounded">${confession.class}</span>` : ''}
             <span class="text-xs text-gray-400">${formatTime(confession.created_at)}</span>
           </div>
           <p class="text-gray-800 mb-3 whitespace-pre-line">${confession.content}</p>
-          <div class="flex items-center text-gray-500 text-sm">
-            <button class="like-btn flex items-center gap-1 hover:text-primary transition-colors" data-id="${confession.id}">
+          <div class="flex items-center justify-between text-gray-500 text-sm">
+            <button class="like-btn flex items-center gap-1 hover:text-newyear-red transition-colors" data-id="${confession.id}">
               <i class="fa fa-heart-o"></i> 
               <span>${confession.likes || 0}</span>
             </button>
+            <div class="flex gap-2">
+              <button class="continue-btn flex items-center gap-1 hover:text-newyear-green transition-colors" data-id="${confession.id}">
+                <i class="fa fa-link"></i> 接祝福
+              </button>
+              <button class="share-btn flex items-center gap-1 hover:text-newyear-gold transition-colors" data-id="${confession.id}">
+                <i class="fa fa-share-alt"></i> 分享
+              </button>
+            </div>
           </div>
         `;
         
         elements.confessionsList.appendChild(card);
         
+        // 点赞功能
         const likeBtn = card.querySelector('.like-btn');
         likeBtn.addEventListener('click', async (e) => {
           const id = e.currentTarget.dataset.id;
@@ -447,10 +528,10 @@
             
             likeCountEl.textContent = newLikes;
             likeIcon.classList.remove('fa-heart-o');
-            likeIcon.classList.add('fa-heart', 'text-primary');
+            likeIcon.classList.add('fa-heart', 'text-newyear-red');
             
-            const { error } = await supabase
-              .from('confessions')
+            const { error } = await supabaseClient
+              .from('newyear_confessions')
               .update({ likes: newLikes })
               .eq('id', id);
               
@@ -460,20 +541,100 @@
             console.error('点赞失败:', error);
             showStatus('操作失败，请稍后再试', true);
             likeCountEl.textContent = (confession.likes || 0);
-            likeIcon.classList.remove('fa-heart', 'text-primary');
+            likeIcon.classList.remove('fa-heart', 'text-newyear-red');
             likeIcon.classList.add('fa-heart-o');
+          }
+        });
+        
+        // 接祝福功能
+        const continueBtn = card.querySelector('.continue-btn');
+        continueBtn.addEventListener('click', () => {
+          const shortContent = confession.content.length > 20 
+            ? confession.content.substring(0, 20) + '...' 
+            : confession.content;
+          elements.confessionInput.value = `🐲 接福：${shortContent}`;
+          elements.confessionInput.focus();
+          updateCharCount();
+        });
+        
+        // 分享功能
+        const shareBtn = card.querySelector('.share-btn');
+        shareBtn.addEventListener('click', async () => {
+          try {
+            // 生成分享海报
+            await generateSharePoster(confession);
+          } catch (error) {
+            // 备用方案：复制链接
+            const shareUrl = `${window.location.href}?id=${confession.id}`;
+            await navigator.clipboard.writeText(`🎆 我在2025元旦心愿墙给你留了悄悄话 → ${shareUrl}`);
+            showStatus('分享链接已复制！快去发给同学/老师吧～', false);
           }
         });
       });
     }
     
+    // 生成分享海报
+    async function generateSharePoster(confession) {
+      // 创建海报容器
+      const posterContainer = document.createElement('div');
+      posterContainer.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black/70';
+      posterContainer.innerHTML = `
+        <div class="bg-white rounded-2xl p-4 max-w-md w-full fade-in">
+          <div id="posterContent" class="bg-gradient-to-br from-newyear-red/10 to-newyear-gold/10 rounded-xl p-6 text-center">
+            <div class="text-2xl font-bold text-newyear-red mb-2">2025元旦心愿墙</div>
+            <div class="text-sm text-gray-500 mb-4">${formatTime(confession.created_at)}</div>
+            <div class="py-4 border-y border-gray-200 mb-4">
+              <p class="text-gray-800 whitespace-pre-line">${confession.content}</p>
+            </div>
+            <div class="flex justify-center gap-2 mb-4">
+              <span class="inline-block px-3 py-1 rounded-full text-xs ${getTagClass(confession.type)}">
+                ${confession.type}
+              </span>
+              ${confession.class ? `<span class="text-xs bg-gray-100 px-2 py-1 rounded">${confession.class}</span>` : ''}
+            </div>
+            <div class="text-xs text-gray-500">分享自：元旦匿名心愿墙</div>
+          </div>
+          <div class="flex gap-3 justify-center mt-4">
+            <button id="closePoster" class="bg-gray-200 px-6 py-2 rounded-lg">关闭</button>
+            <button id="savePoster" class="bg-newyear-red text-white px-6 py-2 rounded-lg">保存海报</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(posterContainer);
+      
+      // 关闭海报
+      document.getElementById('closePoster').addEventListener('click', () => {
+        posterContainer.remove();
+      });
+      
+      // 保存海报
+      document.getElementById('savePoster').addEventListener('click', async () => {
+        try {
+          const posterContent = document.getElementById('posterContent');
+          const canvas = await html2canvas(posterContent);
+          const link = document.createElement('a');
+          link.download = `元旦心愿-${Date.now()}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          showStatus('海报保存成功！快去分享吧～', false);
+        } catch (error) {
+          console.error('生成海报失败:', error);
+          // 备用方案：复制链接
+          const shareUrl = `${window.location.href}?id=${confession.id}`;
+          await navigator.clipboard.writeText(`🎆 我在2025元旦心愿墙给你留了悄悄话 → ${shareUrl}`);
+          showStatus('海报生成失败，已复制分享链接～', false);
+        }
+      });
+    }
+    
+    // 加载祝福数据
     async function loadConfessions() {
       try {
         elements.loadingIndicator.classList.remove('hidden');
         elements.emptyState.classList.add('hidden');
         
-        const { data, error } = await supabase
-          .from('confessions')
+        const { data, error } = await supabaseClient
+          .from('newyear_confessions')
           .select('*')
           .order('created_at', { ascending: false });
           
@@ -490,16 +651,25 @@
       }
     }
     
+    // 应用筛选条件
     function applyFilters() {
       const searchTerm = elements.searchInput.value.toLowerCase().trim();
       const filterType = elements.filterSelect.value;
+      const filterClass = elements.classFilterSelect.value;
       
       let filtered = [...allConfessions];
       
+      // 类型筛选
       if (filterType !== 'all') {
         filtered = filtered.filter(c => c.type === filterType);
       }
       
+      // 班级筛选
+      if (filterClass !== 'all') {
+        filtered = filtered.filter(c => c.class === filterClass);
+      }
+      
+      // 内容搜索
       if (searchTerm) {
         filtered = filtered.filter(c => 
           c.content.toLowerCase().includes(searchTerm)
@@ -509,48 +679,157 @@
       renderConfessions(filtered);
     }
     
-    function createParticles() {
+    // 元旦倒计时
+    function initCountdown() {
+      const targetDate = new Date('2025-01-01 00:00:00');
+      
+      function updateCountdown() {
+        const now = new Date();
+        const diff = targetDate - now;
+        
+        if (diff <= 0) {
+          elements.countdownText.textContent = '元旦快乐！🎉';
+          // 触发烟花特效
+          triggerFireworks();
+          return;
+        }
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        elements.countdownText.textContent = `${days}天${hours}时${minutes}分${seconds}秒`;
+      }
+      
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    }
+    
+    // 烟花特效
+    function triggerFireworks() {
       const container = document.getElementById('particles-container');
-      const particleCount = 20;
+      container.innerHTML = ''; // 清空原有粒子
+      
+      for (let i = 0; i < 50; i++) {
+        const firework = document.createElement('div');
+        const size = Math.random() * 15 + 10;
+        const colors = ['#e63946', '#fca311', '#457b9d', '#7209b7', '#ffffff', '#ffd166'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        
+        firework.style.position = 'absolute';
+        firework.style.left = `${Math.random() * 100}%`;
+        firework.style.top = `${Math.random() * 100}%`;
+        firework.style.width = `${size}px`;
+        firework.style.height = `${size}px`;
+        firework.style.borderRadius = '50%';
+        firework.style.backgroundColor = color;
+        firework.style.opacity = '0.8';
+        firework.style.animation = `firework ${Math.random() * 3 + 2}s linear forwards`;
+        firework.style.animationDelay = `${Math.random() * 2}s`;
+        
+        container.appendChild(firework);
+      }
+    }
+    
+    // 新年签彩蛋
+    function showNewYearCard() {
+      const cards = [
+        '🎊 学业进步，逢考必过',
+        '🧧 老师超爱你，作业减半',
+        '🍬 友谊长存，天天开心',
+        '🌟 新年暴富，零花钱翻倍',
+        '🎈 心想事成，愿望都实现',
+        '🍎 平安健康，万事顺意',
+        '📚 金榜题名，前程似锦',
+        '🥳 没有烦恼，快乐加倍'
+      ];
+      const randomCard = cards[Math.floor(Math.random() * cards.length)];
+      
+      // 弹出签文弹窗
+      const cardModal = document.createElement('div');
+      cardModal.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black/50';
+      cardModal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center fade-in">
+          <div class="text-4xl mb-4">🧧 元旦签 🧧</div>
+          <div class="text-xl font-bold text-newyear-red mb-6 py-4 border-y border-newyear-red/20">
+            ${randomCard}
+          </div>
+          <div class="flex gap-3 justify-center">
+            <button id="closeCard" class="bg-gray-200 px-6 py-2 rounded-lg">关闭</button>
+            <button id="shareCard" class="bg-newyear-red text-white px-6 py-2 rounded-lg">截图分享</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(cardModal);
+      
+      // 关闭弹窗
+      document.getElementById('closeCard').addEventListener('click', () => {
+        cardModal.remove();
+      });
+      
+      // 截图分享
+      document.getElementById('shareCard').addEventListener('click', async () => {
+        try {
+          const cardContent = cardModal.querySelector('.bg-white');
+          const canvas = await html2canvas(cardContent);
+          const link = document.createElement('a');
+          link.download = `2025元旦签-${Date.now()}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          showStatus('元旦签截图已保存！快去分享～', false);
+        } catch (error) {
+          console.error('截图失败:', error);
+          showStatus('截图失败，快去和同学炫耀你的好运吧～', false);
+        }
+      });
+    }
+    
+    // 创建元旦粒子背景
+    function createNewYearParticles() {
+      const container = document.getElementById('particles-container');
+      const particleCount = 30;
       
       if (!container) {
         const newContainer = document.createElement('div');
         newContainer.id = 'particles-container';
-        newContainer.className = 'fixed inset-0 pointer-events-none z-0 opacity-30';
+        newContainer.className = 'fixed inset-0 pointer-events-none z-0 opacity-40';
         document.body.appendChild(newContainer);
       }
       
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes float {
-          0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-          10% { opacity: 0.5; }
-          90% { opacity: 0.5; }
-          100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
-        }
-      `;
-      document.head.appendChild(style);
+      // 元旦元素：爱心、灯笼、烟花、礼物
+      const particleIcons = ['❤️', '🏮', '🎆', '🎁', '🧧', '✨'];
       
       for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
-        const size = Math.random() * 10 + 5;
+        const size = Math.random() * 10 + 8;
+        const icon = particleIcons[Math.floor(Math.random() * particleIcons.length)];
         
-        particle.innerHTML = '<i class="fa fa-heart"></i>';
-        particle.className = 'absolute text-primary/50';
+        particle.innerHTML = icon;
+        particle.className = 'absolute';
         particle.style.left = `${Math.random() * 100}%`;
         particle.style.top = `${Math.random() * 100}%`;
         particle.style.fontSize = `${size}px`;
-        particle.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
+        particle.style.animation = `float ${Math.random() * 15 + 10}s linear infinite`;
         particle.style.animationDelay = `${Math.random() * 5}s`;
         
         container.appendChild(particle);
       }
     }
     
+    // 初始化（确保SDK加载完成后执行）
     if (window.supabase) {
       initApp();
+    } else {
+      // 备用方案：等待SDK加载
+      setTimeout(() => {
+        if (window.supabase) {
+          initApp();
+        } else {
+          showErrorNotification('Supabase加载失败，请刷新页面');
+        }
+      }, 1000);
     }
   </script>
 </body>
 </html>
-    
