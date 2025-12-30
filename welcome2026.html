@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 跨年倒计时</title>
+    <!-- 引入必要资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 修复 Supabase SDK 引入 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/index.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF3366',
+                        secondary: '#33CCFF',
+                        accent: '#FFCC00',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow-glow {
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 255, 0.5), 0 0 15px rgba(255, 255, 255, 0.3);
+            }
+            .border-gradient {
+                border-image: linear-gradient(45deg, #FF3366, #33CCFF, #FFCC00, #FF3366) 1;
+                animation: gradientMove 3s ease infinite;
+            }
+            .animate-float {
+                animation: float 3s ease-in-out infinite;
+            }
+            .animate-float-slow {
+                animation: float 6s ease-in-out infinite;
+            }
+        }
+
+        @keyframes gradientMove {
+            0% { border-image-source: linear-gradient(45deg, #FF3366, #33CCFF, #FFCC00); }
+            50% { border-image-source: linear-gradient(45deg, #33CCFF, #FFCC00, #FF3366); }
+            100% { border-image-source: linear-gradient(45deg, #FFCC00, #FF3366, #33CCFF); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .icon-btn {
+            @apply w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl md:text-3xl cursor-pointer transition-all duration-300 ease-out;
+            @apply shadow-lg shadow-white/20 backdrop-blur-sm bg-black/30 border border-white/20;
+        }
+        .icon-btn:hover {
+            @apply scale-110 shadow-xl shadow-white/40;
+        }
+        .icon-btn:active {
+            @apply scale-95;
+        }
+
+        .message-bubble {
+            @apply absolute px-4 py-2 rounded-lg text-white bg-black/40 backdrop-blur-sm border border-white/20 shadow-lg;
+            animation: floatUp 8s linear forwards, fadeOut 8s linear forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+        @keyframes fadeOut {
+            0%, 80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .star {
+            @apply absolute rounded-full bg-white;
+            animation: twinkle 2s infinite alternate;
+        }
+        @keyframes twinkle {
+            from { opacity: 0.2; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-black min-h-screen flex flex-col items-center justify-center overflow-hidden">
+    <canvas id="fireworksCanvas" class="absolute top-0 left-0 w-full h-full"></canvas>
+
+    <!-- 星星背景 -->
+    <div id="starsContainer" class="absolute top-0 left-0 w-full h-full pointer-events-none"></div>
+
+    <!-- 移动端底部功能栏 -->
+    <div class="fixed bottom-4 left-0 right-0 flex justify-center gap-4 md:hidden z-20">
+        <div class="icon-btn" id="messageBtn" title="发布祝福语">
+            <i class="fa fa-commenting-o"></i>
+        </div>
+        <div class="icon-btn" id="videoBtn" title="播放祝福视频">
+            <i class="fa fa-play-circle-o"></i>
+        </div>
+        <div class="icon-btn" id="musicBtn" title="切换背景音乐">
+            <i class="fa fa-music"></i>
+        </div>
+        <div class="icon-btn" id="confettiBtn" title="撒花庆祝">
+            <i class="fa fa-birthday-cake"></i>
+        </div>
+        <div class="icon-btn" id="historyBtn" title="查看历史祝福">
+            <i class="fa fa-history"></i>
+        </div>
+    </div>
+
+    <!-- 桌面端右侧功能栏 -->
+    <div class="hidden md:flex fixed right-4 top-1/2 transform -translate-y-1/2 flex-col gap-4 z-20">
+        <div class="icon-btn" id="messageBtnDesktop" title="发布祝福语">
+            <i class="fa fa-commenting-o"></i>
+        </div>
+        <div class="icon-btn" id="videoBtnDesktop" title="播放祝福视频">
+            <i class="fa fa-play-circle-o"></i>
+        </div>
+        <div class="icon-btn" id="musicBtnDesktop" title="切换背景音乐">
+            <i class="fa fa-music"></i>
+        </div>
+        <div class="icon-btn" id="confettiBtnDesktop" title="撒花庆祝">
+            <i class="fa fa-birthday-cake"></i>
+        </div>
+        <div class="icon-btn" id="historyBtnDesktop" title="查看历史祝福">
+            <i class="fa fa-history"></i>
+        </div>
+    </div>
+
+    <!-- 祝福语输入弹窗 -->
+    <div id="messageModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-black/90 border-2 border-gradient p-6 rounded-xl w-[80%] max-w-md transform scale-95 transition-transform duration-300">
+            <h3 class="text-xl font-bold text-white mb-4">写下你的新年祝福</h3>
+            <input type="text" id="messageInput" placeholder="输入你的祝福语..." class="w-full p-3 bg-black/50 border border-white/20 rounded-lg text-white mb-4 focus:outline-none focus:border-white/50">
+            <div class="flex justify-end gap-2">
+                <button id="cancelMessageBtn" class="px-4 py-2 bg-black/50 border border-white/20 rounded-lg text-white hover:bg-white/10">取消</button>
+                <button id="sendMessageBtn" class="px-4 py-2 bg-primary rounded-lg text-white hover:bg-primary/80">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 视频播放弹窗（优化提示） -->
+    <div id="videoModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="relative w-[90%] max-w-2xl">
+            <button id="closeVideoBtn" class="absolute -top-12 right-0 text-white text-3xl cursor-pointer hover:text-primary">
+                <i class="fa fa-times"></i>
+            </button>
+            <div id="videoContainer" class="w-full rounded-lg">
+                <video id="blessingVideo" controls class="w-full rounded-lg">
+                    <source src="new_year_video.mp4" type="video/mp4">
+                    <div class="bg-black/50 text-white p-8 text-center rounded-lg border border-white/20">
+                        <i class="fa fa-video-camera text-4xl mb-4"></i>
+                        <p>暂无祝福视频</p>
+                        <p class="text-sm mt-2 text-white/70">可将 MP4 格式视频命名为 new_year_video.mp4 放入同目录</p>
+                    </div>
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史祝福记录弹窗 -->
+    <div id="historyModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="relative w-[90%] max-w-2xl bg-black/90 border-2 border-gradient p-6 rounded-xl max-h-[80vh] overflow-y-auto">
+            <button id="closeHistoryBtn" class="absolute -top-12 right-0 text-white text-3xl cursor-pointer hover:text-primary">
+                <i class="fa fa-times"></i>
+            </button>
+            <h3 class="text-xl font-bold text-white mb-4">历史祝福记录</h3>
+            <div id="historyMessagesList" class="space-y-3">
+                <div class="text-white text-center text-sm">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="relative z-10 text-center px-4">
+        <div class="absolute -top-20 -left-20 text-[clamp(3rem,20vw,15rem)] font-bold text-white/5 select-none">2026</div>
+        <div class="absolute -bottom-20 -right-20 text-[clamp(3rem,20vw,15rem)] font-bold text-white/5 select-none">2026</div>
+        
+        <h1 class="text-[clamp(2rem,15vw,12rem)] font-bold text-white text-shadow-glow animate-float" id="countdown">
+            2026
+        </h1>
+        <p class="text-[clamp(1rem,5vw,3rem)] font-semibold text-white/80 mt-4 animate-float-slow" style="animation-delay: 1s;">
+            距离新年还有
+        </p>
+        <div class="mt-8 p-4 border-4 border-gradient rounded-lg bg-black/30 backdrop-blur-sm inline-block animate-float-slow" style="animation-delay: 2s;">
+            <p class="text-[clamp(1.5rem,8vw,5rem)] font-bold text-white text-shadow-glow" id="timer">
+                00:00:00
+            </p>
+        </div>
+        <div class="mt-12 opacity-0 scale-90 transition-all duration-1000 ease-out" id="newYearMessage">
+            <h2 class="text-[clamp(2rem,10vw,6rem)] font-bold text-white text-shadow-glow">
+                新年快乐！
+            </h2>
+            <p class="text-[clamp(1rem,4vw,2rem)] text-white/80 mt-4">
+                2026，一切顺利！
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- 配置项 ---
+        const config = {
+            colors: [
+                [255, 51, 102], [51, 204, 255], [255, 204, 0],
+                [255, 102, 153], [102, 255, 204], [204, 102, 255],
+            ],
+            particleCount: 150,
+            explosionRadius: 150,
+            gravity: 0.05,
+            fadeSpeed: 0.98,
+            finalFireworkInterval: 500,
+            // 你的 Supabase 配置（已保留）
+            supabaseUrl: 'https://fsjyakepriaxcjjjbwbb.supabase.co',
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzanlha2VwcmlheGNqampid2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3MTQ2MDEsImV4cCI6MjA3NTI5MDYwMX0.mSQD5TlS8d1i5DFScG99hdjKPoySnIvykKCmGJJgRpM',
+        };
+
+        // --- DOM 元素获取 ---
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        const countdownEl = document.getElementById('countdown');
+        const timerEl = document.getElementById('timer');
+        const newYearMessageEl = document.getElementById('newYearMessage');
+        const starsContainer = document.getElementById('starsContainer');
+        
+        // 功能按钮
+        const messageBtn = document.getElementById('messageBtn');
+        const messageBtnDesktop = document.getElementById('messageBtnDesktop');
+        const videoBtn = document.getElementById('videoBtn');
+        const videoBtnDesktop = document.getElementById('videoBtnDesktop');
+        const musicBtn = document.getElementById('musicBtn');
+        const musicBtnDesktop = document.getElementById('musicBtnDesktop');
+        const confettiBtn = document.getElementById('confettiBtn');
+        const confettiBtnDesktop = document.getElementById('confettiBtnDesktop');
+        const historyBtn = document.getElementById('historyBtn');
+        const historyBtnDesktop = document.getElementById('historyBtnDesktop');
+        
+        // 弹窗元素
+        const messageModal = document.getElementById('messageModal');
+        const messageInput = document.getElementById('messageInput');
+        const cancelMessageBtn = document.getElementById('cancelMessageBtn');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const videoModal = document.getElementById('videoModal');
+        const blessingVideo = document.getElementById('blessingVideo');
+        const closeVideoBtn = document.getElementById('closeVideoBtn');
+        const historyModal = document.getElementById('historyModal');
+        const historyMessagesList = document.getElementById('historyMessagesList');
+        const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+
+        // --- 状态变量 ---
+        let fireworks = [];
+        let particles = [];
+        let confetti = [];
+        let animationId;
+        let countdownEnded = false;
+        let isMusicPlaying = false;
+        let supabase = null;
+        let musicAudio = null; // 音频对象
+
+        // --- 初始化函数 ---
+        function init() {
+            // 1. 初始化 Supabase（核心修复）
+            try {
+                if (config.supabaseUrl && config.supabaseKey && window.supabase) {
+                    // 正确的初始化方式
+                    supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+                    console.log('✅ Supabase 初始化成功');
+                    // 检查表 & 加载历史消息
+                    checkAndCreateTable();
+                    loadHistoryMessages();
+                } else {
+                    console.warn('⚠️ Supabase 配置不完整或 SDK 未加载');
+                    hideHistoryBtn();
+                    historyMessagesList.innerHTML = '<div class="text-white text-center text-sm">未配置数据库，无法保存消息</div>';
+                }
+            } catch (e) {
+                console.error('❌ Supabase 初始化失败:', e);
+                hideHistoryBtn();
+                historyMessagesList.innerHTML = `<div class="text-red-500 text-center text-sm">数据库初始化失败：${e.message}</div>`;
+            }
+
+            // 2. 初始化界面
+            resizeCanvas();
+            createStars();
+            updateCountdown();
+            animate();
+            setupEventListeners();
+            
+            // 3. 视频错误处理
+            blessingVideo.addEventListener('error', function() {
+                document.getElementById('videoContainer').innerHTML = `
+                    <div class="bg-black/50 text-white p-8 text-center rounded-lg border border-white/20">
+                        <i class="fa fa-video-camera text-4xl mb-4"></i>
+                        <p>视频文件未找到</p>
+                        <p class="text-sm mt-2 text-white/70">可将 MP4 格式视频命名为 new_year_video.mp4 放入同目录</p>
+                    </div>
+                `;
+            });
+        }
+
+        // --- Supabase 相关函数 ---
+        async function checkAndCreateTable() {
+            if (!supabase) return;
+            try {
+                const { data, error } = await supabase
+                    .from('new_year_messages')
+                    .select('*')
+                    .limit(1);
+
+                if (error) {
+                    if (error.code === '42P01') {
+                        alert('请在 Supabase 控制台执行以下 SQL 创建表：\n' + 
+                              'CREATE TABLE IF NOT EXISTS new_year_messages (\n' +
+                              '  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n' +
+                              '  content TEXT NOT NULL,\n' +
+                              '  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n' +
+                              ');\n\n' +
+                              '并关闭该表的 RLS 权限（测试用）');
+                    } else {
+                        console.error('查询表失败:', error);
+                    }
+                }
+            } catch (err) {
+                console.error('检查表失败:', err);
+            }
+        }
+
+        async function saveMessageToDB(text) {
+            if (!supabase) return;
+            try {
+                const { data, error } = await supabase
+                    .from('new_year_messages')
+                    .insert([{ content: text }]);
+                
+                if (error) throw error;
+                console.log('📝 消息保存成功:', data);
+            } catch (error) {
+                console.error('❌ 保存消息失败:', error);
+                alert('消息保存失败：' + error.message);
+            }
+        }
+
+        async function loadHistoryMessages() {
+            if (!supabase) return;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('new_year_messages')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+                
+                if (error) throw error;
+                
+                historyMessagesList.innerHTML = '';
+                if (data.length === 0) {
+                    historyMessagesList.innerHTML = '<div class="text-white text-center text-sm">暂无历史祝福</div>';
+                    return;
+                }
+                
+                data.forEach(msg => {
+                    const msgElement = document.createElement('div');
+                    msgElement.className = 'p-3 bg-black/50 border border-white/10 rounded-lg text-white';
+                    msgElement.innerHTML = `
+                        <p class="text-sm opacity-70">${new Date(msg.created_at).toLocaleString()}</p>
+                        <p class="mt-1">${msg.content}</p>
+                    `;
+                    historyMessagesList.appendChild(msgElement);
+                });
+            } catch (error) {
+                console.error('❌ 加载历史消息失败:', error);
+                historyMessagesList.innerHTML = `<div class="text-red-500 text-center text-sm">加载失败：${error.message}</div>`;
+            }
+        }
+
+        // --- 辅助函数 ---
+        function hideHistoryBtn() {
+            if (historyBtn) historyBtn.style.display = 'none';
+            if (historyBtnDesktop) historyBtnDesktop.style.display = 'none';
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createStars() {
+            starsContainer.innerHTML = '';
+            const starCount = Math.floor(window.innerWidth * window.innerHeight / 15000);
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.width = `${Math.random() * 3 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // --- 倒计时逻辑 ---
+        const targetDate = new Date('2026-01-01T00:00:00');
+        function updateCountdown() {
+            const now = new Date();
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+                countdownEnded = true;
+                countdownEl.textContent = '2026';
+                timerEl.textContent = '00:00:00';
+                newYearMessageEl.classList.remove('opacity-0', 'scale-90');
+                newYearMessageEl.classList.add('opacity-100', 'scale-100');
+                
+                setInterval(() => {
+                    createFirework(Math.random() * canvas.width);
+                }, config.finalFireworkInterval);
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            timerEl.textContent = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // --- 烟花粒子系统 ---
+        class Firework {
+            constructor(x) {
+                this.x = x;
+                this.y = canvas.height;
+                this.speed = Math.random() * 4 + 6;
+                this.angle = -Math.PI / 2;
+                this.gravity = 0.05;
+                this.vx = Math.cos(this.angle) * this.speed;
+                this.vy = Math.sin(this.angle) * this.speed;
+                this.color = config.colors[Math.floor(Math.random() * config.colors.length)];
+                this.exploded = false;
+                this.explosionHeight = Math.random() * canvas.height / 3 + canvas.height / 6;
+            }
+            update() {
+                if (!this.exploded) {
+                    this.vy += this.gravity;
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.y <= this.explosionHeight) this.explode();
+                }
+            }
+            explode() {
+                this.exploded = true;
+                for (let i = 0; i < config.particleCount; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 5 + 2;
+                    particles.push(new Particle(this.x, this.y, angle, speed, this.color));
+                }
+            }
+            draw() {
+                if (!this.exploded) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]})`;
+                    ctx.fill();
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y, angle, speed, color) {
+                this.x = x;
+                this.y = y;
+                this.speed = speed;
+                this.angle = angle;
+                this.vx = Math.cos(this.angle) * this.speed;
+                this.vy = Math.sin(this.angle) * this.speed;
+                this.gravity = config.gravity;
+                this.alpha = 1;
+                this.fadeSpeed = config.fadeSpeed;
+                this.color = color;
+            }
+            update() {
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha *= this.fadeSpeed;
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, ${this.alpha})`;
+                ctx.fill();
+            }
+        }
+
+        function createFirework(x) {
+            fireworks.push(new Firework(x));
+        }
+
+        // --- 祝福语气泡 ---
+        function createMessage(text) {
+            const message = document.createElement('div');
+            message.classList.add('message-bubble');
+            message.textContent = text;
+            message.style.left = `${Math.random() * (window.innerWidth - 200) + 100}px`;
+            message.style.fontSize = `${Math.random() * 4 + 14}px`;
+            
+            const randomColor = config.colors[Math.floor(Math.random() * config.colors.length)];
+            message.style.borderColor = `rgb(${randomColor[0]}, ${randomColor[1]}, ${randomColor[2]})`;
+            
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                try {
+                    document.body.removeChild(message);
+                } catch (e) {}
+            }, 8000);
+        }
+
+        // --- 撒花效果 ---
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const color = config.colors[Math.floor(Math.random() * config.colors.length)];
+                confetti.push({
+                    x: Math.random() * canvas.width,
+                    y: -10,
+                    size: Math.random() * 10 + 5,
+                    speed: Math.random() * 5 + 2,
+                    angle: Math.random() * Math.PI * 2,
+                    color: color,
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.2
+                });
+            }
+        }
+
+        // --- 背景音乐（简化版，避免复杂旋律） ---
+        function toggleMusic() {
+            try {
+                if (!musicAudio) {
+                    // 如需自定义音频，替换为你的音频路径（如 new_year_music.mp3）
+                    // musicAudio = new Audio('new_year_music.mp3');
+                    // musicAudio.loop = true;
+                    // musicAudio.volume = 0.5;
+                    
+                    // 临时：使用简单音效替代
+                    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+                    musicAudio = audioContext.createOscillator();
+                    musicAudio.type = 'sine';
+                    musicAudio.frequency.setValueAtTime(440, audioContext.currentTime);
+                    const gain = audioContext.createGain();
+                    gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    musicAudio.connect(gain);
+                    gain.connect(audioContext.destination);
+                }
+
+                if (isMusicPlaying) {
+                    if (musicAudio.stop) musicAudio.stop();
+                    // 更新按钮图标
+                    if (musicBtn) musicBtn.innerHTML = '<i class="fa fa-music"></i>';
+                    if (musicBtnDesktop) musicBtnDesktop.innerHTML = '<i class="fa fa-music"></i>';
+                } else {
+                    if (musicAudio.start) musicAudio.start();
+                    // 更新按钮图标
+                    if (musicBtn) musicBtn.innerHTML = '<i class="fa fa-pause"></i>';
+                    if (musicBtnDesktop) musicBtnDesktop.innerHTML = '<i class="fa fa-pause"></i>';
+                }
+                isMusicPlaying = !isMusicPlaying;
+            } catch (e) {
+                console.error('音乐播放失败:', e);
+                alert('当前浏览器不支持音频播放');
+            }
+        }
+
+        // --- 动画循环 ---
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制烟花
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                fireworks[i].update();
+                fireworks[i].draw();
+                if (fireworks[i].exploded) fireworks.splice(i, 1);
+            }
+
+            // 绘制粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0.01) particles.splice(i, 1);
+            }
+
+            // 绘制撒花
+            for (let i = confetti.length - 1; i >= 0; i--) {
+                const c = confetti[i];
+                c.y += c.speed;
+                c.x += Math.sin(c.angle) * 2;
+                c.rotation += c.rotationSpeed;
+
+                ctx.save();
+                ctx.translate(c.x, c.y);
+                ctx.rotate(c.rotation);
+                ctx.fillStyle = `rgb(${c.color[0]}, ${c.color[1]}, ${c.color[2]})`;
+                ctx.fillRect(-c.size/2, -c.size/2, c.size, c.size);
+                ctx.restore();
+
+                if (c.y > canvas.height) confetti.splice(i, 1);
+            }
+
+            // 随机生成烟花
+            if (!countdownEnded && Math.random() < 0.03) {
+                createFirework(Math.random() * canvas.width);
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // --- 事件监听 ---
+        function setupEventListeners() {
+            // 窗口大小变化
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                createStars();
+            });
+
+            // 点击画布生成烟花
+            canvas.addEventListener('click', (e) => createFirework(e.clientX));
+
+            // 按钮绑定通用函数
+            function bindBtn(btn, handler) {
+                if (btn) btn.addEventListener('click', handler);
+            }
+
+            // 祝福语按钮
+            bindBtn(messageBtn, openMessageModal);
+            bindBtn(messageBtnDesktop, openMessageModal);
+            
+            // 视频按钮
+            bindBtn(videoBtn, openVideoModal);
+            bindBtn(videoBtnDesktop, openVideoModal);
+            
+            // 音乐按钮
+            bindBtn(musicBtn, toggleMusic);
+            bindBtn(musicBtnDesktop, toggleMusic);
+            
+            // 撒花按钮
+            bindBtn(confettiBtn, createConfetti);
+            bindBtn(confettiBtnDesktop, createConfetti);
+            
+            // 历史记录按钮
+            bindBtn(historyBtn, openHistoryModal);
+            bindBtn(historyBtnDesktop, openHistoryModal);
+
+            // 弹窗关闭
+            bindBtn(cancelMessageBtn, closeMessageModal);
+            bindBtn(closeVideoBtn, closeVideoModal);
+            bindBtn(closeHistoryBtn, closeHistoryModal);
+
+            // 发送祝福语
+            bindBtn(sendMessageBtn, sendMessage);
+
+            // 回车发送
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        }
+
+        // --- 弹窗操作 ---
+        function openMessageModal() {
+            messageModal.classList.remove('opacity-0', 'pointer-events-none');
+            messageModal.querySelector('div').classList.remove('scale-95');
+            messageModal.querySelector('div').classList.add('scale-100');
+            messageInput.focus();
+            messageInput.value = '';
+        }
+
+        function closeMessageModal() {
+            messageModal.classList.add('opacity-0', 'pointer-events-none');
+            messageModal.querySelector('div').classList.remove('scale-100');
+            messageModal.querySelector('div').classList.add('scale-95');
+        }
+
+        function openVideoModal() {
+            videoModal.classList.remove('opacity-0', 'pointer-events-none');
+            try {
+                blessingVideo.play();
+            } catch (e) {}
+        }
+
+        function closeVideoModal() {
+            videoModal.classList.add('opacity-0', 'pointer-events-none');
+            try {
+                blessingVideo.pause();
+                blessingVideo.currentTime = 0;
+            } catch (e) {}
+        }
+
+        function openHistoryModal() {
+            historyModal.classList.remove('opacity-0', 'pointer-events-none');
+            loadHistoryMessages();
+        }
+
+        function closeHistoryModal() {
+            historyModal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+            
+            // 显示气泡 + 保存到数据库
+            createMessage(text);
+            saveMessageToDB(text);
+            closeMessageModal();
+        }
+
+        // --- 启动应用 ---
+        window.addEventListener('load', init);
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
