@@ -4,12 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome</title>
-  <!-- 预加载关键资源 -->
-  <link rel="preload" href="indexlo.html" as="document">
+  <!-- 预加载仅在确认文件存在时启用，否则注释 -->
+  <!-- <link rel="preload" href="indexlo.html" as="document"> -->
   
   <style>
     :root {
-      /* 定义CSS变量，便于主题维护 */
       --primary-color: #00004d;
       --secondary-color: purple;
       --accent-color: yellow;
@@ -20,7 +19,6 @@
       --btn-font-size: 24px;
     }
 
-    /* 重置默认样式 */
     * {
       margin: 0;
       padding: 0;
@@ -74,6 +72,7 @@
       position: relative;
       opacity: 0;
       transition: opacity 1s ease-in;
+      flex-direction: column; /* 修复标题和按钮重叠问题 */
     }
     
     /* 背景图懒加载样式 */
@@ -96,6 +95,7 @@
       transition: all var(--transition-speed) ease;
       overflow: hidden;
       font-weight: 500;
+      margin-top: 20px; /* 增加按钮和标题间距 */
     }
     
     /* 按钮波纹效果 */
@@ -217,6 +217,25 @@
       margin-left: 20px;
     }
 
+    /* 错误提示样式 */
+    .error-toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      background: #ff4444;
+      color: white;
+      border-radius: 8px;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .error-toast.show {
+      opacity: 1;
+    }
+
     /* 响应式设计 - 多断点适配 */
     @media (max-width: 1024px) {
       h1 {
@@ -290,7 +309,20 @@
     </button>
   </div>
 
+  <!-- 错误提示组件 -->
+  <div class="error-toast" id="errorToast">加载失败，请检查文件是否存在！</div>
+
   <script>
+    // 全局错误提示函数
+    function showErrorToast(message = "操作失败！") {
+      const toast = document.getElementById('errorToast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
     // 页面加载完成后执行
     document.addEventListener('DOMContentLoaded', function() {
       // 移除加载动画
@@ -300,69 +332,121 @@
         
         setTimeout(() => {
           loader.style.display = 'none';
-          // 显示主内容
           document.querySelector('.cover-container').style.opacity = '1';
         }, 500);
       }, 800);
       
-      // 背景图懒加载
+      // 背景图懒加载（增加失败处理）
       lazyLoadBackground();
       
       // 为菜单项添加键盘支持
       initMenuKeyboardSupport();
+
+      // 提前校验跳转目标是否存在
+      checkTargetFileExists('indexlo.html');
     });
     
-    // 背景图懒加载函数
+    // 背景图懒加载函数（增加失败兜底）
     function lazyLoadBackground() {
       const container = document.querySelector('.cover-container');
       const img = new Image();
       img.src = '333.jpg';
       
       img.onload = function() {
-        // 图片加载完成后再显示
         container.classList.add('has-background');
+      };
+      
+      img.onerror = function() {
+        console.warn('背景图333.jpg加载失败，使用默认背景');
+        // 可选：显示提示
+        // showErrorToast('背景图加载失败');
       };
     }
     
-    // 菜单键盘支持
+    // 菜单键盘支持（完善交互）
     function initMenuKeyboardSupport() {
       const menuItems = document.querySelectorAll('.menu li');
       
-      menuItems.forEach(item => {
+      menuItems.forEach((item, index) => {
         item.addEventListener('keydown', function(e) {
-          // 回车键或空格键触发hover效果
+          // 回车键/空格键触发hover效果
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            this.classList.add('hover');
-            
-            // 模拟鼠标离开效果
+            // 模拟hover样式
+            this.style.color = var(--hover-color);
+            this.style.background = 'rgba(255, 255, 255, 0.1)';
+            // 显示hover提示文本
+            const tips = ["半猫诺丷", "2025/8/1 at 5:30 P.M.", "你干嘛~诶哟~", "正在开发中..."];
+            showErrorToast(`【${this.textContent}】：${tips[index]}`);
+            // 恢复样式
             setTimeout(() => {
-              this.classList.remove('hover');
-            }, 1000);
+              this.style.color = '';
+              this.style.background = '';
+            }, 2000);
+          }
+          // 方向键切换焦点
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextIndex = (index + 1) % menuItems.length;
+            menuItems[nextIndex].focus();
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevIndex = (index - 1 + menuItems.length) % menuItems.length;
+            menuItems[prevIndex].focus();
           }
         });
       });
     }
 
-    // 跳转函数
+    // 校验文件是否存在
+    function checkTargetFileExists(filePath) {
+      fetch(filePath, { method: 'HEAD' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`文件${filePath}不存在`);
+          }
+        })
+        .catch(error => {
+          console.warn(error.message);
+          showErrorToast(`检测到${filePath}不存在，请检查文件！`);
+          // 禁用按钮并提示
+          const btn = document.querySelector('.enter-btn');
+          btn.disabled = true;
+          btn.textContent = "文件缺失，请检查";
+        });
+    }
+
+    // 跳转函数（增加错误处理）
     function goToWebsite() {
       const btn = document.querySelector('.enter-btn');
-      
-      // 防止重复点击
       if (btn.disabled) return;
       
-      // 更新按钮状态
       btn.textContent = "Jumping...";
       btn.disabled = true;
       
-      // 添加页面过渡效果
       const container = document.querySelector('.cover-container');
       container.style.opacity = '0';
       
-      // 延迟跳转
-      setTimeout(() => {
-        window.location.href = "indexlo.html"; 
-      }, 500);
+      // 跳转前再次校验
+      fetch('indexlo.html', { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            setTimeout(() => {
+              window.location.href = "indexlo.html"; 
+            }, 500);
+          } else {
+            throw new Error('目标页面不存在');
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          // 恢复页面状态
+          container.style.opacity = '1';
+          btn.textContent = "[Come Here]";
+          btn.disabled = false;
+          showErrorToast('跳转失败：indexlo.html不存在！');
+        });
     }
   </script>
 </body>
