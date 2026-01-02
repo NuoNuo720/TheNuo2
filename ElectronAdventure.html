@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <title>电子冒险2：量子风暴</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <!-- 音效库 -->
+    <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+    <style>
+        :root {
+            --quantum: #8b5cf6;
+            --bg-dark: #0f172a;
+            --electron: #3B82F6;
+            --proton: #F97316;
+            --positive: #EF4444;
+            --negative: #3B82F6;
+            --neutral: #10B981;
+            --trap-primary: #EC4899;
+            --trap-secondary: #8b5cf6;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+            --safe-area-left: env(safe-area-inset-left);
+            --safe-area-right: env(safe-area-inset-right);
+        }
+        
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding-top: var(--safe-area-top);
+            padding-bottom: var(--safe-area-bottom);
+            padding-left: var(--safe-area-left);
+            padding-right: var(--safe-area-right);
+        }
+        
+        #gameArea {
+            position: relative;
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 60vh;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            overflow: hidden;
+            touch-action: none;
+            background-image: linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        
+        /* 控制按钮优化 - 手游级尺寸和反馈 */
+        .control-btn {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            border: none;
+            outline: none;
+            transition: all 0.15s ease;
+            width: clamp(50px, 15vw, 70px);
+            height: clamp(50px, 15vw, 70px);
+            font-size: clamp(18px, 5vw, 22px);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .control-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .control-btn:active::after {
+            transform: translateX(0);
+        }
+        
+        /* 状态栏优化 */
+        .status-bar {
+            width: 100%;
+            padding: 10px 15px;
+            font-size: clamp(12px, 3vw, 14px);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+            background-color: #1e293b;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        
+        /* 控制区优化 */
+        .controls {
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #1e293b;
+            gap: 10px;
+            flex: 0 0 clamp(200px, 40vh, 250px);
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        /* 游戏元素样式优化 */
+        .electron {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 10;
+            transition: none;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+            box-shadow: 0 0 0 rgba(59, 130, 246, 0.5);
+            animation: electron-glow 2s infinite alternate;
+        }
+        
+        @keyframes electron-glow {
+            0% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+        }
+        
+        .proton {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 5;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+        }
+        
+        .fragment {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 8;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+        }
+        
+        .trap {
+            position: absolute;
+            z-index: 7;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--trap-primary) 0%, var(--trap-secondary) 100%);
+            box-shadow: 0 0 20px var(--trap-primary), 
+                        inset 0 0 10px rgba(255,255,255,0.3);
+        }
+        
+        .boss {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 15;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+        }
+        
+        .projectile {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 12;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+        }
+        
+        /* 模态框样式优化 */
+        #rankingModal, .message-modal {
+            background-color: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            border-radius: 20px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        /* 动画效果优化 */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        @keyframes float-3d {
+            0%, 100% { transform: translateZ(0px) translateY(0px); }
+            25% { transform: translateZ(10px) translateY(-5px); }
+            50% { transform: translateZ(0px) translateY(-10px); }
+            75% { transform: translateZ(-10px) translateY(-5px); }
+        }
+        
+        @keyframes quantum-pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        @keyframes charge-shift {
+            0%, 100% { box-shadow: 0 0 15px 5px currentColor; }
+            50% { box-shadow: 0 0 25px 8px currentColor; }
+        }
+        
+        @keyframes trap-rotate {
+            0% { transform: rotate(0deg) translateZ(var(--z-offset, 0px)); }
+            100% { transform: rotate(360deg) translateZ(var(--z-offset, 0px)); }
+        }
+        
+        @keyframes trap-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px var(--trap-primary), 
+                            inset 0 0 10px rgba(255,255,255,0.3); 
+            }
+            50% { 
+                box-shadow: 0 0 30px var(--trap-primary), 
+                            inset 0 0 15px rgba(255,255,255,0.5); 
+            }
+        }
+        
+        .float-3d {
+            animation: float-3d 4s ease-in-out infinite;
+        }
+        
+        .quantum-pulse {
+            animation: quantum-pulse 2s infinite;
+        }
+        
+        .charge-effect {
+            animation: charge-shift 1.5s infinite;
+        }
+        
+        .trap-effect {
+            animation: trap-rotate 8s linear infinite, trap-pulse 2s ease-in-out infinite;
+        }
+        
+        .field-effect {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.1);
+            pointer-events: none;
+            transition: opacity 0.5s;
+            z-index: 1;
+        }
+        
+        .direction-indicator {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+        }
+        
+        /* 新手引导样式 */
+        .tutorial-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .tutorial-step {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 300px;
+            text-align: center;
+            border: 1px solid var(--quantum);
+        }
+        
+        .tutorial-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #475569;
+            margin: 0 4px;
+        }
+        
+        .tutorial-dot.active {
+            background: var(--quantum);
+        }
+        
+        /* 加载动画 */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid var(--quantum);
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+        
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式适配 */
+        @media (min-width: 768px) {
+            .controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 15px;
+                flex: 0 0 180px;
+            }
+            
+            .status-bar {
+                padding: 10px 20px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            #gameArea {
+                min-height: 70vh;
+            }
+            
+            .control-btn {
+                width: 80px;
+                height: 80px;
+                font-size: 24px;
+            }
+        }
+        
+        /* 横屏适配 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .controls {
+                flex: 0 0 120px;
+                padding: 10px;
+            }
+            
+            .control-btn {
+                width: clamp(40px, 10vw, 50px);
+                height: clamp(40px, 10vw, 50px);
+                font-size: 16px;
+            }
+            
+            .status-bar {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+            
+            #gameArea {
+                min-height: 50vh;
+            }
+        }
+    </style>
+    <script>
+        // 游戏全局状态
+        const gameState = {
+            isPlaying: false,
+            level: 1,
+            score: 0,
+            timeLeft: 80,
+            moves: 0,
+            electron: { 
+                x: 100, 
+                y: 100, 
+                charge: -1, 
+                z: 0, 
+                size: 20,
+                velocityX: 0,    
+                velocityY: 0,    
+                speed: 3,        
+                chargeState: 'negative' 
+            },
+            protons: [],
+            traps: [],
+            fragments: [],
+            boss: null,
+            bossProjectiles: [],
+            inBossFight: false,
+            immune: false,
+            fragmentsCollected: 0,
+            fragmentsNeeded: 3,
+            skillAvailable: false,
+            frameCounter: 0,
+            frameSkip: 1,
+            performance: {
+                renderRate: 30,
+                isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+                obstacleDensity: 1
+            },
+            maxZDepth: 3,
+            gameWidth: 0,
+            gameHeight: 0,
+            timerInterval: null,
+            mouseDown: false,
+            mouseOffset: { x: 0, y: 0 },
+            minDistance: {
+                proton: 80,
+                trap: 100,
+                fragment: 60,
+                crossType: 120
+            },
+            // 新增：游戏设置
+            settings: {
+                sound: true,
+                vibration: true,
+                showTutorial: true
+            },
+            // 新增：游戏进度
+            progress: {
+                highestLevel: 0,
+                highestScore: 0,
+                totalPlays: 0
+            }
+        };
+
+        // ========== 音效系统 ==========
+        const soundSystem = {
+            sounds: {},
+            
+            init() {
+                // 预加载音效
+                this.sounds.move = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'],
+                    volume: 0.3
+                });
+                
+                this.sounds.collect = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-collecting-coins-2065.mp3'],
+                    volume: 0.4
+                });
+                
+                this.sounds.charge = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-fast-small-sweep-transition-166.mp3'],
+                    volume: 0.3
+                });
+                
+                this.sounds.skill = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-magic-spell-swish-1565.mp3'],
+                    volume: 0.5
+                });
+                
+                this.sounds.gameOver = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3'],
+                    volume: 0.4
+                });
+                
+                this.sounds.levelUp = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-video-game-level-up-2059.mp3'],
+                    volume: 0.4
+                });
+                
+                this.sounds.boss = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-alarm-buzzer-991.mp3'],
+                    volume: 0.3
+                });
+            },
+            
+            play(soundName) {
+                if (!gameState.settings.sound || !this.sounds[soundName]) return;
+                this.sounds[soundName].play();
+            },
+            
+            toggle() {
+                gameState.settings.sound = !gameState.settings.sound;
+                localStorage.setItem('game_sound', gameState.settings.sound);
+            }
+        };
+
+        // ========== 碰撞检测工具函数 ==========
+        function isPositionSafe(x, y, z, size, existingElements, minDist) {
+            for (const elem of existingElements) {
+                if (elem.z !== z) continue;
+                
+                const dx = x - elem.x;
+                const dy = y - elem.y;
+                const elemSize = elem.size || 20;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const safeDistance = minDist + (size + elemSize) / 2;
+                
+                if (distance < safeDistance) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function isPositionSafeForAll(x, y, z, size, type) {
+            const config = gameState.minDistance;
+            let isSafe = true;
+
+            switch(type) {
+                case 'proton':
+                    isSafe = isPositionSafe(x, y, z, size, gameState.protons, config.proton);
+                    break;
+                case 'trap':
+                    isSafe = isPositionSafe(x, y, z, size, gameState.traps, config.trap);
+                    break;
+                case 'fragment':
+                    isSafe = isPositionSafe(x, y, z, size, gameState.fragments, config.fragment);
+                    break;
+            }
+
+            if (!isSafe) return false;
+
+            if (type !== 'proton') {
+                isSafe = isPositionSafe(x, y, z, size, gameState.protons, config.crossType);
+                if (!isSafe) return false;
+            }
+            
+            if (type !== 'trap') {
+                isSafe = isPositionSafe(x, y, z, size, gameState.traps, config.crossType);
+                if (!isSafe) return false;
+            }
+            
+            if (type !== 'fragment') {
+                isSafe = isPositionSafe(x, y, z, size, gameState.fragments, config.crossType);
+                if (!isSafe) return false;
+            }
+
+            const electron = gameState.electron;
+            const dx = x - electron.x;
+            const dy = y - electron.y;
+            const distanceToElectron = Math.sqrt(dx * dx + dy * dy);
+            if (distanceToElectron < config.crossType) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function generateSafePosition(size, type, maxAttempts = 50) {
+            const gameArea = document.getElementById('gameArea');
+            const rect = gameArea.getBoundingClientRect();
+            const padding = 50;
+
+            for (let i = 0; i < maxAttempts; i++) {
+                const z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+                const x = Math.random() * (rect.width - padding * 2) + padding;
+                const y = Math.random() * (rect.height - padding * 2) + padding;
+
+                if (isPositionSafeForAll(x, y, z, size, type)) {
+                    return { x, y, z };
+                }
+            }
+
+            console.warn(`无法为${type}生成安全位置（尝试${maxAttempts}次）`);
+            return null;
+        }
+
+        // ========== Supabase联机核心 ==========
+        const rankingSystem = {
+            rankings: [],
+            friends: [],
+            currentUser: {
+                id: 'guest_' + Math.random().toString(36).substr(2, 9),
+                username: '游客_' + Math.floor(Math.random() * 1000),
+                avatar: ''
+            },
+            supabase: null,
+            
+            init() {
+                const supabaseUrl = 'https://jwkbmuzpkutarficjetu.supabase.co'; 
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3a2JtdXpwa3V0YXJmaWNqZXR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTU0NDQsImV4cCI6MjA4MjgzMTQ0NH0.1Tveg3PSsFmoqjfnzQYl7ucnAqWON_OxuxmkuH56hrM'; 
+                
+                this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+                    auth: {
+                        storage: localStorage,
+                        autoRefreshToken: true,
+                        persistSession: true,
+                    }
+                });
+
+                this.loadGameProgress();
+                this.checkUser();
+                this.loadFromSupabase();
+                this.loadFriends();
+                
+                // 同步离线缓存的分数
+                this.syncCachedScores();
+            },
+            
+            loadGameProgress() {
+                try {
+                    const savedProgress = localStorage.getItem('game_progress');
+                    if (savedProgress) {
+                        gameState.progress = JSON.parse(savedProgress);
+                    }
+                    
+                    const savedSettings = localStorage.getItem('game_settings');
+                    if (savedSettings) {
+                        gameState.settings = JSON.parse(savedSettings);
+                    }
+                } catch (e) {
+                    console.error('加载游戏进度失败:', e);
+                }
+            },
+            
+            saveGameProgress() {
+                gameState.progress.highestLevel = Math.max(gameState.progress.highestLevel, gameState.level);
+                gameState.progress.highestScore = Math.max(gameState.progress.highestScore, gameState.score);
+                gameState.progress.totalPlays++;
+                
+                localStorage.setItem('game_progress', JSON.stringify(gameState.progress));
+                localStorage.setItem('game_settings', JSON.stringify(gameState.settings));
+            },
+            
+            async checkUser() {
+                try {
+                    const { data: { user } } = await this.supabase.auth.getUser();
+                    if (user) {
+                        this.currentUser.id = user.id;
+                        this.currentUser.username = user.email ? user.email.split('@')[0] : '玩家_' + user.id.substr(0, 6);
+                        
+                        // 获取用户头像
+                        const { data: userData } = await this.supabase
+                            .from('game_users')
+                            .select('*')
+                            .eq('user_id', user.id)
+                            .single();
+                        
+                        if (userData) {
+                            this.currentUser.username = userData.username || this.currentUser.username;
+                            this.currentUser.avatar = userData.avatar || '';
+                        }
+                        
+                        localStorage.setItem('game_user', JSON.stringify(this.currentUser));
+                        
+                        await this.supabase
+                            .from('game_users')
+                            .upsert([{
+                                user_id: user.id,
+                                username: this.currentUser.username,
+                                avatar: this.currentUser.avatar,
+                                last_login: new Date().toISOString()
+                            }]);
+                    } else {
+                        const savedUser = localStorage.getItem('game_user');
+                        if (savedUser) {
+                            this.currentUser = JSON.parse(savedUser);
+                        }
+                    }
+                } catch (error) {
+                    console.error('检查用户状态失败:', error);
+                }
+            },
+            
+            async loadFromSupabase() {
+                try {
+                    const rankingListEl = document.getElementById('rankingList');
+                    if (rankingListEl) {
+                        rankingListEl.innerHTML = '<div class="text-center p-4 text-slate-400"><div class="loader mx-auto mb-2"></div>加载联机排行榜中...</div>';
+                    }
+
+                    const { data, error } = await this.supabase
+                        .from('game_scores')
+                        .select('*')
+                        .order('score', { ascending: false })
+                        .limit(20);
+
+                    if (error) throw error;
+                    
+                    this.rankings = data.map((item, index) => ({
+                        rank: index + 1,
+                        username: item.username || '匿名玩家',
+                        score: item.score,
+                        user_id: item.user_id,
+                        avatar: item.avatar || 'https://ui-avatars.com/api/?name=' + (item.username || '玩家'),
+                        lastLogin: new Date(item.created_at).toLocaleDateString()
+                    }));
+                    
+                    this.render();
+                } catch (error) {
+                    console.error('加载排行榜失败:', error);
+                    const rankingListEl = document.getElementById('rankingList');
+                    if (rankingListEl) {
+                        rankingListEl.innerHTML = `
+                            <div class="text-center p-4 text-red-400">
+                                联机排行榜加载失败<br>
+                                <button class="mt-2 text-sm text-purple-400" onclick="rankingSystem.loadFromSupabase()">重试</button>
+                            </div>
+                        `;
+                    }
+                }
+            },
+            
+            async loadFriends() {
+                try {
+                    const { data, error } = await this.supabase
+                        .from('game_friends')
+                        .select(`
+                            *,
+                            friend:game_users!game_friends_friend_user_id_fkey(user_id, username, avatar)
+                        `)
+                        .or(`user_id.eq.${this.currentUser.id},friend_user_id.eq.${this.currentUser.id}`);
+                    
+                    if (error) throw error;
+                    
+                    this.friends = data.map(item => ({
+                        id: item.id,
+                        userId: item.user_id,
+                        friendUserId: item.friend_user_id,
+                        status: item.status,
+                        isInitiator: item.user_id === this.currentUser.id,
+                        friend: {
+                            id: item.friend?.user_id || item.friend_user_id,
+                            username: item.friend?.username || '未知玩家',
+                            avatar: item.friend?.avatar || 'https://ui-avatars.com/api/?name=未知'
+                        }
+                    }));
+                    
+                    this.renderFriends();
+                } catch (error) {
+                    console.error('加载好友失败:', error);
+                }
+            },
+            
+            async addScore(score) {
+                if (!this.currentUser || score <= 0) return;
+
+                try {
+                    const { error } = await this.supabase
+                        .from('game_scores')
+                        .upsert([{
+                            user_id: this.currentUser.id,
+                            username: this.currentUser.username,
+                            score: score,
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (error) throw error;
+                    this.loadFromSupabase();
+                    this.saveGameProgress();
+                    
+                    this.vibrate(100);
+                } catch (error) {
+                    console.error('提交分数失败:', error);
+                    const cached = JSON.parse(localStorage.getItem('cached_scores') || '[]');
+                    cached.push({ 
+                        user_id: this.currentUser.id, 
+                        username: this.currentUser.username, 
+                        score: score,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('cached_scores', JSON.stringify(cached));
+                }
+            },
+            
+            async syncCachedScores() {
+                try {
+                    const cached = JSON.parse(localStorage.getItem('cached_scores') || '[]');
+                    if (cached.length === 0) return;
+                    
+                    for (const score of cached) {
+                        await this.supabase
+                            .from('game_scores')
+                            .upsert([score]);
+                    }
+                    
+                    localStorage.removeItem('cached_scores');
+                } catch (error) {
+                    console.error('同步缓存分数失败:', error);
+                }
+            },
+            
+            async addFriend(friendUserId, friendUsername) {
+                try {
+                    const { error } = await this.supabase
+                        .from('game_friends')
+                        .upsert([{
+                            user_id: this.currentUser.id,
+                            friend_user_id: friendUserId,
+                            status: 'pending',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        }]);
+                    
+                    if (error) throw error;
+                    
+                    this.showToast('好友请求已发送');
+                    this.loadFriends();
+                    return true;
+                } catch (error) {
+                    console.error('添加好友失败:', error);
+                    this.showToast('添加好友失败');
+                    return false;
+                }
+            },
+            
+            async respondToFriendRequest(friendshipId, status) {
+                try {
+                    const { error } = await this.supabase
+                        .from('game_friends')
+                        .update({
+                            status: status,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', friendshipId);
+                    
+                    if (error) throw error;
+                    
+                    this.showToast(status === 'accepted' ? '已接受好友请求' : '已拒绝好友请求');
+                    this.loadFriends();
+                    return true;
+                } catch (error) {
+                    console.error('处理好友请求失败:', error);
+                    this.showToast('操作失败');
+                    return false;
+                }
+            },
+            
+            render() {
+                const rankingListEl = document.getElementById('rankingList');
+                if (!rankingListEl) return;
+
+                rankingListEl.innerHTML = '';
+
+                if (this.rankings.length === 0) {
+                    rankingListEl.innerHTML = '<div class="text-center p-4 text-slate-400">暂无联机数据</div>';
+                    return;
+                }
+
+                this.rankings.forEach((item) => {
+                    const isCurrentUser = item.user_id === this.currentUser.id;
+                    const rankItem = document.createElement('div');
+                    rankItem.className = `flex justify-between items-center p-3 rounded-lg ${
+                        item.rank < 4 ? 'bg-yellow-900/30' : isCurrentUser ? 'bg-blue-900/30' : 'bg-slate-700/50'
+                    } mb-2`;
+
+                    let rankIcon = '';
+                    if (item.rank === 1) rankIcon = '<i class="fa fa-trophy text-yellow-500 mr-2"></i>';
+                    if (item.rank === 2) rankIcon = '<i class="fa fa-trophy text-gray-400 mr-2"></i>';
+                    if (item.rank === 3) rankIcon = '<i class="fa fa-trophy text-amber-700 mr-2"></i>';
+
+                    rankItem.innerHTML = `
+                        <div class="flex items-center flex-1">
+                            <span class="w-8 text-center font-bold ${item.rank < 4 ? 'text-yellow-400' : ''}">${item.rank}</span>
+                            ${rankIcon}
+                            <img src="${item.avatar}" alt="${item.username}" class="w-8 h-8 rounded-full ml-2 mr-3">
+                            <span class="${isCurrentUser ? 'font-bold text-blue-400' : ''}">${item.username}${isCurrentUser ? '（你）' : ''}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="font-bold text-purple-400 mr-4 text-lg">${item.score}</span>
+                            ${!isCurrentUser ? `<button class="add-friend-btn text-xs bg-slate-600 hover:bg-slate-500 px-2 py-1 rounded" data-user-id="${item.user_id}" data-username="${item.username}">加好友</button>` : ''}
+                        </div>
+                    `;
+                    rankingListEl.appendChild(rankItem);
+                });
+                
+                // 添加好友按钮事件
+                document.querySelectorAll('.add-friend-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const userId = e.target.dataset.userId;
+                        const username = e.target.dataset.username;
+                        this.addFriend(userId, username);
+                    });
+                });
+            },
+            
+            renderFriends() {
+                const friendsListEl = document.getElementById('friendsList');
+                if (!friendsListEl) return;
+                
+                friendsListEl.innerHTML = '';
+                
+                if (this.friends.length === 0) {
+                    friendsListEl.innerHTML = '<div class="text-center p-4 text-slate-400">暂无好友，去排行榜添加吧！</div>';
+                    return;
+                }
+                
+                // 分类显示好友
+                const pending = this.friends.filter(f => f.status === 'pending');
+                const accepted = this.friends.filter(f => f.status === 'accepted');
+                const rejected = this.friends.filter(f => f.status === 'rejected');
+                
+                if (accepted.length > 0) {
+                    const acceptedSection = document.createElement('div');
+                    acceptedSection.innerHTML = '<h4 class="text-sm font-bold text-slate-300 mb-2">已添加</h4>';
+                    accepted.forEach(friend => {
+                        const friendItem = document.createElement('div');
+                        friendItem.className = 'flex justify-between items-center p-2 bg-slate-700/50 rounded-lg mb-2';
+                        friendItem.innerHTML = `
+                            <div class="flex items-center">
+                                <img src="${friend.friend.avatar}" alt="${friend.friend.username}" class="w-8 h-8 rounded-full mr-3">
+                                <span>${friend.friend.username}</span>
+                            </div>
+                            <span class="text-xs text-green-400">已添加</span>
+                        `;
+                        acceptedSection.appendChild(friendItem);
+                    });
+                    friendsListEl.appendChild(acceptedSection);
+                }
+                
+                if (pending.length > 0) {
+                    const pendingSection = document.createElement('div');
+                    pendingSection.innerHTML = '<h4 class="text-sm font-bold text-slate-300 mb-2 mt-4">待处理</h4>';
+                    pending.forEach(friend => {
+                        const friendItem = document.createElement('div');
+                        friendItem.className = 'flex justify-between items-center p-2 bg-slate-700/50 rounded-lg mb-2';
+                        
+                        if (friend.isInitiator) {
+                            friendItem.innerHTML = `
+                                <div class="flex items-center">
+                                    <img src="${friend.friend.avatar}" alt="${friend.friend.username}" class="w-8 h-8 rounded-full mr-3">
+                                    <span>${friend.friend.username}</span>
+                                </div>
+                                <span class="text-xs text-yellow-400">请求已发送</span>
+                            `;
+                        } else {
+                            friendItem.innerHTML = `
+                                <div class="flex items-center">
+                                    <img src="${friend.friend.avatar}" alt="${friend.friend.username}" class="w-8 h-8 rounded-full mr-3">
+                                    <span>${friend.friend.username}</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded accept-friend" data-id="${friend.id}">接受</button>
+                                    <button class="text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded reject-friend" data-id="${friend.id}">拒绝</button>
+                                </div>
+                            `;
+                        }
+                        pendingSection.appendChild(friendItem);
+                    });
+                    friendsListEl.appendChild(pendingSection);
+                }
+                
+                // 好友请求处理事件
+                document.querySelectorAll('.accept-friend').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.respondToFriendRequest(e.target.dataset.id, 'accepted');
+                    });
+                });
+                
+                document.querySelectorAll('.reject-friend').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.respondToFriendRequest(e.target.dataset.id, 'rejected');
+                    });
+                });
+            },
+            
+            vibrate(duration) {
+                if (gameState.settings.vibration && navigator.vibrate) {
+                    navigator.vibrate(duration);
+                }
+            },
+            
+            showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800/90 text-white px-4 py-2 rounded-lg z-50 text-sm';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.5s';
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 500);
+                }, 2000);
+            },
+            
+            async updateUserProfile(username, avatar) {
+                try {
+                    this.currentUser.username = username;
+                    this.currentUser.avatar = avatar;
+                    
+                    await this.supabase
+                        .from('game_users')
+                        .upsert([{
+                            user_id: this.currentUser.id,
+                            username: username,
+                            avatar: avatar,
+                            last_login: new Date().toISOString()
+                        }]);
+                    
+                    localStorage.setItem('game_user', JSON.stringify(this.currentUser));
+                    this.showToast('个人资料已更新');
+                    return true;
+                } catch (error) {
+                    console.error('更新个人资料失败:', error);
+                    this.showToast('更新失败');
+                    return false;
+                }
+            }
+        };
+
+        // ========== 物理引擎核心函数 ==========
+        function updateGameDimensions() {
+            const gameArea = document.getElementById('gameArea');
+            gameState.gameWidth = gameArea.offsetWidth;
+            gameState.gameHeight = gameArea.offsetHeight;
+        }
+
+        function applyField(direction) {
+            if (!gameState.isPlaying) return;
+            
+            gameState.moves++;
+            soundSystem.play('move');
+            showFieldDirectionIndicator(direction);
+            
+            let forceMultiplier = 1;
+            if (gameState.electron.chargeState === 'negative') {
+                forceMultiplier = -1;
+            } else if (gameState.electron.chargeState === 'positive') {
+                forceMultiplier = 1;
+            } else {
+                forceMultiplier = 0.3;
+            }
+            
+            switch(direction) {
+                case 'up':
+                    gameState.electron.velocityY -= gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('up');
+                    break;
+                case 'down':
+                    gameState.electron.velocityY += gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('down');
+                    break;
+                case 'left':
+                    gameState.electron.velocityX -= gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('left');
+                    break;
+                case 'right':
+                    gameState.electron.velocityX += gameState.electron.speed * forceMultiplier;
+                    createFieldEffect('right');
+                    break;
+            }
+            
+            rankingSystem.vibrate(30);
+        }
+
+        function showFieldDirectionIndicator(direction) {
+            const existingIndicator = document.querySelector('.direction-indicator');
+            if (existingIndicator) {
+                document.getElementById('gameArea').removeChild(existingIndicator);
+            }
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'direction-indicator';
+            indicator.style.left = `${gameState.electron.x + 40}px`;
+            indicator.style.top = `${gameState.electron.y}px`;
+            indicator.style.setProperty('--z-offset', `${gameState.electron.z * 30 + 10}px`);
+            
+            let icon, color;
+            switch(direction) {
+                case 'left':
+                    icon = 'fa-long-arrow-left';
+                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
+                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
+                    break;
+                case 'right':
+                    icon = 'fa-long-arrow-right';
+                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
+                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
+                    break;
+                case 'up':
+                    icon = 'fa-long-arrow-up';
+                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
+                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
+                    break;
+                case 'down':
+                    icon = 'fa-long-arrow-down';
+                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
+                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
+                    break;
+            }
+            
+            indicator.innerHTML = `<i class="fa ${icon}" style="color: ${color}; font-size: 24px;"></i>`;
+            document.getElementById('gameArea').appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.style.transition = 'opacity 0.5s, transform 0.5s';
+                    indicator.style.opacity = '0';
+                    indicator.style.transform = `translateZ(${gameState.electron.z * 30 + 10}px) scale(0.8)`;
+                    setTimeout(() => {
+                        if (indicator.parentNode) {
+                            document.getElementById('gameArea').removeChild(indicator);
+                        }
+                    }, 500);
+                }
+            }, 800);
+        }
+
+        function createFieldEffect(direction) {
+            const fieldEffect = document.createElement('div');
+            fieldEffect.className = 'field-effect';
+            fieldEffect.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+            
+            const color = gameState.electron.chargeState === 'negative' ? 'rgba(59, 130, 246, 0.2)' : 
+                          gameState.electron.chargeState === 'positive' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+            fieldEffect.style.background = color;
+            
+            if (direction === 'left' || direction === 'right') {
+                fieldEffect.style.height = '100%';
+                fieldEffect.style.width = '40%';
+                fieldEffect.style.top = '0';
+                fieldEffect.style[direction] = '0';
+            } else {
+                fieldEffect.style.width = '100%';
+                fieldEffect.style.height = '40%';
+                fieldEffect.style.left = '0';
+                fieldEffect.style[direction] = '0';
+            }
+            
+            document.getElementById('gameArea').appendChild(fieldEffect);
+            
+            setTimeout(() => {
+                fieldEffect.style.opacity = '0';
+                setTimeout(() => {
+                    if (fieldEffect.parentNode) {
+                        document.getElementById('gameArea').removeChild(fieldEffect);
+                    }
+                }, 500);
+            }, 400);
+        }
+
+        // ========== 游戏核心逻辑 ==========
+        function initGame() {
+            soundSystem.init();
+            rankingSystem.init();
+            const gameArea = document.getElementById('gameArea');
+            
+            updateGameDimensions();
+            gameState.performance.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            gameState.frameSkip = gameState.performance.isMobile ? 1 : 1;
+            gameState.electron.speed = gameState.performance.isMobile ? 3 : 3.5;
+            gameState.electron.chargeState = gameState.electron.charge > 0 ? 'positive' : 'negative';
+            
+            bindControls();
+            showStartScreen();
+            
+            // 显示新手引导
+            if (gameState.settings.showTutorial && !localStorage.getItem('tutorial_shown')) {
+                setTimeout(showTutorial, 1000);
+            }
+            
+            window.addEventListener('resize', () => {
+                updateGameDimensions();
+                if (gameState.isPlaying) {
+                    repositionElements();
+                }
+            });
+            
+            // 监听返回键
+            document.addEventListener('backbutton', (e) => {
+                const modals = [
+                    document.getElementById('rankingModal'),
+                    document.getElementById('profileModal'),
+                    document.querySelector('.message-modal'),
+                    document.querySelector('.tutorial-overlay')
+                ];
+                
+                for (const modal of modals) {
+                    if (modal && !modal.classList.contains('hidden')) {
+                        modal.classList.add('hidden');
+                        e.preventDefault();
+                        return;
+                    }
+                }
+                
+                if (gameState.isPlaying) {
+                    showMessage('退出游戏', '确定要退出当前游戏吗？', '退出', () => {
+                        gameState.isPlaying = false;
+                        clearInterval(gameState.timerInterval);
+                        showStartScreen();
+                    });
+                    e.preventDefault();
+                }
+            }, false);
+        }
+
+        function showTutorial() {
+            const tutorialSteps = [
+                {
+                    title: '欢迎来到量子风暴！',
+                    content: '你需要控制电子在量子场中收集碎片，躲避危险的质子和能量陷阱。',
+                    image: ''
+                },
+                {
+                    title: '移动控制',
+                    content: '使用方向按钮或直接拖拽屏幕来控制电子移动。不同电荷状态会影响移动效果。',
+                    image: ''
+                },
+                {
+                    title: '电荷切换',
+                    content: '点击电荷按钮切换电子的电荷状态：负、正、中性。不同状态对应不同的物理特性。',
+                    image: ''
+                },
+                {
+                    title: '维度切换',
+                    content: '使用Z+和Z-按钮切换维度，躲避同一维度的障碍物。',
+                    image: ''
+                },
+                {
+                    title: '技能使用',
+                    content: '收集足够碎片后可以激活量子净化技能，清除当前维度的所有质子。',
+                    image: ''
+                }
+            ];
+            
+            let currentStep = 0;
+            
+            const tutorialOverlay = document.createElement('div');
+            tutorialOverlay.className = 'tutorial-overlay';
+            tutorialOverlay.innerHTML = `
+                <div class="tutorial-step">
+                    <h3 class="text-lg font-bold text-purple-400 mb-3">${tutorialSteps[currentStep].title}</h3>
+                    <p class="text-slate-200 mb-4">${tutorialSteps[currentStep].content}</p>
+                    <div class="flex justify-center mb-4">
+                        ${tutorialSteps.map((_, index) => 
+                            `<div class="tutorial-dot ${index === currentStep ? 'active' : ''}"></div>`
+                        ).join('')}
+                    </div>
+                    <div class="flex justify-between">
+                        <button class="prev-step bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg ${currentStep === 0 ? 'hidden' : ''}">上一步</button>
+                        <button class="next-step bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
+                            ${currentStep === tutorialSteps.length - 1 ? '开始游戏' : '下一步'}
+                        </button>
+                    </div>
+                    <div class="mt-3">
+                        <label class="flex items-center text-xs text-slate-400">
+                            <input type="checkbox" class="mr-2" id="dontShowAgain"> 不再显示
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(tutorialOverlay);
+            
+            const updateStep = () => {
+                const tutorialStep = tutorialOverlay.querySelector('.tutorial-step');
+                tutorialStep.innerHTML = `
+                    <h3 class="text-lg font-bold text-purple-400 mb-3">${tutorialSteps[currentStep].title}</h3>
+                    <p class="text-slate-200 mb-4">${tutorialSteps[currentStep].content}</p>
+                    <div class="flex justify-center mb-4">
+                        ${tutorialSteps.map((_, index) => 
+                            `<div class="tutorial-dot ${index === currentStep ? 'active' : ''}"></div>`
+                        ).join('')}
+                    </div>
+                    <div class="flex justify-between">
+                        <button class="prev-step bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg ${currentStep === 0 ? 'hidden' : ''}">上一步</button>
+                        <button class="next-step bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
+                            ${currentStep === tutorialSteps.length - 1 ? '开始游戏' : '下一步'}
+                        </button>
+                    </div>
+                    <div class="mt-3">
+                        <label class="flex items-center text-xs text-slate-400">
+                            <input type="checkbox" class="mr-2" id="dontShowAgain"> 不再显示
+                        </label>
+                    </div>
+                `;
+                
+                bindStepButtons();
+            };
+            
+            const bindStepButtons = () => {
+                tutorialOverlay.querySelector('.next-step').addEventListener('click', () => {
+                    if (currentStep === tutorialSteps.length - 1) {
+                        if (document.getElementById('dontShowAgain').checked) {
+                            localStorage.setItem('tutorial_shown', 'true');
+                            gameState.settings.showTutorial = false;
+                            rankingSystem.saveGameProgress();
+                        }
+                        tutorialOverlay.remove();
+                    } else {
+                        currentStep++;
+                        updateStep();
+                    }
+                });
+                
+                const prevBtn = tutorialOverlay.querySelector('.prev-step');
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', () => {
+                        if (currentStep > 0) {
+                            currentStep--;
+                            updateStep();
+                        }
+                    });
+                }
+            };
+            
+            bindStepButtons();
+        }
+
+        function repositionElements() {
+            renderElectron();
+            
+            gameState.protons.forEach(proton => {
+                proton.el.style.left = `${proton.x - proton.size/2}px`;
+                proton.el.style.top = `${proton.y - proton.size/2}px`;
+            });
+            
+            gameState.traps.forEach(trap => {
+                trap.el.style.left = `${trap.x - trap.size/2}px`;
+                trap.el.style.top = `${trap.y - trap.size/2}px`;
+            });
+            
+            gameState.fragments.forEach(frag => {
+                frag.el.style.left = `${frag.x - frag.size/2}px`;
+                frag.el.style.top = `${frag.y - frag.size/2}px`;
+            });
+        }
+
+        function bindControls() {
+            const gameArea = document.getElementById('gameArea');
+
+            // 触摸交互优化
+            gameArea.addEventListener('touchstart', (e) => {
+                if (!gameState.isPlaying) return;
+                const touch = e.touches[0];
+                const rect = gameArea.getBoundingClientRect();
+                gameState.mouseDown = true;
+                gameState.mouseOffset = {
+                    x: touch.clientX - rect.left - gameState.electron.x,
+                    y: touch.clientY - rect.top - gameState.electron.y
+                };
+            });
+
+            gameArea.addEventListener('touchmove', (e) => {
+                if (!gameState.isPlaying || !gameState.mouseDown) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = gameArea.getBoundingClientRect();
+                
+                const targetX = touch.clientX - rect.left - gameState.mouseOffset.x;
+                const targetY = touch.clientY - rect.top - gameState.mouseOffset.y;
+                
+                gameState.electron.velocityX = (targetX - gameState.electron.x) * 0.1;
+                gameState.electron.velocityY = (targetY - gameState.electron.y) * 0.1;
+                
+                gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+                gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+                
+                renderElectron();
+                checkCollisions();
+                checkFragmentCollection();
+            });
+
+            gameArea.addEventListener('touchend', () => {
+                gameState.mouseDown = false;
+            });
+
+            // 鼠标交互优化
+            gameArea.addEventListener('mousedown', (e) => {
+                if (!gameState.isPlaying) return;
+                const rect = gameArea.getBoundingClientRect();
+                gameState.mouseDown = true;
+                gameState.mouseOffset = {
+                    x: e.clientX - rect.left - gameState.electron.x,
+                    y: e.clientY - rect.top - gameState.electron.y
+                };
+            });
+
+            gameArea.addEventListener('mousemove', (e) => {
+                if (!gameState.isPlaying || !gameState.mouseDown) return;
+                const rect = gameArea.getBoundingClientRect();
+                
+                const targetX = e.clientX - rect.left - gameState.mouseOffset.x;
+                const targetY = e.clientY - rect.top - gameState.mouseOffset.y;
+                
+                gameState.electron.velocityX = (targetX - gameState.electron.x) * 0.1;
+                gameState.electron.velocityY = (targetY - gameState.electron.y) * 0.1;
+                
+                gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+                gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+                
+                renderElectron();
+                checkCollisions();
+                checkFragmentCollection();
+            });
+
+            gameArea.addEventListener('mouseup', () => {
+                gameState.mouseDown = false;
+            });
+
+            gameArea.addEventListener('mouseleave', () => {
+                gameState.mouseDown = false;
+            });
+
+            // 按钮交互
+            document.getElementById('btnUp').addEventListener('click', () => {
+                applyField('up');
+            });
+
+            document.getElementById('btnDown').addEventListener('click', () => {
+                applyField('down');
+            });
+
+            document.getElementById('btnLeft').addEventListener('click', () => {
+                applyField('left');
+            });
+
+            document.getElementById('btnRight').addEventListener('click', () => {
+                applyField('right');
+            });
+
+            document.getElementById('btnZUp').addEventListener('click', () => {
+                if (!gameState.isPlaying) return;
+                const newZ = gameState.electron.z + 1;
+                if (newZ <= gameState.maxZDepth) {
+                    gameState.electron.z = newZ;
+                    gameState.moves++;
+                    soundSystem.play('move');
+                    updateStatus();
+                    renderElectron();
+                    createZEffect();
+                    rankingSystem.vibrate(30);
+                }
+            });
+
+            document.getElementById('btnZDown').addEventListener('click', () => {
+                if (!gameState.isPlaying) return;
+                const newZ = gameState.electron.z - 1;
+                if (newZ >= -gameState.maxZDepth) {
+                    gameState.electron.z = newZ;
+                    gameState.moves++;
+                    soundSystem.play('move');
+                    updateStatus();
+                    renderElectron();
+                    createZEffect();
+                    rankingSystem.vibrate(30);
+                }
+            });
+
+            document.getElementById('btnCharge').addEventListener('click', () => {
+                if (!gameState.isPlaying) return;
+                
+                const chargeCycle = ['negative', 'positive', 'neutral'];
+                const currentIndex = chargeCycle.indexOf(gameState.electron.chargeState);
+                const nextIndex = (currentIndex + 1) % chargeCycle.length;
+                gameState.electron.chargeState = chargeCycle[nextIndex];
+                
+                if (gameState.electron.chargeState === 'negative') {
+                    gameState.electron.charge = -1;
+                } else if (gameState.electron.chargeState === 'positive') {
+                    gameState.electron.charge = 1;
+                } else {
+                    gameState.electron.charge = 0;
+                }
+                
+                gameState.moves++;
+                soundSystem.play('charge');
+                renderElectron();
+                
+                const flash = document.createElement('div');
+                flash.className = `absolute inset-0 pointer-events-none z-20 flex items-center justify-center`;
+                flash.style.backgroundColor = gameState.electron.chargeState === 'negative' ? 'rgba(59, 130, 246, 0.3)' :
+                                             gameState.electron.chargeState === 'positive' ? 'rgba(239, 68, 68, 0.3)' :
+                                             'rgba(16, 185, 129, 0.3)';
+                flash.style.transition = 'opacity 0.5s';
+                gameArea.appendChild(flash);
+                
+                setTimeout(() => {
+                    flash.style.opacity = '0';
+                    setTimeout(() => {
+                        if (flash.parentNode) gameArea.removeChild(flash);
+                    }, 500);
+                }, 100);
+                
+                rankingSystem.vibrate(50);
+            });
+
+            document.getElementById('btnSkill').addEventListener('click', () => {
+                if (gameState.skillAvailable && gameState.isPlaying) {
+                    activateSkill();
+                }
+            });
+
+            document.getElementById('btnRanking').addEventListener('click', () => {
+                document.getElementById('rankingModal').classList.remove('hidden');
+                rankingSystem.loadFromSupabase();
+                rankingSystem.loadFriends();
+            });
+
+            document.getElementById('closeRanking').addEventListener('click', () => {
+                document.getElementById('rankingModal').classList.add('hidden');
+            });
+            
+            document.getElementById('btnProfile').addEventListener('click', () => {
+                document.getElementById('profileModal').classList.remove('hidden');
+                document.getElementById('usernameInput').value = rankingSystem.currentUser.username;
+                document.getElementById('avatarInput').value = rankingSystem.currentUser.avatar || '';
+                
+                // 显示游戏统计
+                document.getElementById('statsHighestLevel').textContent = gameState.progress.highestLevel;
+                document.getElementById('statsHighestScore').textContent = gameState.progress.highestScore;
+                document.getElementById('statsTotalPlays').textContent = gameState.progress.totalPlays;
+                
+                // 音效开关
+                document.getElementById('soundToggle').checked = gameState.settings.sound;
+                document.getElementById('vibrationToggle').checked = gameState.settings.vibration;
+            });
+            
+            document.getElementById('closeProfile').addEventListener('click', () => {
+                document.getElementById('profileModal').classList.add('hidden');
+            });
+            
+            document.getElementById('saveProfile').addEventListener('click', () => {
+                const username = document.getElementById('usernameInput').value.trim();
+                const avatar = document.getElementById('avatarInput').value.trim();
+                
+                if (!username) {
+                    rankingSystem.showToast('请输入用户名');
+                    return;
+                }
+                
+                rankingSystem.updateUserProfile(username, avatar);
+            });
+            
+            document.getElementById('soundToggle').addEventListener('change', () => {
+                soundSystem.toggle();
+                rankingSystem.saveGameProgress();
+            });
+            
+            document.getElementById('vibrationToggle').addEventListener('change', () => {
+                gameState.settings.vibration = document.getElementById('vibrationToggle').checked;
+                rankingSystem.saveGameProgress();
+            });
+
+            document.getElementById('btnStart').addEventListener('click', startGame);
+        }
+
+        function createZEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'absolute inset-0 pointer-events-none z-20';
+            effect.style.background = `radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0) 70%)`;
+            effect.style.transition = 'opacity 0.5s';
+            document.getElementById('gameArea').appendChild(effect);
+            
+            setTimeout(() => {
+                effect.style.opacity = '0';
+                setTimeout(() => {
+                    if (effect.parentNode) document.getElementById('gameArea').removeChild(effect);
+                }, 500);
+            }, 100);
+        }
+
+        function renderElectron() {
+            let electronEl = document.getElementById('electron');
+            if (!electronEl) {
+                electronEl = document.createElement('div');
+                electronEl.id = 'electron';
+                electronEl.className = 'electron float-3d charge-effect';
+                document.getElementById('gameArea').appendChild(electronEl);
+            }
+
+            let color, chargeText;
+            if (gameState.electron.chargeState === 'negative') {
+                color = '#3b82f6';
+                chargeText = 'e⁻';
+            } else if (gameState.electron.chargeState === 'positive') {
+                color = '#ef4444';
+                chargeText = 'e⁺';
+            } else {
+                color = '#10B981';
+                chargeText = 'e⁰';
+            }
+            
+            electronEl.style.width = `${gameState.electron.size}px`;
+            electronEl.style.height = `${gameState.electron.size}px`;
+            electronEl.style.left = `${gameState.electron.x - gameState.electron.size/2}px`;
+            electronEl.style.top = `${gameState.electron.y - gameState.electron.size/2}px`;
+            electronEl.style.backgroundColor = color;
+            electronEl.style.boxShadow = `0 0 15px ${color}`;
+            electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+            electronEl.style.setProperty('--z-absolute', Math.abs(gameState.electron.z));
+            electronEl.innerHTML = `<div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">${chargeText}</div>`;
+            
+            if (gameState.performance.isMobile) {
+                electronEl.style.boxShadow = `0 0 8px ${color}`;
+            }
+        }
+
+        function generateLevelElements() {
+            clearLevelElements();
+            const gameArea = document.getElementById('gameArea');
+            const rect = gameArea.getBoundingClientRect();
+
+            // 质子生成
+            const protonCount = gameState.performance.isMobile 
+                ? Math.min(3 + Math.floor(gameState.level/2), 8) 
+                : Math.min(6 + gameState.level, 12);
+            
+            for (let i = 0; i < protonCount; i++) {
+                const protonSize = 20 + Math.random() * 10;
+                const position = generateSafePosition(protonSize, 'proton');
+                
+                if (position) {
+                    createProton(position.x, position.y, position.z);
+                }
+            }
+
+            // 陷阱生成
+            const trapCount = gameState.performance.isMobile
+                ? Math.min(1 + Math.floor(gameState.level/3), 4)
+                : Math.min(2 + Math.floor(gameState.level/2), 6);
+                
+            for (let i = 0; i < trapCount; i++) {
+                const trapSize = 30 + Math.random() * 15;
+                const position = generateSafePosition(trapSize, 'trap');
+                
+                if (position) {
+                    createTrap(position.x, position.y, position.z);
+                }
+            }
+
+            // 碎片生成
+            const fragmentCount = gameState.fragmentsNeeded;
+            
+            const zLevels = [];
+            zLevels.push(gameState.electron.z);
+            let diffZ = gameState.electron.z;
+            while (diffZ === gameState.electron.z) {
+                diffZ = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+            }
+            zLevels.push(diffZ);
+            for (let i = 2; i < fragmentCount; i++) {
+                zLevels.push(Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth);
+            }
+            zLevels.sort(() => Math.random() - 0.5);
+            
+            for (let i = 0; i < fragmentCount; i++) {
+                const fragmentSize = 15;
+                const position = generateSafePosition(fragmentSize, 'fragment');
+                
+                if (position) {
+                    createFragment(position.x, position.y, position.z);
+                }
+            }
+
+            // Boss生成
+            if (gameState.level % 5 === 0 && !gameState.inBossFight) {
+                setTimeout(() => {
+                    createBoss();
+                    soundSystem.play('boss');
+                    showMessage('⚠️ 警告', `第${gameState.level}关：反粒子Boss即将出现！`, '准备迎战');
+                },
