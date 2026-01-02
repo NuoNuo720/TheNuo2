@@ -1680,3 +1680,825 @@
                     soundSystem.play('boss');
                     showMessage('⚠️ 警告', `第${gameState.level}关：反粒子Boss即将出现！`, '准备迎战');
                 },
+            1000);
+        }
+    }
+
+    function createProton(x, y, z) {
+        const proton = { x, y, z, size: 20 + Math.random() * 10 };
+        gameState.protons.push(proton);
+
+        const protonEl = document.createElement('div');
+        protonEl.className = 'proton';
+        protonEl.style.width = `${proton.size}px`;
+        protonEl.style.height = `${proton.size}px`;
+        protonEl.style.left = `${x - proton.size/2}px`;
+        protonEl.style.top = `${y - proton.size/2}px`;
+        protonEl.style.backgroundColor = '#f97316';
+        protonEl.style.setProperty('--z-offset', `${z * 30}px`);
+        protonEl.style.setProperty('--z-absolute', Math.abs(z));
+        protonEl.innerHTML = `
+            <div class="absolute -inset-1 bg-gradient-to-r from-proton to-orange-300 rounded-full opacity-30"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">p⁺</div>
+        `;
+        document.getElementById('gameArea').appendChild(protonEl);
+        proton.el = protonEl;
+    }
+
+    function createTrap(x, y, z) {
+        const trap = { x, y, z, size: 30 + Math.random() * 15 };
+        gameState.traps.push(trap);
+
+        const trapEl = document.createElement('div');
+        trapEl.className = 'trap trap-effect';
+        trapEl.style.width = `${trap.size}px`;
+        trapEl.style.height = `${trap.size}px`;
+        trapEl.style.left = `${x - trap.size/2}px`;
+        trapEl.style.top = `${y - trap.size/2}px`;
+        trapEl.style.setProperty('--z-offset', `${z * 30}px`);
+        trapEl.style.setProperty('--z-absolute', Math.abs(z));
+        trapEl.innerHTML = `
+            <svg width="${trap.size}" height="${trap.size}" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0">
+                <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                <circle cx="30" cy="30" r="20" fill="none" stroke="rgba(236,72,153,0.6)" stroke-width="2" />
+                <path d="M30 5 L30 25 M30 35 L30 55 M5 30 L25 30 M35 30 L55 30" 
+                      stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" />
+                <path d="M10 10 Q30 0 50 10 T30 30 T10 50 T30 30 T50 10" 
+                      fill="none" stroke="rgba(139,92,246,0.5)" stroke-width="1" />
+                <path d="M10 50 Q30 60 50 50 T30 30 T10 10 T30 30 T50 50" 
+                      fill="none" stroke="rgba(139,92,246,0.5)" stroke-width="1" />
+                <text x="30" y="34" text-anchor="middle" fill="white" font-size="10" font-weight="bold">量子陷阱</text>
+            </svg>
+        `;
+        document.getElementById('gameArea').appendChild(trapEl);
+        trap.el = trapEl;
+    }
+
+    function createFragment(x, y, z) {
+        const fragment = { x, y, z, size: 15 };
+        gameState.fragments.push(fragment);
+
+        const fragmentEl = document.createElement('div');
+        fragmentEl.className = 'fragment quantum-pulse';
+        fragmentEl.style.width = `${fragment.size}px`;
+        fragmentEl.style.height = `${fragment.size}px`;
+        fragmentEl.style.left = `${x - fragment.size/2}px`;
+        fragmentEl.style.top = `${y - fragment.size/2}px`;
+        fragmentEl.style.backgroundColor = '#8b5cf6';
+        fragmentEl.style.boxShadow = '0 0 10px #8b5cf6';
+        fragmentEl.style.setProperty('--z-offset', `${z * 30}px`);
+        fragmentEl.style.setProperty('--z-absolute', Math.abs(z));
+        fragmentEl.innerHTML = `<i class="fa fa-diamond absolute inset-0 flex items-center justify-center text-white text-xs"></i>`;
+        document.getElementById('gameArea').appendChild(fragmentEl);
+        fragment.el = fragmentEl;
+    }
+
+    function createBoss() {
+        gameState.inBossFight = true;
+        const gameArea = document.getElementById('gameArea');
+        const rect = gameArea.getBoundingClientRect();
+
+        gameState.boss = {
+            x: rect.width * 0.7,
+            y: rect.height / 2,
+            z: 0,
+            size: 80,
+            health: 5 + Math.floor(gameState.level/5),
+            fireRate: 2000 - Math.min(500, gameState.level * 100),
+            lastFire: Date.now(),
+            moveSpeed: 0.5 + Math.min(0.5, gameState.level * 0.1)
+        };
+
+        const bossEl = document.createElement('div');
+        bossEl.className = 'boss';
+        bossEl.style.width = `${gameState.boss.size}px`;
+        bossEl.style.height = `${gameState.boss.size}px`;
+        bossEl.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
+        bossEl.style.top = `${gameState.boss.y - gameState.boss.size/2}px`;
+        bossEl.style.backgroundColor = 'rgba(190, 18, 60, 0.8)';
+        bossEl.style.boxShadow = '0 0 20px #be123c';
+        bossEl.style.setProperty('--z-offset', `${gameState.boss.z * 30}px`);
+        bossEl.innerHTML = `
+            <div class="absolute -inset-2 bg-gradient-to-r from-red-500 to-purple-500 rounded-full opacity-30"></div>
+            <div class="text-white text-center mt-3 font-bold">反粒子</div>
+            <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-red-600 text-white text-xs text-center pt-1">
+                ${gameState.boss.health}
+            </div>
+        `;
+        document.getElementById('gameArea').appendChild(bossEl);
+        gameState.boss.el = bossEl;
+
+        gameState.boss.fireInterval = setInterval(() => {
+            if (!gameState.isPlaying) return;
+            fireBossProjectile();
+        }, gameState.boss.fireRate);
+    }
+
+    function fireBossProjectile() {
+        const boss = gameState.boss;
+        if (!boss) return;
+
+        const projectileSize = 15;
+        let x = boss.x + boss.size / 2 - projectileSize / 2;
+        let y = boss.y + boss.size / 2 - projectileSize / 2;
+        const z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+
+        const dx = (gameState.electron.x + gameState.electron.size/2) - x;
+        const dy = (gameState.electron.y + gameState.electron.size/2) - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const speed = 3 + Math.min(2, gameState.level * 0.2);
+
+        const projectile = {
+            x,
+            y,
+            z,
+            size: projectileSize,
+            velocityX: (dx / distance) * speed,
+            velocityY: (dy / distance) * speed
+        };
+
+        const projectileEl = document.createElement('div');
+        projectileEl.className = 'projectile';
+        projectileEl.style.width = `${projectile.size}px`;
+        projectileEl.style.height = `${projectile.size}px`;
+        projectileEl.style.left = `${projectile.x}px`;
+        projectileEl.style.top = `${projectile.y}px`;
+        projectileEl.style.backgroundColor = '#ef4444';
+        projectileEl.style.setProperty('--z-offset', `${z * 30}px`);
+        projectileEl.style.setProperty('--z-absolute', Math.abs(z));
+        document.getElementById('gameArea').appendChild(projectileEl);
+        projectile.el = projectileEl;
+
+        gameState.bossProjectiles.push(projectile);
+    }
+
+    function updateBoss() {
+        if (!gameState.boss || !gameState.isPlaying) return;
+        
+        const targetY = gameState.electron.y;
+        const dy = targetY - gameState.boss.y;
+        gameState.boss.y += dy * 0.02 * gameState.boss.moveSpeed;
+        
+        const padding = 50;
+        if (gameState.boss.y < padding) gameState.boss.y = padding;
+        if (gameState.boss.y > gameState.gameHeight - gameState.boss.size - padding) {
+            gameState.boss.y = gameState.gameHeight - gameState.boss.size - padding;
+        }
+        
+        gameState.boss.el.style.top = `${gameState.boss.y}px`;
+    }
+
+    function updateBossProjectiles() {
+        for (let i = gameState.bossProjectiles.length - 1; i >= 0; i--) {
+            const projectile = gameState.bossProjectiles[i];
+            
+            projectile.x += projectile.velocityX;
+            projectile.y += projectile.velocityY;
+            projectile.el.style.left = `${projectile.x}px`;
+            projectile.el.style.top = `${projectile.y}px`;
+            
+            if (projectile.x < -50 || projectile.x > gameState.gameWidth + 50 ||
+                projectile.y < -50 || projectile.y > gameState.gameHeight + 50) {
+                
+                if (projectile.element) projectile.el.remove();
+                gameState.bossProjectiles.splice(i, 1);
+            }
+        }
+    }
+
+    function checkCollisions() {
+        if (gameState.immune) return;
+
+        const gameArea = document.getElementById('gameArea');
+        const rect = gameArea.getBoundingClientRect();
+        
+        gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+        gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+
+        gameState.protons.forEach(proton => {
+            if (Math.abs(gameState.electron.z - proton.z) > 0) return;
+
+            const dx = gameState.electron.x - proton.x;
+            const dy = gameState.electron.y - proton.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + proton.size)/2) {
+                if (gameState.electron.charge > 0) {
+                    gameOver('碰撞失败', '正电子与质子碰撞，量子态坍塌！');
+                } else {
+                    const angle = Math.atan2(dy, dx);
+                    proton.x -= Math.cos(angle) * 5;
+                    proton.y -= Math.sin(angle) * 5;
+                    proton.el.style.left = `${proton.x - proton.size/2}px`;
+                    proton.el.style.top = `${proton.y - proton.size/2}px`;
+                }
+            }
+        });
+
+        gameState.traps.forEach(trap => {
+            if (Math.abs(gameState.electron.z - trap.z) > 1) return;
+
+            const dx = gameState.electron.x - trap.x;
+            const dy = gameState.electron.y - trap.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + trap.size)/2) {
+                gameOver('陷阱触发', '进入高能陷阱，任务失败！');
+            }
+        });
+
+        gameState.bossProjectiles.forEach(projectile => {
+            if (Math.abs(gameState.electron.z - projectile.z) > 0) return;
+
+            const dx = gameState.electron.x - projectile.x;
+            const dy = gameState.electron.y - projectile.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + projectile.size)/2) {
+                gameOver('被击中', '反粒子投射物击中，电子湮灭！');
+            }
+        });
+
+        if (gameState.boss) {
+            const dx = gameState.electron.x - gameState.boss.x;
+            const dy = gameState.electron.y - gameState.boss.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + gameState.boss.size)/2) {
+                gameState.boss.health--;
+                gameState.boss.el.querySelector('div:last-child').textContent = gameState.boss.health;
+                
+                rankingSystem.vibrate([100, 50, 100]);
+
+                if (gameState.boss.health <= 0) {
+                    clearInterval(gameState.boss.fireInterval);
+                    gameState.boss.el.remove();
+                    gameState.bossProjectiles.forEach(p => p.el.remove());
+                    gameState.boss = null;
+                    gameState.bossProjectiles = [];
+                    gameState.inBossFight = false;
+                    
+                    gameState.score += 500 * gameState.level;
+                    updateStatus();
+                    
+                    const rewardCount = 5 + Math.floor(gameState.level/3);
+                    
+                    for (let i = 0; i < rewardCount; i++) {
+                        const fragmentSize = 15;
+                        const position = generateSafePosition(fragmentSize, 'fragment');
+                        
+                        if (position) {
+                            createFragment(position.x, position.y, position.z);
+                        }
+                    }
+                } else {
+                    let newX = gameState.boss.x + Math.random() * 40 - 20;
+                    let newY = gameState.boss.y + Math.random() * 40 - 20;
+                    
+                    newX = Math.max(50, Math.min(gameState.gameWidth - 50, newX));
+                    newY = Math.max(50, Math.min(gameState.gameHeight - 50, newY));
+                    
+                    gameState.boss.x = newX;
+                    gameState.boss.y = newY;
+                    gameState.boss.el.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
+                    gameState.boss.el.style.top = `${gameState.boss.y - gameState.boss.size/2}px`;
+                }
+            }
+        }
+    }
+
+    function checkFragmentCollection() {
+        gameState.fragments.forEach((fragment, index) => {
+            if (Math.abs(gameState.electron.z - fragment.z) > 0) return;
+
+            const dx = gameState.electron.x - fragment.x;
+            const dy = gameState.electron.y - fragment.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + fragment.size)/2) {
+                fragment.el.remove();
+                gameState.fragments.splice(index, 1);
+                gameState.fragmentsCollected++;
+                
+                rankingSystem.vibrate(50);
+                soundSystem.play('collect');
+
+                showFragmentEffect(fragment.x, fragment.y);
+                checkLevelUpCondition();
+
+                if (gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
+                    gameState.skillAvailable = true;
+                    document.getElementById('btnSkill').classList.remove('opacity-50');
+                    document.getElementById('btnSkill').classList.add('animate-pulse');
+                }
+
+                gameState.score += 100;
+                updateStatus();
+            }
+        });
+    }
+
+    function checkLevelUpCondition() {
+        if (!gameState.inBossFight && gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
+            gameState.level++;
+            gameState.timeLeft += 20;
+            gameState.fragmentsCollected = 0;
+            gameState.skillAvailable = false;
+            document.getElementById('btnSkill').classList.add('opacity-50');
+            document.getElementById('btnSkill').classList.remove('animate-pulse');
+            
+            gameState.fragmentsNeeded = 3 + Math.floor((gameState.level - 1) / 2);
+            
+            if (gameState.level % 5 === 0) {
+                showMessage('⚠️ 警告', `第${gameState.level}关：反粒子Boss即将出现！`, '准备迎战');
+            } else {
+                soundSystem.play('levelUp');
+                showMessage('🎉 关卡升级', `已进入第${gameState.level}关！\n奖励时间+20秒`, '继续游戏');
+            }
+            
+            setTimeout(() => {
+                generateLevelElements();
+                updateStatus();
+            }, 1500);
+            
+            gameState.score += 500 * gameState.level;
+        }
+    }
+
+    function showFragmentEffect(x, y) {
+        const effect = document.createElement('div');
+        effect.className = 'absolute quantum-pulse pointer-events-none z-20';
+        effect.style.left = `${x}px`;
+        effect.style.top = `${y}px`;
+        effect.style.width = '30px';
+        effect.style.height = '30px';
+        effect.style.backgroundColor = 'rgba(139, 92, 246, 0.6)';
+        effect.style.borderRadius = '50%';
+        effect.style.transform = 'translate(-50%, -50%)';
+        
+        document.getElementById('gameArea').appendChild(effect);
+        
+        const scorePopup = document.createElement('div');
+        scorePopup.className = 'absolute text-quantum font-bold pointer-events-none z-20';
+        scorePopup.style.left = `${x}px`;
+        scorePopup.style.top = `${y - 20}px`;
+        scorePopup.style.transform = 'translate(-50%, 0)';
+        scorePopup.style.transition = 'all 0.8s ease-out';
+        scorePopup.textContent = '+100';
+        document.getElementById('gameArea').appendChild(scorePopup);
+        
+        setTimeout(() => {
+            effect.style.opacity = '0';
+            scorePopup.style.opacity = '0';
+            scorePopup.style.transform = 'translate(-50%, -30px)';
+            
+            setTimeout(() => {
+                if (effect.parentNode) document.getElementById('gameArea').removeChild(effect);
+                if (scorePopup.parentNode) document.getElementById('gameArea').removeChild(scorePopup);
+            }, 800);
+        }, 300);
+    }
+
+    function activateSkill() {
+        gameState.skillAvailable = false;
+        gameState.fragmentsCollected = 0;
+        document.getElementById('btnSkill').classList.add('opacity-50');
+        document.getElementById('btnSkill').classList.remove('animate-pulse');
+        
+        gameState.immune = true;
+        soundSystem.play('skill');
+        
+        for (let i = gameState.protons.length - 1; i >= 0; i--) {
+            const proton = gameState.protons[i];
+            if (proton.z === gameState.electron.z) {
+                proton.el.remove();
+                gameState.protons.splice(i, 1);
+            }
+        }
+        
+        const skillEffect = document.createElement('div');
+        skillEffect.className = 'absolute inset-0 bg-quantum/20 pointer-events-none z-30';
+        skillEffect.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+        skillEffect.style.transition = 'opacity 1s';
+        document.getElementById('gameArea').appendChild(skillEffect);
+        
+        const skillMessage = document.createElement('div');
+        skillMessage.className = 'absolute top-4 left-1/2 transform -translate-x-1/2 bg-quantum/80 text-white px-3 py-1 rounded text-xs font-bold z-40';
+        skillMessage.textContent = '量子净化激活！';
+        document.getElementById('gameArea').appendChild(skillMessage);
+        
+        rankingSystem.vibrate(200);
+
+        setTimeout(() => {
+            gameState.immune = false;
+            skillEffect.style.opacity = '0';
+            skillMessage.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (skillEffect.parentNode) document.getElementById('gameArea').removeChild(skillEffect);
+                if (skillMessage.parentNode) document.getElementById('gameArea').removeChild(skillMessage);
+            }, 1000);
+            
+            generateLevelElements();
+        }, 5000);
+    }
+
+    function startGame() {
+        gameState.isPlaying = true;
+        gameState.level = 1;
+        gameState.score = 0;
+        gameState.timeLeft = 80;
+        gameState.moves = 0;
+        gameState.electron = { 
+            x: 100, 
+            y: 100, 
+            charge: -1, 
+            z: 0, 
+            size: 20,
+            velocityX: 0,
+            velocityY: 0,
+            speed: gameState.performance.isMobile ? 2.5 : 3,
+            chargeState: 'negative'
+        };
+        gameState.fragmentsCollected = 0;
+        gameState.fragmentsNeeded = 3;
+        gameState.skillAvailable = false;
+        gameState.inBossFight = false;
+        
+        document.getElementById('gameArea').innerHTML = '';
+        
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameUI').classList.remove('hidden');
+        
+        updateGameDimensions();
+        
+        generateLevelElements();
+        renderElectron();
+        updateStatus();
+        startTimer();
+        gameLoop();
+    }
+
+    let lastFrameTime = 0;
+    const maxFps = 30;
+    const frameInterval = 1000 / maxFps;
+    
+    function gameLoop(timestamp) {
+        if (!gameState.isPlaying) return;
+
+        gameState.frameCounter++;
+        if (gameState.frameCounter % gameState.frameSkip !== 0) {
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+        
+        if (!timestamp) timestamp = performance.now();
+        if (timestamp - lastFrameTime < frameInterval) {
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+        lastFrameTime = timestamp;
+
+        updateElectronPhysics();
+        
+        if (gameState.inBossFight) {
+            updateBoss();
+            updateBossProjectiles();
+        }
+
+        checkCollisions();
+        checkFragmentCollection();
+        
+        requestAnimationFrame(gameLoop);
+    }
+
+    function updateElectronPhysics() {
+        if (gameState.performance.isMobile) {
+            gameState.electron.velocityX *= 0.95;
+            gameState.electron.velocityY *= 0.95;
+        } else {
+            gameState.electron.velocityX *= 0.97;
+            gameState.electron.velocityY *= 0.97;
+        }
+        
+        if (Math.abs(gameState.electron.velocityX) < 0.1) gameState.electron.velocityX = 0;
+        if (Math.abs(gameState.electron.velocityY) < 0.1) gameState.electron.velocityY = 0;
+        
+        gameState.electron.x += gameState.electron.velocityX;
+        gameState.electron.y += gameState.electron.velocityY;
+        
+        const gameArea = document.getElementById('gameArea');
+        const rect = gameArea.getBoundingClientRect();
+        gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+        gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+        
+        renderElectron();
+    }
+
+    function startTimer() {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = setInterval(() => {
+            gameState.timeLeft--;
+            updateStatus();
+
+            if (gameState.timeLeft <= 0) {
+                gameOver('时间耗尽', '量子能量场坍塌，任务失败！');
+            }
+        }, 1000);
+    }
+
+    function updateStatus() {
+        document.getElementById('level').textContent = gameState.level;
+        document.getElementById('score').textContent = gameState.score;
+        document.getElementById('time').textContent = gameState.timeLeft;
+        document.getElementById('zLevel').textContent = gameState.electron.z;
+        
+        const chargeText = gameState.electron.chargeState === 'negative' ? '负' : 
+                          gameState.electron.chargeState === 'positive' ? '正' : '中性';
+        document.getElementById('charge').textContent = chargeText;
+        document.getElementById('moves').textContent = gameState.moves;
+        document.getElementById('fragments').textContent = `${gameState.fragmentsCollected}/${gameState.fragmentsNeeded}`;
+        
+        const timeEl = document.getElementById('time');
+        if (gameState.timeLeft < 10) {
+            timeEl.classList.add('text-red-500', 'animate-pulse');
+        } else {
+            timeEl.classList.remove('text-red-500', 'animate-pulse');
+        }
+    }
+
+    function gameOver(title, message) {
+        gameState.isPlaying = false;
+        clearInterval(gameState.timerInterval);
+        
+        if (gameState.boss?.fireInterval) {
+            clearInterval(gameState.boss.fireInterval);
+        }
+        
+        rankingSystem.addScore(gameState.score);
+        soundSystem.play('gameOver');
+        
+        showMessage(title, message + `\n最终得分: ${gameState.score}\n关卡: ${gameState.level}`, '重新开始', () => {
+            showStartScreen();
+        });
+        
+        rankingSystem.vibrate([200, 100, 200]);
+    }
+
+    function showStartScreen() {
+        document.getElementById('startScreen').classList.remove('hidden');
+        document.getElementById('gameUI').classList.add('hidden');
+        clearInterval(gameState.timerInterval);
+        
+        document.getElementById('gameArea').innerHTML = '';
+        
+        gameState.isPlaying = false;
+        gameState.inBossFight = false;
+        gameState.boss = null;
+        gameState.bossProjectiles = [];
+    }
+
+    function showMessage(title, message, buttonText = '确定', callback = () => {}) {
+        const existingModal = document.querySelector('.message-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'message-modal fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="modal-content p-6 max-w-[80%] w-[300px] text-center">
+                <h3 class="text-xl font-bold text-purple-400 mb-3">${title}</h3>
+                <p class="text-slate-200 mb-5 whitespace-pre-line">${message}</p>
+                <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold w-full" id="modalBtn">${buttonText}</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('modalBtn').addEventListener('click', () => {
+            modal.remove();
+            callback();
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    function clearLevelElements() {
+        gameState.protons.forEach(proton => proton.el?.remove());
+        gameState.traps.forEach(trap => trap.el?.remove());
+        gameState.fragments.forEach(frag => frag.el?.remove());
+        gameState.bossProjectiles.forEach(proj => proj.el?.remove());
+        
+        if (gameState.boss?.el) {
+            gameState.boss.el.remove();
+        }
+        
+        gameState.protons = [];
+        gameState.traps = [];
+        gameState.fragments = [];
+        gameState.bossProjectiles = [];
+        gameState.boss = null;
+        gameState.inBossFight = false;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initGame();
+    });
+</script>
+</head>
+<body>
+    <div class="container">
+        <!-- 开始界面 -->
+        <div id="startScreen" class="absolute inset-0 bg-bg-dark flex flex-col items-center justify-center z-40 p-4">
+            <h1 class="text-[clamp(24px,6vw,36px)] font-bold text-quantum mb-6 text-center">电子冒险2：量子风暴</h1>
+            <div class="bg-slate-800/80 rounded-xl p-6 max-w-[90%] w-[350px] mb-6">
+                <p class="text-slate-300 mb-4 text-sm">
+                    🚀 控制电子在量子场中收集碎片，躲避质子和高能陷阱！<br>
+                    ⚡ 切换电荷状态适应不同磁场，利用Z轴维度躲避障碍<br>
+                    🎯 每5关将遭遇反粒子Boss，击败它获得大量碎片奖励
+                </p>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-arrows text-quantum mr-1"></i> 方向/拖拽：移动
+                    </div>
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-exchange text-quantum mr-1"></i> 电荷：切换极性
+                    </div>
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-level-up text-quantum mr-1"></i> Z+：提升维度
+                    </div>
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-level-down text-quantum mr-1"></i> Z-：降低维度
+                    </div>
+                </div>
+            </div>
+            <button id="btnStart" class="bg-quantum hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg text-lg w-full max-w-[300px]">
+                <i class="fa fa-play mr-2"></i>开始游戏
+            </button>
+            <button id="btnRanking" class="mt-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
+                <i class="fa fa-trophy mr-2"></i>联机排行榜
+            </button>
+            <button id="btnProfile" class="mt-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
+                <i class="fa fa-user mr-2"></i>个人中心
+            </button>
+        </div>
+
+        <!-- 游戏区域 -->
+        <div id="gameArea" class="container"></div>
+
+        <!-- 游戏UI -->
+        <div id="gameUI" class="hidden flex flex-col h-full">
+            <!-- 状态栏 -->
+            <div class="status-bar">
+                <div class="status-item"><i class="fa fa-star text-yellow-400"></i> 关卡: <span id="level">1</span></div>
+                <div class="status-item"><i class="fa fa-coins text-amber-400"></i> 得分: <span id="score">0</span></div>
+                <div class="status-item"><i class="fa fa-clock text-blue-400"></i> 时间: <span id="time">80</span></div>
+                <div class="status-item"><i class="fa fa-cube text-purple-400"></i> Z轴: <span id="zLevel">0</span></div>
+                <div class="status-item"><i class="fa fa-bolt text-yellow-400"></i> 电荷: <span id="charge">负</span></div>
+                <div class="status-item"><i class="fa fa-move text-green-400"></i> 操作: <span id="moves">0</span></div>
+                <div class="status-item"><i class="fa fa-diamond text-purple-400"></i> 碎片: <span id="fragments">0/3</span></div>
+            </div>
+
+            <!-- 控制区 -->
+            <div class="controls">
+                <!-- 方向控制 -->
+                <div class="flex gap-2 mb-2">
+                    <button id="btnUp" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-up"></i>
+                    </button>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <button id="btnLeft" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <button id="btnCharge" class="control-btn bg-quantum hover:bg-purple-700 text-white">
+                        <i class="fa fa-exchange"></i>
+                    </button>
+                    <button id="btnRight" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <button id="btnDown" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-down"></i>
+                    </button>
+                </div>
+
+                <!-- Z轴控制和技能 -->
+                <div class="flex gap-3 mt-2">
+                    <button id="btnZUp" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-level-up"></i> Z+
+                    </button>
+                    <button id="btnZDown" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-level-down"></i> Z-
+                    </button>
+                    <button id="btnSkill" class="control-btn bg-red-600 hover:bg-red-700 text-white opacity-50" disabled>
+                        <i class="fa fa-bomb"></i> 技能
+                    </button>
+                    <button id="btnRanking" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-trophy"></i> 排行
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 排行榜模态框 -->
+        <div id="rankingModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 hidden">
+            <div class="modal-content p-6 w-full max-w-[90%] max-h-[80vh] overflow-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-purple-400">📋 联机排行榜</h3>
+                    <button id="closeRanking" class="text-slate-400 hover:text-white">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">排行榜</h4>
+                    <div id="rankingList" class="space-y-2">
+                        <!-- 排行榜内容由JS动态生成 -->
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">我的好友</h4>
+                    <div id="friendsList" class="space-y-2">
+                        <!-- 好友列表由JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 个人中心模态框 -->
+        <div id="profileModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 hidden">
+            <div class="modal-content p-6 w-full max-w-[90%] max-h-[80vh] overflow-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-purple-400">👤 个人中心</h3>
+                    <button id="closeProfile" class="text-slate-400 hover:text-white">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">个人资料</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">用户名</label>
+                            <input type="text" id="usernameInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white" placeholder="输入用户名">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">头像URL (可选)</label>
+                            <input type="text" id="avatarInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white" placeholder="输入头像图片URL">
+                        </div>
+                        <button id="saveProfile" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
+                            保存资料
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">游戏统计</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-700/50 p-3 rounded-lg">
+                            <div class="text-sm text-slate-400">最高关卡</div>
+                            <div class="text-lg font-bold text-white" id="statsHighestLevel">0</div>
+                        </div>
+                        <div class="bg-slate-700/50 p-3 rounded-lg">
+                            <div class="text-sm text-slate-400">最高得分</div>
+                            <div class="text-lg font-bold text-white" id="statsHighestScore">0</div>
+                        </div>
+                        <div class="bg-slate-700/50 p-3 rounded-lg col-span-2">
+                            <div class="text-sm text-slate-400">总游戏次数</div>
+                            <div class="text-lg font-bold text-white" id="statsTotalPlays">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">游戏设置</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">音效</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="soundToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">震动反馈</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="vibrationToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
