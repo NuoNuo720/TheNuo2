@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
     <title>电子冒险2：量子风暴</title>
@@ -15,6 +16,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     <!-- 音效库 -->
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+    <!-- 新增：备用加载方案 -->
+    <script>
+        // 检测 Howl 是否加载成功，失败则定义空类避免报错
+        if (typeof Howl === 'undefined') {
+            console.warn('Howler 音效库加载失败，已启用无音效模式');
+            window.Howl = class {
+                constructor() { this.play = () => {}; }
+                play() {}
+            };
+        }
+    </script>
     <style>
         :root {
             --quantum: #8b5cf6;
