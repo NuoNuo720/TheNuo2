@@ -1,0 +1,3297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <title>自由电子冒险：量子风暴</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <!-- 音效库 -->
+    <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+    <!-- 新增：备用加载方案 -->
+    <script>
+        // 检测 Howl 是否加载成功，失败则定义空类避免报错
+        if (typeof Howl === 'undefined') {
+            console.warn('Howler 音效库加载失败，已启用无音效模式');
+            window.Howl = class {
+                constructor() { this.play = () => {}; }
+                play() {}
+            };
+        }
+    </script>
+    <style>
+        :root {
+            --quantum: #8b5cf6;
+            --bg-dark: #0f172a;
+            --electron: #3B82F6;
+            --proton: #F97316;
+            --positive: #EF4444;
+            --negative: #3B82F6;
+            --neutral: #10B981;
+            --trap-primary: #EC4899;
+            --trap-secondary: #8b5cf6;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+            --safe-area-left: env(safe-area-inset-left);
+            --safe-area-right: env(safe-area-inset-right);
+            /* 段位颜色 */
+            --rank-newbie: #10B981;
+            --rank-apprentice: #EAB308;
+            --rank-hunter: #F97316;
+            --rank-master: #3B82F6;
+            --rank-dominator: #8B5CF6;
+            --rank-god: #EF4444;
+        }
+        
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding-top: var(--safe-area-top);
+            padding-bottom: var(--safe-area-bottom);
+            padding-left: var(--safe-area-left);
+            padding-right: var(--safe-area-right);
+        }
+        
+        #gameArea {
+            position: relative;
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 60vh;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            overflow: hidden;
+            touch-action: none;
+            background-image: linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        
+        /* 控制按钮优化 - 手游级尺寸和反馈 (修复分辨率问题) */
+        .control-btn {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            border: none;
+            outline: none;
+            transition: all 0.15s ease;
+            width: clamp(45px, 18vw, 80px);
+            height: clamp(45px, 18vw, 80px);
+            font-size: clamp(16px, 6vw, 24px);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0; /* 防止按钮被压缩 */
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .control-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .control-btn:active::after {
+            transform: translateX(0);
+        }
+        
+        /* 状态栏优化 */
+        .status-bar {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: clamp(11px, 3vw, 13px);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 6px;
+            background-color: #1e293b;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+        
+        /* 控制区优化 (修复分辨率问题) */
+        .controls {
+            width: 100%;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #1e293b;
+            gap: 8px;
+            flex: 0 0 clamp(180px, 45vh, 280px);
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+            overflow: hidden;
+        }
+        
+        /* 控制按钮网格布局优化 */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 350px;
+        }
+        
+        .control-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        /* 游戏元素样式优化 */
+        .electron {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 10;
+            transition: none;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+            box-shadow: 0 0 0 rgba(59, 130, 246, 0.5);
+            animation: electron-glow 2s infinite alternate;
+        }
+        
+        @keyframes electron-glow {
+            0% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+        }
+        
+        .proton {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 5;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+        }
+        
+        .fragment {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 8;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+        }
+        
+        .trap {
+            position: absolute;
+            z-index: 7;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--trap-primary) 0%, var(--trap-secondary) 100%);
+            box-shadow: 0 0 20px var(--trap-primary), 
+                        inset 0 0 10px rgba(255,255,255,0.3);
+        }
+        
+        .boss {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 15;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+        }
+        
+        .projectile {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 12;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+            opacity: calc(1 - (var(--z-absolute) * 0.1));
+        }
+        
+        /* 模态框样式优化 */
+        #rankingModal, .message-modal, #rankModal, #matchingModal, #rankResultModal {
+            background-color: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            border-radius: 20px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        /* 排位相关样式 */
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: clamp(10px, 2.5vw, 12px);
+        }
+        
+        .rank-newbie {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--rank-newbie);
+            border: 1px solid var(--rank-newbie);
+        }
+        
+        .rank-apprentice {
+            background-color: rgba(234, 179, 8, 0.2);
+            color: var(--rank-apprentice);
+            border: 1px solid var(--rank-apprentice);
+        }
+        
+        .rank-hunter {
+            background-color: rgba(249, 115, 22, 0.2);
+            color: var(--rank-hunter);
+            border: 1px solid var(--rank-hunter);
+        }
+        
+        .rank-master {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--rank-master);
+            border: 1px solid var(--rank-master);
+        }
+        
+        .rank-dominator {
+            background-color: rgba(139, 92, 246, 0.2);
+            color: var(--rank-dominator);
+            border: 1px solid var(--rank-dominator);
+        }
+        
+        .rank-god {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--rank-god);
+            border: 1px solid var(--rank-god);
+        }
+        
+        .star-container {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        
+        .star {
+            color: #94a3b8;
+            font-size: clamp(10px, 2vw, 12px);
+        }
+        
+        .star.active {
+            color: #eab308;
+            text-shadow: 0 0 4px #eab308;
+        }
+        
+        .rank-progress {
+            height: 6px;
+            border-radius: 3px;
+            background-color: #334155;
+            width: 100%;
+            margin: 4px 0;
+        }
+        
+        .rank-progress-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        /* 匹配界面样式 */
+        .matching-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .matching-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(139, 92, 246, 0.3);
+            border-top: 4px solid var(--quantum);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .countdown-text {
+            font-size: clamp(14px, 4vw, 18px);
+            color: var(--quantum);
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        /* 排位结算界面样式 */
+        .rank-result-container {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .result-header {
+            font-size: clamp(18px, 5vw, 24px);
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .result-win {
+            color: #10B981;
+        }
+        
+        .result-lose {
+            color: #EF4444;
+        }
+        
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background-color: #27374d;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e2e8f0;
+        }
+        
+        .rank-change {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(139, 92, 246, 0.1);
+            border: 1px solid var(--quantum);
+        }
+        
+        /* 动画效果优化 */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        @keyframes float-3d {
+            0%, 100% { transform: translateZ(0px) translateY(0px); }
+            25% { transform: translateZ(10px) translateY(-5px); }
+            50% { transform: translateZ(0px) translateY(-10px); }
+            75% { transform: translateZ(-10px) translateY(-5px); }
+        }
+        
+        @keyframes quantum-pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        @keyframes charge-shift {
+            0%, 100% { box-shadow: 0 0 15px 5px currentColor; }
+            50% { box-shadow: 0 0 25px 8px currentColor; }
+        }
+        
+        @keyframes trap-rotate {
+            0% { transform: rotate(0deg) translateZ(var(--z-offset, 0px)); }
+            100% { transform: rotate(360deg) translateZ(var(--z-offset, 0px)); }
+        }
+        
+        @keyframes trap-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px var(--trap-primary), 
+                            inset 0 0 10px rgba(255,255,255,0.3); 
+            }
+            50% { 
+                box-shadow: 0 0 30px var(--trap-primary), 
+                            inset 0 0 15px rgba(255,255,255,0.5); 
+            }
+        }
+        
+        .float-3d {
+            animation: float-3d 4s ease-in-out infinite;
+        }
+        
+        .quantum-pulse {
+            animation: quantum-pulse 2s infinite;
+        }
+        
+        .charge-effect {
+            animation: charge-shift 1.5s infinite;
+        }
+        
+        .trap-effect {
+            animation: trap-rotate 8s linear infinite, trap-pulse 2s ease-in-out infinite;
+        }
+        
+        .field-effect {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.1);
+            pointer-events: none;
+            transition: opacity 0.5s;
+            z-index: 1;
+        }
+        
+        .direction-indicator {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+            transform-style: preserve-3d;
+            transform: translateZ(var(--z-offset, 0px));
+        }
+        
+        /* 新手引导样式 */
+        .tutorial-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .tutorial-step {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 300px;
+            text-align: center;
+            border: 1px solid var(--quantum);
+        }
+        
+        .tutorial-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #475569;
+            margin: 0 4px;
+        }
+        
+        .tutorial-dot.active {
+            background: var(--quantum);
+        }
+        
+        /* 加载动画 */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid var(--quantum);
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+        
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式适配 (重点修复手机端) */
+        @media (min-width: 768px) {
+            .controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px;
+                flex: 0 0 180px;
+            }
+            
+            .status-bar {
+                padding: 10px 20px;
+            }
+            
+            .control-grid {
+                max-width: 400px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            #gameArea {
+                min-height: 70vh;
+            }
+            
+            .control-btn {
+                width: 80px;
+                height: 80px;
+                font-size: 24px;
+            }
+        }
+        
+        /* 横屏适配 (重点优化) */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .controls {
+                flex: 0 0 120px;
+                padding: 8px;
+                flex-direction: row;
+            }
+            
+            .control-btn {
+                width: clamp(40px, 15vw, 60px);
+                height: clamp(40px, 15vw, 60px);
+                font-size: 16px;
+            }
+            
+            .status-bar {
+                padding: 5px 8px;
+                font-size: 11px;
+                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            }
+            
+            #gameArea {
+                min-height: 50vh;
+            }
+            
+            .control-grid {
+                max-width: 300px;
+            }
+        }
+        
+        /* 小屏手机适配 */
+        @media (max-width: 360px) {
+            .control-btn {
+                width: clamp(40px, 16vw, 50px);
+                height: clamp(40px, 16vw, 50px);
+                font-size: 14px;
+            }
+            
+            .status-item {
+                font-size: 10px;
+            }
+            
+            .controls {
+                padding: 8px;
+                flex: 0 0 160px;
+            }
+        }
+        
+        /* 大屏手机适配 */
+        @media (min-width: 414px) and (max-width: 767px) {
+            .control-btn {
+                width: clamp(50px, 15vw, 70px);
+                height: clamp(50px, 15vw, 70px);
+            }
+            
+            .controls {
+                flex: 0 0 220px;
+            }
+        }
+    </style>
+    <script>
+        // 游戏全局状态
+        const gameState = {
+            isPlaying: false,
+            isRankMode: false, // 是否排位模式
+            isMatching: false, // 是否匹配中
+            matchTimer: null, // 匹配计时器
+            matchCountdown: 30, // 匹配倒计时（秒）
+            aiOpponent: null, // AI对手
+            level: 1,
+            score: 0,
+            timeLeft: 80,
+            moves: 0,
+            electron: { 
+                x: 100, 
+                y: 100, 
+                charge: -1, 
+                z: 0, 
+                size: 20,
+                velocityX: 0,    
+                velocityY: 0,    
+                speed: 3,        
+                chargeState: 'negative' 
+            },
+            protons: [],
+            traps: [],
+            fragments: [],
+            boss: null,
+            bossProjectiles: [],
+            inBossFight: false,
+            immune: false,
+            fragmentsCollected: 0,
+            fragmentsNeeded: 3,
+            skillAvailable: false,
+            frameCounter: 0,
+            frameSkip: 1,
+            performance: {
+                renderRate: 30,
+                isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+                obstacleDensity: 1
+            },
+            maxZDepth: 3,
+            gameWidth: 0,
+            gameHeight: 0,
+            timerInterval: null,
+            mouseDown: false,
+            mouseOffset: { x: 0, y: 0 },
+            minDistance: {
+                proton: 80,
+                trap: 100,
+                fragment: 60,
+                crossType: 120
+            },
+            // 新增：游戏设置
+            settings: {
+                sound: true,
+                vibration: true,
+                showTutorial: true
+            },
+            // 新增：游戏进度
+            progress: {
+                highestLevel: 0,
+                highestScore: 0,
+                totalPlays: 0
+            },
+            // 排位相关状态
+            rankState: {
+                currentRank: '量子新手',
+                currentPoints: 0,
+                currentStars: 0,
+                rankLevel: 1,
+                winStreak: 0,
+                seasonId: 'S1',
+                electronCoins: 0
+            },
+            // 段位配置
+            rankConfig: {
+                '量子新手': { starScore: 50, totalStars: 5, nextRank: '电子学徒', rankLevel: 1, color: '--rank-newbie' },
+                '电子学徒': { starScore: 60, totalStars: 5, nextRank: '质子猎手', rankLevel: 2, color: '--rank-apprentice' },
+                '质子猎手': { starScore: 70, totalStars: 6, nextRank: '量子大师', rankLevel: 3, color: '--rank-hunter' },
+                '量子大师': { starScore: 80, totalStars: 6, nextRank: '维度主宰', rankLevel: 4, color: '--rank-master' },
+                '维度主宰': { starScore: 90, totalStars: 7, nextRank: '风暴之神', rankLevel: 5, color: '--rank-dominator' },
+                '风暴之神': { starScore: 100, totalStars: 8, nextRank: '风暴之神', rankLevel: 6, color: '--rank-god' }
+            }
+        };
+
+        // ========== 音效系统 ==========
+        const soundSystem = {
+            sounds: {},
+            
+            init() {
+                // 预加载音效
+                this.sounds.move = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'],
+                    volume: 0.3
+                });
+                
+                this.sounds.collect = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-collecting-coins-2065.mp3'],
+                    volume: 0.4
+                });
+                
+                this.sounds.charge = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-fast-small-sweep-transition-166.mp3'],
+                    volume: 0.3
+                });
+                
+                this.sounds.skill = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-magic-spell-swish-1565.mp3'],
+                    volume: 0.5
+                });
+                
+                this.sounds.gameOver = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3'],
+                    volume: 0.4
+                });
+                
+                this.sounds.levelUp = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-video-game-level-up-2059.mp3'],
+                    volume: 0.4
+                });
+                
+                this.sounds.boss = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-alarm-buzzer-991.mp3'],
+                    volume: 0.3
+                });
+                
+                this.sounds.rankUp = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'],
+                    volume: 0.5
+                });
+                
+                this.sounds.matchFound = new Howl({
+                    src: ['https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3'],
+                    volume: 0.4
+                });
+            },
+            
+            play(soundName) {
+                if (!gameState.settings.sound || !this.sounds[soundName]) return;
+                this.sounds[soundName].play();
+            },
+            
+            toggle() {
+                gameState.settings.sound = !gameState.settings.sound;
+                localStorage.setItem('game_sound', gameState.settings.sound);
+            }
+        };
+
+        // ========== 碰撞检测工具函数 ==========
+        function isPositionSafe(x, y, z, size, existingElements, minDist) {
+            for (const elem of existingElements) {
+                if (elem.z !== z) continue;
+                
+                const dx = x - elem.x;
+                const dy = y - elem.y;
+                const elemSize = elem.size || 20;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const safeDistance = minDist + (size + elemSize) / 2;
+                
+                if (distance < safeDistance) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function isPositionSafeForAll(x, y, z, size, type) {
+            const config = gameState.minDistance;
+            let isSafe = true;
+
+            switch(type) {
+                case 'proton':
+                    isSafe = isPositionSafe(x, y, z, size, gameState.protons, config.proton);
+                    break;
+                case 'trap':
+                    isSafe = isPositionSafe(x, y, z, size, gameState.traps, config.trap);
+                    break;
+                case 'fragment':
+                    isSafe = isPositionSafe(x, y, z, size, gameState.fragments, config.fragment);
+                    break;
+            }
+
+            if (!isSafe) return false;
+
+            if (type !== 'proton') {
+                isSafe = isPositionSafe(x, y, z, size, gameState.protons, config.crossType);
+                if (!isSafe) return false;
+            }
+            
+            if (type !== 'trap') {
+                isSafe = isPositionSafe(x, y, z, size, gameState.traps, config.crossType);
+                if (!isSafe) return false;
+            }
+            
+            if (type !== 'fragment') {
+                isSafe = isPositionSafe(x, y, z, size, gameState.fragments, config.crossType);
+                if (!isSafe) return false;
+            }
+
+            const electron = gameState.electron;
+            const dx = x - electron.x;
+            const dy = y - electron.y;
+            const distanceToElectron = Math.sqrt(dx * dx + dy * dy);
+            if (distanceToElectron < config.crossType) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function generateSafePosition(size, type, maxAttempts = 50) {
+            const gameArea = document.getElementById('gameArea');
+            const rect = gameArea.getBoundingClientRect();
+            const padding = 50;
+
+            for (let i = 0; i < maxAttempts; i++) {
+                const z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+                const x = Math.random() * (rect.width - padding * 2) + padding;
+                const y = Math.random() * (rect.height - padding * 2) + padding;
+
+                if (isPositionSafeForAll(x, y, z, size, type)) {
+                    return { x, y, z };
+                }
+            }
+
+            console.warn(`无法为${type}生成安全位置（尝试${maxAttempts}次）`);
+            return null;
+        }
+
+        // ========== Supabase联机核心 ==========
+        const rankingSystem = {
+            rankings: [],
+            friends: [],
+            currentUser: {
+                id: 'guest_' + Math.random().toString(36).substr(2, 9),
+                username: '游客_' + Math.floor(Math.random() * 1000),
+                avatar: ''
+            },
+            supabase: null,
+            
+            init() {
+                const supabaseUrl = 'https://jwkbmuzpkutarficjetu.supabase.co'; 
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3a2JtdXpwa3V0YXJmaWNqZXR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNTU0NDQsImV4cCI6MjA4MjgzMTQ0NH0.1Tveg3PSsFmoqjfnzQYl7ucnAqWON_OxuxmkuH56hrM'; 
+                
+                this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+                    auth: {
+                        storage: localStorage,
+                        autoRefreshToken: true,
+                        persistSession: true,
+                    }
+                });
+
+                this.loadGameProgress();
+                this.checkUser();
+                this.loadFromSupabase();
+                this.loadFriends();
+                this.loadRankData(); // 加载排位数据
+                
+                // 同步离线缓存的分数
+                this.syncCachedScores();
+            },
+            
+            loadGameProgress() {
+                try {
+                    const savedProgress = localStorage.getItem('game_progress');
+                    if (savedProgress) {
+                        gameState.progress = JSON.parse(savedProgress);
+                    }
+                    
+                    const savedSettings = localStorage.getItem('game_settings');
+                    if (savedSettings) {
+                        gameState.settings = JSON.parse(savedSettings);
+                    }
+                    
+                    // 加载排位数据
+                    const savedRank = localStorage.getItem('game_rank');
+                    if (savedRank) {
+                        gameState.rankState = JSON.parse(savedRank);
+                    }
+                } catch (e) {
+                    console.error('加载游戏进度失败:', e);
+                }
+            },
+            
+            saveGameProgress() {
+                gameState.progress.highestLevel = Math.max(gameState.progress.highestLevel, gameState.level);
+                gameState.progress.highestScore = Math.max(gameState.progress.highestScore, gameState.score);
+                gameState.progress.totalPlays++;
+                
+                localStorage.setItem('game_progress', JSON.stringify(gameState.progress));
+                localStorage.setItem('game_settings', JSON.stringify(gameState.settings));
+                localStorage.setItem('game_rank', JSON.stringify(gameState.rankState));
+            },
+            
+            async checkUser() {
+                try {
+                    const { data: { user } } = await this.supabase.auth.getUser();
+                    if (user) {
+                        this.currentUser.id = user.id;
+                        this.currentUser.username = user.email ? user.email.split('@')[0] : '玩家_' + user.id.substr(0, 6);
+                        
+                        // 获取用户头像
+                        const { data: userData } = await this.supabase
+                            .from('game_users')
+                            .select('*')
+                            .eq('user_id', user.id)
+                            .single();
+                        
+                        if (userData) {
+                            this.currentUser.username = userData.username || this.currentUser.username;
+                            this.currentUser.avatar = userData.avatar || '';
+                        }
+                        
+                        localStorage.setItem('game_user', JSON.stringify(this.currentUser));
+                        
+                        await this.supabase
+                            .from('game_users')
+                            .upsert([{
+                                user_id: user.id,
+                                username: this.currentUser.username,
+                                avatar: this.currentUser.avatar,
+                                last_login: new Date().toISOString()
+                            }]);
+                    } else {
+                        const savedUser = localStorage.getItem('game_user');
+                        if (savedUser) {
+                            this.currentUser = JSON.parse(savedUser);
+                        }
+                    }
+                } catch (error) {
+                    console.error('检查用户状态失败:', error);
+                }
+            },
+            
+            async loadFromSupabase() {
+                try {
+                    const rankingListEl = document.getElementById('rankingList');
+                    if (rankingListEl) {
+                        rankingListEl.innerHTML = '<div class="text-center p-4 text-slate-400"><div class="loader mx-auto mb-2"></div>加载联机排行榜中...</div>';
+                    }
+
+                    const { data, error } = await this.supabase
+                        .from('game_scores')
+                        .select('*')
+                        .order('score', { ascending: false })
+                        .limit(20);
+
+                    if (error) throw error;
+                    
+                    this.rankings = data.map((item, index) => ({
+                        rank: index + 1,
+                        username: item.username || '匿名玩家',
+                        score: item.score,
+                        user_id: item.user_id,
+                        avatar: item.avatar || 'https://ui-avatars.com/api/?name=' + (item.username || '玩家'),
+                        lastLogin: new Date(item.created_at).toLocaleDateString()
+                    }));
+                    
+                    this.render();
+                } catch (error) {
+                    console.error('加载排行榜失败:', error);
+                    const rankingListEl = document.getElementById('rankingList');
+                    if (rankingListEl) {
+                        rankingListEl.innerHTML = `
+                            <div class="text-center p-4 text-red-400">
+                                联机排行榜加载失败<br>
+                                <button class="mt-2 text-sm text-purple-400" onclick="rankingSystem.loadFromSupabase()">重试</button>
+                            </div>
+                        `;
+                    }
+                }
+            },
+            
+            async loadFriends() {
+                try {
+                    const { data, error } = await this.supabase
+                        .from('game_friends')
+                        .select(`
+                            *,
+                            friend:game_users!game_friends_friend_user_id_fkey(user_id, username, avatar)
+                        `)
+                        .or(`user_id.eq.${this.currentUser.id},friend_user_id.eq.${this.currentUser.id}`);
+                    
+                    if (error) throw error;
+                    
+                    this.friends = data.map(item => ({
+                        id: item.id,
+                        userId: item.user_id,
+                        friendUserId: item.friend_user_id,
+                        status: item.status,
+                        isInitiator: item.user_id === this.currentUser.id,
+                        friend: {
+                            id: item.friend?.user_id || item.friend_user_id,
+                            username: item.friend?.username || '未知玩家',
+                            avatar: item.friend?.avatar || 'https://ui-avatars.com/api/?name=未知'
+                        }
+                    }));
+                    
+                    this.renderFriends();
+                } catch (error) {
+                    console.error('加载好友失败:', error);
+                }
+            },
+            
+            // ========== 排位相关数据库操作 ==========
+            async loadRankData() {
+                try {
+                    const { data, error } = await this.supabase
+                        .from('game_ranking')
+                        .select('*')
+                        .eq('user_id', this.currentUser.id)
+                        .eq('season_id', gameState.rankState.seasonId)
+                        .single();
+                    
+                    if (error) {
+                        // 没有排位数据，创建新记录
+                        await this.supabase
+                            .from('game_ranking')
+                            .insert([{
+                                user_id: this.currentUser.id,
+                                username: this.currentUser.username,
+                                rank_points: 0,
+                                rank_title: '量子新手',
+                                rank_stars: 0,
+                                rank_level: 1,
+                                win_streak: 0,
+                                season_id: gameState.rankState.seasonId,
+                                season_best_rank: '量子新手',
+                                season_best_points: 0,
+                                total_matches: 0,
+                                win_matches: 0,
+                                vs_human: 0,
+                                vs_ai: 0,
+                                electron_coins: 0
+                            }]);
+                        
+                        gameState.rankState = {
+                            currentRank: '量子新手',
+                            currentPoints: 0,
+                            currentStars: 0,
+                            rankLevel: 1,
+                            winStreak: 0,
+                            seasonId: 'S1',
+                            electronCoins: 0
+                        };
+                    } else {
+                        // 更新本地排位状态
+                        gameState.rankState = {
+                            currentRank: data.rank_title,
+                            currentPoints: data.rank_points,
+                            currentStars: data.rank_stars,
+                            rankLevel: data.rank_level,
+                            winStreak: data.win_streak,
+                            seasonId: data.season_id,
+                            electronCoins: data.electron_coins
+                        };
+                    }
+                    
+                    // 更新排位显示
+                    this.updateRankDisplay();
+                } catch (error) {
+                    console.error('加载排位数据失败:', error);
+                }
+            },
+            
+            async updateRankPoints(pointsChange, isWin, isAI = false) {
+                try {
+                    // 计算新的积分和星数
+                    let newPoints = gameState.rankState.currentPoints + pointsChange;
+                    let newRank = gameState.rankState.currentRank;
+                    let newStars = gameState.rankState.currentStars;
+                    const rankConfig = gameState.rankConfig[newRank];
+                    
+                    // 计算星数变化
+                    if (pointsChange > 0) {
+                        // 加分
+                        const totalStarsPoints = newStars * rankConfig.starScore + pointsChange;
+                        newStars = Math.floor(totalStarsPoints / rankConfig.starScore);
+                        const remainingPoints = totalStarsPoints % rankConfig.starScore;
+                        
+                        // 检查是否晋级
+                        while (newStars >= rankConfig.totalStars) {
+                            newStars -= rankConfig.totalStars;
+                            newPoints = newStars * rankConfig.starScore + remainingPoints;
+                            newRank = rankConfig.nextRank;
+                            
+                            // 播放晋级音效
+                            soundSystem.play('rankUp');
+                            
+                            // 显示晋级提示
+                            this.showRankUpMessage(newRank);
+                            
+                            // 更新段位配置
+                            if (newRank !== rankConfig.nextRank) break;
+                        }
+                    } else if (pointsChange < 0) {
+                        // 扣分
+                        const totalStarsPoints = newStars * rankConfig.starScore + pointsChange;
+                        
+                        // 检查是否降级
+                        while (totalStarsPoints < 0 && newRank !== '量子新手') {
+                            // 找到上一个段位
+                            const prevRank = this.getPreviousRank(newRank);
+                            const prevConfig = gameState.rankConfig[prevRank];
+                            
+                            newRank = prevRank;
+                            newStars = prevConfig.totalStars - 1;
+                            newPoints = newStars * prevConfig.starScore + totalStarsPoints + rankConfig.starScore;
+                        }
+                        
+                        // 计算新的星数
+                        if (newRank === '量子新手' && totalStarsPoints < 0) {
+                            newStars = 0;
+                            newPoints = 0;
+                        } else {
+                            newStars = Math.max(0, Math.floor(totalStarsPoints / gameState.rankConfig[newRank].starScore));
+                            const remainingPoints = totalStarsPoints % gameState.rankConfig[newRank].starScore;
+                            newPoints = newStars * gameState.rankConfig[newRank].starScore + remainingPoints;
+                        }
+                    }
+                    
+                    // 确保积分不为负（新手段位）
+                    if (newRank === '量子新手' && newPoints < 0) {
+                        newPoints = 0;
+                        newStars = 0;
+                    }
+                    
+                    // 更新连胜
+                    let newWinStreak = isWin ? gameState.rankState.winStreak + 1 : 0;
+                    
+                    // 更新数据库
+                    await this.supabase
+                        .from('game_ranking')
+                        .update({
+                            rank_points: newPoints,
+                            rank_title: newRank,
+                            rank_stars: newStars,
+                            rank_level: gameState.rankConfig[newRank].rankLevel,
+                            win_streak: newWinStreak,
+                            total_matches: gameState.rankState.totalMatches ? gameState.rankState.totalMatches + 1 : 1,
+                            win_matches: isWin ? (gameState.rankState.winMatches ? gameState.rankState.winMatches + 1 : 1) : gameState.rankState.winMatches || 0,
+                            vs_human: isAI ? gameState.rankState.vsHuman || 0 : (gameState.rankState.vsHuman ? gameState.rankState.vsHuman + 1 : 1),
+                            vs_ai: isAI ? (gameState.rankState.vsAI ? gameState.rankState.vsAI + 1 : 1) : gameState.rankState.vsAI || 0,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('user_id', this.currentUser.id)
+                        .eq('season_id', gameState.rankState.seasonId);
+                    
+                    // 更新本地状态
+                    gameState.rankState.currentRank = newRank;
+                    gameState.rankState.currentPoints = newPoints;
+                    gameState.rankState.currentStars = newStars;
+                    gameState.rankState.rankLevel = gameState.rankConfig[newRank].rankLevel;
+                    gameState.rankState.winStreak = newWinStreak;
+                    
+                    // 保存到本地存储
+                    this.saveGameProgress();
+                    
+                    // 更新显示
+                    this.updateRankDisplay();
+                    
+                    return {
+                        newRank,
+                        newPoints,
+                        newStars,
+                        pointsChange
+                    };
+                } catch (error) {
+                    console.error('更新排位积分失败:', error);
+                    return null;
+                }
+            },
+            
+            async getAIOpponent() {
+                try {
+                    const { data, error } = await this.supabase
+                        .from('game_ai_opponents')
+                        .select('*')
+                        .eq('ai_level', gameState.rankState.currentRank)
+                        .single();
+                    
+                    if (error) throw error;
+                    
+                    // 生成AI得分（基础分 ± 随机波动）
+                    const aiScore = data.base_score + Math.floor(Math.random() * (data.random_variance * 2 + 1)) - data.random_variance;
+                    
+                    gameState.aiOpponent = {
+                        name: data.ai_name,
+                        level: data.ai_level,
+                        score: aiScore
+                    };
+                    
+                    return gameState.aiOpponent;
+                } catch (error) {
+                    console.error('获取AI对手失败:', error);
+                    // 默认AI
+                    gameState.aiOpponent = {
+                        name: 'AI-量子守护者',
+                        level: gameState.rankState.currentRank,
+                        score: 500
+                    };
+                    return gameState.aiOpponent;
+                }
+            },
+            
+            async resetSeasonRank() {
+                try {
+                    // 赛季重置：积分 = 当前积分 - 5000，最低降至电子学徒
+                    let newPoints = gameState.rankState.currentPoints - 5000;
+                    let newRank = gameState.rankState.currentRank;
+                    let newStars = 0;
+                    
+                    // 确保最低为电子学徒
+                    if (newPoints < gameState.rankConfig['电子学徒'].starScore * gameState.rankConfig['电子学徒'].totalStars) {
+                        newRank = '电子学徒';
+                        newPoints = gameState.rankConfig['电子学徒'].starScore * gameState.rankConfig['电子学徒'].totalStars;
+                        newStars = gameState.rankConfig['电子学徒'].totalStars;
+                    } else {
+                        // 计算新的星数
+                        const rankConfig = gameState.rankConfig[newRank];
+                        newStars = Math.floor(newPoints / rankConfig.starScore);
+                    }
+                    
+                    // 更新数据库
+                    await this.supabase
+                        .from('game_ranking')
+                        .update({
+                            rank_points: newPoints,
+                            rank_title: newRank,
+                            rank_stars: newStars,
+                            rank_level: gameState.rankConfig[newRank].rankLevel,
+                            win_streak: 0,
+                            season_id: 'S' + (parseInt(gameState.rankState.seasonId.substring(1)) + 1),
+                            season_best_rank: gameState.rankState.currentRank,
+                            season_best_points: Math.max(gameState.rankState.currentPoints, gameState.rankState.seasonBestPoints || 0)
+                        })
+                        .eq('user_id', this.currentUser.id)
+                        .eq('season_id', gameState.rankState.seasonId);
+                    
+                    // 更新本地状态
+                    gameState.rankState.currentRank = newRank;
+                    gameState.rankState.currentPoints = newPoints;
+                    gameState.rankState.currentStars = newStars;
+                    gameState.rankState.rankLevel = gameState.rankConfig[newRank].rankLevel;
+                    gameState.rankState.winStreak = 0;
+                    gameState.rankState.seasonId = 'S' + (parseInt(gameState.rankState.seasonId.substring(1)) + 1);
+                    
+                    this.saveGameProgress();
+                    this.updateRankDisplay();
+                    
+                    this.showToast('赛季重置完成！您的段位已调整为：' + newRank);
+                } catch (error) {
+                    console.error('赛季重置失败:', error);
+                    this.showToast('赛季重置失败');
+                }
+            },
+            
+            async rewardSeasonCoins() {
+                try {
+                    // 获取赛季前5名
+                    const { data, error } = await this.supabase
+                        .from('game_ranking')
+                        .select('*')
+                        .eq('season_id', gameState.rankState.seasonId)
+                        .order('rank_points', { ascending: false })
+                        .limit(5);
+                    
+                    if (error) throw error;
+                    
+                    // 发放奖励
+                    for (let i = 0; i < data.length; i++) {
+                        const userId = data[i].user_id;
+                        const coins = 100;
+                        
+                        // 更新电子币
+                        await this.supabase
+                            .from('game_ranking')
+                            .update({
+                                electron_coins: (data[i].electron_coins || 0) + coins
+                            })
+                            .eq('user_id', userId)
+                            .eq('season_id', gameState.rankState.seasonId);
+                        
+                        // 记录交易
+                        await this.supabase
+                            .from('game_coin_transactions')
+                            .insert([{
+                                user_id: userId,
+                                transaction_type: 'reward',
+                                amount: coins,
+                                description: `赛季排名奖励：第${i+1}名`,
+                                created_at: new Date().toISOString()
+                            }]);
+                        
+                        // 添加赛季奖励记录
+                        await this.supabase
+                            .from('game_season_rewards')
+                            .insert([{
+                                season_id: gameState.rankState.seasonId,
+                                user_id: userId,
+                                rank_position: i+1,
+                                reward_coins: coins,
+                                is_claimed: true,
+                                claimed_at: new Date().toISOString()
+                            }]);
+                    }
+                    
+                    // 更新当前用户的电子币
+                    if (data.some(item => item.user_id === this.currentUser.id)) {
+                        const userData = data.find(item => item.user_id === this.currentUser.id);
+                        gameState.rankState.electronCoins = (userData.electron_coins || 0) + 100;
+                        this.saveGameProgress();
+                        this.showToast('恭喜获得赛季奖励：100电子币！');
+                    }
+                } catch (error) {
+                    console.error('发放赛季奖励失败:', error);
+                }
+            },
+            
+            getPreviousRank(currentRank) {
+                const rankOrder = ['量子新手', '电子学徒', '质子猎手', '量子大师', '维度主宰', '风暴之神'];
+                const currentIndex = rankOrder.indexOf(currentRank);
+                return currentIndex > 0 ? rankOrder[currentIndex - 1] : currentRank;
+            },
+            
+            updateRankDisplay() {
+                // 更新个人中心的排位显示
+                const rankBadge = document.getElementById('rankBadge');
+                const rankPoints = document.getElementById('rankPoints');
+                const rankStars = document.getElementById('rankStars');
+                const rankProgress = document.getElementById('rankProgressBar');
+                const electronCoins = document.getElementById('electronCoins');
+                
+                if (rankBadge) {
+                    rankBadge.className = `rank-badge rank-${gameState.rankState.currentRank.replace(/\s+/g, '').toLowerCase()}`;
+                    rankBadge.innerHTML = `${gameState.rankState.currentRank} <i class="fa fa-star"></i>${gameState.rankState.currentStars}`;
+                }
+                
+                if (rankPoints) {
+                    rankPoints.textContent = `${gameState.rankState.currentPoints}分`;
+                }
+                
+                if (rankStars) {
+                    const rankConfig = gameState.rankConfig[gameState.rankState.currentRank];
+                    let starsHtml = '';
+                    for (let i = 0; i < rankConfig.totalStars; i++) {
+                        starsHtml += `<i class="fa fa-star star ${i < gameState.rankState.currentStars ? 'active' : ''}"></i>`;
+                    }
+                    rankStars.innerHTML = starsHtml;
+                    
+                    // 更新进度条
+                    if (rankProgress) {
+                        const progressPercent = (gameState.rankState.currentStars / rankConfig.totalStars) * 100;
+                        rankProgress.style.width = `${progressPercent}%`;
+                        rankProgress.style.backgroundColor = `var(${rankConfig.color})`;
+                    }
+                }
+                
+                if (electronCoins) {
+                    electronCoins.textContent = gameState.rankState.electronCoins || 0;
+                }
+                
+                // 更新状态栏的排位显示
+                const rankStatus = document.getElementById('rankStatus');
+                if (rankStatus && gameState.isRankMode) {
+                    rankStatus.innerHTML = `<i class="fa fa-trophy text-yellow-400"></i> 排位: ${gameState.rankState.currentRank} ${gameState.rankState.currentStars}星`;
+                }
+            },
+            
+            showRankUpMessage(newRank) {
+                const messageModal = document.createElement('div');
+                messageModal.className = 'message-modal fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4';
+                messageModal.innerHTML = `
+                    <div class="modal-content p-6 max-w-[80%] w-[300px] text-center">
+                        <div class="text-4xl mb-4">🎉</div>
+                        <h3 class="text-xl font-bold text-purple-400 mb-3">恭喜晋级！</h3>
+                        <p class="text-slate-200 mb-5">您已晋升为 <span class="font-bold text-yellow-400">${newRank}</span>！</p>
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold w-full" id="rankUpBtn">继续游戏</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(messageModal);
+                
+                document.getElementById('rankUpBtn').addEventListener('click', () => {
+                    messageModal.remove();
+                });
+                
+                // 震动反馈
+                this.vibrate([200, 100, 200]);
+            },
+            
+            // ========== 原有功能 ==========
+            async addScore(score) {
+                if (!this.currentUser || score <= 0) return;
+
+                try {
+                    const { error } = await this.supabase
+                        .from('game_scores')
+                        .upsert([{
+                            user_id: this.currentUser.id,
+                            username: this.currentUser.username,
+                            score: score,
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (error) throw error;
+                    this.loadFromSupabase();
+                    this.saveGameProgress();
+                    
+                    this.vibrate(100);
+                } catch (error) {
+                    console.error('提交分数失败:', error);
+                    const cached = JSON.parse(localStorage.getItem('cached_scores') || '[]');
+                    cached.push({ 
+                        user_id: this.currentUser.id, 
+                        username: this.currentUser.username, 
+                        score: score,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('cached_scores', JSON.stringify(cached));
+                }
+            },
+            
+            async syncCachedScores() {
+                try {
+                    const cached = JSON.parse(localStorage.getItem('cached_scores') || '[]');
+                    if (cached.length === 0) return;
+                    
+                    for (const score of cached) {
+                        await this.supabase
+                            .from('game_scores')
+                            .upsert([score]);
+                    }
+                    
+                    localStorage.removeItem('cached_scores');
+                } catch (error) {
+                    console.error('同步缓存分数失败:', error);
+                }
+            },
+            
+            async addFriend(friendUserId, friendUsername) {
+                try {
+                    const { error } = await this.supabase
+                        .from('game_friends')
+                        .upsert([{
+                            user_id: this.currentUser.id,
+                            friend_user_id: friendUserId,
+                            status: 'pending',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        }]);
+                    
+                    if (error) throw error;
+                    
+                    this.showToast('好友请求已发送');
+                    this.loadFriends();
+                    return true;
+                } catch (error) {
+                    console.error('添加好友失败:', error);
+                    this.showToast('添加好友失败');
+                    return false;
+                }
+            },
+            
+            async respondToFriendRequest(friendshipId, status) {
+                try {
+                    const { error } = await this.supabase
+                        .from('game_friends')
+                        .update({
+                            status: status,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', friendshipId);
+                    
+                    if (error) throw error;
+                    
+                    this.showToast(status === 'accepted' ? '已接受好友请求' : '已拒绝好友请求');
+                    this.loadFriends();
+                    return true;
+                } catch (error) {
+                    console.error('处理好友请求失败:', error);
+                    this.showToast('操作失败');
+                    return false;
+                }
+            },
+            
+            render() {
+                const rankingListEl = document.getElementById('rankingList');
+                if (!rankingListEl) return;
+
+                rankingListEl.innerHTML = '';
+
+                if (this.rankings.length === 0) {
+                    rankingListEl.innerHTML = '<div class="text-center p-4 text-slate-400">暂无联机数据</div>';
+                    return;
+                }
+
+                this.rankings.forEach((item) => {
+                    const isCurrentUser = item.user_id === this.currentUser.id;
+                    const rankItem = document.createElement('div');
+                    rankItem.className = `flex justify-between items-center p-3 rounded-lg ${
+                        item.rank < 4 ? 'bg-yellow-900/30' : isCurrentUser ? 'bg-blue-900/30' : 'bg-slate-700/50'
+                    } mb-2`;
+
+                    let rankIcon = '';
+                    if (item.rank === 1) rankIcon = '<i class="fa fa-trophy text-yellow-500 mr-2"></i>';
+                    if (item.rank === 2) rankIcon = '<i class="fa fa-trophy text-gray-400 mr-2"></i>';
+                    if (item.rank === 3) rankIcon = '<i class="fa fa-trophy text-amber-700 mr-2"></i>';
+
+                    rankItem.innerHTML = `
+                        <div class="flex items-center flex-1">
+                            <span class="w-8 text-center font-bold ${isCurrentUser ? 'text-purple-400' : ''}">${item.rank}</span>
+                            ${rankIcon}
+                            <img src="${item.avatar}" alt="${item.username}" class="w-8 h-8 rounded-full mr-2">
+                            <span class="truncate">${item.username}</span>
+                        </div>
+                        <span class="font-bold text-xl ml-4">${item.score.toLocaleString()}</span>
+                    `;
+                    rankingListEl.appendChild(rankItem);
+                });
+            },
+            
+            renderFriends() {
+                const friendsListEl = document.getElementById('friendsList');
+                if (!friendsListEl) return;
+
+                friendsListEl.innerHTML = '';
+
+                if (this.friends.length === 0) {
+                    friendsListEl.innerHTML = '<div class="text-center p-4 text-slate-400">暂无好友，请添加好友</div>';
+                    return;
+                }
+
+                this.friends.forEach((friendship) => {
+                    const friendItem = document.createElement('div');
+                    friendItem.className = 'flex justify-between items-center p-3 rounded-lg bg-slate-700/50 mb-2';
+
+                    let statusText = '';
+                    let actionButton = '';
+
+                    switch (friendship.status) {
+                        case 'pending':
+                            if (friendship.isInitiator) {
+                                statusText = '<span class="text-yellow-400 text-sm">等待通过</span>';
+                                actionButton = '<button class="text-xs text-red-400" onclick="rankingSystem.cancelFriendRequest(\'' + friendship.id + '\')">取消</button>';
+                            } else {
+                                statusText = '<span class="text-blue-400 text-sm">好友请求</span>';
+                                actionButton = `
+                                    <div class="flex gap-2">
+                                        <button class="text-xs text-green-400" onclick="rankingSystem.respondToFriendRequest('${friendship.id}', 'accepted')">接受</button>
+                                        <button class="text-xs text-red-400" onclick="rankingSystem.respondToFriendRequest('${friendship.id}', 'rejected')">拒绝</button>
+                                    </div>
+                                `;
+                            }
+                            break;
+                        case 'accepted':
+                            statusText = '<span class="text-green-400 text-sm">已添加</span>';
+                            actionButton = '<button class="text-xs text-red-400" onclick="rankingSystem.removeFriend(\'' + friendship.id + '\')">删除</button>';
+                            break;
+                        case 'rejected':
+                            statusText = '<span class="text-red-400 text-sm">已拒绝</span>';
+                            actionButton = '';
+                            break;
+                    }
+
+                    friendItem.innerHTML = `
+                        <div class="flex items-center flex-1">
+                            <img src="${friendship.friend.avatar}" alt="${friendship.friend.username}" class="w-8 h-8 rounded-full mr-2">
+                            <div>
+                                <span class="block">${friendship.friend.username}</span>
+                                ${statusText}
+                            </div>
+                        </div>
+                        ${actionButton}
+                    `;
+                    friendsListEl.appendChild(friendItem);
+                });
+            },
+            
+            async cancelFriendRequest(friendshipId) {
+                try {
+                    const { error } = await this.supabase
+                        .from('game_friends')
+                        .delete()
+                        .eq('id', friendshipId);
+                    
+                    if (error) throw error;
+                    
+                    this.showToast('已取消好友请求');
+                    this.loadFriends();
+                } catch (error) {
+                    console.error('取消好友请求失败:', error);
+                    this.showToast('操作失败');
+                }
+            },
+            
+            async removeFriend(friendshipId) {
+                try {
+                    const { error } = await this.supabase
+                        .from('game_friends')
+                        .delete()
+                        .eq('id', friendshipId);
+                    
+                    if (error) throw error;
+                    
+                    this.showToast('已删除好友');
+                    this.loadFriends();
+                } catch (error) {
+                    console.error('删除好友失败:', error);
+                    this.showToast('操作失败');
+                }
+            },
+            
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg z-50 ${
+                    type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-green-600' : 'bg-slate-800'
+                } text-white shadow-lg`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                    setTimeout(() => toast.remove(), 500);
+                }, 3000);
+            },
+            
+            vibrate(pattern) {
+                if (!gameState.settings.vibration || !navigator.vibrate) return;
+                navigator.vibrate(pattern);
+            }
+        };
+
+        // ========== 游戏核心逻辑 ==========
+        function initGame() {
+            soundSystem.init();
+            rankingSystem.init();
+            
+            // 初始化游戏区域尺寸
+            updateGameDimensions();
+            window.addEventListener('resize', updateGameDimensions);
+            
+            // 初始化电子位置
+            resetElectronPosition();
+            
+            // 绑定控制按钮事件（仅保留按键控制，删除触摸移动）
+            bindControls();
+            
+            // 显示新手引导
+            if (gameState.settings.showTutorial) {
+                showTutorial();
+            }
+            
+            // 初始化模态框
+            initModals();
+            
+            // 修复结算界面强制显示
+            fixResultModal();
+            
+            // 初始化排位匹配系统
+            initRankMatching();
+            
+            // 修复手机端分辨率适配
+            fixMobileResolution();
+        }
+
+        function updateGameDimensions() {
+            const gameArea = document.getElementById('gameArea');
+            const rect = gameArea.getBoundingClientRect();
+            gameState.gameWidth = rect.width;
+            gameState.gameHeight = rect.height;
+        }
+
+        function resetElectronPosition() {
+            const gameArea = document.getElementById('gameArea');
+            const rect = gameArea.getBoundingClientRect();
+            
+            gameState.electron.x = rect.width / 2;
+            gameState.electron.y = rect.height / 2;
+            gameState.electron.z = 0;
+            
+            updateElectronPosition();
+        }
+
+        // 仅保留按键控制（删除触摸移动逻辑）
+        function bindControls() {
+            // 方向控制
+            document.getElementById('btnUp').addEventListener('click', () => moveElectron(0, -gameState.electron.speed));
+            document.getElementById('btnDown').addEventListener('click', () => moveElectron(0, gameState.electron.speed));
+            document.getElementById('btnLeft').addEventListener('click', () => moveElectron(-gameState.electron.speed, 0));
+            document.getElementById('btnRight').addEventListener('click', () => moveElectron(gameState.electron.speed, 0));
+            
+            // Z轴控制
+            document.getElementById('btnZUp').addEventListener('click', () => changeZDepth(1));
+            document.getElementById('btnZDown').addEventListener('click', () => changeZDepth(-1));
+            
+            // 电荷切换
+            document.getElementById('btnCharge').addEventListener('click', toggleCharge);
+            
+            // 技能按钮
+            document.getElementById('btnSkill').addEventListener('click', useSkill);
+            
+            // 游戏控制
+            document.getElementById('btnStart').addEventListener('click', startGame);
+            document.getElementById('btnRestart').addEventListener('click', restartGame);
+            document.getElementById('btnPause').addEventListener('click', togglePause);
+            
+            // 排位模式
+            document.getElementById('btnRankMode').addEventListener('click', enterRankMode);
+            
+            // 赛季重置
+            document.getElementById('btnResetSeason').addEventListener('click', () => rankingSystem.resetSeasonRank());
+            
+            // 奖励发放
+            document.getElementById('btnRewardSeason').addEventListener('click', () => rankingSystem.rewardSeasonCoins());
+            
+            // 设置按钮
+            document.getElementById('btnSettings').addEventListener('click', () => {
+                document.getElementById('settingsModal').classList.remove('hidden');
+            });
+            
+            // 音效切换
+            document.getElementById('toggleSound').addEventListener('change', () => {
+                gameState.settings.sound = document.getElementById('toggleSound').checked;
+                soundSystem.toggle();
+                rankingSystem.saveGameProgress();
+            });
+            
+            // 震动切换
+            document.getElementById('toggleVibration').addEventListener('change', () => {
+                gameState.settings.vibration = document.getElementById('toggleVibration').checked;
+                rankingSystem.saveGameProgress();
+            });
+            
+            // 排行榜按钮
+            document.getElementById('btnRanking').addEventListener('click', () => {
+                document.getElementById('rankingModal').classList.remove('hidden');
+                rankingSystem.loadFromSupabase();
+            });
+            
+            // 好友按钮
+            document.getElementById('btnFriends').addEventListener('click', () => {
+                document.getElementById('friendsModal').classList.remove('hidden');
+                rankingSystem.loadFriends();
+            });
+            
+            // 添加好友按钮
+            document.getElementById('addFriendBtn').addEventListener('click', () => {
+                const friendId = document.getElementById('friendIdInput').value.trim();
+                const friendName = document.getElementById('friendNameInput').value.trim();
+                
+                if (!friendId) {
+                    rankingSystem.showToast('请输入好友ID', 'error');
+                    return;
+                }
+                
+                rankingSystem.addFriend(friendId, friendName);
+            });
+            
+            // 关闭按钮通用绑定
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modalId = this.getAttribute('data-modal');
+                    document.getElementById(modalId).classList.add('hidden');
+                });
+            });
+            
+            // 初始化设置开关状态
+            document.getElementById('toggleSound').checked = gameState.settings.sound;
+            document.getElementById('toggleVibration').checked = gameState.settings.vibration;
+        }
+
+        function moveElectron(dx, dy) {
+            if (!gameState.isPlaying || gameState.immune) return;
+            
+            // 更新位置
+            gameState.electron.x += dx;
+            gameState.electron.y += dy;
+            
+            // 边界检测
+            const padding = gameState.electron.size / 2;
+            gameState.electron.x = Math.max(padding, Math.min(gameState.gameWidth - padding, gameState.electron.x));
+            gameState.electron.y = Math.max(padding, Math.min(gameState.gameHeight - padding, gameState.electron.y));
+            
+            // 更新DOM位置
+            updateElectronPosition();
+            
+            // 增加移动次数
+            gameState.moves++;
+            document.getElementById('movesCount').textContent = gameState.moves;
+            
+            // 播放移动音效
+            soundSystem.play('move');
+            
+            // 检测碰撞
+            checkCollisions();
+            
+            // 帧率控制
+            gameState.frameCounter++;
+            if (gameState.frameCounter >= gameState.frameSkip) {
+                gameState.frameCounter = 0;
+                updateGameObjects();
+            }
+        }
+
+        function changeZDepth(dz) {
+            if (!gameState.isPlaying) return;
+            
+            const newZ = gameState.electron.z + dz;
+            if (newZ >= -gameState.maxZDepth && newZ <= gameState.maxZDepth) {
+                gameState.electron.z = newZ;
+                updateElectronPosition();
+                document.getElementById('zDepth').textContent = gameState.electron.z;
+                
+                // 播放音效
+                soundSystem.play('charge');
+            }
+        }
+
+        function toggleCharge() {
+            if (!gameState.isPlaying || !gameState.skillAvailable) return;
+            
+            gameState.electron.charge *= -1;
+            gameState.electron.chargeState = gameState.electron.charge > 0 ? 'positive' : 'negative';
+            
+            const electronEl = document.getElementById('electron');
+            electronEl.className = `electron float-3d charge-effect ${gameState.electron.chargeState}`;
+            
+            document.getElementById('chargeState').textContent = gameState.electron.charge > 0 ? '+' : '-';
+            
+            // 技能冷却
+            gameState.skillAvailable = false;
+            const skillBtn = document.getElementById('btnSkill');
+            skillBtn.disabled = true;
+            skillBtn.classList.add('bg-slate-600', 'cursor-not-allowed');
+            
+            setTimeout(() => {
+                gameState.skillAvailable = true;
+                skillBtn.disabled = false;
+                skillBtn.classList.remove('bg-slate-600', 'cursor-not-allowed');
+            }, 5000);
+            
+            // 播放音效
+            soundSystem.play('charge');
+        }
+
+        function useSkill() {
+            if (!gameState.isPlaying || !gameState.skillAvailable) return;
+            
+            // 无敌状态
+            gameState.immune = true;
+            const electronEl = document.getElementById('electron');
+            electronEl.classList.add('quantum-pulse');
+            
+            // 技能冷却
+            gameState.skillAvailable = false;
+            const skillBtn = document.getElementById('btnSkill');
+            skillBtn.disabled = true;
+            skillBtn.classList.add('bg-slate-600', 'cursor-not-allowed');
+            
+            setTimeout(() => {
+                gameState.immune = false;
+                electronEl.classList.remove('quantum-pulse');
+                
+                setTimeout(() => {
+                    gameState.skillAvailable = true;
+                    skillBtn.disabled = false;
+                    skillBtn.classList.remove('bg-slate-600', 'cursor-not-allowed');
+                }, 3000);
+            }, 3000);
+            
+            // 播放音效
+            soundSystem.play('skill');
+            rankingSystem.vibrate([100, 50, 100]);
+        }
+
+        function updateElectronPosition() {
+            const electronEl = document.getElementById('electron');
+            if (!electronEl) return;
+            
+            // 3D效果计算
+            const zOffset = gameState.electron.z * 5;
+            const zAbsolute = Math.abs(gameState.electron.z);
+            
+            electronEl.style.cssText = `
+                left: ${gameState.electron.x}px;
+                top: ${gameState.electron.y}px;
+                width: ${gameState.electron.size - zAbsolute * 2}px;
+                height: ${gameState.electron.size - zAbsolute * 2}px;
+                --z-offset: ${zOffset}px;
+                --z-absolute: ${zAbsolute};
+                background-color: var(--${gameState.electron.chargeState});
+                margin-left: -${(gameState.electron.size - zAbsolute * 2) / 2}px;
+                margin-top: -${(gameState.electron.size - zAbsolute * 2) / 2}px;
+            `;
+        }
+
+        function createProton() {
+            const position = generateSafePosition(15 + Math.random() * 10, 'proton');
+            if (!position) return null;
+            
+            const proton = {
+                x: position.x,
+                y: position.y,
+                z: position.z,
+                size: 15 + Math.random() * 10,
+                charge: 1,
+                id: 'proton_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+            };
+            
+            gameState.protons.push(proton);
+            
+            const protonEl = document.createElement('div');
+            protonEl.id = proton.id;
+            protonEl.className = 'proton float-3d';
+            
+            const zOffset = proton.z * 5;
+            const zAbsolute = Math.abs(proton.z);
+            
+            protonEl.style.cssText = `
+                left: ${proton.x}px;
+                top: ${proton.y}px;
+                width: ${proton.size - zAbsolute * 2}px;
+                height: ${proton.size - zAbsolute * 2}px;
+                --z-offset: ${zOffset}px;
+                --z-absolute: ${zAbsolute};
+                background-color: var(--proton);
+                margin-left: -${(proton.size - zAbsolute * 2) / 2}px;
+                margin-top: -${(proton.size - zAbsolute * 2) / 2}px;
+            `;
+            
+            document.getElementById('gameArea').appendChild(protonEl);
+            return proton;
+        }
+
+        function createTrap() {
+            const position = generateSafePosition(25 + Math.random() * 15, 'trap');
+            if (!position) return null;
+            
+            const trap = {
+                x: position.x,
+                y: position.y,
+                z: position.z,
+                size: 25 + Math.random() * 15,
+                id: 'trap_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                active: true
+            };
+            
+            gameState.traps.push(trap);
+            
+            const trapEl = document.createElement('div');
+            trapEl.id = trap.id;
+            trapEl.className = 'trap trap-effect';
+            
+            const zOffset = trap.z * 5;
+            const zAbsolute = Math.abs(trap.z);
+            
+            trapEl.style.cssText = `
+                left: ${trap.x}px;
+                top: ${trap.y}px;
+                width: ${trap.size - zAbsolute * 2}px;
+                height: ${trap.size - zAbsolute * 2}px;
+                --z-offset: ${zOffset}px;
+                --z-absolute: ${zAbsolute};
+                margin-left: -${(trap.size - zAbsolute * 2) / 2}px;
+                margin-top: -${(trap.size - zAbsolute * 2) / 2}px;
+            `;
+            
+            document.getElementById('gameArea').appendChild(trapEl);
+            return trap;
+        }
+
+        function createFragment() {
+            const position = generateSafePosition(10 + Math.random() * 5, 'fragment');
+            if (!position) return null;
+            
+            const fragment = {
+                x: position.x,
+                y: position.y,
+                z: position.z,
+                size: 10 + Math.random() * 5,
+                id: 'fragment_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                value: Math.floor(Math.random() * 5) + 1
+            };
+            
+            gameState.fragments.push(fragment);
+            
+            const fragmentEl = document.createElement('div');
+            fragmentEl.id = fragment.id;
+            fragmentEl.className = 'fragment float-3d';
+            
+            const zOffset = fragment.z * 5;
+            const zAbsolute = Math.abs(fragment.z);
+            
+            fragmentEl.style.cssText = `
+                left: ${fragment.x}px;
+                top: ${fragment.y}px;
+                width: ${fragment.size - zAbsolute * 2}px;
+                height: ${fragment.size - zAbsolute * 2}px;
+                --z-offset: ${zOffset}px;
+                --z-absolute: ${zAbsolute};
+                background-color: var(--neutral);
+                margin-left: -${(fragment.size - zAbsolute * 2) / 2}px;
+                margin-top: -${(fragment.size - zAbsolute * 2) / 2}px;
+            `;
+            
+            document.getElementById('gameArea').appendChild(fragmentEl);
+            return fragment;
+        }
+
+        function createBoss() {
+            if (gameState.boss) return;
+            
+            const position = generateSafePosition(50, 'proton');
+            if (!position) return;
+            
+            gameState.boss = {
+                x: position.x,
+                y: position.y,
+                z: position.z,
+                size: 50,
+                health: 10,
+                id: 'boss_' + Date.now(),
+                attackCooldown: 2000,
+                lastAttack: Date.now()
+            };
+            
+            const bossEl = document.createElement('div');
+            bossEl.id = gameState.boss.id;
+            bossEl.className = 'boss float-3d';
+            
+            const zOffset = gameState.boss.z * 5;
+            const zAbsolute = Math.abs(gameState.boss.z);
+            
+            bossEl.style.cssText = `
+                left: ${gameState.boss.x}px;
+                top: ${gameState.boss.y}px;
+                width: ${gameState.boss.size - zAbsolute * 2}px;
+                height: ${gameState.boss.size - zAbsolute * 2}px;
+                --z-offset: ${zOffset}px;
+                --z-absolute: ${zAbsolute};
+                background: radial-gradient(circle, #8b5cf6 0%, #ec4899 100%);
+                box-shadow: 0 0 20px #8b5cf6;
+                margin-left: -${(gameState.boss.size - zAbsolute * 2) / 2}px;
+                margin-top: -${(gameState.boss.size - zAbsolute * 2) / 2}px;
+            `;
+            
+            document.getElementById('gameArea').appendChild(bossEl);
+            gameState.inBossFight = true;
+            
+            // 更新BOSS血条
+            updateBossHealth();
+            
+            // 播放BOSS音效
+            soundSystem.play('boss');
+            rankingSystem.vibrate([200, 100, 200]);
+            
+            // 显示BOSS提示
+            rankingSystem.showToast('量子BOSS出现！', 'info');
+        }
+
+        function bossAttack() {
+            if (!gameState.boss || !gameState.inBossFight) return;
+            
+            const now = Date.now();
+            if (now - gameState.boss.lastAttack < gameState.boss.attackCooldown) return;
+            
+            gameState.boss.lastAttack = now;
+            
+            // 创建投射物
+            const projectile = {
+                x: gameState.boss.x,
+                y: gameState.boss.y,
+                z: gameState.boss.z,
+                size: 10,
+                id: 'projectile_' + Date.now(),
+                velocityX: (gameState.electron.x - gameState.boss.x) / 50,
+                velocityY: (gameState.electron.y - gameState.boss.y) / 50
+            };
+            
+            gameState.bossProjectiles.push(projectile);
+            
+            const projectileEl = document.createElement('div');
+            projectileEl.id = projectile.id;
+            projectileEl.className = 'projectile';
+            
+            const zOffset = projectile.z * 5;
+            const zAbsolute = Math.abs(projectile.z);
+            
+            projectileEl.style.cssText = `
+                left: ${projectile.x}px;
+                top: ${projectile.y}px;
+                width: ${projectile.size - zAbsolute * 2}px;
+                height: ${projectile.size - zAbsolute * 2}px;
+                --z-offset: ${zOffset}px;
+                --z-absolute: ${zAbsolute};
+                background-color: #ec4899;
+                margin-left: -${(projectile.size - zAbsolute * 2) / 2}px;
+                margin-top: -${(projectile.size - zAbsolute * 2) / 2}px;
+            `;
+            
+            document.getElementById('gameArea').appendChild(projectileEl);
+        }
+
+        function updateBossHealth() {
+            const healthBar = document.getElementById('bossHealth');
+            const healthPercent = (gameState.boss.health / 10) * 100;
+            
+            healthBar.style.width = `${healthPercent}%`;
+            healthBar.className = `h-2 rounded-full ${
+                healthPercent > 60 ? 'bg-green-500' : 
+                healthPercent > 30 ? 'bg-yellow-500' : 'bg-red-500'
+            }`;
+            
+            document.getElementById('bossHealthText').textContent = `${gameState.boss.health}/10`;
+            
+            if (gameState.boss.health <= 0) {
+                defeatBoss();
+            }
+        }
+
+        function defeatBoss() {
+            gameState.inBossFight = false;
+            
+            // 移除BOSS元素
+            const bossEl = document.getElementById(gameState.boss.id);
+            if (bossEl) {
+                bossEl.classList.add('scale-0', 'opacity-0', 'transition-all', 'duration-500');
+                setTimeout(() => bossEl.remove(), 500);
+            }
+            
+            // 清除所有投射物
+            gameState.bossProjectiles.forEach(projectile => {
+                const el = document.getElementById(projectile.id);
+                if (el) el.remove();
+            });
+            gameState.bossProjectiles = [];
+            
+            // 奖励分数
+            gameState.score += 500;
+            document.getElementById('scoreCount').textContent = gameState.score;
+            
+            // 隐藏BOSS血条
+            document.getElementById('bossHealthContainer').classList.add('hidden');
+            
+            // 播放音效
+            soundSystem.play('levelUp');
+            rankingSystem.vibrate([100, 50, 100, 50, 100]);
+            
+            // 显示提示
+            rankingSystem.showToast('BOSS已击败！获得500分奖励', 'success');
+            
+            gameState.boss = null;
+            
+            // 升级
+            levelUp();
+        }
+
+        function updateGameObjects() {
+            // 更新投射物位置
+            gameState.bossProjectiles.forEach((projectile, index) => {
+                projectile.x += projectile.velocityX;
+                projectile.y += projectile.velocityY;
+                
+                const el = document.getElementById(projectile.id);
+                if (el) {
+                    const zOffset = projectile.z * 5;
+                    const zAbsolute = Math.abs(projectile.z);
+                    
+                    el.style.cssText = `
+                        left: ${projectile.x}px;
+                        top: ${projectile.y}px;
+                        width: ${projectile.size - zAbsolute * 2}px;
+                        height: ${projectile.size - zAbsolute * 2}px;
+                        --z-offset: ${zOffset}px;
+                        --z-absolute: ${zAbsolute};
+                        background-color: #ec4899;
+                        margin-left: -${(projectile.size - zAbsolute * 2) / 2}px;
+                        margin-top: -${(projectile.size - zAbsolute * 2) / 2}px;
+                    `;
+                }
+                
+                // 边界检测
+                if (projectile.x < 0 || projectile.x > gameState.gameWidth || 
+                    projectile.y < 0 || projectile.y > gameState.gameHeight) {
+                    
+                    const el = document.getElementById(projectile.id);
+                    if (el) el.remove();
+                    gameState.bossProjectiles.splice(index, 1);
+                }
+                
+                // 碰撞检测
+                if (checkCollision(projectile, gameState.electron) && !gameState.immune) {
+                    gameOver();
+                }
+            });
+            
+            // BOSS攻击
+            if (gameState.boss && gameState.inBossFight) {
+                bossAttack();
+            }
+        }
+
+        function checkCollisions() {
+            const electron = gameState.electron;
+            
+            // 检测与质子的碰撞
+            gameState.protons.forEach((proton, index) => {
+                if (checkCollision(electron, proton)) {
+                    if (electron.charge === proton.charge && !gameState.immune) {
+                        // 同电荷碰撞 - 游戏结束
+                        gameOver();
+                    } else if (electron.charge !== proton.charge) {
+                        // 异电荷碰撞 - 加分
+                        collectProton(index);
+                    }
+                }
+            });
+            
+            // 检测与陷阱的碰撞
+            gameState.traps.forEach((trap, index) => {
+                if (checkCollision(electron, trap) && trap.active && !gameState.immune) {
+                    triggerTrap(index);
+                }
+            });
+            
+            // 检测与碎片的碰撞
+            gameState.fragments.forEach((fragment, index) => {
+                if (checkCollision(electron, fragment)) {
+                    collectFragment(index);
+                }
+            });
+        }
+
+        function checkCollision(obj1, obj2) {
+            if (obj1.z !== obj2.z) return false;
+            
+            const dx = obj1.x - obj2.x;
+            const dy = obj1.y - obj2.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDistance = (obj1.size + obj2.size) / 2 - 5;
+            
+            return distance < minDistance;
+        }
+
+        function collectProton(index) {
+            const proton = gameState.protons[index];
+            
+            // 移除质子元素
+            const el = document.getElementById(proton.id);
+            if (el) {
+                el.classList.add('scale-0', 'opacity-0', 'transition-all', 'duration-300');
+                setTimeout(() => el.remove(), 300);
+            }
+            
+            // 从数组移除
+            gameState.protons.splice(index, 1);
+            
+            // 加分
+            const points = 10 * gameState.level;
+            gameState.score += points;
+            document.getElementById('scoreCount').textContent = gameState.score;
+            
+            // 播放音效
+            soundSystem.play('collect');
+            
+            // 创建新质子
+            setTimeout(createProton, 1000);
+            
+            // 震动反馈
+            rankingSystem.vibrate(50);
+        }
+
+        function triggerTrap(index) {
+            const trap = gameState.traps[index];
+            trap.active = false;
+            
+            // 陷阱视觉效果
+            const el = document.getElementById(trap.id);
+            if (el) {
+                el.classList.add('scale-150', 'opacity-0', 'transition-all', 'duration-500');
+                
+                // 创建爆炸效果
+                const explosion = document.createElement('div');
+                explosion.className = 'field-effect';
+                explosion.style.cssText = `
+                    left: ${trap.x}px;
+                    top: ${trap.y}px;
+                    width: ${trap.size * 3}px;
+                    height: ${trap.size * 3}px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, transparent 70%);
+                    margin-left: -${trap.size * 1.5}px;
+                    margin-top: -${trap.size * 1.5}px;
+                    animation: pulse 0.5s ease-out;
+                `;
+                document.getElementById('gameArea').appendChild(explosion);
+                setTimeout(() => explosion.remove(), 500);
+            }
+            
+            // 扣分
+            gameState.score = Math.max(0, gameState.score - 50);
+            document.getElementById('scoreCount').textContent = gameState.score;
+            
+            // 播放音效
+            soundSystem.play('gameOver');
+            
+            // 震动反馈
+            rankingSystem.vibrate([100, 50, 100]);
+            
+            // 3秒后重新激活陷阱
+            setTimeout(() => {
+                if (trap && document.getElementById(trap.id)) {
+                    trap.active = true;
+                    const el = document.getElementById(trap.id);
+                    if (el) {
+                        el.classList.remove('scale-150', 'opacity-0');
+                        el.classList.add('trap-effect');
+                    }
+                }
+            }, 3000);
+        }
+
+        function collectFragment(index) {
+            const fragment = gameState.fragments[index];
+            
+            // 移除碎片元素
+            const el = document.getElementById(fragment.id);
+            if (el) {
+                el.classList.add('scale-0', 'opacity-0', 'transition-all', 'duration-300');
+                setTimeout(() => el.remove(), 300);
+            }
+            
+            // 从数组移除
+            gameState.fragments.splice(index, 1);
+            
+            // 加分
+            gameState.score += fragment.value * 5;
+            document.getElementById('scoreCount').textContent = gameState.score;
+            
+            // 增加收集数量
+            gameState.fragmentsCollected++;
+            document.getElementById('fragmentsCount').textContent = `${gameState.fragmentsCollected}/${gameState.fragmentsNeeded}`;
+            
+            // 播放音效
+            soundSystem.play('collect');
+            
+            // 震动反馈
+            rankingSystem.vibrate(30);
+            
+            // 检查是否收集足够碎片
+            if (gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
+                if (gameState.level % 5 === 0 && !gameState.boss) {
+                    // BOSS关卡
+                    spawnBoss();
+                } else {
+                    // 普通升级
+                    levelUp();
+                }
+            }
+            
+            // 创建新碎片
+            setTimeout(createFragment, 2000);
+        }
+
+        function spawnBoss() {
+            // 清除现有物体
+            clearGameObjects();
+            
+            // 显示BOSS血条
+            document.getElementById('bossHealthContainer').classList.remove('hidden');
+            
+            // 创建BOSS
+            setTimeout(createBoss, 1000);
+        }
+
+        function levelUp() {
+            gameState.level++;
+            document.getElementById('levelCount').textContent = gameState.level;
+            
+            // 重置碎片收集
+            gameState.fragmentsCollected = 0;
+            gameState.fragmentsNeeded = Math.min(5 + Math.floor(gameState.level / 2), 15);
+            document.getElementById('fragmentsCount').textContent = `0/${gameState.fragmentsNeeded}`;
+            
+            // 增加时间
+            gameState.timeLeft += 10;
+            document.getElementById('timeLeft').textContent = gameState.timeLeft;
+            
+            // 播放音效
+            soundSystem.play('levelUp');
+            
+            // 震动反馈
+            rankingSystem.vibrate([100, 50, 100]);
+            
+            // 显示提示
+            rankingSystem.showToast(`升级！当前等级: ${gameState.level}`, 'success');
+            
+            // 重置游戏物体
+            resetGameObjects();
+            
+            // 调整难度
+            adjustDifficulty();
+        }
+
+        function adjustDifficulty() {
+            // 增加障碍密度
+            gameState.performance.obstacleDensity = Math.min(1 + (gameState.level - 1) * 0.1, 3);
+            
+            // 增加电子速度
+            gameState.electron.speed = Math.min(3 + (gameState.level - 1) * 0.1, 6);
+            
+            // 增加陷阱数量
+            const trapCount = Math.min(3 + Math.floor(gameState.level / 3), 8);
+            while (gameState.traps.length < trapCount) {
+                createTrap();
+            }
+            
+            // 增加质子数量
+            const protonCount = Math.min(5 + Math.floor(gameState.level / 2), 15);
+            while (gameState.protons.length < protonCount) {
+                createProton();
+            }
+            
+            // 增加碎片数量
+            const fragmentCount = Math.min(3 + Math.floor(gameState.level / 3), 8);
+            while (gameState.fragments.length < fragmentCount) {
+                createFragment();
+            }
+        }
+
+        function clearGameObjects() {
+            // 移除所有DOM元素
+            document.querySelectorAll('.proton, .trap, .fragment, .boss, .projectile').forEach(el => el.remove());
+            
+            // 清空数组
+            gameState.protons = [];
+            gameState.traps = [];
+            gameState.fragments = [];
+            gameState.bossProjectiles = [];
+            gameState.boss = null;
+            gameState.inBossFight = false;
+        }
+
+        function resetGameObjects() {
+            clearGameObjects();
+            
+            // 创建新的游戏物体
+            const protonCount = Math.min(5 + Math.floor(gameState.level / 2), 15);
+            for (let i = 0; i < protonCount; i++) {
+                setTimeout(() => createProton(), i * 300);
+            }
+            
+            const trapCount = Math.min(3 + Math.floor(gameState.level / 3), 8);
+            for (let i = 0; i < trapCount; i++) {
+                setTimeout(() => createTrap(), i * 500);
+            }
+            
+            const fragmentCount = Math.min(3 + Math.floor(gameState.level / 3), 8);
+            for (let i = 0; i < fragmentCount; i++) {
+                setTimeout(() => createFragment(), i * 400);
+            }
+        }
+
+        function startGame() {
+            if (gameState.isPlaying) return;
+            
+            // 重置游戏状态
+            gameState.isPlaying = true;
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.moves = 0;
+            gameState.timeLeft = 80;
+            gameState.fragmentsCollected = 0;
+            gameState.fragmentsNeeded = 3;
+            gameState.immune = false;
+            gameState.skillAvailable = true;
+            
+            // 重置电子状态
+            gameState.electron.charge = -1;
+            gameState.electron.chargeState = 'negative';
+            gameState.electron.z = 0;
+            gameState.electron.speed = 3;
+            
+            // 更新UI
+            document.getElementById('scoreCount').textContent = 0;
+            document.getElementById('levelCount').textContent = 1;
+            document.getElementById('movesCount').textContent = 0;
+            document.getElementById('timeLeft').textContent = 80;
+            document.getElementById('fragmentsCount').textContent = `0/${gameState.fragmentsNeeded}`;
+            document.getElementById('chargeState').textContent = '-';
+            document.getElementById('zDepth').textContent = 0;
+            
+            // 更新电子样式
+            const electronEl = document.getElementById('electron');
+            electronEl.className = 'electron float-3d charge-effect negative';
+            electronEl.classList.remove('quantum-pulse');
+            
+            // 重置技能按钮
+            const skillBtn = document.getElementById('btnSkill');
+            skillBtn.disabled = false;
+            skillBtn.classList.remove('bg-slate-600', 'cursor-not-allowed');
+            
+            // 隐藏BOSS血条
+            document.getElementById('bossHealthContainer').classList.add('hidden');
+            
+            // 重置游戏物体
+            resetGameObjects();
+            
+            // 重置电子位置
+            resetElectronPosition();
+            
+            // 开始计时
+            startTimer();
+            
+            // 启用控制按钮
+            enableControls();
+            
+            // 保存游戏进度
+            rankingSystem.saveGameProgress();
+            
+            // 隐藏新手引导
+            document.querySelector('.tutorial-overlay')?.remove();
+            gameState.settings.showTutorial = false;
+            
+            // 震动反馈
+            rankingSystem.vibrate(100);
+        }
+
+        function restartGame() {
+            // 停止计时
+            stopTimer();
+            
+            // 重置游戏状态
+            gameState.isPlaying = false;
+            gameState.isRankMode = false;
+            gameState.isMatching = false;
+            
+            // 隐藏结算界面
+            document.getElementById('resultModal').classList.add('hidden');
+            
+            // 开始新游戏
+            startGame();
+        }
+
+        function togglePause() {
+            if (!gameState.isPlaying) return;
+            
+            gameState.isPlaying = !gameState.isPlaying;
+            
+            if (gameState.isPlaying) {
+                // 继续游戏
+                startTimer();
+                enableControls();
+                document.getElementById('btnPause').textContent = '暂停';
+                rankingSystem.showToast('游戏继续');
+            } else {
+                // 暂停游戏
+                stopTimer();
+                disableControls();
+                document.getElementById('btnPause').textContent = '继续';
+                rankingSystem.showToast('游戏已暂停');
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft--;
+                document.getElementById('timeLeft').textContent = gameState.timeLeft;
+                
+                if (gameState.timeLeft <= 0) {
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+
+        function enableControls() {
+            document.querySelectorAll('.control-btn:not(#btnStart):not(#btnRestart):not(#btnPause)').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('bg-slate-600', 'cursor-not-allowed');
+            });
+        }
+
+        function disableControls() {
+            document.querySelectorAll('.control-btn:not(#btnStart):not(#btnRestart):not(#btnPause)').forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('bg-slate-600', 'cursor-not-allowed');
+            });
+        }
+
+        function gameOver() {
+            // 停止计时
+            stopTimer();
+            
+            // 游戏结束状态
+            gameState.isPlaying = false;
+            
+            // 禁用控制按钮
+            disableControls();
+            
+            // 播放音效
+            soundSystem.play('gameOver');
+            
+            // 震动反馈
+            rankingSystem.vibrate([200, 100, 200]);
+            
+            // 更新游戏进度
+            rankingSystem.saveGameProgress();
+            
+            // 提交分数
+            rankingSystem.addScore(gameState.score);
+            
+            // 显示结算界面（强制显示，修复空白点击卡死）
+            showResultModal();
+            
+            // 处理排位模式结算
+            if (gameState.isRankMode) {
+                handleRankGameOver();
+            }
+        }
+
+        // 修复结算界面：强制显示，必须点击按钮退出
+        function fixResultModal() {
+            const resultModal = document.getElementById('resultModal');
+            // 阻止点击空白处关闭
+            resultModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // 强制按钮才能关闭
+            document.getElementById('btnRestart').addEventListener('click', function() {
+                resultModal.classList.add('hidden');
+                restartGame();
+            });
+            
+            document.getElementById('btnQuit').addEventListener('click', function() {
+                resultModal.classList.add('hidden');
+                gameState.isPlaying = false;
+                gameState.isRankMode = false;
+                gameState.isMatching = false;
+                clearGameObjects();
+            });
+        }
+
+        function showResultModal() {
+            const resultModal = document.getElementById('resultModal');
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalLevel').textContent = gameState.level;
+            document.getElementById('finalMoves').textContent = gameState.moves;
+            
+            // 排位模式额外信息
+            const rankResultEl = document.getElementById('rankResultInfo');
+            if (gameState.isRankMode && gameState.aiOpponent) {
+                const isWin = gameState.score > gameState.aiOpponent.score;
+                rankResultEl.innerHTML = `
+                    <div class="mt-4 p-3 bg-slate-800 rounded-lg">
+                        <h4 class="font-bold mb-2">排位赛结果</h4>
+                        <div class="flex justify-between mb-1">
+                            <span>您的得分:</span>
+                            <span class="font-bold ${isWin ? 'text-green-400' : 'text-red-400'}">${gameState.score}</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span>${gameState.aiOpponent.name}:</span>
+                            <span class="font-bold ${!isWin ? 'text-green-400' : 'text-red-400'}">${gameState.aiOpponent.score}</span>
+                        </div>
+                        <div class="text-center font-bold mt-2 ${isWin ? 'text-green-400' : 'text-red-400'}">
+                            ${isWin ? '胜利 ✨' : '失败 ❌'}
+                        </div>
+                    </div>
+                `;
+            } else {
+                rankResultEl.innerHTML = '';
+            }
+            
+            // 显示结算界面（强制显示）
+            resultModal.classList.remove('hidden');
+            
+            // 强制聚焦到重启按钮（防止空白点击）
+            setTimeout(() => {
+                document.getElementById('btnRestart').focus();
+            }, 100);
+        }
+
+        function showTutorial() {
+            const tutorial = document.createElement('div');
+            tutorial.className = 'tutorial-overlay';
+            tutorial.innerHTML = `
+                <div class="tutorial-step">
+                    <h3 class="text-xl font-bold mb-4 text-purple-400">自由电子冒险</h3>
+                    <div id="tutorialContent">
+                        <div class="tutorial-slide active">
+                            <p class="mb-4">欢迎来到量子风暴！</p>
+                            <p class="text-sm text-slate-300 mb-4">您需要控制电子收集质子和碎片，避开陷阱</p>
+                        </div>
+                        <div class="tutorial-slide hidden">
+                            <p class="mb-4">使用方向键控制电子移动</p>
+                            <p class="text-sm text-slate-300 mb-4">Z轴按钮可以切换维度层级</p>
+                        </div>
+                        <div class="tutorial-slide hidden">
+                            <p class="mb-4">电荷按钮可以切换电子电荷</p>
+                            <p class="text-sm text-slate-300 mb-4">同电荷相斥，异电荷相吸</p>
+                        </div>
+                        <div class="tutorial-slide hidden">
+                            <p class="mb-4">技能按钮可以激活无敌状态</p>
+                            <p class="text-sm text-slate-300 mb-4">收集足够碎片可以升级</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-6 mb-4">
+                        <div class="tutorial-dot active"></div>
+                        <div class="tutorial-dot"></div>
+                        <div class="tutorial-dot"></div>
+                        <div class="tutorial-dot"></div>
+                    </div>
+                    <button id="tutorialNext" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold w-full">
+                        下一步
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(tutorial);
+            
+            let currentSlide = 0;
+            const slides = tutorial.querySelectorAll('.tutorial-slide');
+            const dots = tutorial.querySelectorAll('.tutorial-dot');
+            
+            document.getElementById('tutorialNext').addEventListener('click', () => {
+                currentSlide++;
+                
+                if (currentSlide >= slides.length) {
+                    tutorial.remove();
+                    gameState.settings.showTutorial = false;
+                    rankingSystem.saveGameProgress();
+                    return;
+                }
+                
+                slides.forEach((slide, index) => {
+                    slide.classList.toggle('hidden', index !== currentSlide);
+                    slide.classList.toggle('active', index === currentSlide);
+                });
+                
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentSlide);
+                });
+                
+                if (currentSlide === slides.length - 1) {
+                    document.getElementById('tutorialNext').textContent = '开始游戏';
+                }
+            });
+        }
+
+        function initModals() {
+            // 初始化所有模态框关闭按钮
+            document.querySelectorAll('.modal .close-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modalId = this.getAttribute('data-modal');
+                    document.getElementById(modalId).classList.add('hidden');
+                });
+            });
+            
+            // 点击模态框外部关闭（除了结算界面）
+            document.querySelectorAll('.modal:not(#resultModal)').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
+            });
+        }
+
+        // ========== 排位匹配系统 ==========
+        function initRankMatching() {
+            // 初始化排位信息显示
+            rankingSystem.updateRankDisplay();
+            
+            // 匹配倒计时重置
+            gameState.matchCountdown = 30;
+        }
+
+        function enterRankMode() {
+            if (gameState.isPlaying) {
+                rankingSystem.showToast('请先结束当前游戏', 'error');
+                return;
+            }
+            
+            gameState.isRankMode = true;
+            document.getElementById('rankModal').classList.remove('hidden');
+            
+            // 显示当前排位信息
+            document.getElementById('currentRankInfo').innerHTML = `
+                <div class="rank-badge rank-${gameState.rankState.currentRank.replace(/\s+/g, '').toLowerCase()} mb-3">
+                    ${gameState.rankState.currentRank}
+                </div>
+                <div class="star-container mb-2" id="modalRankStars">
+                    ${Array.from({length: gameState.rankConfig[gameState.rankState.currentRank].totalStars}, (_, i) => 
+                        `<i class="fa fa-star star ${i < gameState.rankState.currentStars ? 'active' : ''}"></i>`
+                    ).join('')}
+                </div>
+                <div class="rank-progress mb-3">
+                    <div class="rank-progress-bar" style="width: ${(gameState.rankState.currentStars / gameState.rankConfig[gameState.rankState.currentRank].totalStars) * 100}%; background-color: var(${gameState.rankConfig[gameState.rankState.currentRank].color});"></div>
+                </div>
+                <div class="text-sm text-slate-300 mb-4">
+                    当前积分: ${gameState.rankState.currentPoints} | 连胜: ${gameState.rankState.winStreak}
+                </div>
+            `;
+        }
+
+        function startRankMatching() {
+            if (gameState.isMatching) return;
+            
+            gameState.isMatching = true;
+            gameState.matchCountdown = 30;
+            
+            // 显示匹配界面
+            document.getElementById('rankModal').classList.add('hidden');
+            document.getElementById('matchingModal').classList.remove('hidden');
+            
+            // 更新匹配倒计时
+            updateMatchCountdown();
+            
+            // 开始匹配计时器
+            gameState.matchTimer = setInterval(() => {
+                gameState.matchCountdown--;
+                updateMatchCountdown();
+                
+                // 30秒未匹配到人，匹配人机
+                if (gameState.matchCountdown <= 0) {
+                    clearInterval(gameState.matchTimer);
+                    matchWithAI();
+                }
+            }, 1000);
+            
+            // 模拟匹配（实际项目中应该连接服务器）
+            simulateMatching();
+        }
+
+        function updateMatchCountdown() {
+            document.getElementById('matchCountdown').textContent = gameState.matchCountdown;
+            
+            // 更新进度条
+            const progressPercent = ((30 - gameState.matchCountdown) / 30) * 100;
+            document.getElementById('matchProgress').style.width = `${progressPercent}%`;
+        }
+
+        function simulateMatching() {
+            // 模拟匹配延迟（随机10-25秒匹配到人，否则匹配人机）
+            const matchTime = Math.floor(Math.random() * 16) + 10;
+            
+            setTimeout(() => {
+                if (gameState.isMatching && gameState.matchCountdown > 0) {
+                    // 匹配成功（真人）
+                    clearInterval(gameState.matchTimer);
+                    gameState.isMatching = false;
+                    
+                    // 播放匹配成功音效
+                    soundSystem.play('matchFound');
+                    rankingSystem.vibrate([100, 50, 100]);
+                    
+                    // 隐藏匹配界面，开始游戏
+                    document.getElementById('matchingModal').classList.add('hidden');
+                    rankingSystem.showToast('匹配成功！开始排位赛', 'success');
+                    
+                    // 开始排位游戏
+                    startGame();
+                }
+            }, matchTime * 1000);
+        }
+
+        async function matchWithAI() {
+            gameState.isMatching = false;
+            
+            // 获取AI对手
+            await rankingSystem.getAIOpponent();
+            
+            // 播放匹配音效
+            soundSystem.play('matchFound');
+            
+            // 隐藏匹配界面
+            document.getElementById('matchingModal').classList.add('hidden');
+            
+            // 显示AI匹配提示
+            rankingSystem.showToast(`匹配到AI对手: ${gameState.aiOpponent.name}`, 'info');
+            
+            // 开始游戏
+            startGame();
+        }
+
+        async function handleRankGameOver() {
+            if (!gameState.aiOpponent) return;
+            
+            // 判断胜负
+            const isWin = gameState.score > gameState.aiOpponent.score;
+            const pointsChange = isWin ? 
+                Math.floor(gameState.rankConfig[gameState.rankState.currentRank].starScore * 0.5) : 
+                -Math.floor(gameState.rankConfig[gameState.rankState.currentRank].starScore * 0.3);
+            
+            // 更新排位积分
+            const rankResult = await rankingSystem.updateRankPoints(pointsChange, isWin, true);
+            
+            // 显示排位结果
+            if (rankResult) {
+                document.getElementById('rankResultInfo').innerHTML += `
+                    <div class="mt-3 p-3 bg-slate-800 rounded-lg">
+                        <h4 class="font-bold mb-2">段位变化</h4>
+                        <div class="flex justify-between mb-1">
+                            <span>当前段位:</span>
+                            <span class="font-bold ${gameState.rankConfig[rankResult.newRank].color}">${rankResult.newRank}</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span>当前星数:</span>
+                            <span class="font-bold text-yellow-400">${rankResult.newStars}</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span>积分变化:</span>
+                            <span class="font-bold ${pointsChange > 0 ? 'text-green-400' : 'text-red-400'}">
+                                ${pointsChange > 0 ? '+' : ''}${pointsChange}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ========== 手机端分辨率修复 ==========
+        function fixMobileResolution() {
+            // 响应式调整控制按钮大小
+            function adjustControls() {
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                const isLandscape = screenWidth > screenHeight;
+                
+                const controlBtns = document.querySelectorAll('.control-btn');
+                const baseSize = isLandscape ? 
+                    Math.min(screenHeight * 0.15, 60) : 
+                    Math.min(screenWidth * 0.18, 80);
+                
+                controlBtns.forEach(btn => {
+                    btn.style.width = `${baseSize}px`;
+                    btn.style.height = `${baseSize}px`;
+                    btn.style.fontSize = `${baseSize * 0.4}px`;
+                });
+                
+                // 调整控制区布局
+                const controls = document.querySelector('.controls');
+                if (isLandscape && screenHeight < 400) {
+                    controls.style.padding = '4px';
+                    controls.style.gap = '4px';
+                } else {
+                    controls.style.padding = '';
+                    controls.style.gap = '';
+                }
+            }
+            
+            // 初始化调整
+            adjustControls();
+            
+            // 窗口大小变化时调整
+            window.addEventListener('resize', adjustControls);
+            window.addEventListener('orientationchange', adjustControls);
+            
+            // 修复移动端触摸事件
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    this.click();
+                }, { passive: false });
+            });
+        }
+
+        // 页面加载完成后初始化游戏
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-item"><i class="fa fa-star text-yellow-400"></i> 分数: <span id="scoreCount">0</span></div>
+            <div class="status-item"><i class="fa fa-level-up text-green-400"></i> 等级: <span id="levelCount">1</span></div>
+            <div class="status-item"><i class="fa fa-move text-blue-400"></i> 移动: <span id="movesCount">0</span></div>
+            <div class="status-item"><i class="fa fa-clock text-red-400"></i> 时间: <span id="timeLeft">80</span></div>
+            <div class="status-item"><i class="fa fa-puzzle-piece text-purple-400"></i> 碎片: <span id="fragmentsCount">0/3</span></div>
+            <div class="status-item"><i class="fa fa-bolt text-yellow-400"></i> 电荷: <span id="chargeState">-</span></div>
+            <div class="status-item"><i class="fa fa-cube text-cyan-400"></i> Z轴: <span id="zDepth">0</span></div>
+            <div class="status-item" id="rankStatus"><i class="fa fa-trophy text-yellow-400"></i> 休闲模式</div>
+        </div>
+        
+        <!-- BOSS血条 -->
+        <div id="bossHealthContainer" class="hidden px-4 py-2 bg-slate-800/80">
+            <div class="flex items-center gap-2">
+                <i class="fa fa-skull-crossbones text-pink-500"></i>
+                <span class="text-sm">BOSS血量:</span>
+                <span id="bossHealthText" class="text-sm">10/10</span>
+                <div class="flex-1 h-2 rounded-full bg-slate-700">
+                    <div id="bossHealth" class="h-2 rounded-full bg-green-500" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏区域 -->
+        <div id="gameArea">
+            <div id="electron" class="electron float-3d charge-effect negative"></div>
+        </div>
+        
+        <!-- 控制区 -->
+        <div class="controls">
+            <div class="control-grid">
+                <div class="control-row">
+                    <button id="btnZUp" class="control-btn bg-cyan-700 hover:bg-cyan-600 text-white"><i class="fa fa-arrow-up"></i></button>
+                </div>
+                <div class="control-row">
+                    <button id="btnLeft" class="control-btn bg-blue-700 hover:bg-blue-600 text-white"><i class="fa fa-arrow-left"></i></button>
+                    <button id="btnUp" class="control-btn bg-blue-700 hover:bg-blue-600 text-white"><i class="fa fa-arrow-up"></i></button>
+                    <button id="btnRight" class="control-btn bg-blue-700 hover:bg-blue-600 text-white"><i class="fa fa-arrow-right"></i></button>
+                </div>
+                <div class="control-row">
+                    <button id="btnZDown" class="control-btn bg-cyan-700 hover:bg-cyan-600 text-white"><i class="fa fa-arrow-down"></i></button>
+                    <button id="btnDown" class="control-btn bg-blue-700 hover:bg-blue-600 text-white"><i class="fa fa-arrow-down"></i></button>
+                    <button id="btnCharge" class="control-btn bg-yellow-700 hover:bg-yellow-600 text-white"><i class="fa fa-bolt"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 ml-4">
+                <button id="btnSkill" class="control-btn bg-purple-700 hover:bg-purple-600 text-white"><i class="fa fa-shield"></i></button>
+                <button id="btnStart" class="control-btn bg-green-700 hover:bg-green-600 text-white"><i class="fa fa-play"></i></button>
+                <button id="btnPause" class="control-btn bg-orange-700 hover:bg-orange-600 text-white"><i class="fa fa-pause"></i></button>
+                <button id="btnRankMode" class="control-btn bg-red-700 hover:bg-red-600 text-white"><i class="fa fa-trophy"></i></button>
+                <button id="btnRanking" class="control-btn bg-indigo-700 hover:bg-indigo-600 text-white"><i class="fa fa-ranking-star"></i></button>
+                <button id="btnFriends" class="control-btn bg-teal-700 hover:bg-teal-600 text-white"><i class="fa fa-users"></i></button>
+                <button id="btnSettings" class="control-btn bg-slate-700 hover:bg-slate-600 text-white"><i class="fa fa-cog"></i></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 排行榜模态框 -->
+    <div id="rankingModal" class="modal fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="modal-content w-[90%] max-w-[500px] max-h-[80vh] overflow-y-auto p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-purple-400">📊 联机排行榜</h3>
+                <button class="close-btn text-slate-400 hover:text-white" data-modal="rankingModal">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div id="rankingList" class="space-y-2">
+                <div class="text-center p-4 text-slate-400">
+                    <div class="loader mx-auto mb-2"></div>
+                    加载排行榜中...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 好友模态框 -->
+    <div id="friendsModal" class="modal fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="modal-content w-[90%] max-w-[500px] max-h-[80vh] overflow-y-auto p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-teal-400">👥 好友系统</h3>
+                <button class="close-btn text-slate-400 hover:text-white" data-modal="friendsModal">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-4 p-3 bg-slate-800 rounded-lg">
+                <h4 class="font-bold mb-2">添加好友</h4>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="friendIdInput" placeholder="好友ID" class="flex-1 px-3 py-2 bg-slate-700 rounded-lg text-white border border-slate-600">
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="friendNameInput" placeholder="好友昵称" class="flex-1 px-3 py-2 bg-slate-700 rounded-lg text-white border border-slate-600">
+                    <button id="addFriendBtn" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg">添加</button>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-bold mb-2">我的好友</h4>
+                <div id="friendsList" class="space-y-2">
+                    <div class="text-center p-4 text-slate-400">加载好友列表中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设置模态框 -->
+    <div id="settingsModal" class="modal fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="modal-content w-[90%] max-w-[400px] p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-200">⚙️ 游戏设置</h3>
+                <button class="close-btn text-slate-400 hover:text-white" data-modal="settingsModal">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-200">🔊 音效</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleSound" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-200">📳 震动反馈</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleVibration" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-200">🏆 当前段位</span>
+                    <div id="rankBadge" class="rank-badge rank-量子新手">量子新手 <i class="fa fa-star"></i>0</div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-200">💰 电子币</span>
+                    <span id="electronCoins" class="font-bold text-yellow-400">0</span>
+                </div>
+                
+                <div class="star-container mb-2" id="rankStars">
+                    <i class="fa fa-star star active"></i>
+                    <i class="fa fa-star star"></i>
+                    <i class="fa fa-star star"></i>
+                    <i class="fa fa-star star"></i>
+                    <i class="fa fa-star star"></i>
+                </div>
+                
+                <div class="rank-progress">
+                    <div id="rankProgressBar" class="rank-progress-bar" style="width: 0%; background-color: var(--rank-newbie);"></div>
+                </div>
+                
+                <div class="flex gap-2 mt-4">
+                    <button id="btnResetSeason" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm">
+                        赛季重置
+                    </button>
+                    <button id="btnRewardSeason" class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm">
+                        发放奖励
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-sm text-slate-400">
+                    <p>用户ID: <span id="userIdDisplay" class="text-slate-200">${rankingSystem.currentUser.id}</span></p>
+                    <p>用户名: <span id="usernameDisplay" class="text-slate-200">${rankingSystem.currentUser.username}</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 排位模式模态框 -->
+    <div id="rankModal" class="modal fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="modal-content w-[90%] max-w-[400px] p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-red-400">🏆 排位模式</h3>
+                <button class="close-btn text-slate-400 hover:text-white" data-modal="rankModal">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="currentRankInfo" class="mb-4 text-center">
+                <div class="rank-badge rank-量子新手 mb-3">量子新手</div>
+                <div class="star-container mb-2">
+                    <i class="fa fa-star star active"></i>
+                    <i class="fa fa-star star"></i>
+                    <i class="fa fa-star star"></i>
+                    <i class="fa fa-star star"></i>
+                    <i class="fa fa-star star"></i>
+                </div>
+                <div class="rank-progress mb-3">
+                    <div class="rank-progress-bar" style="width: 0%; background-color: var(--rank-newbie);"></div>
+                </div>
+                <div class="text-sm text-slate-300 mb-4">
+                    当前积分: 0 | 连胜: 0
+                </div>
+            </div>
+            
+            <div class="mb-4 text-center text-slate-300 text-sm">
+                <p>排位赛规则:</p>
+                <ul class="text-left mt-2 space-y-1">
+                    <li>• 匹配真人玩家或AI对手</li>
+                    <li>• 胜利获得积分和星数</li>
+                    <li>• 失败扣除积分</li>
+                    <li>• 累积星数可晋级段位</li>
+                    <li>• 赛季前5名获得100电子币</li>
+                </ul>
+            </div>
+            
+            <button onclick="startRankMatching()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg">
+                开始匹配 <i class="fa fa-search"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 匹配中模态框 -->
+    <div id="matchingModal" class="modal fixed inset-0 bg-black/90 flex items-center justify-center z-50 hidden">
+        <div class="modal-content w-[90%] max-w-[350px] p-6">
+            <div class="matching-container">
+                <div class="matching-spinner"></div>
+                <h3 class="text-xl font-bold text-purple-400 mb-2">匹配中...</h3>
+                <p class="text-slate-300 mb-4">正在寻找合适的对手</p>
+                <div class="w-full bg-slate-700 rounded-full h-2 mb-3">
+                    <div id="matchProgress" class="bg-purple-500 h-2 rounded-full" style="width: 0%;"></div>
+                </div>
+                <p class="countdown-text">匹配倒计时: <span id="matchCountdown">30</span>秒</p>
+                <p class="text-xs text-slate-400 mt-4">30秒后将匹配AI对手</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 游戏结算模态框 -->
+    <div id="resultModal" class="modal fixed inset-0 bg-black/95 flex items-center justify-center z-50 hidden">
+        <div class="modal-content w-[90%] max-w-[400px] p-6">
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold text-purple-400 mb-2">游戏结束</h3>
+                <div class="text-xl font-bold mb-4">
+                    最终得分: <span id="finalScore" class="text-yellow-400">0</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-slate-800 p-2 rounded-lg">
+                        <div class="text-sm text-slate-400">等级</div>
+                        <div class="font-bold" id="finalLevel">1</div>
+                    </div>
+                    <div class="bg-slate-800 p-2 rounded-lg">
+                        <div class="text-sm text-slate-400">移动次数</div>
+                        <div class="font-bold" id="finalMoves">0</div>
+                    </div>
+                </div>
+                
+                <!-- 排位赛结果信息 -->
+                <div id="rankResultInfo"></div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button id="btnRestart" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg">
+                        再来一局 <i class="fa fa-refresh"></i>
+                    </button>
+                    <button id="btnQuit" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 rounded-lg">
+                        退出 <i class="fa fa-sign-out"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
