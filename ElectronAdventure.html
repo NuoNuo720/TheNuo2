@@ -409,223 +409,13 @@
             }
         }
     </style>
-</head>
-<body>
-    <div class="container">
-        <!-- 开始界面 -->
-        <div id="startScreen" class="absolute inset-0 bg-bg-dark flex flex-col items-center justify-center z-40 p-4">
-            <h1 class="text-[clamp(24px,6vw,36px)] font-bold text-quantum mb-6 text-center">自由电子冒险：量子风暴</h1>
-            <div class="bg-slate-800/80 rounded-xl p-6 max-w-[90%] w-[350px] mb-6">
-                <p class="text-slate-300 mb-4 text-sm">
-                    🚀 控制电子在量子场中收集碎片，躲避质子和高能陷阱！<br>
-                    ⚡ 切换电荷状态适应不同磁场，利用Z轴维度躲避障碍<br>
-                    🎯 每5关将遭遇反粒子Boss，击败它获得大量碎片奖励
-                </p>
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
-                        <i class="fa fa-arrows text-quantum mr-1"></i> 方向/拖拽：移动
-                    </div>
-                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
-                        <i class="fa fa-exchange text-quantum mr-1"></i> 电荷：切换极性
-                    </div>
-                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
-                        <i class="fa fa-level-up text-quantum mr-1"></i> Z+：提升维度
-                    </div>
-                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
-                        <i class="fa fa-level-down text-quantum mr-1"></i> Z-：降低维度
-                    </div>
-                </div>
-            </div>
-            <button id="btnStart" class="bg-quantum hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg text-lg w-full max-w-[300px]">
-                <i class="fa fa-play mr-2"></i>开始游戏
-            </button>
-            <button id="btnRanking" class="mt-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
-                <i class="fa fa-trophy mr-2"></i>联机排行榜
-            </button>
-            <button id="btnProfile" class="mt-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
-                <i class="fa fa-user mr-2"></i>个人中心
-            </button>
-        </div>
-
-        <!-- 游戏区域 -->
-        <div id="gameArea" class="container"></div>
-
-        <!-- 游戏UI -->
-        <div id="gameUI" class="hidden flex flex-col h-full">
-            <!-- 状态栏 -->
-            <div class="status-bar">
-                <div class="status-item"><i class="fa fa-star text-yellow-400"></i> 关卡: <span id="level">1</span></div>
-                <div class="status-item"><i class="fa fa-coins text-amber-400"></i> 得分: <span id="score">0</span></div>
-                <div class="status-item"><i class="fa fa-clock text-blue-400"></i> 时间: <span id="time">80</span></div>
-                <div class="status-item"><i class="fa fa-cube text-purple-400"></i> Z轴: <span id="zLevel">0</span></div>
-                <div class="status-item"><i class="fa fa-bolt text-yellow-400"></i> 电荷: <span id="charge">负</span></div>
-                <div class="status-item"><i class="fa fa-move text-green-400"></i> 操作: <span id="moves">0</span></div>
-                <div class="status-item"><i class="fa fa-diamond text-purple-400"></i> 碎片: <span id="fragments">0/3</span></div>
-            </div>
-
-            <!-- 控制区 -->
-            <div class="controls">
-                <!-- 方向控制 -->
-                <div class="flex gap-2 mb-2">
-                    <button id="btnUp" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
-                        <i class="fa fa-arrow-up"></i>
-                    </button>
-                </div>
-                <div class="flex gap-2 mb-2">
-                    <button id="btnLeft" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
-                        <i class="fa fa-arrow-left"></i>
-                    </button>
-                    <button id="btnCharge" class="control-btn bg-quantum hover:bg-purple-700 text-white">
-                        <i class="fa fa-exchange"></i>
-                    </button>
-                    <button id="btnRight" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
-                        <i class="fa fa-arrow-right"></i>
-                    </button>
-                </div>
-                <div class="flex gap-2 mb-2">
-                    <button id="btnDown" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
-                        <i class="fa fa-arrow-down"></i>
-                    </button>
-                </div>
-
-                <!-- Z轴控制和技能 -->
-                <div class="flex gap-3 mt-2">
-                    <button id="btnZUp" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
-                        <i class="fa fa-level-up"></i> Z+
-                    </button>
-                    <button id="btnZDown" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
-                        <i class="fa fa-level-down"></i> Z-
-                    </button>
-                    <button id="btnSkill" class="control-btn bg-red-600 hover:bg-red-700 text-white opacity-50" disabled>
-                        <i class="fa fa-bomb"></i> 技能
-                    </button>
-                    <button id="btnRankingGame" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
-                        <i class="fa fa-trophy"></i> 排行
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 排行榜模态框 -->
-        <div id="rankingModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 hidden">
-            <div class="modal-content p-6 w-full max-w-[90%] max-h-[80vh] overflow-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-purple-400">📋 联机排行榜</h3>
-                    <button id="closeRanking" class="text-slate-400 hover:text-white">
-                        <i class="fa fa-times text-xl"></i>
-                    </button>
-                </div>
-                
-                <div class="mb-6">
-                    <h4 class="text-lg font-bold text-slate-300 mb-3">排行榜</h4>
-                    <div id="rankingList" class="space-y-2">
-                        <!-- 排行榜内容由JS动态生成 -->
-                    </div>
-                </div>
-                
-                <div>
-                    <h4 class="text-lg font-bold text-slate-300 mb-3">我的好友</h4>
-                    <div id="friendsList" class="space-y-2">
-                        <!-- 好友列表由JS动态生成 -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 个人中心模态框 -->
-        <div id="profileModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 hidden">
-            <div class="modal-content p-6 w-full max-w-[90%] max-h-[80vh] overflow-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-purple-400">👤 个人中心</h3>
-                    <button id="closeProfile" class="text-slate-400 hover:text-white">
-                        <i class="fa fa-times text-xl"></i>
-                    </button>
-                </div>
-                
-                <div class="mb-6">
-                    <h4 class="text-lg font-bold text-slate-300 mb-3">个人资料</h4>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm text-slate-400 mb-1">用户名</label>
-                            <input type="text" id="usernameInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white" placeholder="输入用户名">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-slate-400 mb-1">头像URL (可选)</label>
-                            <input type="text" id="avatarInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white" placeholder="输入头像图片URL">
-                        </div>
-                        <button id="saveProfile" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
-                            保存资料
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="mb-6">
-                    <h4 class="text-lg font-bold text-slate-300 mb-3">游戏统计</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-slate-700/50 p-3 rounded-lg">
-                            <div class="text-sm text-slate-400">最高关卡</div>
-                            <div class="text-lg font-bold text-white" id="statsHighestLevel">0</div>
-                        </div>
-                        <div class="bg-slate-700/50 p-3 rounded-lg">
-                            <div class="text-sm text-slate-400">最高得分</div>
-                            <div class="text-lg font-bold text-white" id="statsHighestScore">0</div>
-                        </div>
-                        <div class="bg-slate-700/50 p-3 rounded-lg col-span-2">
-                            <div class="text-sm text-slate-400">总游戏次数</div>
-                            <div class="text-lg font-bold text-white" id="statsTotalPlays">0</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div>
-                    <h4 class="text-lg font-bold text-slate-300 mb-3">游戏设置</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300">音效</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="soundToggle" class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                            </label>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300">震动反馈</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="vibrationToggle" class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // ========== 游戏核心配置 ==========
-        const GAME_CONFIG = {
-            MAX_Z_DEPTH: 3,
-            BASE_ELECTRON_SPEED: 3,
-            MOBILE_SPEED_MULTIPLIER: 0.85,
-            MAX_FPS: 30,
-            FRAME_SKIP_MOBILE: 1,
-            FRAME_SKIP_DESKTOP: 1,
-            INITIAL_TIME: 80,
-            TIME_BONUS_PER_LEVEL: 20,
-            BASE_FRAGMENTS_NEEDED: 3,
-            FRAGMENTS_INCREMENT: 1,
-            FRAGMENTS_INCREMENT_INTERVAL: 2,
-            BOSS_SPAWN_INTERVAL: 5,
-            SCORE_FRAGMENT: 100,
-            SCORE_LEVEL_UP: 500,
-            SCORE_BOSS_KILL: 500
-        };
-
-        // ========== 游戏全局状态 ==========
+        // 游戏全局状态
         const gameState = {
             isPlaying: false,
             level: 1,
             score: 0,
-            timeLeft: GAME_CONFIG.INITIAL_TIME,
+            timeLeft: 80,
             moves: 0,
             electron: { 
                 x: 100, 
@@ -635,7 +425,7 @@
                 size: 20,
                 velocityX: 0,    
                 velocityY: 0,    
-                speed: GAME_CONFIG.BASE_ELECTRON_SPEED,        
+                speed: 3,        
                 chargeState: 'negative' 
             },
             protons: [],
@@ -646,16 +436,16 @@
             inBossFight: false,
             immune: false,
             fragmentsCollected: 0,
-            fragmentsNeeded: GAME_CONFIG.BASE_FRAGMENTS_NEEDED,
+            fragmentsNeeded: 3,
             skillAvailable: false,
             frameCounter: 0,
             frameSkip: 1,
             performance: {
-                renderRate: GAME_CONFIG.MAX_FPS,
+                renderRate: 30,
                 isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
                 obstacleDensity: 1
             },
-            maxZDepth: GAME_CONFIG.MAX_Z_DEPTH,
+            maxZDepth: 3,
             gameWidth: 0,
             gameHeight: 0,
             timerInterval: null,
@@ -667,13 +457,13 @@
                 fragment: 60,
                 crossType: 120
             },
-            // 游戏设置
+            // 新增：游戏设置
             settings: {
                 sound: true,
                 vibration: true,
                 showTutorial: true
             },
-            // 游戏进度
+            // 新增：游戏进度
             progress: {
                 highestLevel: 0,
                 highestScore: 0,
@@ -827,16 +617,16 @@
             supabase: null,
             
             init() {
-                const supabaseUrl = 'https://yrphftrjypacnvgwbqec.supabase.co'; 
-                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlycGhmdHJqeXBhY252Z3dicWVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczOTQxNzEsImV4cCI6MjA4Mjk3MDE3MX0.sbHGsux6fsuFHtdvZKnVi9wgbltkXzkwCqS3r5bi5PI'; 
+                const supabaseUrl = 'https://ogrxasqdipkqykpwmktk.supabase.co'; 
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncnhhc3FkaXBrcXlrcHdta3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0OTMwNzAsImV4cCI6MjA4MzA2OTA3MH0.SpPEL5JuEuqC7QCZF-20qxTovyij3q179KYr9XJqERk'; 
                 
-                this.supabase = window.supabase?.createClient ? window.supabase.createClient(supabaseUrl, supabaseKey, {
+                this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
                     auth: {
                         storage: localStorage,
                         autoRefreshToken: true,
                         persistSession: true,
                     }
-                }) : null;
+                });
 
                 this.loadGameProgress();
                 this.checkUser();
@@ -873,8 +663,6 @@
             },
             
             async checkUser() {
-                if (!this.supabase) return;
-                
                 try {
                     const { data: { user } } = await this.supabase.auth.getUser();
                     if (user) {
@@ -915,14 +703,6 @@
             },
             
             async loadFromSupabase() {
-                if (!this.supabase) {
-                    const rankingListEl = document.getElementById('rankingList');
-                    if (rankingListEl) {
-                        rankingListEl.innerHTML = '<div class="text-center p-4 text-slate-400">无法连接到联机服务器</div>';
-                    }
-                    return;
-                }
-                
                 try {
                     const rankingListEl = document.getElementById('rankingList');
                     if (rankingListEl) {
@@ -962,8 +742,6 @@
             },
             
             async loadFriends() {
-                if (!this.supabase) return;
-                
                 try {
                     const { data, error } = await this.supabase
                         .from('game_friends')
@@ -995,7 +773,7 @@
             },
             
             async addScore(score) {
-                if (!this.supabase || !this.currentUser || score <= 0) return;
+                if (!this.currentUser || score <= 0) return;
 
                 try {
                     const { error } = await this.supabase
@@ -1026,8 +804,6 @@
             },
             
             async syncCachedScores() {
-                if (!this.supabase) return;
-                
                 try {
                     const cached = JSON.parse(localStorage.getItem('cached_scores') || '[]');
                     if (cached.length === 0) return;
@@ -1045,11 +821,6 @@
             },
             
             async addFriend(friendUserId, friendUsername) {
-                if (!this.supabase) {
-                    this.showToast('无法连接到联机服务器');
-                    return false;
-                }
-                
                 try {
                     const { error } = await this.supabase
                         .from('game_friends')
@@ -1074,11 +845,6 @@
             },
             
             async respondToFriendRequest(friendshipId, status) {
-                if (!this.supabase) {
-                    this.showToast('无法连接到联机服务器');
-                    return false;
-                }
-                
                 try {
                     const { error } = await this.supabase
                         .from('game_friends')
@@ -1250,11 +1016,6 @@
             },
             
             async updateUserProfile(username, avatar) {
-                if (!this.supabase) {
-                    this.showToast('无法连接到联机服务器');
-                    return false;
-                }
-                
                 try {
                     this.currentUser.username = username;
                     this.currentUser.avatar = avatar;
@@ -1418,10 +1179,8 @@
             
             updateGameDimensions();
             gameState.performance.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            gameState.frameSkip = gameState.performance.isMobile ? GAME_CONFIG.FRAME_SKIP_MOBILE : GAME_CONFIG.FRAME_SKIP_DESKTOP;
-            gameState.electron.speed = gameState.performance.isMobile 
-                ? GAME_CONFIG.BASE_ELECTRON_SPEED * GAME_CONFIG.MOBILE_SPEED_MULTIPLIER 
-                : GAME_CONFIG.BASE_ELECTRON_SPEED;
+            gameState.frameSkip = gameState.performance.isMobile ? 1 : 1;
+            gameState.electron.speed = gameState.performance.isMobile ? 3 : 3.5;
             gameState.electron.chargeState = gameState.electron.charge > 0 ? 'positive' : 'negative';
             
             bindControls();
@@ -1580,916 +1339,219 @@
             bindStepButtons();
         }
 
-        function showStartScreen() {
-            document.getElementById('startScreen').classList.remove('hidden');
-            document.getElementById('gameUI').classList.add('hidden');
-            document.getElementById('gameArea').innerHTML = '';
-            
-            // 更新个人中心数据
-            document.getElementById('statsHighestLevel').textContent = gameState.progress.highestLevel;
-            document.getElementById('statsHighestScore').textContent = gameState.progress.highestScore;
-            document.getElementById('statsTotalPlays').textContent = gameState.progress.totalPlays;
-            
-            // 填充用户名和头像
-            const user = rankingSystem.currentUser;
-            if (user) {
-                document.getElementById('usernameInput').value = user.username;
-                document.getElementById('avatarInput').value = user.avatar || '';
-            }
-            
-            // 设置开关状态
-            document.getElementById('soundToggle').checked = gameState.settings.sound;
-            document.getElementById('vibrationToggle').checked = gameState.settings.vibration;
-        }
-
-        function startGame() {
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('gameUI').classList.remove('hidden');
-            
-            // 重置游戏状态
-            gameState.isPlaying = true;
-            gameState.level = 1;
-            gameState.score = 0;
-            gameState.timeLeft = GAME_CONFIG.INITIAL_TIME;
-            gameState.moves = 0;
-            gameState.electron = { 
-                x: gameState.gameWidth / 2, 
-                y: gameState.gameHeight / 2, 
-                charge: -1, 
-                z: 0, 
-                size: 20,
-                velocityX: 0,    
-                velocityY: 0,    
-                speed: gameState.performance.isMobile 
-                    ? GAME_CONFIG.BASE_ELECTRON_SPEED * GAME_CONFIG.MOBILE_SPEED_MULTIPLIER 
-                    : GAME_CONFIG.BASE_ELECTRON_SPEED,        
-                chargeState: 'negative' 
-            };
-            gameState.protons = [];
-            gameState.traps = [];
-            gameState.fragments = [];
-            gameState.boss = null;
-            gameState.bossProjectiles = [];
-            gameState.inBossFight = false;
-            gameState.immune = false;
-            gameState.fragmentsCollected = 0;
-            gameState.fragmentsNeeded = GAME_CONFIG.BASE_FRAGMENTS_NEEDED;
-            gameState.skillAvailable = false;
-            
-            // 更新UI
-            updateUI();
-            
-            // 清空游戏区域
-            document.getElementById('gameArea').innerHTML = '';
-            
-            // 创建电子
-            createElectron();
-            
-            // 生成初始障碍物和碎片
-            generateLevelElements();
-            
-            // 启动游戏循环
-            startGameLoop();
-            
-            // 启动计时器
-            startTimer();
-            
-            // 记录游戏次数
-            gameState.progress.totalPlays++;
-            rankingSystem.saveGameProgress();
-        }
-
-        function generateLevelElements() {
-            const density = gameState.performance.obstacleDensity * (1 + (gameState.level - 1) * 0.1);
-            const protonCount = Math.min(8, Math.floor(3 * density));
-            const trapCount = Math.min(4, Math.floor(2 * density));
-            const fragmentCount = gameState.fragmentsNeeded;
-            
-            // 生成质子
-            for (let i = 0; i < protonCount; i++) {
-                const position = generateSafePosition(25, 'proton');
-                if (position) {
-                    gameState.protons.push({
-                        x: position.x,
-                        y: position.y,
-                        z: position.z,
-                        size: 25,
-                        charge: 1,
-                        chargeState: 'positive'
-                    });
-                }
-            }
-            
-            // 生成陷阱
-            for (let i = 0; i < trapCount; i++) {
-                const position = generateSafePosition(30, 'trap');
-                if (position) {
-                    gameState.traps.push({
-                        x: position.x,
-                        y: position.y,
-                        z: position.z,
-                        size: 30,
-                        rotation: 0
-                    });
-                }
-            }
-            
-            // 生成碎片
-            for (let i = 0; i < fragmentCount; i++) {
-                const position = generateSafePosition(15, 'fragment');
-                if (position) {
-                    gameState.fragments.push({
-                        x: position.x,
-                        y: position.y,
-                        z: position.z,
-                        size: 15,
-                        collected: false
-                    });
-                }
-            }
-            
-            // 渲染元素
-            renderGameElements();
-            
-            // 检查是否是BOSS关卡
-            if (gameState.level % GAME_CONFIG.BOSS_SPAWN_INTERVAL === 0) {
-                spawnBoss();
-            }
-        }
-
-        function spawnBoss() {
-            gameState.inBossFight = true;
-            gameState.boss = {
-                x: gameState.gameWidth * 0.8,
-                y: gameState.gameHeight / 2,
-                z: 0,
-                size: 60,
-                health: 5 + Math.floor(gameState.level / GAME_CONFIG.BOSS_SPAWN_INTERVAL),
-                maxHealth: 5 + Math.floor(gameState.level / GAME_CONFIG.BOSS_SPAWN_INTERVAL),
-                charge: 1,
-                chargeState: 'positive',
-                attackCooldown: 0
-            };
-            
-            soundSystem.play('boss');
-            showMessage('BOSS出现！', '反粒子BOSS已出现，击败它获得丰厚奖励！', '继续');
-            
-            // 渲染BOSS
-            renderBoss();
-            
-            // BOSS攻击循环
-            const bossAttack = () => {
-                if (!gameState.isPlaying || !gameState.boss || gameState.boss.health <= 0) return;
-                
-                if (gameState.boss.attackCooldown <= 0) {
-                    fireBossProjectile();
-                    gameState.boss.attackCooldown = 100;
-                } else {
-                    gameState.boss.attackCooldown--;
-                }
-                
-                setTimeout(bossAttack, 50);
-            };
-            
-            bossAttack();
-        }
-
-        function fireBossProjectile() {
-            if (!gameState.boss) return;
-            
-            const projectile = {
-                x: gameState.boss.x,
-                y: gameState.boss.y,
-                z: gameState.boss.z,
-                size: 15,
-                velocityX: (gameState.electron.x - gameState.boss.x) / 50,
-                velocityY: (gameState.electron.y - gameState.boss.y) / 50
-            };
-            
-            gameState.bossProjectiles.push(projectile);
-            renderProjectile(projectile);
-        }
-
-        function createElectron() {
-            const electronEl = document.createElement('div');
-            electronEl.className = 'electron float-3d charge-effect';
-            electronEl.id = 'electron';
-            electronEl.style.width = `${gameState.electron.size}px`;
-            electronEl.style.height = `${gameState.electron.size}px`;
-            electronEl.style.left = `${gameState.electron.x - gameState.electron.size/2}px`;
-            electronEl.style.top = `${gameState.electron.y - gameState.electron.size/2}px`;
-            electronEl.style.backgroundColor = gameState.electron.chargeState === 'negative' ? 'var(--negative)' : 
-                                             gameState.electron.chargeState === 'positive' ? 'var(--positive)' : 'var(--neutral)';
-            electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
-            electronEl.style.setProperty('--z-absolute', Math.abs(gameState.electron.z));
-            
-            document.getElementById('gameArea').appendChild(electronEl);
-        }
-
-        function renderGameElements() {
-            const gameArea = document.getElementById('gameArea');
-            
-            // 清除现有元素（保留电子）
-            const elementsToRemove = gameArea.querySelectorAll('.proton, .trap, .fragment');
-            elementsToRemove.forEach(el => el.remove());
-            
-            // 渲染质子
-            gameState.protons.forEach((proton, index) => {
-                const protonEl = document.createElement('div');
-                protonEl.className = 'proton float-3d';
-                protonEl.id = `proton-${index}`;
-                protonEl.style.width = `${proton.size}px`;
-                protonEl.style.height = `${proton.size}px`;
-                protonEl.style.left = `${proton.x - proton.size/2}px`;
-                protonEl.style.top = `${proton.y - proton.size/2}px`;
-                protonEl.style.backgroundColor = 'var(--proton)';
-                protonEl.style.boxShadow = '0 0 15px rgba(249, 115, 22, 0.6)';
-                protonEl.style.setProperty('--z-offset', `${proton.z * 30}px`);
-                protonEl.style.setProperty('--z-absolute', Math.abs(proton.z));
-                
-                gameArea.appendChild(protonEl);
-            });
-            
-            // 渲染陷阱
-            gameState.traps.forEach((trap, index) => {
-                const trapEl = document.createElement('div');
-                trapEl.className = 'trap trap-effect';
-                trapEl.id = `trap-${index}`;
-                trapEl.style.width = `${trap.size}px`;
-                trapEl.style.height = `${trap.size}px`;
-                trapEl.style.left = `${trap.x - trap.size/2}px`;
-                trapEl.style.top = `${trap.y - trap.size/2}px`;
-                trapEl.style.setProperty('--z-offset', `${trap.z * 30}px`);
-                trapEl.style.setProperty('--z-absolute', Math.abs(trap.z));
-                
-                gameArea.appendChild(trapEl);
-            });
-            
-            // 渲染碎片
-            gameState.fragments.forEach((fragment, index) => {
-                if (fragment.collected) return;
-                
-                const fragmentEl = document.createElement('div');
-                fragmentEl.className = 'fragment float-3d quantum-pulse';
-                fragmentEl.id = `fragment-${index}`;
-                fragmentEl.style.width = `${fragment.size}px`;
-                fragmentEl.style.height = `${fragment.size}px`;
-                fragmentEl.style.left = `${fragment.x - fragment.size/2}px`;
-                fragmentEl.style.top = `${fragment.y - fragment.size/2}px`;
-                fragmentEl.style.backgroundColor = 'var(--quantum)';
-                fragmentEl.style.boxShadow = '0 0 15px rgba(139, 92, 246, 0.8)';
-                fragmentEl.style.setProperty('--z-offset', `${fragment.z * 30}px`);
-                fragmentEl.style.setProperty('--z-absolute', Math.abs(fragment.z));
-                
-                gameArea.appendChild(fragmentEl);
-            });
-        }
-
-        function renderBoss() {
-            const gameArea = document.getElementById('gameArea');
-            const existingBoss = gameArea.querySelector('.boss');
-            if (existingBoss) existingBoss.remove();
-            
-            if (!gameState.boss) return;
-            
-            const bossEl = document.createElement('div');
-            bossEl.className = 'boss float-3d';
-            bossEl.id = 'boss';
-            bossEl.style.width = `${gameState.boss.size}px`;
-            bossEl.style.height = `${gameState.boss.size}px`;
-            bossEl.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
-            bossEl.style.top = `${gameState.boss.y - gameState.boss.size/2}px`;
-            bossEl.style.background = 'radial-gradient(circle, #EF4444 0%, #991B1B 100%)';
-            bossEl.style.boxShadow = '0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 20px rgba(255,255,255,0.3)';
-            bossEl.style.setProperty('--z-offset', `${gameState.boss.z * 30}px`);
-            bossEl.style.setProperty('--z-absolute', Math.abs(gameState.boss.z));
-            
-            // 添加血条
-            const healthBar = document.createElement('div');
-            healthBar.className = 'absolute -bottom-10 left-0 right-0 h-3 bg-slate-700 rounded-full overflow-hidden';
-            healthBar.style.width = '100%';
-            
-            const healthFill = document.createElement('div');
-            healthFill.className = 'h-full bg-red-500 transition-all duration-300';
-            healthFill.style.width = `${(gameState.boss.health / gameState.boss.maxHealth) * 100}%`;
-            
-            healthBar.appendChild(healthFill);
-            bossEl.appendChild(healthBar);
-            
-            gameArea.appendChild(bossEl);
-        }
-
-        function renderProjectile(projectile) {
-            const gameArea = document.getElementById('gameArea');
-            const projectileEl = document.createElement('div');
-            projectileEl.className = 'projectile';
-            projectileEl.id = `projectile-${Date.now()}`;
-            projectileEl.style.width = `${projectile.size}px`;
-            projectileEl.style.height = `${projectile.size}px`;
-            projectileEl.style.left = `${projectile.x - projectile.size/2}px`;
-            projectileEl.style.top = `${projectile.y - projectile.size/2}px`;
-            projectileEl.style.backgroundColor = '#EF4444';
-            projectileEl.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.8)';
-            projectileEl.style.setProperty('--z-offset', `${projectile.z * 30}px`);
-            projectileEl.style.setProperty('--z-absolute', Math.abs(projectile.z));
-            
-            gameArea.appendChild(projectileEl);
-        }
-
-        function updateElectronPosition() {
-            const electronEl = document.getElementById('electron');
-            if (!electronEl || !gameState.isPlaying) return;
-            
-            // 应用速度
-            gameState.electron.x += gameState.electron.velocityX;
-            gameState.electron.y += gameState.electron.velocityY;
-            
-            // 边界检查
-            gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(gameState.gameWidth - gameState.electron.size/2, gameState.electron.x));
-            gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(gameState.gameHeight - gameState.electron.size/2, gameState.electron.y));
-            
-            // 应用摩擦力
-            gameState.electron.velocityX *= 0.95;
-            gameState.electron.velocityY *= 0.95;
-            
-            // 更新DOM位置
-            electronEl.style.left = `${gameState.electron.x - gameState.electron.size/2}px`;
-            electronEl.style.top = `${gameState.electron.y - gameState.electron.size/2}px`;
-            electronEl.style.backgroundColor = gameState.electron.chargeState === 'negative' ? 'var(--negative)' : 
-                                             gameState.electron.chargeState === 'positive' ? 'var(--positive)' : 'var(--neutral)';
-            electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
-            electronEl.style.setProperty('--z-absolute', Math.abs(gameState.electron.z));
-            
-            // 检查碰撞
-            checkCollisions();
-            
-            // 更新BOSS位置（如果存在）
-            if (gameState.boss) {
-                updateBossPosition();
-            }
-            
-            // 更新弹幕位置
-            updateProjectiles();
-        }
-
-        function updateBossPosition() {
-            if (!gameState.boss) return;
-            
-            // BOSS缓慢追踪电子
-            const dx = gameState.electron.x - gameState.boss.x;
-            const dy = gameState.electron.y - gameState.boss.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance > 150) {
-                gameState.boss.x += dx * 0.005;
-                gameState.boss.y += dy * 0.005;
-            }
-            
-            // 边界检查
-            gameState.boss.x = Math.max(gameState.boss.size/2, Math.min(gameState.gameWidth - gameState.boss.size/2, gameState.boss.x));
-            gameState.boss.y = Math.max(gameState.boss.size/2, Math.min(gameState.gameHeight - gameState.boss.size/2, gameState.boss.y));
-            
-            // 更新DOM
-            const bossEl = document.getElementById('boss');
-            if (bossEl) {
-                bossEl.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
-                bossEl.style.top = `${gameState.boss.y - gameState.boss.size/2}px`;
-                
-                // 更新血条
-                const healthFill = bossEl.querySelector('div > div');
-                if (healthFill) {
-                    healthFill.style.width = `${(gameState.boss.health / gameState.boss.maxHealth) * 100}%`;
-                }
-            }
-        }
-
-        function updateProjectiles() {
-            const gameArea = document.getElementById('gameArea');
-            
-            gameState.bossProjectiles.forEach((projectile, index) => {
-                // 更新位置
-                projectile.x += projectile.velocityX;
-                projectile.y += projectile.velocityY;
-                
-                // 更新DOM
-                const projectileEl = document.getElementById(`projectile-${Date.now() - index}`) || 
-                                     gameArea.querySelectorAll('.projectile')[index];
-                if (projectileEl) {
-                    projectileEl.style.left = `${projectile.x - projectile.size/2}px`;
-                    projectileEl.style.top = `${projectile.y - projectile.size/2}px`;
-                }
-                
-                // 边界检查
-                if (projectile.x < 0 || projectile.x > gameState.gameWidth || 
-                    projectile.y < 0 || projectile.y > gameState.gameHeight) {
-                    // 移除弹幕
-                    if (projectileEl) projectileEl.remove();
-                    gameState.bossProjectiles.splice(index, 1);
-                }
-            });
-        }
-
-        function checkCollisions() {
-            if (gameState.immune) return;
-            
-            const electron = gameState.electron;
-            
-            // 检查碎片碰撞
-            gameState.fragments.forEach((fragment, index) => {
-                if (fragment.collected || fragment.z !== electron.z) return;
-                
-                const dx = electron.x - fragment.x;
-                const dy = electron.y - fragment.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < (electron.size + fragment.size) / 2) {
-                    collectFragment(index);
-                }
-            });
-            
-            // 检查质子碰撞
-            gameState.protons.forEach((proton, index) => {
-                if (proton.z !== electron.z) return;
-                
-                const dx = electron.x - proton.x;
-                const dy = electron.y - proton.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < (electron.size + proton.size) / 2) {
-                    // 电荷相同则排斥，相反则吸引（碰撞）
-                    if (electron.chargeState !== proton.chargeState && electron.chargeState !== 'neutral') {
-                        gameOver('被质子捕获！');
-                    }
-                }
-            });
-            
-            // 检查陷阱碰撞
-            gameState.traps.forEach(trap => {
-                if (trap.z !== electron.z) return;
-                
-                const dx = electron.x - trap.x;
-                const dy = electron.y - trap.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < (electron.size + trap.size) / 2) {
-                    gameOver('陷入量子陷阱！');
-                }
-            });
-            
-            // 检查BOSS碰撞
-            if (gameState.boss && gameState.boss.z === electron.z) {
-                const dx = electron.x - gameState.boss.x;
-                const dy = electron.y - gameState.boss.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < (electron.size + gameState.boss.size) / 2) {
-                    // 电子电荷与BOSS相反则造成伤害
-                    if (electron.chargeState !== gameState.boss.chargeState) {
-                        gameState.boss.health--;
-                        gameState.immune = true;
-                        rankingSystem.vibrate(200);
-                        
-                        // 闪烁效果
-                        const electronEl = document.getElementById('electron');
-                        if (electronEl) {
-                            electronEl.style.opacity = '0.5';
-                            setTimeout(() => {
-                                electronEl.style.opacity = '1';
-                                gameState.immune = false;
-                            }, 500);
-                        }
-                        
-                        // 检查BOSS是否被击败
-                        if (gameState.boss.health <= 0) {
-                            defeatBoss();
-                        }
-                    } else {
-                        gameOver('被反粒子BOSS捕获！');
-                    }
-                }
-            });
-            
-            // 检查弹幕碰撞
-            gameState.bossProjectiles.forEach((projectile, index) => {
-                if (projectile.z !== electron.z) return;
-                
-                const dx = electron.x - projectile.x;
-                const dy = electron.y - projectile.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < (electron.size + projectile.size) / 2) {
-                    gameOver('被高能粒子击中！');
-                }
-            });
-        }
-
-        function collectFragment(index) {
-            const fragment = gameState.fragments[index];
-            if (fragment.collected) return;
-            
-            fragment.collected = true;
-            gameState.fragmentsCollected++;
-            gameState.score += GAME_CONFIG.SCORE_FRAGMENT;
-            
-            // 播放音效
-            soundSystem.play('collect');
-            rankingSystem.vibrate(50);
-            
-            // 移除碎片元素
-            const fragmentEl = document.getElementById(`fragment-${index}`);
-            if (fragmentEl) {
-                fragmentEl.style.opacity = '0';
-                fragmentEl.style.transform = `scale(0) translateZ(${fragment.z * 30}px)`;
-                fragmentEl.style.transition = 'all 0.3s ease';
-                setTimeout(() => {
-                    if (fragmentEl.parentNode) fragmentEl.remove();
-                }, 300);
-            }
-            
-            // 更新UI
-            document.getElementById('fragments').textContent = `${gameState.fragmentsCollected}/${gameState.fragmentsNeeded}`;
-            document.getElementById('score').textContent = gameState.score;
-            
-            // 检查是否收集足够碎片
-            if (gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
-                if (gameState.inBossFight) {
-                    // BOSS关卡需要击败BOSS才能过关
-                    showMessage('收集完成！', '继续攻击BOSS以完成本关卡！', '继续');
-                } else {
-                    levelUp();
-                }
-            }
-            
-            // 解锁技能
-            if (gameState.fragmentsCollected >= 2) {
-                gameState.skillAvailable = true;
-                const skillBtn = document.getElementById('btnSkill');
-                skillBtn.disabled = false;
-                skillBtn.style.opacity = '1';
-            }
-        }
-
-        function defeatBoss() {
-            gameState.inBossFight = false;
-            gameState.score += GAME_CONFIG.SCORE_BOSS_KILL;
-            gameState.boss = null;
-            
-            // 播放音效
-            soundSystem.play('levelUp');
-            rankingSystem.vibrate(300);
-            
-            // 移除BOSS元素
-            const bossEl = document.getElementById('boss');
-            if (bossEl) {
-                bossEl.style.opacity = '0';
-                bossEl.style.transform = 'scale(0) translateZ(0px)';
-                bossEl.style.transition = 'all 0.5s ease';
-                setTimeout(() => {
-                    if (bossEl.parentNode) bossEl.remove();
-                }, 500);
-            }
-            
-            // 清除弹幕
-            const projectiles = document.querySelectorAll('.projectile');
-            projectiles.forEach(p => {
-                p.style.opacity = '0';
-                setTimeout(() => {
-                    if (p.parentNode) p.remove();
-                }, 300);
-            });
-            gameState.bossProjectiles = [];
-            
-            // 显示奖励信息
-            showMessage('BOSS被击败！', `获得${GAME_CONFIG.SCORE_BOSS_KILL}分奖励！`, '继续', () => {
-                levelUp();
-            });
-        }
-
-        function levelUp() {
-            gameState.level++;
-            gameState.score += GAME_CONFIG.SCORE_LEVEL_UP;
-            gameState.timeLeft += GAME_CONFIG.TIME_BONUS_PER_LEVEL;
-            gameState.fragmentsCollected = 0;
-            
-            // 更新碎片需求
-            if (gameState.level % GAME_CONFIG.FRAGMENTS_INCREMENT_INTERVAL === 0) {
-                gameState.fragmentsNeeded += GAME_CONFIG.FRAGMENTS_INCREMENT;
-            }
-            
-            // 重置技能
-            gameState.skillAvailable = false;
-            const skillBtn = document.getElementById('btnSkill');
-            skillBtn.disabled = true;
-            skillBtn.style.opacity = '0.5';
-            
-            // 播放音效
-            soundSystem.play('levelUp');
-            rankingSystem.vibrate(150);
-            
-            // 更新UI
-            updateUI();
-            
-            // 清除现有元素
-            gameState.protons = [];
-            gameState.traps = [];
-            gameState.fragments = [];
-            
-            // 生成新关卡元素
-            generateLevelElements();
-            
-            // 显示关卡升级信息
-            showMessage(`第${gameState.level}关`, '量子场强度增加，小心！', '继续');
-            
-            // 提交分数到排行榜
-            rankingSystem.addScore(gameState.score);
-        }
-
-        function useSkill() {
-            if (!gameState.skillAvailable || !gameState.isPlaying) return;
-            
-            gameState.skillAvailable = false;
-            const skillBtn = document.getElementById('btnSkill');
-            skillBtn.disabled = true;
-            skillBtn.style.opacity = '0.5';
-            
-            // 播放音效
-            soundSystem.play('skill');
-            rankingSystem.vibrate(200);
-            
-            // 清除当前维度的所有质子
-            const currentZ = gameState.electron.z;
-            gameState.protons = gameState.protons.filter(proton => proton.z !== currentZ);
-            
-            // 视觉效果
-            const protons = document.querySelectorAll('.proton');
-            protons.forEach(proton => {
-                const z = parseInt(proton.style.getPropertyValue('--z-offset')) / 30;
-                if (z === currentZ) {
-                    proton.style.opacity = '0';
-                    proton.style.transform = `scale(0) translateZ(${z * 30}px)`;
-                    setTimeout(() => {
-                        if (proton.parentNode) proton.remove();
-                    }, 300);
-                }
-            });
-            
-            // 免疫效果
-            gameState.immune = true;
-            const electronEl = document.getElementById('electron');
-            if (electronEl) {
-                electronEl.style.boxShadow = '0 0 30px rgba(139, 92, 246, 1)';
-                setTimeout(() => {
-                    electronEl.style.boxShadow = '';
-                    gameState.immune = false;
-                }, 2000);
-            }
-        }
-
-        function gameOver(reason) {
-            gameState.isPlaying = false;
-            clearInterval(gameState.timerInterval);
-            
-            // 播放音效
-            soundSystem.play('gameOver');
-            rankingSystem.vibrate(500);
-            
-            // 提交最终分数
-            rankingSystem.addScore(gameState.score);
-            
-            // 更新最高记录
-            gameState.progress.highestLevel = Math.max(gameState.progress.highestLevel, gameState.level);
-            gameState.progress.highestScore = Math.max(gameState.progress.highestScore, gameState.score);
-            rankingSystem.saveGameProgress();
-            
-            // 显示游戏结束信息
-            showMessage('游戏结束', `${reason}\n得分: ${gameState.score}\n关卡: ${gameState.level}`, '重新开始', () => {
-                startGame();
-            });
-        }
-
-        function updateUI() {
-            document.getElementById('level').textContent = gameState.level;
-            document.getElementById('score').textContent = gameState.score;
-            document.getElementById('time').textContent = Math.ceil(gameState.timeLeft);
-            document.getElementById('zLevel').textContent = gameState.electron.z;
-            document.getElementById('charge').textContent = gameState.electron.chargeState === 'negative' ? '负' : 
-                                                           gameState.electron.chargeState === 'positive' ? '正' : '中性';
-            document.getElementById('moves').textContent = gameState.moves;
-            document.getElementById('fragments').textContent = `${gameState.fragmentsCollected}/${gameState.fragmentsNeeded}`;
-        }
-
-        function startTimer() {
-            clearInterval(gameState.timerInterval);
-            
-            gameState.timerInterval = setInterval(() => {
-                if (!gameState.isPlaying) return;
-                
-                gameState.timeLeft -= 0.1;
-                document.getElementById('time').textContent = Math.ceil(gameState.timeLeft);
-                
-                if (gameState.timeLeft <= 0) {
-                    gameOver('时间耗尽！');
-                }
-            }, 100);
-        }
-
-        function startGameLoop() {
-            const gameLoop = () => {
-                if (!gameState.isPlaying) return;
-                
-                gameState.frameCounter++;
-                if (gameState.frameCounter % gameState.frameSkip === 0) {
-                    updateElectronPosition();
-                    gameState.frameCounter = 0;
-                }
-                
-                requestAnimationFrame(gameLoop);
-            };
-            
-            requestAnimationFrame(gameLoop);
-        }
-
-        function switchCharge() {
-            if (!gameState.isPlaying) return;
-            
-            gameState.moves++;
-            soundSystem.play('charge');
-            rankingSystem.vibrate(50);
-            
-            // 切换电荷状态
-            if (gameState.electron.chargeState === 'negative') {
-                gameState.electron.chargeState = 'positive';
-                gameState.electron.charge = 1;
-            } else if (gameState.electron.chargeState === 'positive') {
-                gameState.electron.chargeState = 'neutral';
-                gameState.electron.charge = 0;
-            } else {
-                gameState.electron.chargeState = 'negative';
-                gameState.electron.charge = -1;
-            }
-            
-            // 更新电子样式
-            const electronEl = document.getElementById('electron');
-            if (electronEl) {
-                electronEl.style.backgroundColor = gameState.electron.chargeState === 'negative' ? 'var(--negative)' : 
-                                                 gameState.electron.chargeState === 'positive' ? 'var(--positive)' : 'var(--neutral)';
-                
-                // 电荷切换动画
-                electronEl.style.transform = `translateZ(${gameState.electron.z * 30}px) scale(1.2)`;
-                setTimeout(() => {
-                    electronEl.style.transform = `translateZ(${gameState.electron.z * 30}px) scale(1)`;
-                }, 200);
-            }
-            
-            // 更新UI
-            document.getElementById('charge').textContent = gameState.electron.chargeState === 'negative' ? '负' : 
-                                                           gameState.electron.chargeState === 'positive' ? '正' : '中性';
-        }
-
-        function adjustZLevel(direction) {
-            if (!gameState.isPlaying) return;
-            
-            gameState.moves++;
-            soundSystem.play('move');
-            rankingSystem.vibrate(40);
-            
-            // 调整Z轴
-            if (direction === 'up') {
-                gameState.electron.z = Math.min(gameState.maxZDepth, gameState.electron.z + 1);
-            } else {
-                gameState.electron.z = Math.max(-gameState.maxZDepth, gameState.electron.z - 1);
-            }
-            
-            // 更新电子样式
-            const electronEl = document.getElementById('electron');
-            if (electronEl) {
-                electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
-                electronEl.style.setProperty('--z-absolute', Math.abs(gameState.electron.z));
-                
-                // Z轴切换动画
-                electronEl.style.transition = 'transform 0.3s ease';
-                electronEl.style.transform = `translateZ(${gameState.electron.z * 30 + 20}px)`;
-                setTimeout(() => {
-                    electronEl.style.transform = `translateZ(${gameState.electron.z * 30}px)`;
-                }, 300);
-            }
-            
-            // 更新UI
-            document.getElementById('zLevel').textContent = gameState.electron.z;
-        }
-
         function repositionElements() {
-            // 重新计算元素位置以适应窗口大小变化
-            const scaleX = gameState.gameWidth / gameState.gameWidth;
-            const scaleY = gameState.gameHeight / gameState.gameHeight;
+            renderElectron();
             
-            // 更新电子位置
-            gameState.electron.x *= scaleX;
-            gameState.electron.y *= scaleY;
-            
-            // 更新质子位置
             gameState.protons.forEach(proton => {
-                proton.x *= scaleX;
-                proton.y *= scaleY;
+                proton.el.style.left = `${proton.x - proton.size/2}px`;
+                proton.el.style.top = `${proton.y - proton.size/2}px`;
             });
             
-            // 更新陷阱位置
             gameState.traps.forEach(trap => {
-                trap.x *= scaleX;
-                trap.y *= scaleY;
+                trap.el.style.left = `${trap.x - trap.size/2}px`;
+                trap.el.style.top = `${trap.y - trap.size/2}px`;
             });
             
-            // 更新碎片位置
-            gameState.fragments.forEach(fragment => {
-                fragment.x *= scaleX;
-                fragment.y *= scaleY;
-            });
-            
-            // 更新BOSS位置
-            if (gameState.boss) {
-                gameState.boss.x *= scaleX;
-                gameState.boss.y *= scaleY;
-            }
-            
-            // 重新渲染
-            renderGameElements();
-            updateElectronPosition();
-        }
-
-        function showMessage(title, message, btnText = '确定', callback = null) {
-            // 移除现有模态框
-            const existingModal = document.querySelector('.message-modal');
-            if (existingModal) existingModal.remove();
-            
-            // 创建新模态框
-            const modal = document.createElement('div');
-            modal.className = 'message-modal fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4';
-            
-            const modalContent = document.createElement('div');
-            modalContent.className = 'modal-content p-6 max-w-[90%] w-[300px] text-center';
-            
-            modalContent.innerHTML = `
-                <h3 class="text-xl font-bold text-purple-400 mb-4">${title}</h3>
-                <p class="text-slate-300 mb-6 whitespace-pre-line">${message}</p>
-                <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">${btnText}</button>
-            `;
-            
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-            
-            // 添加按钮事件
-            const btn = modalContent.querySelector('button');
-            btn.addEventListener('click', () => {
-                modal.remove();
-                if (callback) callback();
+            gameState.fragments.forEach(frag => {
+                frag.el.style.left = `${frag.x - frag.size/2}px`;
+                frag.el.style.top = `${frag.y - frag.size/2}px`;
             });
         }
 
         function bindControls() {
-            // 开始游戏
-            document.getElementById('btnStart').addEventListener('click', startGame);
-            
-            // 方向控制
-            document.getElementById('btnUp').addEventListener('click', () => applyField('up'));
-            document.getElementById('btnDown').addEventListener('click', () => applyField('down'));
-            document.getElementById('btnLeft').addEventListener('click', () => applyField('left'));
-            document.getElementById('btnRight').addEventListener('click', () => applyField('right'));
-            
-            // 电荷切换
-            document.getElementById('btnCharge').addEventListener('click', switchCharge);
-            
-            // Z轴控制
-            document.getElementById('btnZUp').addEventListener('click', () => adjustZLevel('up'));
-            document.getElementById('btnZDown').addEventListener('click', () => adjustZLevel('down'));
-            
-            // 技能按钮
-            document.getElementById('btnSkill').addEventListener('click', useSkill);
-            
-            // 排行榜按钮
+            const gameArea = document.getElementById('gameArea');
+
+            // 触摸交互优化
+            gameArea.addEventListener('touchstart', (e) => {
+                if (!gameState.isPlaying) return;
+                const touch = e.touches[0];
+                const rect = gameArea.getBoundingClientRect();
+                gameState.mouseDown = true;
+                gameState.mouseOffset = {
+                    x: touch.clientX - rect.left - gameState.electron.x,
+                    y: touch.clientY - rect.top - gameState.electron.y
+                };
+            });
+
+            gameArea.addEventListener('touchmove', (e) => {
+                if (!gameState.isPlaying || !gameState.mouseDown) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = gameArea.getBoundingClientRect();
+                
+                const targetX = touch.clientX - rect.left - gameState.mouseOffset.x;
+                const targetY = touch.clientY - rect.top - gameState.mouseOffset.y;
+                
+                gameState.electron.velocityX = (targetX - gameState.electron.x) * 0.1;
+                gameState.electron.velocityY = (targetY - gameState.electron.y) * 0.1;
+                
+                gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+                gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+                
+                renderElectron();
+                checkCollisions();
+                checkFragmentCollection();
+            });
+
+            gameArea.addEventListener('touchend', () => {
+                gameState.mouseDown = false;
+            });
+
+            // 鼠标交互优化
+            gameArea.addEventListener('mousedown', (e) => {
+                if (!gameState.isPlaying) return;
+                const rect = gameArea.getBoundingClientRect();
+                gameState.mouseDown = true;
+                gameState.mouseOffset = {
+                    x: e.clientX - rect.left - gameState.electron.x,
+                    y: e.clientY - rect.top - gameState.electron.y
+                };
+            });
+
+            gameArea.addEventListener('mousemove', (e) => {
+                if (!gameState.isPlaying || !gameState.mouseDown) return;
+                const rect = gameArea.getBoundingClientRect();
+                
+                const targetX = e.clientX - rect.left - gameState.mouseOffset.x;
+                const targetY = e.clientY - rect.top - gameState.mouseOffset.y;
+                
+                gameState.electron.velocityX = (targetX - gameState.electron.x) * 0.1;
+                gameState.electron.velocityY = (targetY - gameState.electron.y) * 0.1;
+                
+                gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+                gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+                
+                renderElectron();
+                checkCollisions();
+                checkFragmentCollection();
+            });
+
+            gameArea.addEventListener('mouseup', () => {
+                gameState.mouseDown = false;
+            });
+
+            gameArea.addEventListener('mouseleave', () => {
+                gameState.mouseDown = false;
+            });
+
+            // 按钮交互
+            document.getElementById('btnUp').addEventListener('click', () => {
+                applyField('up');
+            });
+
+            document.getElementById('btnDown').addEventListener('click', () => {
+                applyField('down');
+            });
+
+            document.getElementById('btnLeft').addEventListener('click', () => {
+                applyField('left');
+            });
+
+            document.getElementById('btnRight').addEventListener('click', () => {
+                applyField('right');
+            });
+
+            document.getElementById('btnZUp').addEventListener('click', () => {
+                if (!gameState.isPlaying) return;
+                const newZ = gameState.electron.z + 1;
+                if (newZ <= gameState.maxZDepth) {
+                    gameState.electron.z = newZ;
+                    gameState.moves++;
+                    soundSystem.play('move');
+                    updateStatus();
+                    renderElectron();
+                    createZEffect();
+                    rankingSystem.vibrate(30);
+                }
+            });
+
+            document.getElementById('btnZDown').addEventListener('click', () => {
+                if (!gameState.isPlaying) return;
+                const newZ = gameState.electron.z - 1;
+                if (newZ >= -gameState.maxZDepth) {
+                    gameState.electron.z = newZ;
+                    gameState.moves++;
+                    soundSystem.play('move');
+                    updateStatus();
+                    renderElectron();
+                    createZEffect();
+                    rankingSystem.vibrate(30);
+                }
+            });
+
+            document.getElementById('btnCharge').addEventListener('click', () => {
+                if (!gameState.isPlaying) return;
+                
+                const chargeCycle = ['negative', 'positive', 'neutral'];
+                const currentIndex = chargeCycle.indexOf(gameState.electron.chargeState);
+                const nextIndex = (currentIndex + 1) % chargeCycle.length;
+                gameState.electron.chargeState = chargeCycle[nextIndex];
+                
+                if (gameState.electron.chargeState === 'negative') {
+                    gameState.electron.charge = -1;
+                } else if (gameState.electron.chargeState === 'positive') {
+                    gameState.electron.charge = 1;
+                } else {
+                    gameState.electron.charge = 0;
+                }
+                
+                gameState.moves++;
+                soundSystem.play('charge');
+                renderElectron();
+                
+                const flash = document.createElement('div');
+                flash.className = `absolute inset-0 pointer-events-none z-20 flex items-center justify-center`;
+                flash.style.backgroundColor = gameState.electron.chargeState === 'negative' ? 'rgba(59, 130, 246, 0.3)' :
+                                             gameState.electron.chargeState === 'positive' ? 'rgba(239, 68, 68, 0.3)' :
+                                             'rgba(16, 185, 129, 0.3)';
+                flash.style.transition = 'opacity 0.5s';
+                gameArea.appendChild(flash);
+                
+                setTimeout(() => {
+                    flash.style.opacity = '0';
+                    setTimeout(() => {
+                        if (flash.parentNode) gameArea.removeChild(flash);
+                    }, 500);
+                }, 100);
+                
+                rankingSystem.vibrate(50);
+            });
+
+            document.getElementById('btnSkill').addEventListener('click', () => {
+                if (gameState.skillAvailable && gameState.isPlaying) {
+                    activateSkill();
+                }
+            });
+
             document.getElementById('btnRanking').addEventListener('click', () => {
                 document.getElementById('rankingModal').classList.remove('hidden');
                 rankingSystem.loadFromSupabase();
+                rankingSystem.loadFriends();
             });
-            
-            document.getElementById('btnRankingGame').addEventListener('click', () => {
-                document.getElementById('rankingModal').classList.remove('hidden');
-                rankingSystem.loadFromSupabase();
-            });
-            
+
             document.getElementById('closeRanking').addEventListener('click', () => {
                 document.getElementById('rankingModal').classList.add('hidden');
             });
             
-            // 个人中心按钮
             document.getElementById('btnProfile').addEventListener('click', () => {
                 document.getElementById('profileModal').classList.remove('hidden');
+                document.getElementById('usernameInput').value = rankingSystem.currentUser.username;
+                document.getElementById('avatarInput').value = rankingSystem.currentUser.avatar || '';
+                
+                // 显示游戏统计
+                document.getElementById('statsHighestLevel').textContent = gameState.progress.highestLevel;
+                document.getElementById('statsHighestScore').textContent = gameState.progress.highestScore;
+                document.getElementById('statsTotalPlays').textContent = gameState.progress.totalPlays;
+                
+                // 音效开关
+                document.getElementById('soundToggle').checked = gameState.settings.sound;
+                document.getElementById('vibrationToggle').checked = gameState.settings.vibration;
             });
             
             document.getElementById('closeProfile').addEventListener('click', () => {
                 document.getElementById('profileModal').classList.add('hidden');
             });
             
-            // 保存个人资料
             document.getElementById('saveProfile').addEventListener('click', () => {
                 const username = document.getElementById('usernameInput').value.trim();
                 const avatar = document.getElementById('avatarInput').value.trim();
@@ -2502,103 +1564,953 @@
                 rankingSystem.updateUserProfile(username, avatar);
             });
             
-            // 音效开关
             document.getElementById('soundToggle').addEventListener('change', () => {
-                gameState.settings.sound = document.getElementById('soundToggle').checked;
                 soundSystem.toggle();
                 rankingSystem.saveGameProgress();
             });
             
-            // 震动开关
             document.getElementById('vibrationToggle').addEventListener('change', () => {
                 gameState.settings.vibration = document.getElementById('vibrationToggle').checked;
                 rankingSystem.saveGameProgress();
             });
-            
-            // 触摸控制
-            const gameArea = document.getElementById('gameArea');
-            let touchStart = { x: 0, y: 0 };
-            
-            gameArea.addEventListener('touchstart', (e) => {
-                if (!gameState.isPlaying) return;
-                
-                e.preventDefault();
-                touchStart.x = e.touches[0].clientX;
-                touchStart.y = e.touches[0].clientY;
-                gameState.mouseDown = true;
-            });
-            
-            gameArea.addEventListener('touchmove', (e) => {
-                if (!gameState.isPlaying || !gameState.mouseDown) return;
-                
-                e.preventDefault();
-                const touchX = e.touches[0].clientX;
-                const touchY = e.touches[0].clientY;
-                
-                const dx = touchX - touchStart.x;
-                const dy = touchY - touchStart.y;
-                
-                // 仅在移动距离超过阈值时响应
-                if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        applyField(dx > 0 ? 'right' : 'left');
-                    } else {
-                        applyField(dy > 0 ? 'down' : 'up');
-                    }
-                    
-                    // 重置起始位置
-                    touchStart.x = touchX;
-                    touchStart.y = touchY;
-                }
-            });
-            
-            gameArea.addEventListener('touchend', () => {
-                gameState.mouseDown = false;
-            });
-            
-            // 键盘控制
-            document.addEventListener('keydown', (e) => {
-                if (!gameState.isPlaying) return;
-                
-                switch(e.key) {
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        applyField('up');
-                        break;
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        applyField('down');
-                        break;
-                    case 'ArrowLeft':
-                        e.preventDefault();
-                        applyField('left');
-                        break;
-                    case 'ArrowRight':
-                        e.preventDefault();
-                        applyField('right');
-                        break;
-                    case ' ':
-                        e.preventDefault();
-                        switchCharge();
-                        break;
-                    case 'z':
-                        e.preventDefault();
-                        adjustZLevel('down');
-                        break;
-                    case 'x':
-                        e.preventDefault();
-                        adjustZLevel('up');
-                        break;
-                    case 'c':
-                        e.preventDefault();
-                        useSkill();
-                        break;
-                }
-            });
+
+            document.getElementById('btnStart').addEventListener('click', startGame);
         }
 
-        // 初始化游戏
-        window.addEventListener('load', initGame);
-    </script>
+        function createZEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'absolute inset-0 pointer-events-none z-20';
+            effect.style.background = `radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0) 70%)`;
+            effect.style.transition = 'opacity 0.5s';
+            document.getElementById('gameArea').appendChild(effect);
+            
+            setTimeout(() => {
+                effect.style.opacity = '0';
+                setTimeout(() => {
+                    if (effect.parentNode) document.getElementById('gameArea').removeChild(effect);
+                }, 500);
+            }, 100);
+        }
+
+        function renderElectron() {
+            let electronEl = document.getElementById('electron');
+            if (!electronEl) {
+                electronEl = document.createElement('div');
+                electronEl.id = 'electron';
+                electronEl.className = 'electron float-3d charge-effect';
+                document.getElementById('gameArea').appendChild(electronEl);
+            }
+
+            let color, chargeText;
+            if (gameState.electron.chargeState === 'negative') {
+                color = '#3b82f6';
+                chargeText = 'e⁻';
+            } else if (gameState.electron.chargeState === 'positive') {
+                color = '#ef4444';
+                chargeText = 'e⁺';
+            } else {
+                color = '#10B981';
+                chargeText = 'e⁰';
+            }
+            
+            electronEl.style.width = `${gameState.electron.size}px`;
+            electronEl.style.height = `${gameState.electron.size}px`;
+            electronEl.style.left = `${gameState.electron.x - gameState.electron.size/2}px`;
+            electronEl.style.top = `${gameState.electron.y - gameState.electron.size/2}px`;
+            electronEl.style.backgroundColor = color;
+            electronEl.style.boxShadow = `0 0 15px ${color}`;
+            electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+            electronEl.style.setProperty('--z-absolute', Math.abs(gameState.electron.z));
+            electronEl.innerHTML = `<div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">${chargeText}</div>`;
+            
+            if (gameState.performance.isMobile) {
+                electronEl.style.boxShadow = `0 0 8px ${color}`;
+            }
+        }
+
+        function generateLevelElements() {
+            clearLevelElements();
+            const gameArea = document.getElementById('gameArea');
+            const rect = gameArea.getBoundingClientRect();
+
+            // 质子生成
+            const protonCount = gameState.performance.isMobile 
+                ? Math.min(3 + Math.floor(gameState.level/2), 8) 
+                : Math.min(6 + gameState.level, 12);
+            
+            for (let i = 0; i < protonCount; i++) {
+                const protonSize = 20 + Math.random() * 10;
+                const position = generateSafePosition(protonSize, 'proton');
+                
+                if (position) {
+                    createProton(position.x, position.y, position.z);
+                }
+            }
+
+            // 陷阱生成
+            const trapCount = gameState.performance.isMobile
+                ? Math.min(1 + Math.floor(gameState.level/3), 4)
+                : Math.min(2 + Math.floor(gameState.level/2), 6);
+                
+            for (let i = 0; i < trapCount; i++) {
+                const trapSize = 30 + Math.random() * 15;
+                const position = generateSafePosition(trapSize, 'trap');
+                
+                if (position) {
+                    createTrap(position.x, position.y, position.z);
+                }
+            }
+
+            // 碎片生成
+            const fragmentCount = gameState.fragmentsNeeded;
+            
+            const zLevels = [];
+            zLevels.push(gameState.electron.z);
+            let diffZ = gameState.electron.z;
+            while (diffZ === gameState.electron.z) {
+                diffZ = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+            }
+            zLevels.push(diffZ);
+            for (let i = 2; i < fragmentCount; i++) {
+                zLevels.push(Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth);
+            }
+            zLevels.sort(() => Math.random() - 0.5);
+            
+            for (let i = 0; i < fragmentCount; i++) {
+                const fragmentSize = 15;
+                const position = generateSafePosition(fragmentSize, 'fragment');
+                
+                if (position) {
+                    createFragment(position.x, position.y, position.z);
+                }
+            }
+
+            // Boss生成
+            if (gameState.level % 5 === 0 && !gameState.inBossFight) {
+                setTimeout(() => {
+                    createBoss();
+                    soundSystem.play('boss');
+                    showMessage('⚠️ 警告', `第${gameState.level}关：反粒子Boss即将出现！`, '准备迎战');
+                },
+            1000);
+        }
+    }
+
+    function createProton(x, y, z) {
+        const proton = { x, y, z, size: 20 + Math.random() * 10 };
+        gameState.protons.push(proton);
+
+        const protonEl = document.createElement('div');
+        protonEl.className = 'proton';
+        protonEl.style.width = `${proton.size}px`;
+        protonEl.style.height = `${proton.size}px`;
+        protonEl.style.left = `${x - proton.size/2}px`;
+        protonEl.style.top = `${y - proton.size/2}px`;
+        protonEl.style.backgroundColor = '#f97316';
+        protonEl.style.setProperty('--z-offset', `${z * 30}px`);
+        protonEl.style.setProperty('--z-absolute', Math.abs(z));
+        protonEl.innerHTML = `
+            <div class="absolute -inset-1 bg-gradient-to-r from-proton to-orange-300 rounded-full opacity-30"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">p⁺</div>
+        `;
+        document.getElementById('gameArea').appendChild(protonEl);
+        proton.el = protonEl;
+    }
+
+    function createTrap(x, y, z) {
+        const trap = { x, y, z, size: 30 + Math.random() * 15 };
+        gameState.traps.push(trap);
+
+        const trapEl = document.createElement('div');
+        trapEl.className = 'trap trap-effect';
+        trapEl.style.width = `${trap.size}px`;
+        trapEl.style.height = `${trap.size}px`;
+        trapEl.style.left = `${x - trap.size/2}px`;
+        trapEl.style.top = `${y - trap.size/2}px`;
+        trapEl.style.setProperty('--z-offset', `${z * 30}px`);
+        trapEl.style.setProperty('--z-absolute', Math.abs(z));
+        trapEl.innerHTML = `
+            <svg width="${trap.size}" height="${trap.size}" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0">
+                <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                <circle cx="30" cy="30" r="20" fill="none" stroke="rgba(236,72,153,0.6)" stroke-width="2" />
+                <path d="M30 5 L30 25 M30 35 L30 55 M5 30 L25 30 M35 30 L55 30" 
+                      stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" />
+                <path d="M10 10 Q30 0 50 10 T30 30 T10 50 T30 30 T50 10" 
+                      fill="none" stroke="rgba(139,92,246,0.5)" stroke-width="1" />
+                <path d="M10 50 Q30 60 50 50 T30 30 T10 10 T30 30 T50 50" 
+                      fill="none" stroke="rgba(139,92,246,0.5)" stroke-width="1" />
+                <text x="30" y="34" text-anchor="middle" fill="white" font-size="10" font-weight="bold">量子陷阱</text>
+            </svg>
+        `;
+        document.getElementById('gameArea').appendChild(trapEl);
+        trap.el = trapEl;
+    }
+
+    function createFragment(x, y, z) {
+        const fragment = { x, y, z, size: 15 };
+        gameState.fragments.push(fragment);
+
+        const fragmentEl = document.createElement('div');
+        fragmentEl.className = 'fragment quantum-pulse';
+        fragmentEl.style.width = `${fragment.size}px`;
+        fragmentEl.style.height = `${fragment.size}px`;
+        fragmentEl.style.left = `${x - fragment.size/2}px`;
+        fragmentEl.style.top = `${y - fragment.size/2}px`;
+        fragmentEl.style.backgroundColor = '#8b5cf6';
+        fragmentEl.style.boxShadow = '0 0 10px #8b5cf6';
+        fragmentEl.style.setProperty('--z-offset', `${z * 30}px`);
+        fragmentEl.style.setProperty('--z-absolute', Math.abs(z));
+        fragmentEl.innerHTML = `<i class="fa fa-diamond absolute inset-0 flex items-center justify-center text-white text-xs"></i>`;
+        document.getElementById('gameArea').appendChild(fragmentEl);
+        fragment.el = fragmentEl;
+    }
+
+    function createBoss() {
+        gameState.inBossFight = true;
+        const gameArea = document.getElementById('gameArea');
+        const rect = gameArea.getBoundingClientRect();
+
+        gameState.boss = {
+            x: rect.width * 0.7,
+            y: rect.height / 2,
+            z: 0,
+            size: 80,
+            health: 5 + Math.floor(gameState.level/5),
+            fireRate: 2000 - Math.min(500, gameState.level * 100),
+            lastFire: Date.now(),
+            moveSpeed: 0.5 + Math.min(0.5, gameState.level * 0.1)
+        };
+
+        const bossEl = document.createElement('div');
+        bossEl.className = 'boss';
+        bossEl.style.width = `${gameState.boss.size}px`;
+        bossEl.style.height = `${gameState.boss.size}px`;
+        bossEl.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
+        bossEl.style.top = `${gameState.boss.y - gameState.boss.size/2}px`;
+        bossEl.style.backgroundColor = 'rgba(190, 18, 60, 0.8)';
+        bossEl.style.boxShadow = '0 0 20px #be123c';
+        bossEl.style.setProperty('--z-offset', `${gameState.boss.z * 30}px`);
+        bossEl.innerHTML = `
+            <div class="absolute -inset-2 bg-gradient-to-r from-red-500 to-purple-500 rounded-full opacity-30"></div>
+            <div class="text-white text-center mt-3 font-bold">反粒子</div>
+            <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-red-600 text-white text-xs text-center pt-1">
+                ${gameState.boss.health}
+            </div>
+        `;
+        document.getElementById('gameArea').appendChild(bossEl);
+        gameState.boss.el = bossEl;
+
+        gameState.boss.fireInterval = setInterval(() => {
+            if (!gameState.isPlaying) return;
+            fireBossProjectile();
+        }, gameState.boss.fireRate);
+    }
+
+    function fireBossProjectile() {
+        const boss = gameState.boss;
+        if (!boss) return;
+
+        const projectileSize = 15;
+        let x = boss.x + boss.size / 2 - projectileSize / 2;
+        let y = boss.y + boss.size / 2 - projectileSize / 2;
+        const z = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+
+        const dx = (gameState.electron.x + gameState.electron.size/2) - x;
+        const dy = (gameState.electron.y + gameState.electron.size/2) - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const speed = 3 + Math.min(2, gameState.level * 0.2);
+
+        const projectile = {
+            x,
+            y,
+            z,
+            size: projectileSize,
+            velocityX: (dx / distance) * speed,
+            velocityY: (dy / distance) * speed
+        };
+
+        const projectileEl = document.createElement('div');
+        projectileEl.className = 'projectile';
+        projectileEl.style.width = `${projectile.size}px`;
+        projectileEl.style.height = `${projectile.size}px`;
+        projectileEl.style.left = `${projectile.x}px`;
+        projectileEl.style.top = `${projectile.y}px`;
+        projectileEl.style.backgroundColor = '#ef4444';
+        projectileEl.style.setProperty('--z-offset', `${z * 30}px`);
+        projectileEl.style.setProperty('--z-absolute', Math.abs(z));
+        document.getElementById('gameArea').appendChild(projectileEl);
+        projectile.el = projectileEl;
+
+        gameState.bossProjectiles.push(projectile);
+    }
+
+    function updateBoss() {
+        if (!gameState.boss || !gameState.isPlaying) return;
+        
+        const targetY = gameState.electron.y;
+        const dy = targetY - gameState.boss.y;
+        gameState.boss.y += dy * 0.02 * gameState.boss.moveSpeed;
+        
+        const padding = 50;
+        if (gameState.boss.y < padding) gameState.boss.y = padding;
+        if (gameState.boss.y > gameState.gameHeight - gameState.boss.size - padding) {
+            gameState.boss.y = gameState.gameHeight - gameState.boss.size - padding;
+        }
+        
+        gameState.boss.el.style.top = `${gameState.boss.y}px`;
+    }
+
+    function updateBossProjectiles() {
+        for (let i = gameState.bossProjectiles.length - 1; i >= 0; i--) {
+            const projectile = gameState.bossProjectiles[i];
+            
+            projectile.x += projectile.velocityX;
+            projectile.y += projectile.velocityY;
+            projectile.el.style.left = `${projectile.x}px`;
+            projectile.el.style.top = `${projectile.y}px`;
+            
+            if (projectile.x < -50 || projectile.x > gameState.gameWidth + 50 ||
+                projectile.y < -50 || projectile.y > gameState.gameHeight + 50) {
+                
+                if (projectile.element) projectile.el.remove();
+                gameState.bossProjectiles.splice(i, 1);
+            }
+        }
+    }
+
+    function checkCollisions() {
+        if (gameState.immune) return;
+
+        const gameArea = document.getElementById('gameArea');
+        const rect = gameArea.getBoundingClientRect();
+        
+        gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+        gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+
+        gameState.protons.forEach(proton => {
+            if (Math.abs(gameState.electron.z - proton.z) > 0) return;
+
+            const dx = gameState.electron.x - proton.x;
+            const dy = gameState.electron.y - proton.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + proton.size)/2) {
+                if (gameState.electron.charge > 0) {
+                    gameOver('碰撞失败', '正电子与质子碰撞，量子态坍塌！');
+                } else {
+                    const angle = Math.atan2(dy, dx);
+                    proton.x -= Math.cos(angle) * 5;
+                    proton.y -= Math.sin(angle) * 5;
+                    proton.el.style.left = `${proton.x - proton.size/2}px`;
+                    proton.el.style.top = `${proton.y - proton.size/2}px`;
+                }
+            }
+        });
+
+        gameState.traps.forEach(trap => {
+            if (Math.abs(gameState.electron.z - trap.z) > 1) return;
+
+            const dx = gameState.electron.x - trap.x;
+            const dy = gameState.electron.y - trap.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + trap.size)/2) {
+                gameOver('陷阱触发', '进入高能陷阱，任务失败！');
+            }
+        });
+
+        gameState.bossProjectiles.forEach(projectile => {
+            if (Math.abs(gameState.electron.z - projectile.z) > 0) return;
+
+            const dx = gameState.electron.x - projectile.x;
+            const dy = gameState.electron.y - projectile.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + projectile.size)/2) {
+                gameOver('被击中', '反粒子投射物击中，电子湮灭！');
+            }
+        });
+
+        if (gameState.boss) {
+            const dx = gameState.electron.x - gameState.boss.x;
+            const dy = gameState.electron.y - gameState.boss.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + gameState.boss.size)/2) {
+                gameState.boss.health--;
+                gameState.boss.el.querySelector('div:last-child').textContent = gameState.boss.health;
+                
+                rankingSystem.vibrate([100, 50, 100]);
+
+                if (gameState.boss.health <= 0) {
+                    clearInterval(gameState.boss.fireInterval);
+                    gameState.boss.el.remove();
+                    gameState.bossProjectiles.forEach(p => p.el.remove());
+                    gameState.boss = null;
+                    gameState.bossProjectiles = [];
+                    gameState.inBossFight = false;
+                    
+                    gameState.score += 500 * gameState.level;
+                    updateStatus();
+                    
+                    const rewardCount = 5 + Math.floor(gameState.level/3);
+                    
+                    for (let i = 0; i < rewardCount; i++) {
+                        const fragmentSize = 15;
+                        const position = generateSafePosition(fragmentSize, 'fragment');
+                        
+                        if (position) {
+                            createFragment(position.x, position.y, position.z);
+                        }
+                    }
+                } else {
+                    let newX = gameState.boss.x + Math.random() * 40 - 20;
+                    let newY = gameState.boss.y + Math.random() * 40 - 20;
+                    
+                    newX = Math.max(50, Math.min(gameState.gameWidth - 50, newX));
+                    newY = Math.max(50, Math.min(gameState.gameHeight - 50, newY));
+                    
+                    gameState.boss.x = newX;
+                    gameState.boss.y = newY;
+                    gameState.boss.el.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
+                    gameState.boss.el.style.top = `${gameState.boss.y - gameState.boss.size/2}px`;
+                }
+            }
+        }
+    }
+
+    function checkFragmentCollection() {
+        gameState.fragments.forEach((fragment, index) => {
+            if (Math.abs(gameState.electron.z - fragment.z) > 0) return;
+
+            const dx = gameState.electron.x - fragment.x;
+            const dy = gameState.electron.y - fragment.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+
+            if (distance < (gameState.electron.size + fragment.size)/2) {
+                fragment.el.remove();
+                gameState.fragments.splice(index, 1);
+                gameState.fragmentsCollected++;
+                
+                rankingSystem.vibrate(50);
+                soundSystem.play('collect');
+
+                showFragmentEffect(fragment.x, fragment.y);
+                checkLevelUpCondition();
+
+                if (gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
+                    gameState.skillAvailable = true;
+                    document.getElementById('btnSkill').classList.remove('opacity-50');
+                    document.getElementById('btnSkill').classList.add('animate-pulse');
+                }
+
+                gameState.score += 100;
+                updateStatus();
+            }
+        });
+    }
+
+    function checkLevelUpCondition() {
+        if (!gameState.inBossFight && gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
+            gameState.level++;
+            gameState.timeLeft += 20;
+            gameState.fragmentsCollected = 0;
+            gameState.skillAvailable = false;
+            document.getElementById('btnSkill').classList.add('opacity-50');
+            document.getElementById('btnSkill').classList.remove('animate-pulse');
+            
+            gameState.fragmentsNeeded = 3 + Math.floor((gameState.level - 1) / 2);
+            
+            if (gameState.level % 5 === 0) {
+                showMessage('⚠️ 警告', `第${gameState.level}关：反粒子Boss即将出现！`, '准备迎战');
+            } else {
+                soundSystem.play('levelUp');
+                showMessage('🎉 关卡升级', `已进入第${gameState.level}关！\n奖励时间+20秒`, '继续游戏');
+            }
+            
+            setTimeout(() => {
+                generateLevelElements();
+                updateStatus();
+            }, 1500);
+            
+            gameState.score += 500 * gameState.level;
+        }
+    }
+
+    function showFragmentEffect(x, y) {
+        const effect = document.createElement('div');
+        effect.className = 'absolute quantum-pulse pointer-events-none z-20';
+        effect.style.left = `${x}px`;
+        effect.style.top = `${y}px`;
+        effect.style.width = '30px';
+        effect.style.height = '30px';
+        effect.style.backgroundColor = 'rgba(139, 92, 246, 0.6)';
+        effect.style.borderRadius = '50%';
+        effect.style.transform = 'translate(-50%, -50%)';
+        
+        document.getElementById('gameArea').appendChild(effect);
+        
+        const scorePopup = document.createElement('div');
+        scorePopup.className = 'absolute text-quantum font-bold pointer-events-none z-20';
+        scorePopup.style.left = `${x}px`;
+        scorePopup.style.top = `${y - 20}px`;
+        scorePopup.style.transform = 'translate(-50%, 0)';
+        scorePopup.style.transition = 'all 0.8s ease-out';
+        scorePopup.textContent = '+100';
+        document.getElementById('gameArea').appendChild(scorePopup);
+        
+        setTimeout(() => {
+            effect.style.opacity = '0';
+            scorePopup.style.opacity = '0';
+            scorePopup.style.transform = 'translate(-50%, -30px)';
+            
+            setTimeout(() => {
+                if (effect.parentNode) document.getElementById('gameArea').removeChild(effect);
+                if (scorePopup.parentNode) document.getElementById('gameArea').removeChild(scorePopup);
+            }, 800);
+        }, 300);
+    }
+
+    function activateSkill() {
+        gameState.skillAvailable = false;
+        gameState.fragmentsCollected = 0;
+        document.getElementById('btnSkill').classList.add('opacity-50');
+        document.getElementById('btnSkill').classList.remove('animate-pulse');
+        
+        gameState.immune = true;
+        soundSystem.play('skill');
+        
+        for (let i = gameState.protons.length - 1; i >= 0; i--) {
+            const proton = gameState.protons[i];
+            if (proton.z === gameState.electron.z) {
+                proton.el.remove();
+                gameState.protons.splice(i, 1);
+            }
+        }
+        
+        const skillEffect = document.createElement('div');
+        skillEffect.className = 'absolute inset-0 bg-quantum/20 pointer-events-none z-30';
+        skillEffect.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
+        skillEffect.style.transition = 'opacity 1s';
+        document.getElementById('gameArea').appendChild(skillEffect);
+        
+        const skillMessage = document.createElement('div');
+        skillMessage.className = 'absolute top-4 left-1/2 transform -translate-x-1/2 bg-quantum/80 text-white px-3 py-1 rounded text-xs font-bold z-40';
+        skillMessage.textContent = '量子净化激活！';
+        document.getElementById('gameArea').appendChild(skillMessage);
+        
+        rankingSystem.vibrate(200);
+
+        setTimeout(() => {
+            gameState.immune = false;
+            skillEffect.style.opacity = '0';
+            skillMessage.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (skillEffect.parentNode) document.getElementById('gameArea').removeChild(skillEffect);
+                if (skillMessage.parentNode) document.getElementById('gameArea').removeChild(skillMessage);
+            }, 1000);
+            
+            generateLevelElements();
+        }, 5000);
+    }
+
+    function startGame() {
+        gameState.isPlaying = true;
+        gameState.level = 1;
+        gameState.score = 0;
+        gameState.timeLeft = 80;
+        gameState.moves = 0;
+        gameState.electron = { 
+            x: 100, 
+            y: 100, 
+            charge: -1, 
+            z: 0, 
+            size: 20,
+            velocityX: 0,
+            velocityY: 0,
+            speed: gameState.performance.isMobile ? 2.5 : 3,
+            chargeState: 'negative'
+        };
+        gameState.fragmentsCollected = 0;
+        gameState.fragmentsNeeded = 3;
+        gameState.skillAvailable = false;
+        gameState.inBossFight = false;
+        
+        document.getElementById('gameArea').innerHTML = '';
+        
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameUI').classList.remove('hidden');
+        
+        updateGameDimensions();
+        
+        generateLevelElements();
+        renderElectron();
+        updateStatus();
+        startTimer();
+        gameLoop();
+    }
+
+    let lastFrameTime = 0;
+    const maxFps = 30;
+    const frameInterval = 1000 / maxFps;
+    
+    function gameLoop(timestamp) {
+        if (!gameState.isPlaying) return;
+
+        gameState.frameCounter++;
+        if (gameState.frameCounter % gameState.frameSkip !== 0) {
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+        
+        if (!timestamp) timestamp = performance.now();
+        if (timestamp - lastFrameTime < frameInterval) {
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+        lastFrameTime = timestamp;
+
+        updateElectronPhysics();
+        
+        if (gameState.inBossFight) {
+            updateBoss();
+            updateBossProjectiles();
+        }
+
+        checkCollisions();
+        checkFragmentCollection();
+        
+        requestAnimationFrame(gameLoop);
+    }
+
+    function updateElectronPhysics() {
+        if (gameState.performance.isMobile) {
+            gameState.electron.velocityX *= 0.95;
+            gameState.electron.velocityY *= 0.95;
+        } else {
+            gameState.electron.velocityX *= 0.97;
+            gameState.electron.velocityY *= 0.97;
+        }
+        
+        if (Math.abs(gameState.electron.velocityX) < 0.1) gameState.electron.velocityX = 0;
+        if (Math.abs(gameState.electron.velocityY) < 0.1) gameState.electron.velocityY = 0;
+        
+        gameState.electron.x += gameState.electron.velocityX;
+        gameState.electron.y += gameState.electron.velocityY;
+        
+        const gameArea = document.getElementById('gameArea');
+        const rect = gameArea.getBoundingClientRect();
+        gameState.electron.x = Math.max(gameState.electron.size/2, Math.min(rect.width - gameState.electron.size/2, gameState.electron.x));
+        gameState.electron.y = Math.max(gameState.electron.size/2, Math.min(rect.height - gameState.electron.size/2, gameState.electron.y));
+        
+        renderElectron();
+    }
+
+    function startTimer() {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = setInterval(() => {
+            gameState.timeLeft--;
+            updateStatus();
+
+            if (gameState.timeLeft <= 0) {
+                gameOver('时间耗尽', '量子能量场坍塌，任务失败！');
+            }
+        }, 1000);
+    }
+
+    function updateStatus() {
+        document.getElementById('level').textContent = gameState.level;
+        document.getElementById('score').textContent = gameState.score;
+        document.getElementById('time').textContent = gameState.timeLeft;
+        document.getElementById('zLevel').textContent = gameState.electron.z;
+        
+        const chargeText = gameState.electron.chargeState === 'negative' ? '负' : 
+                          gameState.electron.chargeState === 'positive' ? '正' : '中性';
+        document.getElementById('charge').textContent = chargeText;
+        document.getElementById('moves').textContent = gameState.moves;
+        document.getElementById('fragments').textContent = `${gameState.fragmentsCollected}/${gameState.fragmentsNeeded}`;
+        
+        const timeEl = document.getElementById('time');
+        if (gameState.timeLeft < 10) {
+            timeEl.classList.add('text-red-500', 'animate-pulse');
+        } else {
+            timeEl.classList.remove('text-red-500', 'animate-pulse');
+        }
+    }
+
+    function gameOver(title, message) {
+        gameState.isPlaying = false;
+        clearInterval(gameState.timerInterval);
+        
+        if (gameState.boss?.fireInterval) {
+            clearInterval(gameState.boss.fireInterval);
+        }
+        
+        rankingSystem.addScore(gameState.score);
+        soundSystem.play('gameOver');
+        
+        showMessage(title, message + `\n最终得分: ${gameState.score}\n关卡: ${gameState.level}`, '重新开始', () => {
+            showStartScreen();
+        });
+        
+        rankingSystem.vibrate([200, 100, 200]);
+    }
+
+    function showStartScreen() {
+        document.getElementById('startScreen').classList.remove('hidden');
+        document.getElementById('gameUI').classList.add('hidden');
+        clearInterval(gameState.timerInterval);
+        
+        document.getElementById('gameArea').innerHTML = '';
+        
+        gameState.isPlaying = false;
+        gameState.inBossFight = false;
+        gameState.boss = null;
+        gameState.bossProjectiles = [];
+    }
+
+    function showMessage(title, message, buttonText = '确定', callback = () => {}) {
+        const existingModal = document.querySelector('.message-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'message-modal fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="modal-content p-6 max-w-[80%] w-[300px] text-center">
+                <h3 class="text-xl font-bold text-purple-400 mb-3">${title}</h3>
+                <p class="text-slate-200 mb-5 whitespace-pre-line">${message}</p>
+                <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold w-full" id="modalBtn">${buttonText}</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('modalBtn').addEventListener('click', () => {
+            modal.remove();
+            callback();
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    function clearLevelElements() {
+        gameState.protons.forEach(proton => proton.el?.remove());
+        gameState.traps.forEach(trap => trap.el?.remove());
+        gameState.fragments.forEach(frag => frag.el?.remove());
+        gameState.bossProjectiles.forEach(proj => proj.el?.remove());
+        
+        if (gameState.boss?.el) {
+            gameState.boss.el.remove();
+        }
+        
+        gameState.protons = [];
+        gameState.traps = [];
+        gameState.fragments = [];
+        gameState.bossProjectiles = [];
+        gameState.boss = null;
+        gameState.inBossFight = false;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initGame();
+    });
+</script>
+</head>
+<body>
+    <div class="container">
+        <!-- 开始界面 -->
+        <div id="startScreen" class="absolute inset-0 bg-bg-dark flex flex-col items-center justify-center z-40 p-4">
+            <h1 class="text-[clamp(24px,6vw,36px)] font-bold text-quantum mb-6 text-center">自由电子冒险：量子风暴</h1>
+            <div class="bg-slate-800/80 rounded-xl p-6 max-w-[90%] w-[350px] mb-6">
+                <p class="text-slate-300 mb-4 text-sm">
+                    🚀 控制电子在量子场中收集碎片，躲避质子和高能陷阱！<br>
+                    ⚡ 切换电荷状态适应不同磁场，利用Z轴维度躲避障碍<br>
+                    🎯 每5关将遭遇反粒子Boss，击败它获得大量碎片奖励
+                </p>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-arrows text-quantum mr-1"></i> 方向/拖拽：移动
+                    </div>
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-exchange text-quantum mr-1"></i> 电荷：切换极性
+                    </div>
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-level-up text-quantum mr-1"></i> Z+：提升维度
+                    </div>
+                    <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
+                        <i class="fa fa-level-down text-quantum mr-1"></i> Z-：降低维度
+                    </div>
+                </div>
+            </div>
+            <button id="btnStart" class="bg-quantum hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg text-lg w-full max-w-[300px]">
+                <i class="fa fa-play mr-2"></i>开始游戏
+            </button>
+            <button id="btnRanking" class="mt-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
+                <i class="fa fa-trophy mr-2"></i>联机排行榜
+            </button>
+            <button id="btnProfile" class="mt-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
+                <i class="fa fa-user mr-2"></i>个人中心
+            </button>
+        </div>
+
+        <!-- 游戏区域 -->
+        <div id="gameArea" class="container"></div>
+
+        <!-- 游戏UI -->
+        <div id="gameUI" class="hidden flex flex-col h-full">
+            <!-- 状态栏 -->
+            <div class="status-bar">
+                <div class="status-item"><i class="fa fa-star text-yellow-400"></i> 关卡: <span id="level">1</span></div>
+                <div class="status-item"><i class="fa fa-coins text-amber-400"></i> 得分: <span id="score">0</span></div>
+                <div class="status-item"><i class="fa fa-clock text-blue-400"></i> 时间: <span id="time">80</span></div>
+                <div class="status-item"><i class="fa fa-cube text-purple-400"></i> Z轴: <span id="zLevel">0</span></div>
+                <div class="status-item"><i class="fa fa-bolt text-yellow-400"></i> 电荷: <span id="charge">负</span></div>
+                <div class="status-item"><i class="fa fa-move text-green-400"></i> 操作: <span id="moves">0</span></div>
+                <div class="status-item"><i class="fa fa-diamond text-purple-400"></i> 碎片: <span id="fragments">0/3</span></div>
+            </div>
+
+            <!-- 控制区 -->
+            <div class="controls">
+                <!-- 方向控制 -->
+                <div class="flex gap-2 mb-2">
+                    <button id="btnUp" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-up"></i>
+                    </button>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <button id="btnLeft" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <button id="btnCharge" class="control-btn bg-quantum hover:bg-purple-700 text-white">
+                        <i class="fa fa-exchange"></i>
+                    </button>
+                    <button id="btnRight" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <button id="btnDown" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-arrow-down"></i>
+                    </button>
+                </div>
+
+                <!-- Z轴控制和技能 -->
+                <div class="flex gap-3 mt-2">
+                    <button id="btnZUp" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-level-up"></i> Z+
+                    </button>
+                    <button id="btnZDown" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-level-down"></i> Z-
+                    </button>
+                    <button id="btnSkill" class="control-btn bg-red-600 hover:bg-red-700 text-white opacity-50" disabled>
+                        <i class="fa fa-bomb"></i> 技能
+                    </button>
+                    <button id="btnRanking" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
+                        <i class="fa fa-trophy"></i> 排行
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 排行榜模态框 -->
+        <div id="rankingModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 hidden">
+            <div class="modal-content p-6 w-full max-w-[90%] max-h-[80vh] overflow-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-purple-400">📋 联机排行榜</h3>
+                    <button id="closeRanking" class="text-slate-400 hover:text-white">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">排行榜</h4>
+                    <div id="rankingList" class="space-y-2">
+                        <!-- 排行榜内容由JS动态生成 -->
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">我的好友</h4>
+                    <div id="friendsList" class="space-y-2">
+                        <!-- 好友列表由JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 个人中心模态框 -->
+        <div id="profileModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 hidden">
+            <div class="modal-content p-6 w-full max-w-[90%] max-h-[80vh] overflow-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-purple-400">👤 个人中心</h3>
+                    <button id="closeProfile" class="text-slate-400 hover:text-white">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">个人资料</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">用户名</label>
+                            <input type="text" id="usernameInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white" placeholder="输入用户名">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">头像URL (可选)</label>
+                            <input type="text" id="avatarInput" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white" placeholder="输入头像图片URL">
+                        </div>
+                        <button id="saveProfile" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
+                            保存资料
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">游戏统计</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-700/50 p-3 rounded-lg">
+                            <div class="text-sm text-slate-400">最高关卡</div>
+                            <div class="text-lg font-bold text-white" id="statsHighestLevel">0</div>
+                        </div>
+                        <div class="bg-slate-700/50 p-3 rounded-lg">
+                            <div class="text-sm text-slate-400">最高得分</div>
+                            <div class="text-lg font-bold text-white" id="statsHighestScore">0</div>
+                        </div>
+                        <div class="bg-slate-700/50 p-3 rounded-lg col-span-2">
+                            <div class="text-sm text-slate-400">总游戏次数</div>
+                            <div class="text-lg font-bold text-white" id="statsTotalPlays">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold text-slate-300 mb-3">游戏设置</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">音效</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="soundToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">震动反馈</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="vibrationToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
