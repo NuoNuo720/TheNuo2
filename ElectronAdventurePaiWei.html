@@ -7,26 +7,17 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
-    <title>自由电子冒险：量子风暴</title>
+    <title>自由电子冒险：量子风暴 - 联机版</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- 音效库 -->
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
-    <!-- 新增：备用加载方案 -->
-    <script>
-        // 检测 Howl 是否加载成功，失败则定义空类避免报错
-        if (typeof Howl === 'undefined') {
-            console.warn('Howler 音效库加载失败，已启用无音效模式');
-            window.Howl = class {
-                constructor() { this.play = () => {}; }
-                play() {}
-            };
-        }
-    </script>
     <style>
         :root {
             --quantum: #8b5cf6;
@@ -226,7 +217,7 @@
         }
         
         /* 模态框样式优化 */
-        #rankingModal, #duelModal, .message-modal {
+        #rankingModal, .message-modal, #authModal, #securityModal {
             background-color: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
@@ -408,6 +399,114 @@
                 min-height: 50vh;
             }
         }
+
+        /* ========== 新增：排位/信誉分系统样式 ========== */
+        /* 登录状态卡片 */
+        .auth-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        /* 段位展示卡片 */
+        .rank-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        /* 匹配区域 */
+        .match-area {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        /* 信誉分卡片 */
+        .security-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        /* 信誉分进度条 */
+        .security-bar {
+            height: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        
+        .security-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #60a5fa);
+            border-radius: 4px;
+        }
+        
+        /* 任务面板 */
+        .task-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        
+        /* 申诉进度面板 */
+        .appeal-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        
+        /* 对战场景 */
+        .battle-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* 申诉弹窗样式 */
+        .appeal-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 95%;
+            width: 500px;
+            z-index: 999999;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 999998;
+        }
     </style>
 </head>
 <body>
@@ -415,12 +514,143 @@
         <!-- 开始界面 -->
         <div id="startScreen" class="absolute inset-0 bg-bg-dark flex flex-col items-center justify-center z-40 p-4">
             <h1 class="text-[clamp(24px,6vw,36px)] font-bold text-quantum mb-6 text-center">自由电子冒险：量子风暴</h1>
+            
+            <!-- 新增：登录状态卡片 -->
+            <div id="authStatus" class="auth-card w-full max-w-[350px] mb-4">
+                <p id="loginText">未登录</p>
+                <button id="btnLogin" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-2">登录</button>
+            </div>
+            
+            <!-- 新增：段位展示卡片 -->
+            <div id="rankCard" class="rank-card w-full max-w-[350px] mb-4 hidden">
+                <h3 class="text-lg font-bold text-white mb-2">当前段位</h3>
+                <div id="rankName" class="text-2xl font-bold text-amber-600 mb-1">青铜</div>
+                <div id="rankScore" class="text-blue-300 mb-2">积分：0/99</div>
+                <div class="flex justify-around">
+                    <span>胜场：<span id="winCount">0</span></span>
+                    <span>负场：<span id="loseCount">0</span></span>
+                </div>
+            </div>
+            
+            <!-- 新增：匹配区域 -->
+            <div id="matchArea" class="match-area w-full max-w-[350px] mb-4 hidden">
+                <button id="btnRankMatch" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded text-lg">排位对决</button>
+                <button id="btnCancelMatch" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded text-lg ml-2 hidden">取消匹配</button>
+                <p id="matchStatus" class="text-blue-300 mt-2">未匹配</p>
+            </div>
+            
+            <!-- 新增：信誉分卡片 -->
+            <div id="securityScoreCard" class="security-card w-full max-w-[350px] mb-6 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-lg font-bold text-green-400">安全信誉分</h3>
+                    <div>
+                        <button id="scoreTaskBtn" class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded mr-2 text-sm">加分任务</button>
+                        <button id="appealUploadBtn" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded mr-2 text-sm">申诉上传</button>
+                        <button id="appealProgressBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded text-sm">申诉进度</button>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <div>
+                        <span class="text-blue-300 text-xs">当前等级</span>
+                        <div id="securityLevelName" class="text-lg font-bold text-blue-400">安全合规</div>
+                    </div>
+                    <div>
+                        <span class="text-blue-300 text-xs">信誉分数</span>
+                        <div id="securityScoreValue" class="text-lg font-bold">100</div>
+                    </div>
+                    <div>
+                        <span class="text-blue-300 text-xs">更新时间</span>
+                        <div id="securityScoreUpdated" class="text-sm text-blue-300">刚刚</div>
+                    </div>
+                </div>
+                <div class="security-bar">
+                    <div id="securityScoreBar" class="security-fill" style="width: 100%;"></div>
+                </div>
+                <div class="flex justify-between text-xs text-slate-400">
+                    <span>0</span>
+                    <span>50</span>
+                    <span>100</span>
+                </div>
+
+                <!-- 加分任务面板 -->
+                <div id="scoreTaskPanel" class="task-panel hidden">
+                    <h4 class="text-green-400 mb-2">可完成加分任务</h4>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-center p-2 bg-green-900/20 rounded">
+                            <div>
+                                <span>安全知识答题</span>
+                                <span class="text-blue-300 text-xs ml-2">+3分</span>
+                            </div>
+                            <button class="taskCompleteBtn bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-xs" data-task="add_task">立即完成</button>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-blue-900/20 rounded">
+                            <div>
+                                <span>连续3天无违规</span>
+                                <span class="text-blue-300 text-xs ml-2">+5分</span>
+                            </div>
+                            <span class="text-blue-300 text-xs">已完成2/3天</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-yellow-900/20 rounded">
+                            <div>
+                                <span>有效举报违规玩家</span>
+                                <span class="text-blue-300 text-xs ml-2">+5分/次</span>
+                            </div>
+                            <button class="taskCompleteBtn bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-xs" data-task="add_valid_report">提交举报</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 申诉进度面板 -->
+                <div id="appealProgressPanel" class="appeal-panel hidden">
+                    <h4 class="text-yellow-400 mb-3">我的申诉进度</h4>
+                    <div id="noAppealTip" class="text-center py-4 text-blue-300">暂无申诉记录</div>
+                    <div id="appealStatsCard" class="bg-black/20 rounded p-2 mb-2 hidden">
+                        <div class="flex gap-2 mb-2">
+                            <button class="timeRangeBtn active bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded text-xs" data-range="7d">近7天</button>
+                            <button class="timeRangeBtn bg-yellow-900/20 text-yellow-400 py-1 px-3 rounded text-xs" data-range="30d">近30天</button>
+                            <button class="timeRangeBtn bg-yellow-900/20 text-yellow-400 py-1 px-3 rounded text-xs" data-range="all">全部</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mb-2">
+                            <div class="text-center p-1 bg-black/20 rounded">
+                                <div class="text-blue-300 text-xs">总申诉量</div>
+                                <div id="totalAppeals" class="text-lg font-bold">0</div>
+                            </div>
+                            <div class="text-center p-1 bg-black/20 rounded">
+                                <div class="text-blue-300 text-xs">通过率</div>
+                                <div id="appealPassRate" class="text-green-400 text-lg font-bold">0%</div>
+                            </div>
+                            <div class="text-center p-1 bg-black/20 rounded">
+                                <div class="text-blue-300 text-xs">平均审核时长</div>
+                                <div id="avgReviewTime" class="text-blue-400 text-lg font-bold">0h</div>
+                            </div>
+                        </div>
+                        <div class="h-32 mb-2">
+                            <canvas id="statusDistributionChart"></canvas>
+                        </div>
+                        <div class="h-32">
+                            <canvas id="appealTrendChart"></canvas>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <select id="statusFilter" class="bg-black/30 border border-yellow-500 rounded py-1 px-2 text-xs">
+                                <option value="all">全部状态</option>
+                                <option value="pending">审核中</option>
+                                <option value="approved">申诉通过</option>
+                                <option value="rejected">申诉驳回</option>
+                                <option value="canceled">已取消</option>
+                            </select>
+                            <button id="exportStatsBtn" class="bg-blue-900/20 border border-blue-500 text-blue-400 py-1 px-3 rounded text-xs">导出数据</button>
+                        </div>
+                    </div>
+                    <div id="appealProgressList" class="flex flex-col gap-3 hidden"></div>
+                </div>
+            </div>
+            
             <div class="bg-slate-800/80 rounded-xl p-6 max-w-[90%] w-[350px] mb-6">
                 <p class="text-slate-300 mb-4 text-sm">
                     🚀 控制电子在量子场中收集碎片，躲避质子和高能陷阱！<br>
                     ⚡ 切换电荷状态适应不同磁场，利用Z轴维度躲避障碍<br>
                     🎯 每5关将遭遇反粒子Boss，击败它获得大量碎片奖励<br>
-                    ⚔️ 双人对决：2分钟限时比拼，分数高者获胜！
+                    🏆 新增排位系统，可进行联机排位对战！
                 </p>
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div class="bg-slate-700/60 p-2 rounded-lg text-xs text-slate-300">
@@ -442,9 +672,6 @@
             </button>
             <button id="btnRanking" class="mt-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
                 <i class="fa fa-trophy mr-2"></i>联机排行榜
-            </button>
-            <button id="btnDuel" class="mt-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg text-sm">
-                <i class="fa fa-users mr-2"></i>双人对决
             </button>
             <button id="btnProfile" class="mt-2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg text-sm">
                 <i class="fa fa-user mr-2"></i>个人中心
@@ -506,9 +733,6 @@
                     <button id="btnRankingGame" class="control-btn bg-slate-700 hover:bg-slate-600 text-white">
                         <i class="fa fa-trophy"></i> 排行
                     </button>
-                    <button id="btnDuelGame" class="control-btn bg-red-600 hover:bg-red-700 text-white">
-                        <i class="fa fa-users"></i> 对决
-                    </button>
                 </div>
             </div>
         </div>
@@ -535,52 +759,6 @@
                     <div id="friendsList" class="space-y-2">
                         <!-- 好友列表由JS动态生成 -->
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 双人对决模态框 -->
-        <div id="duelModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 hidden">
-            <div class="modal-content p-6 w-full max-w-[90%] max-h-[80vh] overflow-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-purple-400">⚔️ 双人限时对决</h3>
-                    <button id="closeDuel" class="text-slate-400 hover:text-white">
-                        <i class="fa fa-times text-xl"></i>
-                    </button>
-                </div>
-                
-                <div class="mb-6">
-                    <button id="createDuelBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg w-full mb-4">
-                        <i class="fa fa-plus mr-2"></i>创建新对决
-                    </button>
-                    
-                    <h4 class="text-lg font-bold text-slate-300 mb-3">等待中的对决</h4>
-                    <div id="duelList" class="space-y-2">
-                        <!-- 对决列表由JS生成 -->
-                    </div>
-                </div>
-                
-                <!-- 对决进行中面板 -->
-                <div id="duelGamePanel" class="hidden">
-                    <div class="bg-slate-700/50 p-4 rounded-lg mb-4">
-                        <div class="flex justify-between mb-2">
-                            <div>
-                                <span class="text-sm text-slate-400">你的分数</span>
-                                <div class="text-xl font-bold text-purple-400" id="myDuelScore">0</div>
-                            </div>
-                            <div>
-                                <span class="text-sm text-slate-400">对手分数</span>
-                                <div class="text-xl font-bold text-red-400" id="opponentDuelScore">0</div>
-                            </div>
-                        </div>
-                        <div class="h-2 bg-slate-600 rounded-full overflow-hidden mb-2">
-                            <div id="duelTimeBar" class="h-full bg-green-500" style="width: 100%"></div>
-                        </div>
-                        <div class="text-center text-sm text-slate-400" id="duelTimeLeft">剩余时间: 120秒</div>
-                    </div>
-                    <button id="exitDuelBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg w-full">
-                        退出对决
-                    </button>
                 </div>
             </div>
         </div>
@@ -649,6 +827,48 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 新增：对战场景容器 -->
+        <div id="battleContainer" class="battle-container hidden">
+            <div class="w-full max-w-[500px] text-center">
+                <div class="flex justify-between mb-8">
+                    <div>
+                        <h3 id="hostName" class="text-green-400 text-xl"></h3>
+                        <p>分数：<span id="hostScore">0</span></p>
+                    </div>
+                    <div>
+                        <h3 id="guestName" class="text-white text-xl"></h3>
+                        <p>分数：<span id="guestScore">0</span></p>
+                    </div>
+                </div>
+                <h2 id="countdown" class="text-2xl mb-6">倒计时：2:00</h2>
+                <button id="btnAddScore" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-6 rounded text-lg">获取积分</button>
+            </div>
+        </div>
+
+        <!-- 新增：申诉上传弹窗 -->
+        <div class="modal-overlay" id="appealModalOverlay"></div>
+        <div class="appeal-modal" id="appealModal" style="display: none;">
+            <div class="flex justify-between items-center mb-3 border-b border-yellow-500/30 pb-2">
+                <h3 class="text-yellow-400">发起申诉</h3>
+                <button id="closeAppealModal" class="bg-transparent text-blue-300 text-xl">×</button>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div>
+                    <label class="text-blue-300 text-sm">违规记录</label>
+                    <select id="violationSelect" class="w-full bg-black/30 border border-yellow-500 rounded py-2 px-2 mt-1"></select>
+                </div>
+                <div>
+                    <label class="text-blue-300 text-sm">申诉理由</label>
+                    <textarea id="appealReason" class="w-full bg-black/30 border border-yellow-500 rounded py-2 px-2 mt-1 min-h-[80px]"></textarea>
+                </div>
+                <div>
+                    <label class="text-blue-300 text-sm">上传证据</label>
+                    <input type="file" id="evidenceFile" accept="image/*,video/*" class="w-full mt-1">
+                </div>
+                <button id="submitAppeal" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-0 rounded mt-2">提交申诉</button>
             </div>
         </div>
     </div>
@@ -731,12 +951,19 @@
                 highestLevel: 0,
                 highestScore: 0,
                 totalPlays: 0
-            },
-            // 双人对决相关
-            duelMode: false,
-            currentDuel: null,
-            duelTimer: null
+            }
         };
+
+        // ========== Supabase配置（排位/信誉分系统） ==========
+        const SUPABASE_URL = 'https://zxvylwdtdftcmortolnn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4dnlsd2R0ZGZ0Y21vcnRvbG5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0ODU4NDIsImV4cCI6MjA4MzA2MTg0Mn0.kRDKqc9ffmt1g0dw1OaoteJxSapxPO-vpsyHpsVOBbQ';
+        const supabase = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+        // 全局状态（排位/信誉分）
+        let currentUser = null;
+        let matchSystem = null;
+        let rankSystem = null;
+        let securitySystem = null;
 
         // ========== 音效系统 ==========
         const soundSystem = {
@@ -884,17 +1111,7 @@
             supabase: null,
             
             init() {
-                // 替换为你的Supabase项目信息
-                const supabaseUrl = 'https://axqdumwopcufjkydxhgj.supabase.co'; 
-                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4cWR1bXdvcGN1ZmpreWR4aGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0MTQ0MjAsImV4cCI6MjA4Mjk5MDQyMH0.YFKfOFVGEvitoHpbgUFnCcf24PSn83RAutpBkDVgHVI'; 
-                
-                this.supabase = window.supabase?.createClient ? window.supabase.createClient(supabaseUrl, supabaseKey, {
-                    auth: {
-                        storage: localStorage,
-                        autoRefreshToken: true,
-                        persistSession: true,
-                    }
-                }) : null;
+                this.supabase = supabase;
 
                 this.loadGameProgress();
                 this.checkUser();
@@ -1158,162 +1375,6 @@
                 }
             },
             
-            // 双人对决相关方法
-            createDuelMatch() {
-                if (!this.supabase) {
-                    this.showToast('无法连接到联机服务器');
-                    return null;
-                }
-                
-                return new Promise(async (resolve) => {
-                    try {
-                        const matchData = {
-                            player1_id: this.currentUser.id,
-                            player1_username: this.currentUser.username,
-                            status: 'waiting',
-                            time_limit: 120 // 2分钟限时
-                        };
-                        
-                        const { data, error } = await this.supabase
-                            .from('duel_matches')
-                            .insert([matchData])
-                            .select();
-                        
-                        if (error) throw error;
-                        this.showToast('已创建对决房间，等待对手加入...');
-                        resolve(data[0]);
-                    } catch (error) {
-                        console.error('创建对决失败:', error);
-                        this.showToast('创建对决失败');
-                        resolve(null);
-                    }
-                });
-            },
-            
-            joinDuelMatch(matchId) {
-                if (!this.supabase) {
-                    this.showToast('无法连接到联机服务器');
-                    return false;
-                }
-                
-                return new Promise(async (resolve) => {
-                    try {
-                        const { data: match, error: fetchError } = await this.supabase
-                            .from('duel_matches')
-                            .select('*')
-                            .eq('id', matchId)
-                            .single();
-                        
-                        if (fetchError) throw fetchError;
-                        
-                        if (match.status !== 'waiting' || match.player1_id === this.currentUser.id) {
-                            this.showToast('无法加入该对决');
-                            resolve(false);
-                            return;
-                        }
-                        
-                        const { error } = await this.supabase
-                            .from('duel_matches')
-                            .update({
-                                player2_id: this.currentUser.id,
-                                player2_username: this.currentUser.username,
-                                status: 'playing',
-                                start_time: new Date().toISOString()
-                            })
-                            .eq('id', matchId);
-                        
-                        if (error) throw error;
-                        
-                        this.showToast('成功加入对决！');
-                        resolve(true);
-                    } catch (error) {
-                        console.error('加入对决失败:', error);
-                        this.showToast('加入对决失败');
-                        resolve(false);
-                    }
-                });
-            },
-            
-            async getActiveDuelMatches() {
-                if (!this.supabase) return [];
-                
-                try {
-                    const { data, error } = await this.supabase
-                        .from('duel_matches')
-                        .select('*')
-                        .eq('status', 'waiting')
-                        .neq('player1_id', this.currentUser.id)
-                        .limit(10);
-                    
-                    if (error) throw error;
-                    return data || [];
-                } catch (error) {
-                    console.error('获取对决列表失败:', error);
-                    return [];
-                }
-            },
-            
-            async updateDuelScore(matchId, isPlayer1, score) {
-                if (!this.supabase) return false;
-                
-                try {
-                    const updateData = isPlayer1 
-                        ? { player1_score: score } 
-                        : { player2_score: score };
-                    
-                    const { error } = await this.supabase
-                        .from('duel_matches')
-                        .update(updateData)
-                        .eq('id', matchId);
-                    
-                    if (error) throw error;
-                    return true;
-                } catch (error) {
-                    console.error('更新对决分数失败:', error);
-                    return false;
-                }
-            },
-            
-            async finishDuelMatch(matchId, winnerId) {
-                if (!this.supabase) return false;
-                
-                try {
-                    const { error } = await this.supabase
-                        .from('duel_matches')
-                        .update({
-                            status: 'finished',
-                            end_time: new Date().toISOString(),
-                            winner_id: winnerId
-                        })
-                        .eq('id', matchId);
-                    
-                    if (error) throw error;
-                    this.showToast('对决结束！');
-                    return true;
-                } catch (error) {
-                    console.error('结束对决失败:', error);
-                    this.showToast('结束对决失败');
-                    return false;
-                }
-            },
-            
-            // 监听对决状态变化（实时更新）
-            listenToDuelMatch(matchId, callback) {
-                if (!this.supabase) return null;
-                
-                return this.supabase
-                    .channel(`duel:${matchId}`)
-                    .on('postgres_changes', {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'duel_matches',
-                        filter: `id=eq.${matchId}`
-                    }, (payload) => {
-                        callback(payload.new);
-                    })
-                    .subscribe();
-            },
-            
             render() {
                 const rankingListEl = document.getElementById('rankingList');
                 if (!rankingListEl) return;
@@ -1418,8 +1479,8 @@
                                     <span>${friend.friend.username}</span>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded accept-friend" data-id="${friend.id}">接受</button>
-                                    <button class="text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded reject-friend" data-id="${friend.id}">拒绝</button>
+                                    <button class="accept-friend-btn text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded" data-id="${friend.id}">接受</button>
+                                    <button class="reject-friend-btn text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-id="${friend.id}">拒绝</button>
                                 </div>
                             `;
                         }
@@ -1428,29 +1489,61 @@
                     friendsListEl.appendChild(pendingSection);
                 }
                 
-                // 好友请求处理事件
-                document.querySelectorAll('.accept-friend').forEach(btn => {
+                // 绑定好友请求处理事件
+                document.querySelectorAll('.accept-friend-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        this.respondToFriendRequest(e.target.dataset.id, 'accepted');
+                        const id = e.target.dataset.id;
+                        this.respondToFriendRequest(id, 'accepted');
                     });
                 });
                 
-                document.querySelectorAll('.reject-friend').forEach(btn => {
+                document.querySelectorAll('.reject-friend-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        this.respondToFriendRequest(e.target.dataset.id, 'rejected');
+                        const id = e.target.dataset.id;
+                        this.respondToFriendRequest(id, 'rejected');
                     });
                 });
             },
             
-            vibrate(duration) {
-                if (gameState.settings.vibration && navigator.vibrate) {
-                    navigator.vibrate(duration);
+            async updateProfile(username, avatar) {
+                if (!this.supabase || !this.currentUser) return false;
+                
+                try {
+                    this.currentUser.username = username;
+                    this.currentUser.avatar = avatar;
+                    
+                    localStorage.setItem('game_user', JSON.stringify(this.currentUser));
+                    
+                    const { error } = await this.supabase
+                        .from('game_users')
+                        .update({
+                            username: username,
+                            avatar: avatar,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('user_id', this.currentUser.id);
+                    
+                    if (error) throw error;
+                    
+                    // 更新所有分数记录中的用户名
+                    await this.supabase
+                        .from('game_scores')
+                        .update({ username: username })
+                        .eq('user_id', this.currentUser.id);
+                    
+                    this.showToast('个人资料更新成功');
+                    this.loadFromSupabase();
+                    return true;
+                } catch (error) {
+                    console.error('更新资料失败:', error);
+                    this.showToast('更新失败，请重试');
+                    return false;
                 }
             },
             
             showToast(message) {
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800/90 text-white px-4 py-2 rounded-lg z-50 text-sm';
+                let toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg z-50';
                 toast.textContent = message;
                 document.body.appendChild(toast);
                 
@@ -1458,1497 +1551,856 @@
                     toast.style.opacity = '0';
                     toast.style.transition = 'opacity 0.5s';
                     setTimeout(() => {
-                        toast.remove();
+                        document.body.removeChild(toast);
                     }, 500);
                 }, 2000);
             },
             
-            async updateUserProfile(username, avatar) {
-                if (!this.supabase) {
-                    this.showToast('无法连接到联机服务器');
-                    return false;
-                }
-                
-                try {
-                    this.currentUser.username = username;
-                    this.currentUser.avatar = avatar;
-                    
-                    await this.supabase
-                        .from('game_users')
-                        .upsert([{
-                            user_id: this.currentUser.id,
-                            username: username,
-                            avatar: avatar,
-                            last_login: new Date().toISOString()
-                        }]);
-                    
-                    localStorage.setItem('game_user', JSON.stringify(this.currentUser));
-                    this.showToast('个人资料已更新');
-                    return true;
-                } catch (error) {
-                    console.error('更新个人资料失败:', error);
-                    this.showToast('更新失败');
-                    return false;
+            vibrate(duration = 50) {
+                if (gameState.settings.vibration && navigator.vibrate) {
+                    navigator.vibrate(duration);
                 }
             }
         };
 
-        // ========== 物理引擎核心函数 ==========
-        function updateGameDimensions() {
-            const gameArea = document.getElementById('gameArea');
-            gameState.gameWidth = gameArea.offsetWidth;
-            gameState.gameHeight = gameArea.offsetHeight;
-        }
-
-        function applyField(direction) {
-            if (!gameState.isPlaying) return;
-            
-            gameState.moves++;
-            soundSystem.play('move');
-            showFieldDirectionIndicator(direction);
-            
-            let forceMultiplier = 1;
-            if (gameState.electron.chargeState === 'negative') {
-                forceMultiplier = -1;
-            } else if (gameState.electron.chargeState === 'positive') {
-                forceMultiplier = 1;
-            } else {
-                forceMultiplier = 0.3;
-            }
-            
-            switch(direction) {
-                case 'up':
-                    gameState.electron.velocityY -= gameState.electron.speed * forceMultiplier;
-                    createFieldEffect('up');
-                    break;
-                case 'down':
-                    gameState.electron.velocityY += gameState.electron.speed * forceMultiplier;
-                    createFieldEffect('down');
-                    break;
-                case 'left':
-                    gameState.electron.velocityX -= gameState.electron.speed * forceMultiplier;
-                    createFieldEffect('left');
-                    break;
-                case 'right':
-                    gameState.electron.velocityX += gameState.electron.speed * forceMultiplier;
-                    createFieldEffect('right');
-                    break;
-            }
-            
-            rankingSystem.vibrate(30);
-        }
-
-        function showFieldDirectionIndicator(direction) {
-            const existingIndicator = document.querySelector('.direction-indicator');
-            if (existingIndicator) {
-                document.getElementById('gameArea').removeChild(existingIndicator);
-            }
-            
-            const indicator = document.createElement('div');
-            indicator.className = 'direction-indicator';
-            indicator.style.left = `${gameState.electron.x + 40}px`;
-            indicator.style.top = `${gameState.electron.y}px`;
-            indicator.style.setProperty('--z-offset', `${gameState.electron.z * 30 + 10}px`);
-            
-            let icon, color;
-            switch(direction) {
-                case 'left':
-                    icon = 'fa-long-arrow-left';
-                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
-                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
-                    break;
-                case 'right':
-                    icon = 'fa-long-arrow-right';
-                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
-                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
-                    break;
-                case 'up':
-                    icon = 'fa-long-arrow-up';
-                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
-                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
-                    break;
-                case 'down':
-                    icon = 'fa-long-arrow-down';
-                    color = gameState.electron.chargeState === 'negative' ? '#3B82F6' : 
-                            gameState.electron.chargeState === 'positive' ? '#EF4444' : '#10B981';
-                    break;
-            }
-            
-            indicator.innerHTML = `<i class="fa ${icon}" style="color: ${color}; font-size: 24px;"></i>`;
-            document.getElementById('gameArea').appendChild(indicator);
-            
-            setTimeout(() => {
-                if (indicator.parentNode) {
-                    indicator.style.transition = 'opacity 0.5s, transform 0.5s';
-                    indicator.style.opacity = '0';
-                    indicator.style.transform = `translateZ(${gameState.electron.z * 30 + 10}px) scale(0.8)`;
-                    setTimeout(() => {
-                        if (indicator.parentNode) {
-                            document.getElementById('gameArea').removeChild(indicator);
-                        }
-                    }, 500);
-                }
-            }, 800);
-        }
-
-        function createFieldEffect(direction) {
-            const fieldEffect = document.createElement('div');
-            fieldEffect.className = 'field-effect';
-            fieldEffect.style.width = '80px';
-            fieldEffect.style.height = '80px';
-            fieldEffect.style.borderRadius = '50%';
-            fieldEffect.style.left = `${gameState.electron.x - 40}px`;
-            fieldEffect.style.top = `${gameState.electron.y - 40}px`;
-            
-            let transform = '';
-            switch(direction) {
-                case 'up': transform = 'translateY(-20px)'; break;
-                case 'down': transform = 'translateY(20px)'; break;
-                case 'left': transform = 'translateX(-20px)'; break;
-                case 'right': transform = 'translateX(20px)'; break;
-            }
-            
-            fieldEffect.style.transform = transform;
-            fieldEffect.style.opacity = '0.3';
-            
-            document.getElementById('gameArea').appendChild(fieldEffect);
-            
-            setTimeout(() => {
-                fieldEffect.style.opacity = '0';
-                setTimeout(() => {
-                    if (fieldEffect.parentNode) {
-                        document.getElementById('gameArea').removeChild(fieldEffect);
-                    }
-                }, 500);
-            }, 300);
-        }
-
-        function updateElectronPosition() {
-            if (!gameState.isPlaying) return;
-            
-            // 应用速度
-            gameState.electron.x += gameState.electron.velocityX;
-            gameState.electron.y += gameState.electron.velocityY;
-            
-            // 摩擦力
-            gameState.electron.velocityX *= 0.9;
-            gameState.electron.velocityY *= 0.9;
-            
-            // 边界检查
-            const margin = gameState.electron.size / 2;
-            if (gameState.electron.x < margin) {
-                gameState.electron.x = margin;
-                gameState.electron.velocityX *= -0.5;
-            }
-            if (gameState.electron.x > gameState.gameWidth - margin) {
-                gameState.electron.x = gameState.gameWidth - margin;
-                gameState.electron.velocityX *= -0.5;
-            }
-            if (gameState.electron.y < margin) {
-                gameState.electron.y = margin;
-                gameState.electron.velocityY *= -0.5;
-            }
-            if (gameState.electron.y > gameState.gameHeight - margin) {
-                gameState.electron.y = gameState.gameHeight - margin;
-                gameState.electron.velocityY *= -0.5;
-            }
-            
-            // 更新DOM
-            const electronEl = document.getElementById('electron');
-            if (electronEl) {
-                electronEl.style.left = `${gameState.electron.x}px`;
-                electronEl.style.top = `${gameState.electron.y}px`;
-                electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
-                electronEl.style.setProperty('--z-absolute', `${Math.abs(gameState.electron.z)}`);
-                
-                // 更新电荷状态样式
-                if (gameState.electron.chargeState === 'negative') {
-                    electronEl.style.backgroundColor = 'var(--negative)';
-                    electronEl.style.boxShadow = '0 0 15px 5px var(--negative)';
-                } else if (gameState.electron.chargeState === 'positive') {
-                    electronEl.style.backgroundColor = 'var(--positive)';
-                    electronEl.style.boxShadow = '0 0 15px 5px var(--positive)';
-                } else {
-                    electronEl.style.backgroundColor = 'var(--neutral)';
-                    electronEl.style.boxShadow = '0 0 15px 5px var(--neutral)';
-                }
-            }
-        }
-
-        function toggleCharge() {
-            if (!gameState.isPlaying) return;
-            
-            gameState.moves++;
-            soundSystem.play('charge');
-            
-            if (gameState.electron.chargeState === 'negative') {
-                gameState.electron.chargeState = 'positive';
-                gameState.electron.charge = 1;
-                document.getElementById('charge').textContent = '正';
-            } else if (gameState.electron.chargeState === 'positive') {
-                gameState.electron.chargeState = 'neutral';
-                gameState.electron.charge = 0;
-                document.getElementById('charge').textContent = '中';
-            } else {
-                gameState.electron.chargeState = 'negative';
-                gameState.electron.charge = -1;
-                document.getElementById('charge').textContent = '负';
-            }
-            
-            const electronEl = document.getElementById('electron');
-            if (electronEl) {
-                electronEl.classList.add('charge-effect');
-                setTimeout(() => {
-                    electronEl.classList.remove('charge-effect');
-                }, 1500);
-            }
-            
-            rankingSystem.vibrate(50);
-        }
-
-        function changeZLevel(direction) {
-            if (!gameState.isPlaying) return;
-            
-            gameState.moves++;
-            soundSystem.play('move');
-            
-            if (direction === 'up') {
-                gameState.electron.z = Math.min(gameState.electron.z + 1, gameState.maxZDepth);
-            } else {
-                gameState.electron.z = Math.max(gameState.electron.z - 1, -gameState.maxZDepth);
-            }
-            
-            document.getElementById('zLevel').textContent = gameState.electron.z;
-            
-            // Z轴变化视觉效果
-            const electronEl = document.getElementById('electron');
-            if (electronEl) {
-                electronEl.style.transition = 'transform 0.3s ease';
-                electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 30}px`);
-                electronEl.style.setProperty('--z-absolute', `${Math.abs(gameState.electron.z)}`);
-                
-                setTimeout(() => {
-                    electronEl.style.transition = 'none';
-                }, 300);
-            }
-            
-            rankingSystem.vibrate(40);
-        }
-
-        function createProton() {
-            const size = 15 + Math.random() * 10;
-            const position = generateSafePosition(size, 'proton');
-            
-            if (!position) return null;
-            
-            const proton = {
-                x: position.x,
-                y: position.y,
-                z: position.z,
-                size: size,
-                charge: 1,
-                id: 'proton_' + Date.now() + '_' + Math.floor(Math.random() * 1000)
-            };
-            
-            gameState.protons.push(proton);
-            
-            const protonEl = document.createElement('div');
-            protonEl.id = proton.id;
-            protonEl.className = 'proton float-3d';
-            protonEl.style.width = `${proton.size}px`;
-            protonEl.style.height = `${proton.size}px`;
-            protonEl.style.left = `${proton.x}px`;
-            protonEl.style.top = `${proton.y}px`;
-            protonEl.style.backgroundColor = 'var(--proton)';
-            protonEl.style.boxShadow = '0 0 10px rgba(249, 115, 22, 0.6)';
-            protonEl.style.setProperty('--z-offset', `${proton.z * 30}px`);
-            protonEl.style.setProperty('--z-absolute', `${Math.abs(proton.z)}`);
-            
-            document.getElementById('gameArea').appendChild(protonEl);
-            
-            return proton;
-        }
-
-        function createTrap() {
-            const size = 20 + Math.random() * 15;
-            const position = generateSafePosition(size, 'trap');
-            
-            if (!position) return null;
-            
-            const trap = {
-                x: position.x,
-                y: position.y,
-                z: position.z,
-                size: size,
-                id: 'trap_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                type: Math.random() > 0.5 ? 'static' : 'moving',
-                speed: 0.5 + Math.random() * 1
-            };
-            
-            gameState.traps.push(trap);
-            
-            const trapEl = document.createElement('div');
-            trapEl.id = trap.id;
-            trapEl.className = 'trap trap-effect';
-            trapEl.style.width = `${trap.size}px`;
-            trapEl.style.height = `${trap.size}px`;
-            trapEl.style.left = `${trap.x}px`;
-            trapEl.style.top = `${trap.y}px`;
-            trapEl.style.setProperty('--z-offset', `${trap.z * 30}px`);
-            trapEl.style.setProperty('--z-absolute', `${Math.abs(trap.z)}`);
-            
-            document.getElementById('gameArea').appendChild(trapEl);
-            
-            return trap;
-        }
-
-        function createFragment() {
-            const size = 10 + Math.random() * 5;
-            const position = generateSafePosition(size, 'fragment');
-            
-            if (!position) return null;
-            
-            const fragment = {
-                x: position.x,
-                y: position.y,
-                z: position.z,
-                size: size,
-                id: 'fragment_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                value: 1
-            };
-            
-            gameState.fragments.push(fragment);
-            
-            const fragmentEl = document.createElement('div');
-            fragmentEl.id = fragment.id;
-            fragmentEl.className = 'fragment quantum-pulse';
-            fragmentEl.style.width = `${fragment.size}px`;
-            fragmentEl.style.height = `${fragment.size}px`;
-            fragmentEl.style.left = `${fragment.x}px`;
-            fragmentEl.style.top = `${fragment.y}px`;
-            fragmentEl.style.backgroundColor = '#8b5cf6';
-            fragmentEl.style.boxShadow = '0 0 10px rgba(139, 92, 246, 0.8)';
-            fragmentEl.style.setProperty('--z-offset', `${fragment.z * 30}px`);
-            fragmentEl.style.setProperty('--z-absolute', `${Math.abs(fragment.z)}`);
-            
-            document.getElementById('gameArea').appendChild(fragmentEl);
-            
-            return fragment;
-        }
-
-        function spawnBoss() {
-            if (gameState.inBossFight) return;
-            
-            gameState.inBossFight = true;
-            soundSystem.play('boss');
-            
-            const bossSize = 60 + gameState.level * 5;
-            const position = generateSafePosition(bossSize, 'proton'); // 复用proton的安全检查
-            
-            if (!position) {
-                gameState.inBossFight = false;
-                return;
-            }
-            
-            gameState.boss = {
-                x: position.x,
-                y: position.y,
-                z: position.z,
-                size: bossSize,
-                health: 10 + gameState.level * 2,
-                id: 'boss_' + Date.now(),
-                attackCooldown: 1500,
-                lastAttack: 0,
-                speed: 0.8 + (gameState.level * 0.1)
-            };
-            
-            // 创建Boss元素
-            const bossEl = document.createElement('div');
-            bossEl.id = gameState.boss.id;
-            bossEl.className = 'boss';
-            bossEl.style.width = `${gameState.boss.size}px`;
-            bossEl.style.height = `${gameState.boss.size}px`;
-            bossEl.style.left = `${gameState.boss.x}px`;
-            bossEl.style.top = `${gameState.boss.y}px`;
-            bossEl.style.backgroundColor = '#EC4899';
-            bossEl.style.boxShadow = '0 0 20px #EC4899, inset 0 0 10px rgba(255,255,255,0.5)';
-            bossEl.style.setProperty('--z-offset', `${gameState.boss.z * 30}px`);
-            bossEl.style.setProperty('--z-absolute', `${Math.abs(gameState.boss.z)}`);
-            
-            // 添加血条
-            const healthBar = document.createElement('div');
-            healthBar.className = 'absolute -top-8 left-0 right-0 h-2 bg-red-900 rounded-full overflow-hidden';
-            healthBar.innerHTML = `<div id="bossHealthBar" class="h-full bg-red-500 w-${gameState.boss.health * 10}%" style="width: ${gameState.boss.health * 10}%"></div>`;
-            bossEl.appendChild(healthBar);
-            
-            document.getElementById('gameArea').appendChild(bossEl);
-            
-            // 显示Boss提示
-            showMessage('⚠️ 反粒子Boss出现！', 'bg-pink-900/80 text-white', 0);
-            
-            // 激活技能按钮
-            document.getElementById('btnSkill').disabled = false;
-            document.getElementById('btnSkill').classList.remove('opacity-50');
-            gameState.skillAvailable = true;
-        }
-
-        function bossAttack() {
-            if (!gameState.boss || !gameState.inBossFight) return;
-            
-            const now = Date.now();
-            if (now - gameState.boss.lastAttack < gameState.boss.attackCooldown) return;
-            
-            gameState.boss.lastAttack = now;
-            
-            // 计算朝向电子的方向
-            const dx = gameState.electron.x - gameState.boss.x;
-            const dy = gameState.electron.y - gameState.boss.y;
-            const angle = Math.atan2(dy, dx);
-            
-            // 创建多个弹幕
-            const count = 3 + Math.floor(gameState.level / 3);
-            for (let i = 0; i < count; i++) {
-                const offsetAngle = angle + (Math.random() - 0.5) * Math.PI / 3;
-                const projectileSize = 8 + Math.random() * 4;
-                
-                const projectile = {
-                    x: gameState.boss.x,
-                    y: gameState.boss.y,
-                    z: gameState.boss.z + (Math.random() - 0.5) * 2,
-                    size: projectileSize,
-                    speed: 2 + gameState.level * 0.1,
-                    angle: offsetAngle,
-                    id: 'boss_projectile_' + Date.now() + '_' + i
+        // ========== 排位系统核心 ==========
+        class RankSystem {
+            constructor() {
+                this.ranks = [
+                    { name: '青铜', minScore: 0, maxScore: 99, color: 'text-amber-600' },
+                    { name: '白银', minScore: 100, maxScore: 299, color: 'text-slate-300' },
+                    { name: '黄金', minScore: 300, maxScore: 499, color: 'text-yellow-400' },
+                    { name: '铂金', minScore: 500, maxScore: 799, color: 'text-cyan-400' },
+                    { name: '钻石', minScore: 800, maxScore: 1199, color: 'text-blue-500' },
+                    { name: '大师', minScore: 1200, maxScore: 1599, color: 'text-purple-500' },
+                    { name: '王者', minScore: 1600, maxScore: Infinity, color: 'text-red-500' }
+                ];
+                this.userRankData = {
+                    score: 0,
+                    winCount: 0,
+                    loseCount: 0,
+                    rank: this.ranks[0]
                 };
+            }
+
+            // 初始化用户排位数据
+            async init() {
+                if (!supabase || !currentUser) return;
                 
-                gameState.bossProjectiles.push(projectile);
+                try {
+                    // 获取用户排位数据
+                    const { data, error } = await supabase
+                        .from('user_ranks')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .single();
+                    
+                    if (error && error.code !== 'PGRST116') throw error;
+                    
+                    if (data) {
+                        this.userRankData = {
+                            score: data.score || 0,
+                            winCount: data.win_count || 0,
+                            loseCount: data.lose_count || 0,
+                            rank: this.getRankByScore(data.score || 0)
+                        };
+                    } else {
+                        // 初始化新用户数据
+                        await supabase
+                            .from('user_ranks')
+                            .insert([{
+                                user_id: currentUser.id,
+                                score: 0,
+                                win_count: 0,
+                                lose_count: 0,
+                                created_at: new Date().toISOString()
+                            }]);
+                    }
+                    
+                    this.updateRankUI();
+                } catch (error) {
+                    console.error('初始化排位数据失败:', error);
+                }
+            }
+
+            // 根据分数获取段位
+            getRankByScore(score) {
+                for (const rank of this.ranks) {
+                    if (score >= rank.minScore && score <= rank.maxScore) {
+                        return rank;
+                    }
+                }
+                return this.ranks[0];
+            }
+
+            // 更新段位UI显示
+            updateRankUI() {
+                const rankCard = document.getElementById('rankCard');
+                const rankName = document.getElementById('rankName');
+                const rankScore = document.getElementById('rankScore');
+                const winCount = document.getElementById('winCount');
+                const loseCount = document.getElementById('loseCount');
                 
-                // 创建弹幕元素
-                const projectileEl = document.createElement('div');
-                projectileEl.id = projectile.id;
-                projectileEl.className = 'projectile';
-                projectileEl.style.width = `${projectile.size}px`;
-                projectileEl.style.height = `${projectile.size}px`;
-                projectileEl.style.left = `${projectile.x}px`;
-                projectileEl.style.top = `${projectile.y}px`;
-                projectileEl.style.backgroundColor = '#F43F5E';
-                projectileEl.style.boxShadow = '0 0 8px #F43F5E';
-                projectileEl.style.setProperty('--z-offset', `${projectile.z * 30}px`);
-                projectileEl.style.setProperty('--z-absolute', `${Math.abs(projectile.z)}`);
+                if (!rankCard || !rankName || !rankScore) return;
                 
-                document.getElementById('gameArea').appendChild(projectileEl);
+                rankCard.classList.remove('hidden');
+                rankName.className = this.userRankData.rank.color + ' text-2xl font-bold mb-1';
+                rankName.textContent = this.userRankData.rank.name;
+                
+                const nextRank = this.ranks[this.ranks.indexOf(this.userRankData.rank) + 1];
+                if (nextRank) {
+                    rankScore.textContent = `积分：${this.userRankData.score - this.userRankData.rank.minScore}/${nextRank.minScore - this.userRankData.rank.minScore}`;
+                } else {
+                    rankScore.textContent = `积分：${this.userRankData.score}（最高段位）`;
+                }
+                
+                winCount.textContent = this.userRankData.winCount;
+                loseCount.textContent = this.userRankData.loseCount;
+            }
+
+            // 更新排位分数
+            async updateScore(isWin, battleScore) {
+                if (!supabase || !currentUser) return;
+                
+                try {
+                    // 计算分数变化（胜利+15~30分，失败-5~10分）
+                    const scoreChange = isWin 
+                        ? Math.floor(Math.random() * 16) + 15 
+                        : -Math.floor(Math.random() * 6) - 5;
+                    
+                    const newScore = Math.max(0, this.userRankData.score + scoreChange);
+                    const newWinCount = isWin ? this.userRankData.winCount + 1 : this.userRankData.winCount;
+                    const newLoseCount = !isWin ? this.userRankData.loseCount + 1 : this.userRankData.loseCount;
+                    
+                    // 更新数据库
+                    const { error } = await supabase
+                        .from('user_ranks')
+                        .update({
+                            score: newScore,
+                            win_count: newWinCount,
+                            lose_count: newLoseCount,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('user_id', currentUser.id);
+                    
+                    if (error) throw error;
+                    
+                    // 更新本地数据
+                    this.userRankData.score = newScore;
+                    this.userRankData.winCount = newWinCount;
+                    this.userRankData.loseCount = newLoseCount;
+                    this.userRankData.rank = this.getRankByScore(newScore);
+                    
+                    // 记录对战结果
+                    await supabase
+                        .from('battle_records')
+                        .insert([{
+                            user_id: currentUser.id,
+                            opponent_id: matchSystem.currentMatch?.opponentId || 'unknown',
+                            is_win: isWin,
+                            score: battleScore,
+                            rank_score_change: scoreChange,
+                            created_at: new Date().toISOString()
+                        }]);
+                    
+                    this.updateRankUI();
+                    rankingSystem.showToast(isWin ? `胜利！+${scoreChange}排位分` : `失败！${scoreChange}排位分`);
+                } catch (error) {
+                    console.error('更新排位分数失败:', error);
+                    rankingSystem.showToast('更新排位数据失败');
+                }
             }
         }
 
-        function updateBoss() {
-            if (!gameState.boss || !gameState.inBossFight) return;
-            
-            // Boss向电子移动
-            const dx = gameState.electron.x - gameState.boss.x;
-            const dy = gameState.electron.y - gameState.boss.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance > gameState.boss.size) {
-                gameState.boss.x += (dx / distance) * gameState.boss.speed;
-                gameState.boss.y += (dy / distance) * gameState.boss.speed;
-                
-                // 更新Boss位置
-                const bossEl = document.getElementById(gameState.boss.id);
-                if (bossEl) {
-                    bossEl.style.left = `${gameState.boss.x}px`;
-                    bossEl.style.top = `${gameState.boss.y}px`;
-                }
+        // ========== 匹配系统核心 ==========
+        class MatchSystem {
+            constructor() {
+                this.isMatching = false;
+                this.matchInterval = null;
+                this.currentMatch = null;
+                this.battleTimer = null;
+                this.battleTime = 120; // 2分钟对战时长
+                this.currentBattleTime = 0;
             }
-            
-            // Boss攻击
-            bossAttack();
-            
-            // 更新弹幕位置
-            gameState.bossProjectiles.forEach((projectile, index) => {
-                projectile.x += Math.cos(projectile.angle) * projectile.speed;
-                projectile.y += Math.sin(projectile.angle) * projectile.speed;
+
+            // 开始匹配
+            startMatching() {
+                if (!supabase || !currentUser || this.isMatching) return;
                 
-                const projectileEl = document.getElementById(projectile.id);
-                if (projectileEl) {
-                    projectileEl.style.left = `${projectile.x}px`;
-                    projectileEl.style.top = `${projectile.y}px`;
-                    projectileEl.style.setProperty('--z-offset', `${projectile.z * 30}px`);
-                    projectileEl.style.setProperty('--z-absolute', `${Math.abs(projectile.z)}`);
-                }
+                this.isMatching = true;
+                const btnRankMatch = document.getElementById('btnRankMatch');
+                const btnCancelMatch = document.getElementById('btnCancelMatch');
+                const matchStatus = document.getElementById('matchStatus');
                 
-                // 超出边界移除
-                if (projectile.x < 0 || projectile.x > gameState.gameWidth || 
-                    projectile.y < 0 || projectile.y > gameState.gameHeight) {
-                    if (projectileEl) projectileEl.remove();
-                    gameState.bossProjectiles.splice(index, 1);
-                }
-            });
-            
-            // 检测电子与Boss碰撞
-            if (checkCollision(gameState.electron, gameState.boss) && gameState.electron.z === gameState.boss.z) {
-                if (!gameState.immune) {
-                    gameState.timeLeft -= 5;
-                    gameState.immune = true;
-                    showMessage('⚠️ 受到Boss攻击！', 'bg-red-900/80 text-white', 1000);
-                    
-                    // 电子闪烁效果
-                    const electronEl = document.getElementById('electron');
-                    if (electronEl) {
-                        electronEl.style.opacity = '0.5';
-                        setTimeout(() => {
-                            electronEl.style.opacity = '1';
-                            gameState.immune = false;
-                        }, 1000);
-                    }
-                }
-            }
-            
-            // 检测电子与弹幕碰撞
-            gameState.bossProjectiles.forEach((projectile, index) => {
-                if (checkCollision(gameState.electron, projectile) && gameState.electron.z === projectile.z) {
-                    if (!gameState.immune) {
-                        gameState.timeLeft -= 3;
-                        gameState.immune = true;
-                        showMessage('⚠️ 被弹幕击中！', 'bg-red-900/80 text-white', 1000);
+                btnRankMatch.classList.add('hidden');
+                btnCancelMatch.classList.remove('hidden');
+                matchStatus.textContent = '匹配中...';
+                
+                // 模拟匹配逻辑（实际项目中建议用WebSocket）
+                this.matchInterval = setInterval(async () => {
+                    try {
+                        // 获取在线玩家
+                        const { data, error } = await supabase
+                            .from('user_ranks')
+                            .select('user_id, score')
+                            .not('user_id', 'eq', currentUser.id)
+                            .limit(10);
                         
-                        // 移除弹幕
-                        const projectileEl = document.getElementById(projectile.id);
-                        if (projectileEl) projectileEl.remove();
-                        gameState.bossProjectiles.splice(index, 1);
+                        if (error) throw error;
                         
-                        // 电子闪烁效果
-                        const electronEl = document.getElementById('electron');
-                        if (electronEl) {
-                            electronEl.style.opacity = '0.5';
-                            setTimeout(() => {
-                                electronEl.style.opacity = '1';
-                                gameState.immune = false;
-                            }, 1000);
-                        }
-                    }
-                }
-            });
-        }
-
-        function useSkill() {
-            if (!gameState.skillAvailable || !gameState.inBossFight) return;
-            
-            gameState.skillAvailable = false;
-            document.getElementById('btnSkill').disabled = true;
-            document.getElementById('btnSkill').classList.add('opacity-50');
-            
-            soundSystem.play('skill');
-            
-            // 技能效果：Boss受到伤害
-            gameState.boss.health -= 3;
-            document.getElementById('bossHealthBar').style.width = `${gameState.boss.health * 10}%`;
-            
-            showMessage('💥 量子冲击波！Boss受到重创！', 'bg-purple-900/80 text-white', 1500);
-            
-            // Boss闪烁效果
-            const bossEl = document.getElementById(gameState.boss.id);
-            if (bossEl) {
-                bossEl.style.opacity = '0.5';
-                setTimeout(() => {
-                    bossEl.style.opacity = '1';
-                }, 500);
-            }
-            
-            rankingSystem.vibrate(100);
-            
-            // 检查Boss是否被击败
-            if (gameState.boss.health <= 0) {
-                defeatBoss();
-            }
-        }
-
-        function defeatBoss() {
-            if (!gameState.boss) return;
-            
-            // 移除Boss
-            const bossEl = document.getElementById(gameState.boss.id);
-            if (bossEl) bossEl.remove();
-            
-            // 移除所有弹幕
-            gameState.bossProjectiles.forEach(projectile => {
-                const el = document.getElementById(projectile.id);
-                if (el) el.remove();
-            });
-            gameState.bossProjectiles = [];
-            
-            // 播放爆炸动画
-            createExplosion(gameState.boss.x, gameState.boss.y, gameState.boss.size);
-            
-            // 更新分数
-            gameState.score += GAME_CONFIG.SCORE_BOSS_KILL;
-            document.getElementById('score').textContent = gameState.score;
-            
-            // 增加时间奖励
-            gameState.timeLeft += 15;
-            document.getElementById('time').textContent = Math.ceil(gameState.timeLeft);
-            
-            showMessage('🎉 Boss被击败！获得时间和分数奖励！', 'bg-green-900/80 text-white', 2000);
-            
-            gameState.inBossFight = false;
-            gameState.boss = null;
-            
-            // 生成奖励碎片
-            const rewardCount = 3 + Math.floor(gameState.level / 2);
-            for (let i = 0; i < rewardCount; i++) {
-                setTimeout(() => {
-                    createFragment();
-                }, i * 300);
-            }
-        }
-
-        function createExplosion(x, y, size) {
-            const explosion = document.createElement('div');
-            explosion.className = 'absolute';
-            explosion.style.left = `${x - size/2}px`;
-            explosion.style.top = `${y - size/2}px`;
-            explosion.style.width = `${size}px`;
-            explosion.style.height = `${size}px`;
-            explosion.style.borderRadius = '50%';
-            explosion.style.background = 'radial-gradient(circle, #FF6B6B 0%, #FFE066 100%)';
-            explosion.style.boxShadow = '0 0 30px #FF6B6B';
-            explosion.style.animation = 'pulse 0.8s forwards';
-            explosion.style.zIndex = '20';
-            
-            document.getElementById('gameArea').appendChild(explosion);
-            
-            setTimeout(() => {
-                if (explosion.parentNode) {
-                    explosion.remove();
-                }
-            }, 800);
-        }
-
-        function checkCollision(obj1, obj2) {
-            const dx = obj1.x - obj2.x;
-            const dy = obj1.y - obj2.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const minDistance = (obj1.size / 2) + (obj2.size / 2);
-            
-            return distance < minDistance;
-        }
-
-        function checkCollisions() {
-            // 检测碎片收集
-            gameState.fragments.forEach((fragment, index) => {
-                if (checkCollision(gameState.electron, fragment) && gameState.electron.z === fragment.z) {
-                    // 收集碎片
-                    const fragmentEl = document.getElementById(fragment.id);
-                    if (fragmentEl) {
-                        fragmentEl.style.animation = 'pulse 0.5s forwards';
-                        setTimeout(() => {
-                            if (fragmentEl.parentNode) fragmentEl.remove();
-                        }, 500);
-                    }
-                    
-                    gameState.fragments.splice(index, 1);
-                    gameState.fragmentsCollected += fragment.value;
-                    gameState.score += GAME_CONFIG.SCORE_FRAGMENT;
-                    
-                    document.getElementById('fragments').textContent = `${gameState.fragmentsCollected}/${gameState.fragmentsNeeded}`;
-                    document.getElementById('score').textContent = gameState.score;
-                    
-                    soundSystem.play('collect');
-                    rankingSystem.vibrate(60);
-                    
-                    // 检查是否收集足够碎片
-                    if (gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
-                        levelUp();
-                    }
-                }
-            });
-            
-            // 检测质子碰撞
-            gameState.protons.forEach(proton => {
-                if (checkCollision(gameState.electron, proton) && gameState.electron.z === proton.z) {
-                    if (!gameState.immune) {
-                        if (gameState.electron.chargeState === 'negative') {
-                            // 异性电荷相吸 - 时间惩罚
-                            gameState.timeLeft -= 3;
-                            showMessage('⚠️ 异性相吸！时间减少！', 'bg-amber-900/80 text-white', 1000);
-                        } else if (gameState.electron.chargeState === 'positive') {
-                            // 同性电荷相斥 - 反弹
-                            const dx = gameState.electron.x - proton.x;
-                            const dy = gameState.electron.y - proton.y;
-                            const angle = Math.atan2(dy, dx);
+                        // 匹配段位相近的玩家
+                        const rankScore = rankSystem.userRankData.score;
+                        const suitablePlayers = data.filter(player => 
+                            Math.abs(player.score - rankScore) <= 50
+                        );
+                        
+                        if (suitablePlayers.length > 0) {
+                            // 随机选择一个对手
+                            const opponent = suitablePlayers[Math.floor(Math.random() * suitablePlayers.length)];
                             
-                            gameState.electron.velocityX = Math.cos(angle) * gameState.electron.speed * 2;
-                            gameState.electron.velocityY = Math.sin(angle) * gameState.electron.speed * 2;
+                            // 获取对手信息
+                            const { data: opponentData } = await supabase
+                                .from('game_users')
+                                .select('username, avatar')
+                                .eq('user_id', opponent.user_id)
+                                .single();
                             
-                            showMessage('⚠️ 同性相斥！被弹开！', 'bg-blue-900/80 text-white', 1000);
+                            // 停止匹配
+                            this.stopMatching();
+                            
+                            // 创建匹配
+                            this.currentMatch = {
+                                opponentId: opponent.user_id,
+                                opponentName: opponentData?.username || '未知玩家',
+                                opponentAvatar: opponentData?.avatar || 'https://ui-avatars.com/api/?name=对手',
+                                opponentRankScore: opponent.score,
+                                startTime: new Date(),
+                                hostScore: 0,
+                                guestScore: 0
+                            };
+                            
+                            // 显示对战界面
+                            this.startBattle();
                         }
-                        
-                        gameState.immune = true;
-                        setTimeout(() => {
-                            gameState.immune = false;
-                        }, 1000);
-                        
-                        // 电子闪烁效果
-                        const electronEl = document.getElementById('electron');
-                        if (electronEl) {
-                            electronEl.style.opacity = '0.5';
-                            setTimeout(() => {
-                                electronEl.style.opacity = '1';
-                            }, 1000);
-                        }
+                    } catch (error) {
+                        console.error('匹配过程出错:', error);
                     }
-                }
-            });
-            
-            // 检测陷阱碰撞
-            gameState.traps.forEach(trap => {
-                if (checkCollision(gameState.electron, trap) && gameState.electron.z === trap.z) {
-                    if (!gameState.immune) {
-                        gameState.timeLeft -= 8;
-                        gameState.immune = true;
-                        showMessage('⚠️ 高能陷阱！大量时间流失！', 'bg-pink-900/80 text-white', 1500);
-                        
-                        // 电子闪烁效果
-                        const electronEl = document.getElementById('electron');
-                        if (electronEl) {
-                            electronEl.style.opacity = '0.5';
-                            setTimeout(() => {
-                                electronEl.style.opacity = '1';
-                                gameState.immune = false;
-                            }, 1000);
-                        }
-                    }
-                }
-            });
-        }
+                }, 3000);
+            }
 
-        function updateTraps() {
-            gameState.traps.forEach(trap => {
-                if (trap.type === 'moving') {
-                    // 随机移动
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = trap.speed * (gameState.level * 0.1);
-                    
-                    trap.x += Math.cos(angle) * speed;
-                    trap.y += Math.sin(angle) * speed;
-                    
-                    // 边界检查
-                    if (trap.x < trap.size/2) trap.x = trap.size/2;
-                    if (trap.x > gameState.gameWidth - trap.size/2) trap.x = gameState.gameWidth - trap.size/2;
-                    if (trap.y < trap.size/2) trap.y = trap.size/2;
-                    if (trap.y > gameState.gameHeight - trap.size/2) trap.y = gameState.gameHeight - trap.size/2;
-                    
-                    // 更新DOM
-                    const trapEl = document.getElementById(trap.id);
-                    if (trapEl) {
-                        trapEl.style.left = `${trap.x}px`;
-                        trapEl.style.top = `${trap.y}px`;
-                    }
-                }
-            });
-        }
+            // 停止匹配
+            stopMatching() {
+                this.isMatching = false;
+                clearInterval(this.matchInterval);
+                
+                const btnRankMatch = document.getElementById('btnRankMatch');
+                const btnCancelMatch = document.getElementById('btnCancelMatch');
+                const matchStatus = document.getElementById('matchStatus');
+                
+                btnRankMatch.classList.remove('hidden');
+                btnCancelMatch.classList.add('hidden');
+                matchStatus.textContent = '未匹配';
+            }
 
-        function levelUp() {
-            gameState.level++;
-            gameState.fragmentsCollected = 0;
-            
-            // 计算本关需要的碎片数量
-            const incrementCount = Math.floor((gameState.level - 1) / GAME_CONFIG.FRAGMENTS_INCREMENT_INTERVAL);
-            gameState.fragmentsNeeded = GAME_CONFIG.BASE_FRAGMENTS_NEEDED + (incrementCount * GAME_CONFIG.FRAGMENTS_INCREMENT);
-            
-            // 更新UI
-            document.getElementById('level').textContent = gameState.level;
-            document.getElementById('fragments').textContent = `0/${gameState.fragmentsNeeded}`;
-            
-            // 增加时间奖励
-            gameState.timeLeft += GAME_CONFIG.TIME_BONUS_PER_LEVEL;
-            document.getElementById('time').textContent = Math.ceil(gameState.timeLeft);
-            
-            // 增加分数奖励
-            gameState.score += GAME_CONFIG.SCORE_LEVEL_UP;
-            document.getElementById('score').textContent = gameState.score;
-            
-            soundSystem.play('levelUp');
-            rankingSystem.vibrate(80);
-            
-            showMessage(`🎉 第${gameState.level}关！时间+${GAME_CONFIG.TIME_BONUS_PER_LEVEL}`, 'bg-green-900/80 text-white', 2000);
-            
-            // 清理当前关卡的元素
-            clearLevelElements();
-            
-            // 生成新关卡的元素
-            generateLevelElements();
-            
-            // 检查是否生成Boss
-            if (gameState.level % GAME_CONFIG.BOSS_SPAWN_INTERVAL === 0) {
-                setTimeout(() => {
-                    spawnBoss();
+            // 开始对战
+            startBattle() {
+                if (!this.currentMatch) return;
+                
+                const battleContainer = document.getElementById('battleContainer');
+                const hostName = document.getElementById('hostName');
+                const guestName = document.getElementById('guestName');
+                const countdown = document.getElementById('countdown');
+                
+                battleContainer.classList.remove('hidden');
+                hostName.textContent = rankingSystem.currentUser.username;
+                guestName.textContent = this.currentMatch.opponentName;
+                
+                // 初始化对战计时
+                this.currentBattleTime = this.battleTime;
+                this.updateBattleCountdown(countdown);
+                
+                // 开始倒计时
+                this.battleTimer = setInterval(() => {
+                    this.currentBattleTime--;
+                    this.updateBattleCountdown(countdown);
+                    
+                    // 对战结束
+                    if (this.currentBattleTime <= 0) {
+                        this.endBattle();
+                    }
                 }, 1000);
             }
-        }
 
-        function clearLevelElements() {
-            // 移除质子
-            gameState.protons.forEach(proton => {
-                const el = document.getElementById(proton.id);
-                if (el) el.remove();
-            });
-            gameState.protons = [];
-            
-            // 移除陷阱
-            gameState.traps.forEach(trap => {
-                const el = document.getElementById(trap.id);
-                if (el) el.remove();
-            });
-            gameState.traps = [];
-            
-            // 移除碎片
-            gameState.fragments.forEach(fragment => {
-                const el = document.getElementById(fragment.id);
-                if (el) el.remove();
-            });
-            gameState.fragments = [];
-            
-            // 移除Boss和弹幕
-            if (gameState.boss) {
-                const bossEl = document.getElementById(gameState.boss.id);
-                if (bossEl) bossEl.remove();
-                gameState.boss = null;
+            // 更新对战倒计时
+            updateBattleCountdown(element) {
+                const minutes = Math.floor(this.currentBattleTime / 60);
+                const seconds = this.currentBattleTime % 60;
+                element.textContent = `倒计时：${minutes}:${seconds.toString().padStart(2, '0')}`;
             }
-            
-            gameState.bossProjectiles.forEach(projectile => {
-                const el = document.getElementById(projectile.id);
-                if (el) el.remove();
-            });
-            gameState.bossProjectiles = [];
-            
-            gameState.inBossFight = false;
-            gameState.skillAvailable = false;
-            document.getElementById('btnSkill').disabled = true;
-            document.getElementById('btnSkill').classList.add('opacity-50');
-        }
 
-        function generateLevelElements() {
-            // 根据关卡难度生成元素
-            const baseCount = 5;
-            const levelMultiplier = Math.min(1 + (gameState.level * 0.1), 3);
-            
-            const protonCount = Math.floor(baseCount * levelMultiplier);
-            const trapCount = Math.floor((baseCount / 2) * levelMultiplier);
-            const fragmentCount = gameState.fragmentsNeeded;
-            
-            // 生成质子
-            for (let i = 0; i < protonCount; i++) {
-                setTimeout(() => {
-                    createProton();
-                }, i * 200);
+            // 增加对战分数
+            addBattleScore() {
+                if (!this.currentMatch) return;
+                
+                const scoreIncrement = Math.floor(Math.random() * 10) + 10;
+                this.currentMatch.hostScore += scoreIncrement;
+                
+                document.getElementById('hostScore').textContent = this.currentMatch.hostScore;
+                rankingSystem.vibrate(50);
             }
-            
-            // 生成陷阱
-            for (let i = 0; i < trapCount; i++) {
-                setTimeout(() => {
-                    createTrap();
-                }, (i + protonCount) * 200);
-            }
-            
-            // 生成碎片
-            for (let i = 0; i < fragmentCount; i++) {
-                setTimeout(() => {
-                    createFragment();
-                }, (i + protonCount + trapCount) * 200);
+
+            // 结束对战
+            endBattle() {
+                clearInterval(this.battleTimer);
+                
+                const battleContainer = document.getElementById('battleContainer');
+                battleContainer.classList.add('hidden');
+                
+                // 判断胜负
+                const isWin = this.currentMatch.hostScore > this.currentMatch.guestScore;
+                rankSystem.updateScore(isWin, this.currentMatch.hostScore);
+                
+                // 重置匹配状态
+                this.currentMatch = null;
+                this.currentBattleTime = 0;
+                
+                rankingSystem.showToast(isWin ? '对战胜利！' : '对战失败！');
             }
         }
 
-        function showMessage(text, className, duration = 2000) {
-            // 移除现有消息
-            const existingMessage = document.querySelector('.message-modal');
-            if (existingMessage) {
-                existingMessage.remove();
+        // ========== 信誉分系统核心 ==========
+        class SecuritySystem {
+            constructor() {
+                this.securityData = {
+                    score: 100,
+                    level: '安全合规',
+                    updatedAt: '刚刚',
+                    violationRecords: [],
+                    appealRecords: []
+                };
+                this.charts = {
+                    statusDistribution: null,
+                    appealTrend: null
+                };
             }
-            
-            // 创建新消息
-            const message = document.createElement('div');
-            message.className = `message-modal fixed top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${className} px-6 py-3 rounded-xl z-50 text-center font-bold`;
-            message.textContent = text;
-            
-            document.body.appendChild(message);
-            
-            // 自动移除
-            setTimeout(() => {
-                message.style.opacity = '0';
-                message.style.transition = 'opacity 0.5s';
-                setTimeout(() => {
-                    if (message.parentNode) {
-                        message.remove();
-                    }
-                }, 500);
-            }, duration);
-        }
 
-        function startGame() {
-            // 重置游戏状态
-            gameState.isPlaying = true;
-            gameState.level = 1;
-            gameState.score = 0;
-            gameState.timeLeft = GAME_CONFIG.INITIAL_TIME;
-            gameState.moves = 0;
-            gameState.electron = {
-                x: gameState.gameWidth / 2,
-                y: gameState.gameHeight / 2,
-                charge: -1,
-                z: 0,
-                size: 20,
-                velocityX: 0,
-                velocityY: 0,
-                speed: gameState.performance.isMobile 
-                    ? GAME_CONFIG.BASE_ELECTRON_SPEED * GAME_CONFIG.MOBILE_SPEED_MULTIPLIER 
-                    : GAME_CONFIG.BASE_ELECTRON_SPEED,
-                chargeState: 'negative'
-            };
-            gameState.protons = [];
-            gameState.traps = [];
-            gameState.fragments = [];
-            gameState.boss = null;
-            gameState.bossProjectiles = [];
-            gameState.inBossFight = false;
-            gameState.immune = false;
-            gameState.fragmentsCollected = 0;
-            gameState.fragmentsNeeded = GAME_CONFIG.BASE_FRAGMENTS_NEEDED;
-            gameState.skillAvailable = false;
-            
-            // 更新UI
-            document.getElementById('level').textContent = gameState.level;
-            document.getElementById('score').textContent = gameState.score;
-            document.getElementById('time').textContent = Math.ceil(gameState.timeLeft);
-            document.getElementById('zLevel').textContent = gameState.electron.z;
-            document.getElementById('charge').textContent = '负';
-            document.getElementById('moves').textContent = gameState.moves;
-            document.getElementById('fragments').textContent = `0/${gameState.fragmentsNeeded}`;
-            
-            // 隐藏开始界面，显示游戏UI
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('gameUI').classList.remove('hidden');
-            
-            // 创建电子
-            createElectron();
-            
-            // 生成第一关元素
-            generateLevelElements();
-            
-            // 启动计时器
-            if (gameState.timerInterval) {
-                clearInterval(gameState.timerInterval);
-            }
-            
-            gameState.timerInterval = setInterval(() => {
-                gameState.timeLeft -= 0.1;
-                document.getElementById('time').textContent = Math.ceil(gameState.timeLeft);
+            // 初始化信誉分数据
+            async init() {
+                if (!supabase || !currentUser) return;
                 
-                if (gameState.timeLeft <= 0) {
-                    gameOver();
-                }
-            }, 100);
-            
-            // 启动游戏循环
-            gameLoop();
-            
-            // 显示新手引导
-            if (gameState.settings.showTutorial) {
-                showTutorial();
-            }
-            
-            // 记录游戏次数
-            gameState.progress.totalPlays++;
-            rankingSystem.saveGameProgress();
-        }
-
-        function createElectron() {
-            // 移除现有电子
-            const existingElectron = document.getElementById('electron');
-            if (existingElectron) {
-                existingElectron.remove();
-            }
-            
-            // 创建新电子
-            const electronEl = document.createElement('div');
-            electronEl.id = 'electron';
-            electronEl.className = 'electron';
-            electronEl.style.width = `${gameState.electron.size}px`;
-            electronEl.style.height = `${gameState.electron.size}px`;
-            electronEl.style.left = `${gameState.electron.x}px`;
-            electronEl.style.top = `${gameState.electron.y}px`;
-            electronEl.style.backgroundColor = 'var(--negative)';
-            electronEl.style.boxShadow = '0 0 15px 5px var(--negative)';
-            electronEl.style.setProperty('--z-offset', '0px');
-            electronEl.style.setProperty('--z-absolute', '0');
-            
-            document.getElementById('gameArea').appendChild(electronEl);
-        }
-
-        function showTutorial() {
-            const tutorial = document.createElement('div');
-            tutorial.className = 'tutorial-overlay';
-            
-            const steps = [
-                {
-                    title: '欢迎来到量子世界！',
-                    content: '你将控制一个自由电子，在量子场中收集反物质碎片。'
-                },
-                {
-                    title: '移动控制',
-                    content: '使用方向按钮或拖拽屏幕来控制电子移动。电荷会影响移动方向！'
-                },
-                {
-                    title: '电荷切换',
-                    content: '点击电荷按钮切换正负电荷，不同电荷会与质子产生不同相互作用。'
-                },
-                {
-                    title: 'Z轴维度',
-                    content: '使用Z+/-按钮切换维度，躲避同一平面的危险！'
-                },
-                {
-                    title: '陷阱与Boss',
-                    content: '小心高能陷阱！每5关会出现Boss，击败它获得丰厚奖励！'
-                }
-            ];
-            
-            let currentStep = 0;
-            
-            function renderStep() {
-                tutorial.innerHTML = `
-                    <div class="tutorial-step">
-                        <h3 class="text-xl font-bold text-purple-400 mb-4">${steps[currentStep].title}</h3>
-                        <p class="text-slate-300 mb-6">${steps[currentStep].content}</p>
-                        <div class="flex justify-center mb-4">
-                            ${steps.map((_, index) => `
-                                <div class="tutorial-dot ${index === currentStep ? 'active' : ''}"></div>
-                            `).join('')}
-                        </div>
-                        <div class="flex gap-3">
-                            ${currentStep > 0 ? `<button class="prev-btn bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg">上一步</button>` : ''}
-                            ${currentStep < steps.length - 1 ? `<button class="next-btn bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">下一步</button>` : `<button class="start-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">开始游戏</button>`}
-                        </div>
-                        <div class="mt-4">
-                            <label class="flex items-center text-sm text-slate-400">
-                                <input type="checkbox" id="dontShowAgain" class="mr-2">
-                                不再显示
-                            </label>
-                        </div>
-                    </div>
-                `;
-                
-                // 添加事件监听
-                if (currentStep > 0) {
-                    tutorial.querySelector('.prev-btn').addEventListener('click', () => {
-                        currentStep--;
-                        renderStep();
-                    });
-                }
-                
-                if (currentStep < steps.length - 1) {
-                    tutorial.querySelector('.next-btn').addEventListener('click', () => {
-                        currentStep++;
-                        renderStep();
-                    });
-                } else {
-                    tutorial.querySelector('.start-btn').addEventListener('click', () => {
-                        tutorial.remove();
-                        gameState.settings.showTutorial = !document.getElementById('dontShowAgain').checked;
-                        rankingSystem.saveGameProgress();
-                    });
-                }
-            }
-            
-            renderStep();
-            document.body.appendChild(tutorial);
-        }
-
-        function gameLoop() {
-            if (!gameState.isPlaying) return;
-            
-            gameState.frameCounter++;
-            
-            // 帧率控制
-            if (gameState.frameCounter % gameState.frameSkip !== 0) {
-                requestAnimationFrame(gameLoop);
-                return;
-            }
-            
-            // 更新电子位置
-            updateElectronPosition();
-            
-            // 检查碰撞
-            checkCollisions();
-            
-            // 更新陷阱位置
-            updateTraps();
-            
-            // 更新Boss
-            updateBoss();
-            
-            // 继续循环
-            requestAnimationFrame(gameLoop);
-        }
-
-        function gameOver() {
-            gameState.isPlaying = false;
-            
-            // 停止计时器
-            if (gameState.timerInterval) {
-                clearInterval(gameState.timerInterval);
-                gameState.timerInterval = null;
-            }
-            
-            // 播放游戏结束音效
-            soundSystem.play('gameOver');
-            
-            // 显示游戏结束消息
-            showMessage(`游戏结束！关卡: ${gameState.level} 得分: ${Math.floor(gameState.score)}`, 'bg-red-900/80 text-white', 3000);
-            
-            // 保存最高分
-            if (gameState.score > gameState.progress.highestScore) {
-                gameState.progress.highestScore = Math.floor(gameState.score);
-            }
-            
-            if (gameState.level > gameState.progress.highestLevel) {
-                gameState.progress.highestLevel = gameState.level;
-            }
-            
-            rankingSystem.saveGameProgress();
-            
-            // 提交分数到排行榜
-            rankingSystem.addScore(Math.floor(gameState.score));
-            
-            // 震动反馈
-            rankingSystem.vibrate(200);
-            
-            // 3秒后返回开始界面
-            setTimeout(() => {
-                // 清理游戏元素
-                clearLevelElements();
-                
-                // 隐藏游戏UI，显示开始界面
-                document.getElementById('gameUI').classList.add('hidden');
-                document.getElementById('startScreen').classList.remove('hidden');
-                
-                // 移除电子
-                const electronEl = document.getElementById('electron');
-                if (electronEl) {
-                    electronEl.remove();
-                }
-            }, 3000);
-        }
-
-        // ========== 双人对决核心函数 ==========
-        async function startDuelMode() {
-            // 创建新对决
-            const duelMatch = await rankingSystem.createDuelMatch();
-            if (!duelMatch) return;
-            
-            gameState.currentDuel = duelMatch;
-            gameState.duelMode = true;
-            
-            // 显示对决面板
-            document.getElementById('duelList').classList.add('hidden');
-            document.getElementById('duelGamePanel').classList.remove('hidden');
-            
-            // 监听对决状态变化
-            const duelChannel = rankingSystem.listenToDuelMatch(duelMatch.id, (newMatchData) => {
-                gameState.currentDuel = newMatchData;
-                
-                // 对手加入
-                if (newMatchData.status === 'playing' && !gameState.duelTimer) {
-                    startDuelGame(newMatchData);
-                }
-                
-                // 更新对手分数
-                if (newMatchData.player1_id === rankingSystem.currentUser.id) {
-                    document.getElementById('opponentDuelScore').textContent = newMatchData.player2_score || 0;
-                } else {
-                    document.getElementById('opponentDuelScore').textContent = newMatchData.player1_score || 0;
-                }
-                
-                // 对决结束
-                if (newMatchData.status === 'finished') {
-                    endDuelGame(newMatchData);
-                }
-            });
-            
-            // 退出按钮事件
-            document.getElementById('exitDuelBtn').onclick = () => {
-                if (duelChannel) {
-                    rankingSystem.supabase.removeChannel(duelChannel);
-                }
-                
-                if (gameState.duelTimer) {
-                    clearInterval(gameState.duelTimer);
-                    gameState.duelTimer = null;
-                }
-                
-                gameState.duelMode = false;
-                gameState.currentDuel = null;
-                
-                document.getElementById('duelGamePanel').classList.add('hidden');
-                document.getElementById('duelList').classList.remove('hidden');
-                
-                // 刷新对决列表
-                loadDuelMatches();
-            };
-        }
-
-        async function joinDuelMatch(matchId) {
-            const success = await rankingSystem.joinDuelMatch(matchId);
-            if (!success) return;
-            
-            // 获取更新后的对决信息
-            const { data: matchData } = await rankingSystem.supabase
-                .from('duel_matches')
-                .select('*')
-                .eq('id', matchId)
-                .single();
-            
-            gameState.currentDuel = matchData;
-            gameState.duelMode = true;
-            
-            // 显示对决面板
-            document.getElementById('duelList').classList.add('hidden');
-            document.getElementById('duelGamePanel').classList.remove('hidden');
-            
-            // 开始对决游戏
-            startDuelGame(matchData);
-            
-            // 监听对决状态变化
-            const duelChannel = rankingSystem.listenToDuelMatch(matchId, (newMatchData) => {
-                gameState.currentDuel = newMatchData;
-                
-                // 更新对手分数
-                if (newMatchData.player1_id === rankingSystem.currentUser.id) {
-                    document.getElementById('opponentDuelScore').textContent = newMatchData.player2_score || 0;
-                } else {
-                    document.getElementById('opponentDuelScore').textContent = newMatchData.player1_score || 0;
-                }
-                
-                // 对决结束
-                if (newMatchData.status === 'finished') {
-                    endDuelGame(newMatchData);
-                }
-            });
-            
-            // 退出按钮事件
-            document.getElementById('exitDuelBtn').onclick = () => {
-                if (duelChannel) {
-                    rankingSystem.supabase.removeChannel(duelChannel);
-                }
-                
-                if (gameState.duelTimer) {
-                    clearInterval(gameState.duelTimer);
-                    gameState.duelTimer = null;
-                }
-                
-                gameState.duelMode = false;
-                gameState.currentDuel = null;
-                
-                document.getElementById('duelGamePanel').classList.add('hidden');
-                document.getElementById('duelList').classList.remove('hidden');
-                
-                // 刷新对决列表
-                loadDuelMatches();
-            };
-        }
-
-        function startDuelGame(matchData) {
-            // 初始化分数显示
-            if (matchData.player1_id === rankingSystem.currentUser.id) {
-                document.getElementById('myDuelScore').textContent = matchData.player1_score || 0;
-                document.getElementById('opponentDuelScore').textContent = matchData.player2_score || 0;
-            } else {
-                document.getElementById('myDuelScore').textContent = matchData.player2_score || 0;
-                document.getElementById('opponentDuelScore').textContent = matchData.player1_score || 0;
-            }
-            
-            // 计算剩余时间
-            const startTime = new Date(matchData.start_time);
-            const now = new Date();
-            const elapsed = (now - startTime) / 1000;
-            let timeLeft = matchData.time_limit - elapsed;
-            
-            if (timeLeft <= 0) {
-                endDuelGame(matchData);
-                return;
-            }
-            
-            // 更新时间显示
-            document.getElementById('duelTimeLeft').textContent = `剩余时间: ${Math.ceil(timeLeft)}秒`;
-            document.getElementById('duelTimeBar').style.width = `${(timeLeft / matchData.time_limit) * 100}%`;
-            
-            // 启动倒计时
-            gameState.duelTimer = setInterval(() => {
-                timeLeft -= 1;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(gameState.duelTimer);
-                    gameState.duelTimer = null;
+                try {
+                    // 获取用户信誉分数据
+                    const { data, error } = await supabase
+                        .from('user_security')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .single();
                     
-                    // 计算胜者
-                    let winnerId = null;
-                    const myScore = parseInt(document.getElementById('myDuelScore').textContent);
-                    const opponentScore = parseInt(document.getElementById('opponentDuelScore').textContent);
+                    if (error && error.code !== 'PGRST116') throw error;
                     
-                    if (myScore > opponentScore) {
-                        winnerId = rankingSystem.currentUser.id;
-                    } else if (opponentScore > myScore) {
-                        winnerId = matchData.player1_id === rankingSystem.currentUser.id ? matchData.player2_id : matchData.player1_id;
+                    if (data) {
+                        this.securityData = {
+                            score: data.score || 100,
+                            level: this.getSecurityLevel(data.score || 100),
+                            updatedAt: this.formatTime(data.updated_at || new Date().toISOString()),
+                            violationRecords: [],
+                            appealRecords: []
+                        };
+                    } else {
+                        // 初始化新用户信誉分
+                        await supabase
+                            .from('user_security')
+                            .insert([{
+                                user_id: currentUser.id,
+                                score: 100,
+                                level: '安全合规',
+                                updated_at: new Date().toISOString()
+                            }]);
                     }
                     
-                    // 结束对决
-                    rankingSystem.finishDuelMatch(matchData.id, winnerId);
-                    endDuelGame({
-                        ...matchData,
-                        status: 'finished',
-                        winner_id: winnerId
-                    });
+                    // 获取违规记录
+                    await this.loadViolationRecords();
+                    
+                    // 获取申诉记录
+                    await this.loadAppealRecords();
+                    
+                    this.updateSecurityUI();
+                } catch (error) {
+                    console.error('初始化信誉分数据失败:', error);
+                }
+            }
+
+            // 获取安全等级
+            getSecurityLevel(score) {
+                if (score >= 90) return '安全合规';
+                if (score >= 70) return '一般风险';
+                if (score >= 50) return '中等风险';
+                if (score >= 30) return '高风险';
+                return '极高风险';
+            }
+
+            // 格式化时间
+            formatTime(timeString) {
+                const now = new Date();
+                const time = new Date(timeString);
+                const diff = now - time;
+                
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                
+                if (minutes < 1) return '刚刚';
+                if (minutes < 60) return `${minutes}分钟前`;
+                if (hours < 24) return `${hours}小时前`;
+                return `${days}天前`;
+            }
+
+            // 更新信誉分UI
+            updateSecurityUI() {
+                const securityScoreCard = document.getElementById('securityScoreCard');
+                const securityLevelName = document.getElementById('securityLevelName');
+                const securityScoreValue = document.getElementById('securityScoreValue');
+                const securityScoreUpdated = document.getElementById('securityScoreUpdated');
+                const securityScoreBar = document.getElementById('securityScoreBar');
+                
+                if (!securityScoreCard) return;
+                
+                securityScoreCard.classList.remove('hidden');
+                securityLevelName.textContent = this.securityData.level;
+                securityScoreValue.textContent = this.securityData.score;
+                securityScoreUpdated.textContent = this.securityData.updatedAt;
+                securityScoreBar.style.width = `${this.securityData.score}%`;
+                
+                // 根据分数设置进度条颜色
+                if (this.securityData.score >= 90) {
+                    securityScoreBar.style.background = 'linear-gradient(90deg, #4ade80, #60a5fa)';
+                } else if (this.securityData.score >= 70) {
+                    securityScoreBar.style.background = 'linear-gradient(90deg, #facc15, #f59e0b)';
+                } else if (this.securityData.score >= 50) {
+                    securityScoreBar.style.background = 'linear-gradient(90deg, #f97316, #ea580c)';
+                } else {
+                    securityScoreBar.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+                }
+            }
+
+            // 加载违规记录
+            async loadViolationRecords() {
+                if (!supabase || !currentUser) return;
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('violation_records')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    
+                    this.securityData.violationRecords = data || [];
+                } catch (error) {
+                    console.error('加载违规记录失败:', error);
+                }
+            }
+
+            // 加载申诉记录
+            async loadAppealRecords() {
+                if (!supabase || !currentUser) return;
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('appeal_records')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    
+                    this.securityData.appealRecords = data || [];
+                    this.renderAppealList();
+                    this.initAppealCharts();
+                } catch (error) {
+                    console.error('加载申诉记录失败:', error);
+                }
+            }
+
+            // 渲染申诉列表
+            renderAppealList() {
+                const appealProgressList = document.getElementById('appealProgressList');
+                const noAppealTip = document.getElementById('noAppealTip');
+                const appealStatsCard = document.getElementById('appealStatsCard');
+                
+                if (!appealProgressList || !noAppealTip) return;
+                
+                if (this.securityData.appealRecords.length === 0) {
+                    noAppealTip.classList.remove('hidden');
+                    appealStatsCard.classList.add('hidden');
+                    appealProgressList.classList.add('hidden');
                     return;
                 }
                 
-                // 更新时间显示
-                document.getElementById('duelTimeLeft').textContent = `剩余时间: ${Math.ceil(timeLeft)}秒`;
-                document.getElementById('duelTimeBar').style.width = `${(timeLeft / matchData.time_limit) * 100}%`;
+                noAppealTip.classList.add('hidden');
+                appealStatsCard.classList.remove('hidden');
+                appealProgressList.classList.remove('hidden');
+                appealProgressList.innerHTML = '';
                 
-                // 红色警告
-                if (timeLeft <= 30) {
-                    document.getElementById('duelTimeBar').classList.remove('bg-green-500');
-                    document.getElementById('duelTimeBar').classList.add('bg-red-500');
+                // 统计申诉数据
+                const total = this.securityData.appealRecords.length;
+                const approved = this.securityData.appealRecords.filter(a => a.status === 'approved').length;
+                const passRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+                
+                document.getElementById('totalAppeals').textContent = total;
+                document.getElementById('appealPassRate').textContent = `${passRate}%`;
+                
+                // 计算平均审核时长
+                const reviewedAppeals = this.securityData.appealRecords.filter(a => a.reviewed_at);
+                let avgHours = 0;
+                if (reviewedAppeals.length > 0) {
+                    const totalHours = reviewedAppeals.reduce((sum, appeal) => {
+                        const createTime = new Date(appeal.created_at);
+                        const reviewTime = new Date(appeal.reviewed_at);
+                        const hours = (reviewTime - createTime) / 3600000;
+                        return sum + hours;
+                    }, 0);
+                    avgHours = Math.round(totalHours / reviewedAppeals.length);
                 }
-            }, 1000);
-            
-            // 开始游戏
-            startGame();
-            
-            // 重写分数更新逻辑，同步到对决
-            const originalScoreUpdate = (score) => {
-                gameState.score = score;
-                document.getElementById('score').textContent = score;
+                document.getElementById('avgReviewTime').textContent = `${avgHours}h`;
                 
-                // 同步到对决
-                if (gameState.duelMode && gameState.currentDuel) {
-                    const isPlayer1 = gameState.currentDuel.player1_id === rankingSystem.currentUser.id;
-                    rankingSystem.updateDuelScore(gameState.currentDuel.id, isPlayer1, Math.floor(score));
+                // 渲染申诉记录
+                this.securityData.appealRecords.slice(0, 5).forEach(appeal => {
+                    const appealItem = document.createElement('div');
+                    appealItem.className = 'bg-black/20 rounded p-3';
                     
-                    // 更新本地显示
-                    document.getElementById('myDuelScore').textContent = Math.floor(score);
-                }
-            };
-            
-            // 拦截分数更新
-            Object.defineProperty(gameState, 'score', {
-                get: () => gameState._score || 0,
-                set: (value) => {
-                    gameState._score = value;
-                    originalScoreUpdate(value);
-                }
-            });
-        }
-
-        function endDuelGame(matchData) {
-            // 停止游戏
-            gameState.isPlaying = false;
-            
-            // 显示结果
-            let resultMessage = '';
-            if (matchData.winner_id === rankingSystem.currentUser.id) {
-                resultMessage = '🎉 你赢得了对决！';
-            } else if (matchData.winner_id) {
-                resultMessage = '😢 你输掉了对决！';
-            } else {
-                resultMessage = '🤝 对决平局！';
-            }
-            
-            showMessage(resultMessage, 'bg-purple-900/80 text-white', 5000);
-            
-            // 3秒后返回对决列表
-            setTimeout(() => {
-                gameState.duelMode = false;
-                gameState.currentDuel = null;
-                
-                document.getElementById('duelGamePanel').classList.add('hidden');
-                document.getElementById('duelList').classList.remove('hidden');
-                
-                // 刷新对决列表
-                loadDuelMatches();
-            }, 3000);
-        }
-
-        async function loadDuelMatches() {
-            const duelListEl = document.getElementById('duelList');
-            duelListEl.innerHTML = '<div class="text-center p-4 text-slate-400"><div class="loader mx-auto mb-2"></div>加载对决房间中...</div>';
-            
-            const matches = await rankingSystem.getActiveDuelMatches();
-            
-            if (matches.length === 0) {
-                duelListEl.innerHTML = '<div class="text-center p-4 text-slate-400">暂无等待中的对决，创建一个新对决吧！</div>';
-                return;
-            }
-            
-            duelListEl.innerHTML = '';
-            
-            matches.forEach(match => {
-                const matchItem = document.createElement('div');
-                matchItem.className = 'flex justify-between items-center p-3 bg-slate-700/50 rounded-lg mb-2';
-                matchItem.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold">${match.player1_username}</span>
-                        <span class="text-xs text-slate-400">等待对手加入...</span>
-                    </div>
-                    <button class="join-duel-btn bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm" data-match-id="${match.id}">
-                        加入对决
-                    </button>
-                `;
-                duelListEl.appendChild(matchItem);
-            });
-            
-            // 加入对决按钮事件
-            document.querySelectorAll('.join-duel-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const matchId = e.target.dataset.matchId;
-                    joinDuelMatch(matchId);
+                    let statusClass = '';
+                    let statusText = '';
+                    
+                    switch (appeal.status) {
+                        case 'pending':
+                            statusClass = 'text-yellow-400';
+                            statusText = '审核中';
+                            break;
+                        case 'approved':
+                            statusClass = 'text-green-400';
+                            statusText = '申诉通过';
+                            break;
+                        case 'rejected':
+                            statusClass = 'text-red-400';
+                            statusText = '申诉驳回';
+                            break;
+                        case 'canceled':
+                            statusClass = 'text-slate-400';
+                            statusText = '已取消';
+                            break;
+                    }
+                    
+                    appealItem.innerHTML = `
+                        <div class="flex justify-between mb-2">
+                            <span class="text-blue-400">${appeal.violation_type || '违规行为'}</span>
+                            <span class="${statusClass} font-bold">${statusText}</span>
+                        </div>
+                        <div class="text-sm text-slate-300 mb-2">${appeal.reason || '无申诉理由'}</div>
+                        <div class="flex justify-between text-xs text-slate-500">
+                            <span>提交时间：${new Date(appeal.created_at).toLocaleString()}</span>
+                            ${appeal.reviewed_at ? `<span>审核时间：${new Date(appeal.reviewed_at).toLocaleString()}</span>` : ''}
+                        </div>
+                    `;
+                    appealProgressList.appendChild(appealItem);
                 });
-            });
+            }
+
+            // 初始化申诉统计图表
+            initAppealCharts() {
+                // 状态分布图表
+                const statusCtx = document.getElementById('statusDistributionChart');
+                if (statusCtx && typeof Chart !== 'undefined') {
+                    if (this.charts.statusDistribution) {
+                        this.charts.statusDistribution.destroy();
+                    }
+                    
+                    const statusCounts = {
+                        pending: this.securityData.appealRecords.filter(a => a.status === 'pending').length,
+                        approved: this.securityData.appealRecords.filter(a => a.status === 'approved').length,
+                        rejected: this.securityData.appealRecords.filter(a => a.status === 'rejected').length,
+                        canceled: this.securityData.appealRecords.filter(a => a.status === 'canceled').length
+                    };
+                    
+                    this.charts.statusDistribution = new Chart(statusCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['审核中', '申诉通过', '申诉驳回', '已取消'],
+                            datasets: [{
+                                data: [statusCounts.pending, statusCounts.approved, statusCounts.rejected, statusCounts.canceled],
+                                backgroundColor: ['#eab308', '#22c55e', '#ef4444', '#64748b'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: '#e2e8f0',
+                                        font: {
+                                            size: 10
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 申诉趋势图表
+                const trendCtx = document.getElementById('appealTrendChart');
+                if (trendCtx && typeof Chart !== 'undefined') {
+                    if (this.charts.appealTrend) {
+                        this.charts.appealTrend.destroy();
+                    }
+                    
+                    // 按日期分组
+                    const dateGroups = {};
+                    this.securityData.appealRecords.forEach(appeal => {
+                        const date = new Date(appeal.created_at).toLocaleDateString();
+                        if (!dateGroups[date]) {
+                            dateGroups[date] = 0;
+                        }
+                        dateGroups[date]++;
+                    });
+                    
+                    // 取最近7天
+                    const dates = Object.keys(dateGroups).slice(-7);
+                    const counts = dates.map(date => dateGroups[date]);
+                    
+                    this.charts.appealTrend = new Chart(trendCtx, {
+                        type: 'line',
+                        data: {
+                            labels: dates,
+                            datasets: [{
+                                label: '申诉数量',
+                                data: counts,
+                                borderColor: '#8b5cf6',
+                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        color: '#94a3b8'
+                                    },
+                                    grid: {
+                                        color: 'rgba(148, 163, 184, 0.1)'
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: '#94a3b8',
+                                        font: {
+                                            size: 10
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // 打开申诉上传弹窗
+            openAppealModal() {
+                const appealModal = document.getElementById('appealModal');
+                const appealModalOverlay = document.getElementById('appealModalOverlay');
+                const violationSelect = document.getElementById('violationSelect');
+                
+                if (!appealModal || !appealModalOverlay || !violationSelect) return;
+                
+                // 填充违规记录
+                violationSelect.innerHTML = '';
+                
+                if (this.securityData.violationRecords.length === 0) {
+                    violationSelect.innerHTML = '<option value="">暂无违规记录</option>';
+                } else {
+                    this.securityData.violationRecords.forEach(record => {
+                        const option = document.createElement('option');
+                        option.value = record.id;
+                        option.textContent = `${record.violation_type} (${this.formatTime(record.created_at)})`;
+                        violationSelect.appendChild(option);
+                    });
+                }
+                
+                appealModalOverlay.style.display = 'block';
+                appealModal.style.display = 'block';
+            }
+
+            // 关闭申诉上传弹窗
+            closeAppealModal() {
+                const appealModal = document.getElementById('appealModal');
+                const appealModalOverlay = document.getElementById('appealModalOverlay');
+                
+                if (appealModal && appealModalOverlay) {
+                    appealModalOverlay.style.display = 'none';
+                    appealModal.style.display = 'none';
+                }
+            }
+
+            // 提交申诉
+            async submitAppeal() {
+                const violationId = document.getElementById('violationSelect').value;
+                const reason = document.getElementById('appealReason').value;
+                
+                if (!violationId || !reason) {
+                    rankingSystem.showToast('请选择违规记录并填写申诉理由');
+                    return;
+                }
+                
+                try {
+                    // 获取违规记录详情
+                    const { data: violation } = await supabase
+                        .from('violation_records')
+                        .select('*')
+                        .eq('id', violationId)
+                        .single();
+                    
+                    // 创建申诉记录
+                    const { error } = await supabase
+                        .from('appeal_records')
+                        .insert([{
+                            user_id: currentUser.id,
+                            violation_id: violationId,
+                            violation_type: violation.violation_type,
+                            reason: reason,
+                            status: 'pending',
+                            created_at: new Date().toISOString()
+                        }]);
+                    
+                    if (error) throw error;
+                    
+                    this.closeAppealModal();
+                    rankingSystem.showToast('申诉提交成功，等待审核');
+                    
+                    // 重新加载申诉记录
+                    await this.loadAppealRecords();
+                    this.renderAppealList();
+                } catch (error) {
+                    console.error('提交申诉失败:', error);
+                    rankingSystem.showToast('提交申诉失败，请重试');
+                }
+            }
+
+            // 完成加分任务
+            async completeTask(taskType) {
+                if (!supabase || !currentUser) return;
+                
+                try {
+                    // 模拟任务完成，实际项目中需要验证任务完成状态
+                    let scoreAdd = 0;
+                    let taskName = '';
+                    
+                    switch (taskType) {
+                        case 'add_task':
+                            scoreAdd = 3;
+                            taskName = '安全知识答题';
+                            break;
+                        case 'add_valid_report':
+                            scoreAdd = 5;
+                            taskName = '有效举报违规玩家';
+                            break;
+                        default:
+                            return;
+                    }
+                    
+                    const newScore = Math.min(100, this.securityData.score + scoreAdd);
+                    
+                    // 更新信誉分
+                    const { error } = await supabase
+                        .from('user_security')
+                        .update({
+                            score: newScore,
+                            level: this.getSecurityLevel(newScore),
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('user_id', currentUser.id);
+                    
+                    if (error) throw error;
+                    
+                    // 记录加分任务
+                    await supabase
+                        .from('security_tasks')
+                        .insert([{
+                            user_id: currentUser.id,
+                            task_type: taskType,
+                            task_name: taskName,
+                            score_add: scoreAdd,
+                            created_at: new Date().toISOString()
+                        }]);
+                    
+                    // 更新本地数据
+                    this.securityData.score = newScore;
+                    this.securityData.level = this.getSecurityLevel(newScore);
+                    this.securityData.updatedAt = '刚刚';
+                    
+                    this.updateSecurityUI();
+                    rankingSystem.showToast(`完成${taskName}，信誉分+${scoreAdd}`);
+                } catch (error) {
+                    console.error('完成加分任务失败:', error);
+                    rankingSystem.showToast('任务完成失败，请重试');
+                }
+            }
         }
 
-        // ========== 初始化和事件绑定 ==========
-        function init() {
+        // ========== 游戏初始化 ==========
+        function initGame() {
             // 初始化音效系统
             soundSystem.init();
             
             // 初始化排行榜系统
             rankingSystem.init();
             
-            // 更新游戏尺寸
-            updateGameDimensions();
-            window.addEventListener('resize', updateGameDimensions);
+            // 设置游戏区域尺寸
+            const gameArea = document.getElementById('gameArea');
+            const rect = gameArea.getBoundingClientRect();
+            gameState.gameWidth = rect.width;
+            gameState.gameHeight = rect.height;
             
-            // 设置帧率
-            gameState.frameSkip = gameState.performance.isMobile 
-                ? GAME_CONFIG.FRAME_SKIP_MOBILE 
-                : GAME_CONFIG.FRAME_SKIP_DESKTOP;
+            // 根据设备调整帧率
+            if (gameState.performance.isMobile) {
+                gameState.frameSkip = GAME_CONFIG.FRAME_SKIP_MOBILE;
+                gameState.electron.speed = GAME_CONFIG.BASE_ELECTRON_SPEED * GAME_CONFIG.MOBILE_SPEED_MULTIPLIER;
+            } else {
+                gameState.frameSkip = GAME_CONFIG.FRAME_SKIP_DESKTOP;
+            }
             
+            // 初始化电子位置在屏幕中心
+            gameState.electron.x = gameState.gameWidth / 2;
+            gameState.electron.y = gameState.gameHeight / 2;
+            
+            // 注册事件监听
+            registerEventListeners();
+            
+            // 初始化UI
+            updateUI();
+            
+            console.log('游戏初始化完成，设备类型:', gameState.performance.isMobile ? '移动设备' : '桌面设备');
+        }
+
+        // ========== 事件监听注册 ==========
+        function registerEventListeners() {
             // 开始游戏按钮
             document.getElementById('btnStart').addEventListener('click', startGame);
-            
-            // 方向控制
-            document.getElementById('btnUp').addEventListener('click', () => applyField('up'));
-            document.getElementById('btnDown').addEventListener('click', () => applyField('down'));
-            document.getElementById('btnLeft').addEventListener('click', () => applyField('left'));
-            document.getElementById('btnRight').addEventListener('click', () => applyField('right'));
-            
-            // 电荷切换
-            document.getElementById('btnCharge').addEventListener('click', toggleCharge);
-            
-            // Z轴控制
-            document.getElementById('btnZUp').addEventListener('click', () => changeZLevel('up'));
-            document.getElementById('btnZDown').addEventListener('click', () => changeZLevel('down'));
-            
-            // 技能按钮
-            document.getElementById('btnSkill').addEventListener('click', useSkill);
             
             // 排行榜按钮
             document.getElementById('btnRanking').addEventListener('click', () => {
@@ -2956,51 +2408,24 @@
                 rankingSystem.loadFromSupabase();
             });
             
-            document.getElementById('btnRankingGame').addEventListener('click', () => {
-                document.getElementById('rankingModal').classList.remove('hidden');
-                rankingSystem.loadFromSupabase();
-            });
-            
+            // 关闭排行榜
             document.getElementById('closeRanking').addEventListener('click', () => {
                 document.getElementById('rankingModal').classList.add('hidden');
             });
             
-            // 双人对决按钮
-            document.getElementById('btnDuel').addEventListener('click', () => {
-                document.getElementById('duelModal').classList.remove('hidden');
-                loadDuelMatches();
-            });
-            
-            document.getElementById('btnDuelGame').addEventListener('click', () => {
-                document.getElementById('duelModal').classList.remove('hidden');
-                loadDuelMatches();
-            });
-            
-            document.getElementById('closeDuel').addEventListener('click', () => {
-                document.getElementById('duelModal').classList.add('hidden');
-            });
-            
-            // 创建对决按钮
-            document.getElementById('createDuelBtn').addEventListener('click', startDuelMode);
-            
             // 个人中心按钮
             document.getElementById('btnProfile').addEventListener('click', () => {
                 document.getElementById('profileModal').classList.remove('hidden');
-                
-                // 填充个人资料
                 document.getElementById('usernameInput').value = rankingSystem.currentUser.username;
-                document.getElementById('avatarInput').value = rankingSystem.currentUser.avatar || '';
+                document.getElementById('avatarInput').value = rankingSystem.currentUser.avatar;
                 
-                // 填充游戏统计
+                // 更新游戏统计
                 document.getElementById('statsHighestLevel').textContent = gameState.progress.highestLevel;
                 document.getElementById('statsHighestScore').textContent = gameState.progress.highestScore;
                 document.getElementById('statsTotalPlays').textContent = gameState.progress.totalPlays;
-                
-                // 设置开关状态
-                document.getElementById('soundToggle').checked = gameState.settings.sound;
-                document.getElementById('vibrationToggle').checked = gameState.settings.vibration;
             });
             
+            // 关闭个人中心
             document.getElementById('closeProfile').addEventListener('click', () => {
                 document.getElementById('profileModal').classList.add('hidden');
             });
@@ -3015,134 +2440,958 @@
                     return;
                 }
                 
-                rankingSystem.updateUserProfile(username, avatar);
+                rankingSystem.updateProfile(username, avatar);
+            });
+            
+            // 方向控制按钮
+            document.getElementById('btnUp').addEventListener('click', () => moveElectron(0, -1));
+            document.getElementById('btnDown').addEventListener('click', () => moveElectron(0, 1));
+            document.getElementById('btnLeft').addEventListener('click', () => moveElectron(-1, 0));
+            document.getElementById('btnRight').addEventListener('click', () => moveElectron(1, 0));
+            
+            // 电荷切换按钮
+            document.getElementById('btnCharge').addEventListener('click', toggleCharge);
+            
+            // Z轴控制按钮
+            document.getElementById('btnZUp').addEventListener('click', () => changeZLevel(1));
+            document.getElementById('btnZDown').addEventListener('click', () => changeZLevel(-1));
+            
+            // 技能按钮
+            document.getElementById('btnSkill').addEventListener('click', useSkill);
+            
+            // 游戏内排行榜按钮
+            document.getElementById('btnRankingGame').addEventListener('click', () => {
+                document.getElementById('rankingModal').classList.remove('hidden');
+                rankingSystem.loadFromSupabase();
             });
             
             // 音效开关
             document.getElementById('soundToggle').addEventListener('change', (e) => {
                 gameState.settings.sound = e.target.checked;
-                soundSystem.toggle();
-                rankingSystem.saveGameProgress();
+                localStorage.setItem('game_sound', gameState.settings.sound);
             });
             
             // 震动开关
             document.getElementById('vibrationToggle').addEventListener('change', (e) => {
                 gameState.settings.vibration = e.target.checked;
-                rankingSystem.saveGameProgress();
+                localStorage.setItem('game_vibration', gameState.settings.vibration);
             });
             
-            // 触摸控制
+            // 鼠标/触摸控制
             const gameArea = document.getElementById('gameArea');
             
+            // 鼠标按下
             gameArea.addEventListener('mousedown', (e) => {
                 if (!gameState.isPlaying) return;
                 
                 gameState.mouseDown = true;
-                gameState.mouseOffset.x = e.clientX - gameState.electron.x;
-                gameState.mouseOffset.y = e.clientY - gameState.electron.y;
+                const rect = gameArea.getBoundingClientRect();
+                gameState.mouseOffset.x = e.clientX - rect.left - gameState.electron.x;
+                gameState.mouseOffset.y = e.clientY - rect.top - gameState.electron.y;
             });
             
+            // 鼠标移动
+            gameArea.addEventListener('mousemove', (e) => {
+                if (!gameState.isPlaying || !gameState.mouseDown) return;
+                
+                const rect = gameArea.getBoundingClientRect();
+                const x = e.clientX - rect.left - gameState.mouseOffset.x;
+                const y = e.clientY - rect.top - gameState.mouseOffset.y;
+                
+                // 限制在游戏区域内
+                gameState.electron.x = Math.max(20, Math.min(gameState.gameWidth - 20, x));
+                gameState.electron.y = Math.max(20, Math.min(gameState.gameHeight - 20, y));
+                
+                gameState.moves++;
+                updateUI();
+            });
+            
+            // 鼠标释放
+            document.addEventListener('mouseup', () => {
+                gameState.mouseDown = false;
+            });
+            
+            // 触摸开始
             gameArea.addEventListener('touchstart', (e) => {
                 if (!gameState.isPlaying) return;
                 
                 e.preventDefault();
                 const touch = e.touches[0];
-                gameState.mouseDown = true;
-                gameState.mouseOffset.x = touch.clientX - gameState.electron.x;
-                gameState.mouseOffset.y = touch.clientY - gameState.electron.y;
-            });
+                const rect = gameArea.getBoundingClientRect();
+                gameState.mouseOffset.x = touch.clientX - rect.left - gameState.electron.x;
+                gameState.mouseOffset.y = touch.clientY - rect.top - gameState.electron.y;
+            }, { passive: false });
             
-            document.addEventListener('mousemove', (e) => {
-                if (!gameState.isPlaying || !gameState.mouseDown) return;
-                
-                gameState.electron.x = e.clientX - gameState.mouseOffset.x;
-                gameState.electron.y = e.clientY - gameState.mouseOffset.y;
-                
-                // 边界检查
-                const margin = gameState.electron.size / 2;
-                gameState.electron.x = Math.max(margin, Math.min(gameState.electron.x, gameState.gameWidth - margin));
-                gameState.electron.y = Math.max(margin, Math.min(gameState.electron.y, gameState.gameHeight - margin));
-            });
-            
-            document.addEventListener('touchmove', (e) => {
-                if (!gameState.isPlaying || !gameState.mouseDown) return;
+            // 触摸移动
+            gameArea.addEventListener('touchmove', (e) => {
+                if (!gameState.isPlaying) return;
                 
                 e.preventDefault();
                 const touch = e.touches[0];
+                const rect = gameArea.getBoundingClientRect();
+                const x = touch.clientX - rect.left - gameState.mouseOffset.x;
+                const y = touch.clientY - rect.top - gameState.mouseOffset.y;
                 
-                gameState.electron.x = touch.clientX - gameState.mouseOffset.x;
-                gameState.electron.y = touch.clientY - gameState.mouseOffset.y;
+                // 限制在游戏区域内
+                gameState.electron.x = Math.max(20, Math.min(gameState.gameWidth - 20, x));
+                gameState.electron.y = Math.max(20, Math.min(gameState.gameHeight - 20, y));
                 
-                // 边界检查
-                const margin = gameState.electron.size / 2;
-                gameState.electron.x = Math.max(margin, Math.min(gameState.electron.x, gameState.gameWidth - margin));
-                gameState.electron.y = Math.max(margin, Math.min(gameState.electron.y, gameState.gameHeight - margin));
-            });
-            
-            document.addEventListener('mouseup', () => {
-                gameState.mouseDown = false;
-            });
-            
-            document.addEventListener('touchend', () => {
-                gameState.mouseDown = false;
-            });
+                gameState.moves++;
+                updateUI();
+            }, { passive: false });
             
             // 键盘控制
             document.addEventListener('keydown', (e) => {
                 if (!gameState.isPlaying) return;
                 
                 switch(e.key) {
-                    case 'ArrowUp':
-                        applyField('up');
-                        break;
-                    case 'ArrowDown':
-                        applyField('down');
-                        break;
-                    case 'ArrowLeft':
-                        applyField('left');
-                        break;
-                    case 'ArrowRight':
-                        applyField('right');
-                        break;
-                    case ' ':
-                        toggleCharge();
-                        break;
-                    case 'z':
-                        changeZLevel('down');
-                        break;
-                    case 'x':
-                        changeZLevel('up');
-                        break;
-                    case 's':
-                        useSkill();
-                        break;
+                    case 'ArrowUp': moveElectron(0, -1); break;
+                    case 'ArrowDown': moveElectron(0, 1); break;
+                    case 'ArrowLeft': moveElectron(-1, 0); break;
+                    case 'ArrowRight': moveElectron(1, 0); break;
+                    case ' ': toggleCharge(); break; // 空格切换电荷
+                    case 'PageUp': changeZLevel(1); break;
+                    case 'PageDown': changeZLevel(-1); break;
+                    case 'Enter': useSkill(); break;
                 }
             });
             
-            // 点击模态框外部关闭
-            document.getElementById('rankingModal').addEventListener('click', (e) => {
-                if (e.target === document.getElementById('rankingModal')) {
-                    document.getElementById('rankingModal').classList.add('hidden');
+            // ========== 新增：排位/信誉分事件监听 ==========
+            // 登录按钮
+            document.getElementById('btnLogin').addEventListener('click', async () => {
+                if (!supabase) {
+                    rankingSystem.showToast('无法连接到服务器');
+                    return;
+                }
+                
+                try {
+                    // 匿名登录
+                    const { data, error } = await supabase.auth.signInAnonymously();
+                    
+                    if (error) throw error;
+                    
+                    currentUser = data.user;
+                    document.getElementById('loginText').textContent = `已登录：${currentUser.id.substr(0, 8)}`;
+                    document.getElementById('btnLogin').textContent = '退出登录';
+                    
+                    // 初始化排位系统
+                    rankSystem = new RankSystem();
+                    await rankSystem.init();
+                    
+                    // 初始化匹配系统
+                    matchSystem = new MatchSystem();
+                    
+                    // 初始化信誉分系统
+                    securitySystem = new SecuritySystem();
+                    await securitySystem.init();
+                    
+                    // 显示匹配区域
+                    document.getElementById('matchArea').classList.remove('hidden');
+                    
+                    rankingSystem.checkUser();
+                    rankingSystem.loadFromSupabase();
+                } catch (error) {
+                    console.error('登录失败:', error);
+                    rankingSystem.showToast('登录失败');
                 }
             });
             
-            document.getElementById('duelModal').addEventListener('click', (e) => {
-                if (e.target === document.getElementById('duelModal')) {
-                    document.getElementById('duelModal').classList.add('hidden');
+            // 排位匹配按钮
+            document.getElementById('btnRankMatch').addEventListener('click', () => {
+                if (matchSystem) {
+                    matchSystem.startMatching();
                 }
             });
             
-            document.getElementById('profileModal').addEventListener('click', (e) => {
-                if (e.target === document.getElementById('profileModal')) {
-                    document.getElementById('profileModal').classList.add('hidden');
+            // 取消匹配按钮
+            document.getElementById('btnCancelMatch').addEventListener('click', () => {
+                if (matchSystem) {
+                    matchSystem.stopMatching();
                 }
             });
             
-            console.log('游戏初始化完成！');
+            // 获取积分按钮
+            document.getElementById('btnAddScore').addEventListener('click', () => {
+                if (matchSystem) {
+                    matchSystem.addBattleScore();
+                }
+            });
+            
+            // 加分任务按钮
+            document.getElementById('scoreTaskBtn').addEventListener('click', () => {
+                const panel = document.getElementById('scoreTaskPanel');
+                panel.classList.toggle('hidden');
+            });
+            
+            // 任务完成按钮
+            document.querySelectorAll('.taskCompleteBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const taskType = e.target.dataset.task;
+                    if (securitySystem) {
+                        securitySystem.completeTask(taskType);
+                    }
+                });
+            });
+            
+            // 申诉上传按钮
+            document.getElementById('appealUploadBtn').addEventListener('click', () => {
+                if (securitySystem) {
+                    securitySystem.openAppealModal();
+                }
+            });
+            
+            // 关闭申诉弹窗
+            document.getElementById('closeAppealModal').addEventListener('click', () => {
+                if (securitySystem) {
+                    securitySystem.closeAppealModal();
+                }
+            });
+            
+            // 提交申诉按钮
+            document.getElementById('submitAppeal').addEventListener('click', () => {
+                if (securitySystem) {
+                    securitySystem.submitAppeal();
+                }
+            });
+            
+            // 申诉进度按钮
+            document.getElementById('appealProgressBtn').addEventListener('click', () => {
+                const panel = document.getElementById('appealProgressPanel');
+                panel.classList.toggle('hidden');
+            });
+            
+            // 时间范围按钮
+            document.querySelectorAll('.timeRangeBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.timeRangeBtn').forEach(b => {
+                        b.classList.remove('active', 'bg-yellow-500', 'hover:bg-yellow-600');
+                        b.classList.add('bg-yellow-900/20', 'text-yellow-400');
+                    });
+                    e.target.classList.add('active', 'bg-yellow-500', 'hover:bg-yellow-600');
+                    e.target.classList.remove('bg-yellow-900/20', 'text-yellow-400');
+                    
+                    // 实际项目中需要根据时间范围筛选数据
+                    if (securitySystem) {
+                        securitySystem.renderAppealList();
+                    }
+                });
+            });
+            
+            // 导出数据按钮
+            document.getElementById('exportStatsBtn').addEventListener('click', () => {
+                rankingSystem.showToast('数据导出功能开发中');
+            });
+            
+            // 状态筛选下拉框
+            document.getElementById('statusFilter').addEventListener('change', () => {
+                if (securitySystem) {
+                    securitySystem.renderAppealList();
+                }
+            });
         }
 
-        // 启动游戏
-        window.addEventListener('DOMContentLoaded', init);
+        // ========== 游戏控制函数 ==========
+        function startGame() {
+            // 重置游戏状态
+            gameState.isPlaying = true;
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.timeLeft = GAME_CONFIG.INITIAL_TIME;
+            gameState.moves = 0;
+            gameState.electron.x = gameState.gameWidth / 2;
+            gameState.electron.y = gameState.gameHeight / 2;
+            gameState.electron.charge = -1;
+            gameState.electron.z = 0;
+            gameState.electron.chargeState = 'negative';
+            gameState.protons = [];
+            gameState.traps = [];
+            gameState.fragments = [];
+            gameState.boss = null;
+            gameState.bossProjectiles = [];
+            gameState.inBossFight = false;
+            gameState.immune = false;
+            gameState.fragmentsCollected = 0;
+            gameState.fragmentsNeeded = GAME_CONFIG.BASE_FRAGMENTS_NEEDED;
+            gameState.skillAvailable = false;
+            
+            // 隐藏开始界面，显示游戏UI
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameUI').classList.remove('hidden');
+            
+            // 生成初始游戏元素
+            generateGameElements();
+            
+            // 开始游戏循环
+            gameLoop();
+            
+            // 开始计时
+            startTimer();
+            
+            // 更新UI
+            updateUI();
+            
+            // 播放开始音效
+            soundSystem.play('move');
+            
+            // 记录游戏次数
+            gameState.progress.totalPlays++;
+            rankingSystem.saveGameProgress();
+            
+            console.log('游戏开始！关卡：1');
+        }
+
+        function generateGameElements() {
+            const density = gameState.performance.obstacleDensity * (1 + (gameState.level - 1) * 0.1);
+            const protonCount = Math.floor(5 * density);
+            const trapCount = Math.floor(3 * density);
+            const fragmentCount = gameState.fragmentsNeeded;
+            
+            // 清空现有元素
+            gameState.protons = [];
+            gameState.traps = [];
+            gameState.fragments = [];
+            
+            // 生成质子
+            for (let i = 0; i < protonCount; i++) {
+                const position = generateSafePosition(25 + Math.random() * 15, 'proton');
+                if (position) {
+                    gameState.protons.push({
+                        x: position.x,
+                        y: position.y,
+                        z: position.z,
+                        size: 25 + Math.random() * 15,
+                        charge: 1,
+                        chargeState: 'positive',
+                        speed: 0.5 + Math.random() * 1,
+                        direction: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+            
+            // 生成陷阱
+            for (let i = 0; i < trapCount; i++) {
+                const position = generateSafePosition(30 + Math.random() * 20, 'trap');
+                if (position) {
+                    gameState.traps.push({
+                        x: position.x,
+                        y: position.y,
+                        z: position.z,
+                        size: 30 + Math.random() * 20,
+                        charge: Math.random() > 0.5 ? 1 : -1,
+                        chargeState: Math.random() > 0.5 ? 'positive' : 'negative',
+                        rotationSpeed: 0.01 + Math.random() * 0.02
+                    });
+                }
+            }
+            
+            // 生成碎片
+            for (let i = 0; i < fragmentCount; i++) {
+                const position = generateSafePosition(15 + Math.random() * 10, 'fragment');
+                if (position) {
+                    gameState.fragments.push({
+                        x: position.x,
+                        y: position.y,
+                        z: position.z,
+                        size: 15 + Math.random() * 10,
+                        value: 100 + gameState.level * 10
+                    });
+                }
+            }
+            
+            // 如果是Boss关卡，生成Boss
+            if (gameState.level % GAME_CONFIG.BOSS_SPAWN_INTERVAL === 0) {
+                spawnBoss();
+            }
+            
+            // 渲染游戏元素
+            renderGameElements();
+        }
+
+        function spawnBoss() {
+            gameState.inBossFight = true;
+            gameState.boss = {
+                x: gameState.gameWidth / 2,
+                y: 100,
+                z: 0,
+                size: 80 + gameState.level * 5,
+                health: 100 + gameState.level * 20,
+                maxHealth: 100 + gameState.level * 20,
+                charge: 1,
+                chargeState: 'positive',
+                speed: 1 + gameState.level * 0.1,
+                attackCooldown: 2000,
+                lastAttack: Date.now()
+            };
+            
+            soundSystem.play('boss');
+            rankingSystem.showToast('⚠️ 反粒子Boss出现！');
+        }
+
+        function moveElectron(dx, dy) {
+            if (!gameState.isPlaying) return;
+            
+            // 计算新位置
+            const newX = gameState.electron.x + dx * gameState.electron.speed * 10;
+            const newY = gameState.electron.y + dy * gameState.electron.speed * 10;
+            
+            // 限制在游戏区域内
+            gameState.electron.x = Math.max(20, Math.min(gameState.gameWidth - 20, newX));
+            gameState.electron.y = Math.max(20, Math.min(gameState.gameHeight - 20, newY));
+            
+            gameState.moves++;
+            soundSystem.play('move');
+            updateUI();
+            
+            // 检查碰撞
+            checkCollisions();
+        }
+
+        function toggleCharge() {
+            if (!gameState.isPlaying) return;
+            
+            gameState.electron.charge *= -1;
+            gameState.electron.chargeState = gameState.electron.charge === 1 ? 'positive' : 'negative';
+            
+            soundSystem.play('charge');
+            updateUI();
+            
+            // 短暂无敌
+            gameState.immune = true;
+            setTimeout(() => {
+                gameState.immune = false;
+            }, 1000);
+        }
+
+        function changeZLevel(dz) {
+            if (!gameState.isPlaying) return;
+            
+            const newZ = gameState.electron.z + dz;
+            
+            // 限制Z轴范围
+            if (newZ >= -gameState.maxZDepth && newZ <= gameState.maxZDepth) {
+                gameState.electron.z = newZ;
+                updateUI();
+                
+                // 短暂无敌
+                gameState.immune = true;
+                setTimeout(() => {
+                    gameState.immune = false;
+                }, 500);
+            }
+        }
+
+        function useSkill() {
+            if (!gameState.isPlaying || !gameState.skillAvailable) return;
+            
+            // 技能效果：清除当前Z轴的所有陷阱和质子
+            const currentZ = gameState.electron.z;
+            gameState.protons = gameState.protons.filter(p => p.z !== currentZ);
+            gameState.traps = gameState.traps.filter(t => t.z !== currentZ);
+            gameState.bossProjectiles = gameState.bossProjectiles.filter(p => p.z !== currentZ);
+            
+            soundSystem.play('skill');
+            gameState.skillAvailable = false;
+            document.getElementById('btnSkill').classList.add('opacity-50');
+            document.getElementById('btnSkill').disabled = true;
+            
+            // 技能冷却
+            setTimeout(() => {
+                gameState.skillAvailable = true;
+                document.getElementById('btnSkill').classList.remove('opacity-50');
+                document.getElementById('btnSkill').disabled = false;
+                rankingSystem.showToast('技能已就绪！');
+            }, 15000);
+            
+            renderGameElements();
+        }
+
+        function checkCollisions() {
+            if (gameState.immune) return;
+            
+            const electron = gameState.electron;
+            
+            // 检查与质子的碰撞
+            for (let i = gameState.protons.length - 1; i >= 0; i--) {
+                const proton = gameState.protons[i];
+                
+                // 只检查同Z轴的碰撞
+                if (proton.z !== electron.z) continue;
+                
+                const dx = electron.x - proton.x;
+                const dy = electron.y - proton.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < (electron.size + proton.size) / 2) {
+                    // 同电荷相斥，异电荷相吸（游戏结束）
+                    if (electron.charge !== proton.charge) {
+                        gameOver();
+                        return;
+                    }
+                }
+            }
+            
+            // 检查与陷阱的碰撞
+            for (let i = gameState.traps.length - 1; i >= 0; i--) {
+                const trap = gameState.traps[i];
+                
+                // 只检查同Z轴的碰撞
+                if (trap.z !== electron.z) continue;
+                
+                const dx = electron.x - trap.x;
+                const dy = electron.y - trap.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < (electron.size + trap.size) / 2) {
+                    // 陷阱无论电荷都会造成伤害
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // 检查与碎片的碰撞
+            for (let i = gameState.fragments.length - 1; i >= 0; i--) {
+                const fragment = gameState.fragments[i];
+                
+                // 只检查同Z轴的碰撞
+                if (fragment.z !== electron.z) continue;
+                
+                const dx = electron.x - fragment.x;
+                const dy = electron.y - fragment.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < (electron.size + fragment.size) / 2) {
+                    // 收集碎片
+                    gameState.score += fragment.value;
+                    gameState.fragmentsCollected++;
+                    soundSystem.play('collect');
+                    
+                    // 移除碎片
+                    gameState.fragments.splice(i, 1);
+                    
+                    // 检查是否收集足够碎片
+                    if (gameState.fragmentsCollected >= gameState.fragmentsNeeded) {
+                        levelUp();
+                        return;
+                    }
+                    
+                    updateUI();
+                    renderGameElements();
+                    
+                    // 随机解锁技能
+                    if (!gameState.skillAvailable && Math.random() < 0.3) {
+                        gameState.skillAvailable = true;
+                        document.getElementById('btnSkill').classList.remove('opacity-50');
+                        document.getElementById('btnSkill').disabled = false;
+                        rankingSystem.showToast('量子技能已解锁！');
+                    }
+                }
+            }
+            
+            // 检查与Boss的碰撞
+            if (gameState.boss && gameState.boss.z === electron.z) {
+                const dx = electron.x - gameState.boss.x;
+                const dy = electron.y - gameState.boss.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < (electron.size + gameState.boss.size) / 2) {
+                    // 同电荷反弹，异电荷受伤
+                    if (electron.charge !== gameState.boss.charge) {
+                        gameOver();
+                        return;
+                    } else {
+                        // 对Boss造成伤害
+                        gameState.boss.health -= 10;
+                        
+                        if (gameState.boss.health <= 0) {
+                            // Boss被击败
+                            gameState.score += GAME_CONFIG.SCORE_BOSS_KILL;
+                            gameState.inBossFight = false;
+                            gameState.boss = null;
+                            gameState.bossProjectiles = [];
+                            
+                            soundSystem.play('levelUp');
+                            rankingSystem.showToast('🎉 Boss已击败！');
+                            
+                            // 直接升级
+                            levelUp();
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // 检查与Boss子弹的碰撞
+            for (let i = gameState.bossProjectiles.length - 1; i >= 0; i--) {
+                const projectile = gameState.bossProjectiles[i];
+                
+                if (projectile.z !== electron.z) continue;
+                
+                const dx = electron.x - projectile.x;
+                const dy = electron.y - projectile.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < (electron.size + projectile.size) / 2) {
+                    // 子弹碰撞
+                    gameState.bossProjectiles.splice(i, 1);
+                    
+                    // 同电荷免疫，异电荷受伤
+                    if (electron.charge !== projectile.charge) {
+                        gameOver();
+                        return;
+                    }
+                }
+            }
+        }
+
+        function levelUp() {
+            gameState.level++;
+            gameState.score += GAME_CONFIG.SCORE_LEVEL_UP;
+            gameState.timeLeft += GAME_CONFIG.TIME_BONUS_PER_LEVEL;
+            gameState.fragmentsCollected = 0;
+            
+            // 每2关增加所需碎片数量
+            if (gameState.level % GAME_CONFIG.FRAGMENTS_INCREMENT_INTERVAL === 0) {
+                gameState.fragmentsNeeded += GAME_CONFIG.FRAGMENTS_INCREMENT;
+            }
+            
+            soundSystem.play('levelUp');
+            rankingSystem.showToast(`🚀 已升级到关卡 ${gameState.level}！`);
+            
+            // 更新游戏难度
+            gameState.performance.obstacleDensity = Math.min(3, 1 + (gameState.level - 1) * 0.1);
+            
+            // 生成新的游戏元素
+            generateGameElements();
+            
+            // 更新UI
+            updateUI();
+            
+            // 保存进度
+            rankingSystem.saveGameProgress();
+        }
+
+        function gameOver() {
+            gameState.isPlaying = false;
+            clearInterval(gameState.timerInterval);
+            
+            soundSystem.play('gameOver');
+            
+            // 提交分数到排行榜
+            rankingSystem.addScore(gameState.score);
+            
+            // 保存游戏进度
+            rankingSystem.saveGameProgress();
+            
+            // 显示游戏结束信息
+            setTimeout(() => {
+                rankingSystem.showToast(`游戏结束！关卡：${gameState.level} 得分：${gameState.score}`);
+                
+                // 返回开始界面
+                document.getElementById('startScreen').classList.remove('hidden');
+                document.getElementById('gameUI').classList.add('hidden');
+                
+                // 清除游戏元素
+                clearGameElements();
+            }, 1000);
+        }
+
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            
+            gameState.timerInterval = setInterval(() => {
+                if (!gameState.isPlaying) return;
+                
+                gameState.timeLeft--;
+                updateUI();
+                
+                if (gameState.timeLeft <= 0) {
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        // ========== UI更新函数 ==========
+        function updateUI() {
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('time').textContent = gameState.timeLeft;
+            document.getElementById('zLevel').textContent = gameState.electron.z;
+            document.getElementById('charge').textContent = gameState.electron.charge === 1 ? '正' : '负';
+            document.getElementById('moves').textContent = gameState.moves;
+            document.getElementById('fragments').textContent = `${gameState.fragmentsCollected}/${gameState.fragmentsNeeded}`;
+            
+            // 更新电子电荷显示样式
+            const chargeElement = document.getElementById('charge');
+            chargeElement.className = gameState.electron.charge === 1 ? 'text-positive' : 'text-negative';
+            
+            // 更新音效和震动开关状态
+            document.getElementById('soundToggle').checked = gameState.settings.sound;
+            document.getElementById('vibrationToggle').checked = gameState.settings.vibration;
+        }
+
+        function renderGameElements() {
+            clearGameElements();
+            
+            const gameArea = document.getElementById('gameArea');
+            
+            // 创建电子元素
+            const electronEl = document.createElement('div');
+            electronEl.className = 'electron charge-effect';
+            electronEl.style.width = `${gameState.electron.size}px`;
+            electronEl.style.height = `${gameState.electron.size}px`;
+            electronEl.style.left = `${gameState.electron.x - gameState.electron.size/2}px`;
+            electronEl.style.top = `${gameState.electron.y - gameState.electron.size/2}px`;
+            electronEl.style.backgroundColor = gameState.electron.charge === 1 ? 'var(--positive)' : 'var(--negative)';
+            electronEl.style.setProperty('--z-offset', `${gameState.electron.z * 5}px`);
+            electronEl.style.setProperty('--z-absolute', Math.abs(gameState.electron.z));
+            gameArea.appendChild(electronEl);
+            
+            // 创建质子元素
+            gameState.protons.forEach(proton => {
+                const protonEl = document.createElement('div');
+                protonEl.className = 'proton charge-effect';
+                protonEl.style.width = `${proton.size}px`;
+                protonEl.style.height = `${proton.size}px`;
+                protonEl.style.left = `${proton.x - proton.size/2}px`;
+                protonEl.style.top = `${proton.y - proton.size/2}px`;
+                protonEl.style.backgroundColor = 'var(--proton)';
+                protonEl.style.setProperty('--z-offset', `${proton.z * 5}px`);
+                protonEl.style.setProperty('--z-absolute', Math.abs(proton.z));
+                gameArea.appendChild(protonEl);
+            });
+            
+            // 创建陷阱元素
+            gameState.traps.forEach(trap => {
+                const trapEl = document.createElement('div');
+                trapEl.className = 'trap trap-effect';
+                trapEl.style.width = `${trap.size}px`;
+                trapEl.style.height = `${trap.size}px`;
+                trapEl.style.left = `${trap.x - trap.size/2}px`;
+                trapEl.style.top = `${trap.y - trap.size/2}px`;
+                trapEl.style.setProperty('--z-offset', `${trap.z * 5}px`);
+                trapEl.style.setProperty('--z-absolute', Math.abs(trap.z));
+                gameArea.appendChild(trapEl);
+            });
+            
+            // 创建碎片元素
+            gameState.fragments.forEach(fragment => {
+                const fragmentEl = document.createElement('div');
+                fragmentEl.className = 'fragment float-3d';
+                fragmentEl.style.width = `${fragment.size}px`;
+                fragmentEl.style.height = `${fragment.size}px`;
+                fragmentEl.style.left = `${fragment.x - fragment.size/2}px`;
+                fragmentEl.style.top = `${fragment.y - fragment.size/2}px`;
+                fragmentEl.style.backgroundColor = 'var(--neutral)';
+                fragmentEl.style.boxShadow = '0 0 15px var(--neutral)';
+                fragmentEl.style.setProperty('--z-offset', `${fragment.z * 5}px`);
+                fragmentEl.style.setProperty('--z-absolute', Math.abs(fragment.z));
+                gameArea.appendChild(fragmentEl);
+            });
+            
+            // 创建Boss元素
+            if (gameState.boss) {
+                const bossEl = document.createElement('div');
+                bossEl.className = 'boss quantum-pulse';
+                bossEl.style.width = `${gameState.boss.size}px`;
+                bossEl.style.height = `${gameState.boss.size}px`;
+                bossEl.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
+                bossEl.style.top = `${gameState.boss.y - gameState.boss.size/2}px`;
+                bossEl.style.backgroundColor = 'var(--proton)';
+                bossEl.style.boxShadow = '0 0 30px var(--proton)';
+                bossEl.style.setProperty('--z-offset', `${gameState.boss.z * 5}px`);
+                bossEl.style.setProperty('--z-absolute', Math.abs(gameState.boss.z));
+                
+                // Boss血条
+                const healthBar = document.createElement('div');
+                healthBar.style.position = 'absolute';
+                healthBar.style.left = `${gameState.boss.x - gameState.boss.size/2}px`;
+                healthBar.style.top = `${gameState.boss.y - gameState.boss.size/2 - 10}px`;
+                healthBar.style.width = `${gameState.boss.size}px`;
+                healthBar.style.height = '8px';
+                healthBar.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                healthBar.style.borderRadius = '4px';
+                healthBar.style.zIndex = '20';
+                
+                const healthFill = document.createElement('div');
+                healthFill.style.width = `${(gameState.boss.health / gameState.boss.maxHealth) * 100}%`;
+                healthFill.style.height = '100%';
+                healthFill.style.backgroundColor = gameState.boss.health > 50 ? '#10B981' : '#EF4444';
+                healthFill.style.borderRadius = '4px';
+                healthFill.style.transition = 'width 0.3s';
+                
+                healthBar.appendChild(healthFill);
+                bossEl.appendChild(healthBar);
+                
+                gameArea.appendChild(bossEl);
+            }
+            
+            // 创建Boss子弹元素
+            gameState.bossProjectiles.forEach(projectile => {
+                const projectileEl = document.createElement('div');
+                projectileEl.className = 'projectile';
+                projectileEl.style.width = `${projectile.size}px`;
+                projectileEl.style.height = `${projectile.size}px`;
+                projectileEl.style.left = `${projectile.x - projectile.size/2}px`;
+                projectileEl.style.top = `${projectile.y - projectile.size/2}px`;
+                projectileEl.style.backgroundColor = projectile.charge === 1 ? 'var(--positive)' : 'var(--negative)';
+                projectileEl.style.boxShadow = `0 0 10px ${projectile.charge === 1 ? 'var(--positive)' : 'var(--negative)'}`;
+                projectileEl.style.setProperty('--z-offset', `${projectile.z * 5}px`);
+                projectileEl.style.setProperty('--z-absolute', Math.abs(projectile.z));
+                gameArea.appendChild(projectileEl);
+            });
+        }
+
+        function clearGameElements() {
+            const gameArea = document.getElementById('gameArea');
+            
+            // 保留背景，清除所有游戏元素
+            const elements = gameArea.querySelectorAll('.electron, .proton, .trap, .fragment, .boss, .projectile');
+            elements.forEach(el => el.remove());
+        }
+
+        // ========== 游戏主循环 ==========
+        function gameLoop() {
+            if (!gameState.isPlaying) return;
+            
+            gameState.frameCounter++;
+            
+            // 帧跳过，提高性能
+            if (gameState.frameCounter % gameState.frameSkip !== 0) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            // 更新质子位置（随机移动）
+            gameState.protons.forEach(proton => {
+                proton.x += Math.cos(proton.direction) * proton.speed;
+                proton.y += Math.sin(proton.direction) * proton.speed;
+                
+                // 边界反弹
+                if (proton.x < 20 || proton.x > gameState.gameWidth - 20) {
+                    proton.direction = Math.PI - proton.direction;
+                }
+                if (proton.y < 20 || proton.y > gameState.gameHeight - 20) {
+                    proton.direction = -proton.direction;
+                }
+                
+                // 随机改变方向
+                if (Math.random() < 0.01) {
+                    proton.direction += (Math.random() - 0.5) * 0.5;
+                }
+            });
+            
+            // 更新Boss位置和攻击
+            if (gameState.boss) {
+                // Boss追踪玩家
+                const dx = gameState.electron.x - gameState.boss.x;
+                const dy = gameState.electron.y - gameState.boss.y;
+                const angle = Math.atan2(dy, dx);
+                
+                gameState.boss.x += Math.cos(angle) * gameState.boss.speed;
+                gameState.boss.y += Math.sin(angle) * gameState.boss.speed;
+                
+                // Boss攻击
+                const now = Date.now();
+                if (now - gameState.boss.lastAttack > gameState.boss.attackCooldown) {
+                    // 发射子弹
+                    const projectileCount = 3 + Math.floor(gameState.level / 5);
+                    
+                    for (let i = 0; i < projectileCount; i++) {
+                        const angleOffset = (i / projectileCount) * Math.PI * 2;
+                        const projectileZ = Math.floor(Math.random() * (gameState.maxZDepth * 2 + 1)) - gameState.maxZDepth;
+                        
+                        gameState.bossProjectiles.push({
+                            x: gameState.boss.x,
+                            y: gameState.boss.y,
+                            z: projectileZ,
+                            size: 15 + Math.random() * 10,
+                            charge: gameState.boss.charge,
+                            speed: 3 + gameState.level * 0.1,
+                            direction: angle + angleOffset
+                        });
+                    }
+                    
+                    gameState.boss.lastAttack = now;
+                }
+            }
+            
+            // 更新Boss子弹位置
+            for (let i = gameState.bossProjectiles.length - 1; i >= 0; i--) {
+                const projectile = gameState.bossProjectiles[i];
+                
+                projectile.x += Math.cos(projectile.direction) * projectile.speed;
+                projectile.y += Math.sin(projectile.direction) * projectile.speed;
+                
+                // 超出边界移除
+                if (projectile.x < 0 || projectile.x > gameState.gameWidth || 
+                    projectile.y < 0 || projectile.y > gameState.gameHeight) {
+                    gameState.bossProjectiles.splice(i, 1);
+                }
+            }
+            
+            // 检查碰撞
+            checkCollisions();
+            
+            // 渲染游戏元素
+            renderGameElements();
+            
+            // 继续游戏循环
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ========== 页面加载完成后初始化 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化游戏
+            initGame();
+            
+            // 适配窗口大小变化
+            window.addEventListener('resize', () => {
+                const gameArea = document.getElementById('gameArea');
+                const rect = gameArea.getBoundingClientRect();
+                gameState.gameWidth = rect.width;
+                gameState.gameHeight = rect.height;
+                
+                if (gameState.isPlaying) {
+                    renderGameElements();
+                }
+            });
+            
+            // 初始化音效和震动设置
+            const savedSound = localStorage.getItem('game_sound');
+            const savedVibration = localStorage.getItem('game_vibration');
+            
+            if (savedSound !== null) {
+                gameState.settings.sound = JSON.parse(savedSound);
+            }
+            
+            if (savedVibration !== null) {
+                gameState.settings.vibration = JSON.parse(savedVibration);
+            }
+            
+            console.log('游戏页面加载完成！');
+        });
+
+        // ========== 全局错误处理 ==========
+        window.addEventListener('error', (e) => {
+            console.error('游戏错误:', e.error);
+            rankingSystem.showToast('游戏出错，请刷新页面');
+        });
+
+        // ========== 离线支持 ==========
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('SW registered:', registration);
+                }).catch(registrationError => {
+                    console.log('SW registration failed:', registrationError);
+                });
+            });
+        }
+
+        // ========== 导出全局对象供调试 ==========
+        window.gameState = gameState;
+        window.rankingSystem = rankingSystem;
+        window.soundSystem = soundSystem;
     </script>
 </body>
 </html>
