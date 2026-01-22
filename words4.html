@@ -78,7 +78,7 @@
 <body class="bg-gray-50 font-sans text-dark">
     <!-- 顶部导航栏 -->
     <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
             <button id="nav-back-btn" class="btn-nav flex items-center order-0">
                 <i class="fa fa-arrow-left mr-2"></i>返回导航页
             </button>
@@ -128,9 +128,9 @@
                 <!-- 新增：显示单词词性 -->
                 <div id="word-part-of-speech" class="mb-2"></div>
                 <p id="word-definition" class="text-lg mb-2">单词释义将在这里显示</p>
-                <div class="flex items-center mb-2">
+                <div class="flex flex-wrap items-center mb-2 gap-2">
                     <span>请写出对应的英语单词: </span>
-                    <input type="text" id="answer-input" class="input-field ml-2 flex-1" placeholder="在此输入答案">
+                    <input type="text" id="answer-input" class="input-field flex-1" placeholder="在此输入答案">
                 </div>
                 <div id="pronunciation" class="text-sm text-neutral italic mt-2 hidden">
                     <i class="fa fa-volume-up mr-1"></i>
@@ -206,7 +206,7 @@
                 </div>
             </div>
             
-            <div class="flex gap-4">
+            <div class="flex flex-wrap gap-4">
                 <button id="restart-btn" class="btn-primary flex-1">
                     <i class="fa fa-refresh mr-2"></i>重新练习
                 </button>
@@ -228,428 +228,362 @@
     </footer>
 
     <script>
-        // 外研版选择性必修第二册单词按单元分类（严格匹配教材）
+        // 外研版选择性必修第二册单词（严格匹配你提供的课本内容）
         const wordUnits = {
             unit1: {
-                title: "第一单元：Growing Up",
+                title: "第一单元",
                 words: [
-                    { word: "integrity", partOfSpeech: "n.", definition: "正直诚实；完整，完全", pronunciation: "/ɪnˈteɡrəti/" },
-                    { word: "virtue", partOfSpeech: "n.", definition: "美德；优秀品质；优点，长处", pronunciation: "/ˈvɜːtʃuː/" },
-                    { word: "licence", partOfSpeech: "n.", definition: "执照；许可证；许可", pronunciation: "/ˈlaɪsns/" },
-                    { word: "loan", partOfSpeech: "n.", definition: "（银行等的）贷款；借出", pronunciation: "/ləʊn/" },
-                    { word: "adulthood", partOfSpeech: "n.", definition: "成年；成年期", pronunciation: "/ˈædʌlthʊd/" },
-                    { word: "milestone", partOfSpeech: "n.", definition: "重大事件；里程碑", pronunciation: "/ˈmaɪlstəʊn/" },
-                    { word: "election", partOfSpeech: "n.", definition: "选举；选择", pronunciation: "/ɪˈlekʃn/" },
+                    { word: "integrity", partOfSpeech: "n.", definition: "正直诚实", pronunciation: "/ɪnˈteɡrəti/" },
+                    { word: "virtue", partOfSpeech: "n.", definition: "美德", pronunciation: "/ˈvɜːtʃuː/" },
+                    { word: "licence", partOfSpeech: "n.", definition: "执照", pronunciation: "/ˈlaɪsns/" },
+                    { word: "loan", partOfSpeech: "n.", definition: "（银行等的）贷款", pronunciation: "/ləʊn/" },
+                    { word: "adulthood", partOfSpeech: "n.", definition: "成年", pronunciation: "/ˈædʌlthʊd/" },
+                    { word: "milestone", partOfSpeech: "n.", definition: "重大事件，里程碑", pronunciation: "/ˈmaɪlstəʊn/" },
+                    { word: "election", partOfSpeech: "n.", definition: "选举", pronunciation: "/ɪˈlekʃn/" },
                     { word: "wage", partOfSpeech: "n.", definition: "（按小时、日或周计算的）工资，薪金", pronunciation: "/weɪdʒ/" },
-                    { word: "tax", partOfSpeech: "n.", definition: "税；税款；重负", pronunciation: "/tæks/" },
+                    { word: "tax", partOfSpeech: "n.", definition: "税", pronunciation: "/tæks/" },
                     { word: "have a say", partOfSpeech: "phr.", definition: "有发言权", pronunciation: "/hæv ə seɪ/" },
                     { word: "behind the wheel", partOfSpeech: "phr.", definition: "在驾驶汽车", pronunciation: "/bɪˈhaɪnd ðə wiːl/" },
                     { word: "ambulance", partOfSpeech: "n.", definition: "救护车", pronunciation: "/ˈæmbjələns/" },
-                    { word: "legal", partOfSpeech: "adj.", definition: "合法的；法律上的", pronunciation: "/ˈliːɡl/" },
-                    { word: "mature", partOfSpeech: "adj.", definition: "成熟的；明白事理的", pronunciation: "/məˈtʃʊə(r)/" },
+                    { word: "legal", partOfSpeech: "adj.", definition: "合法的", pronunciation: "/ˈliːɡl/" },
+                    { word: "mature", partOfSpeech: "adj.", definition: "成熟的，明白事理的", pronunciation: "/məˈtʃʊə(r)/" },
                     { word: "instantly", partOfSpeech: "adv.", definition: "立即，马上", pronunciation: "/ˈɪnstəntli/" },
-                    { word: "childhood", partOfSpeech: "n.", definition: "童年，儿童时期", pronunciation: "/ˈtʃaɪldhʊd/" },
+                    { word: "childhood", partOfSpeech: "n.", definition: "童年，儿童时代", pronunciation: "/ˈtʃaɪldhʊd/" },
                     { word: "obey", partOfSpeech: "v.", definition: "服从；遵守", pronunciation: "/əˈbeɪ/" },
-                    { word: "subtle", partOfSpeech: "adj.", definition: "微妙的；难以察觉的", pronunciation: "/ˈsʌtl/" },
+                    { word: "subtle", partOfSpeech: "adj.", definition: "难以察觉的；微妙的", pronunciation: "/ˈsʌtl/" },
                     { word: "gradual", partOfSpeech: "adj.", definition: "逐渐的，逐步的", pronunciation: "/ˈɡrædʒuəl/" },
                     { word: "selfish", partOfSpeech: "adj.", definition: "自私的", pronunciation: "/ˈselfɪʃ/" },
-                    { word: "organ donation", partOfSpeech: "n.", definition: "器官捐献", pronunciation: "/ˈɔːɡən dəʊˈneɪʃn/" },
-                    { word: "approve", partOfSpeech: "v.", definition: "批准；认可；赞成，同意", pronunciation: "/əˈpruːv/" },
-                    { word: "librarian", partOfSpeech: "n.", definition: "图书管理员", pronunciation: "/laɪˈbreəriən/" },
-                    { word: "household", partOfSpeech: "n./adj.", definition: "家庭；一家人；家庭的；家用的", pronunciation: "/ˈhaʊshəʊld/" },
-                    { word: "commute", partOfSpeech: "v./n.", definition: "通勤；通勤路程", pronunciation: "/kəˈmjuːt/" },
-                    { word: "deposit", partOfSpeech: "n./v.", definition: "存款；押金；存放；沉积", pronunciation: "/dɪˈpɒzɪt/" },
-                    { word: "commitment", partOfSpeech: "n.", definition: "承诺；投入；承担义务", pronunciation: "/kəˈmɪtmənt/" },
-                    { word: "suitable", partOfSpeech: "adj.", definition: "合适的，适宜的", pronunciation: "/ˈsuːtəbl/" },
-                    { word: "minimum", partOfSpeech: "adj./n.", definition: "最低的，最小的；最小值，最低限度", pronunciation: "/ˈmɪnɪməm/" },
+                    { word: "organ donation", partOfSpeech: "phr.", definition: "器官捐献", pronunciation: "/ˈɔːɡən dəʊˈneɪʃn/" },
+                    { word: "approval", partOfSpeech: "n.", definition: "赞成，同意", pronunciation: "/əˈpruːvl/" },
+                    { word: "steady", partOfSpeech: "adj.", definition: "稳定的", pronunciation: "/ˈstedi/" },
+                    { word: "tempt", partOfSpeech: "v.", definition: "诱惑，引诱", pronunciation: "/tempt/" },
+                    { word: "librarian", partOfSpeech: "n.", definition: "图书馆管理员", pronunciation: "/laɪˈbreəriən/" },
+                    { word: "household", partOfSpeech: "adj.", definition: "家庭的", pronunciation: "/ˈhaʊshəʊld/" },
+                    { word: "commute", partOfSpeech: "n.", definition: "每天上班的路程", pronunciation: "/kəˈmjuːt/" },
+                    { word: "deposit", partOfSpeech: "n.", definition: "订金", pronunciation: "/dɪˈpɒzɪt/" },
+                    { word: "commitment", partOfSpeech: "n.", definition: "投入，花费", pronunciation: "/kəˈmɪtmənt/" },
+                    { word: "suitable", partOfSpeech: "adj.", definition: "合适的", pronunciation: "/ˈsuːtəbl/" },
+                    { word: "minimum", partOfSpeech: "adj.", definition: "最小的，最少的", pronunciation: "/ˈmɪnɪməm/" },
                     { word: "bittersweet", partOfSpeech: "adj.", definition: "苦乐参半的", pronunciation: "/ˌbɪtəˈswiːt/" },
-                    { word: "border", partOfSpeech: "n./v.", definition: "边界；边境；与……接壤；接近", pronunciation: "/ˈbɔːdə(r)/" },
-                    { word: "varied", partOfSpeech: "adj.", definition: "各种各样的；多变的", pronunciation: "/ˈveərid/" },
-                    { word: "cherish", partOfSpeech: "v.", definition: "珍惜；珍爱；怀念", pronunciation: "/ˈtʃerɪʃ/" },
-                    { word: "routine", partOfSpeech: "n./adj.", definition: "常规；惯例；常规的，例行的", pronunciation: "/ruːˈtiːn/" },
+                    { word: "boarder", partOfSpeech: "n.", definition: "寄宿生，住校生", pronunciation: "/ˈbɔːdə(r)/" },
+                    { word: "varied", partOfSpeech: "adj.", definition: "各种各样的", pronunciation: "/ˈveərid/" },
+                    { word: "cherish", partOfSpeech: "v.", definition: "重视，珍视", pronunciation: "/ˈtʃerɪʃ/" },
+                    { word: "routine", partOfSpeech: "n.", definition: "惯例，习惯", pronunciation: "/ruːˈtiːn/" },
                     { word: "primeval", partOfSpeech: "adj.", definition: "原始的，远古的", pronunciation: "/praɪˈmiːvl/" },
                     { word: "boa constrictor", partOfSpeech: "n.", definition: "蟒蛇", pronunciation: "/ˌbəʊə kənˈstrɪktə(r)/" },
-                    { word: "swallow", partOfSpeech: "v./n.", definition: "吞下；咽下；燕子", pronunciation: "/ˈswɒləʊ/" },
-                    { word: "prey", partOfSpeech: "n./v.", definition: "猎物；受害者；捕食；掠夺", pronunciation: "/preɪ/" },
-                    { word: "chew", partOfSpeech: "v.", definition: "咀嚼；咬", pronunciation: "/tʃuː/" },
-                    { word: "digestion", partOfSpeech: "n.", definition: "消化；消化能力", pronunciation: "/daɪˈdʒestʃən/" },
-                    { word: "ponder", partOfSpeech: "v.", definition: "沉思，仔细考虑", pronunciation: "/ˈpɒndə(r)/" },
-                    { word: "masterpiece", partOfSpeech: "n.", definition: "杰作；代表作", pronunciation: "/ˈmɑːstəpiːs/" },
-                    { word: "digest", partOfSpeech: "v./n.", definition: "消化；理解；文摘，摘要", pronunciation: "/daɪˈdʒest/ /ˈdaɪdʒest/" },
-                    { word: "lay aside", partOfSpeech: "phr.v.", definition: "把……搁置一边；留存备用", pronunciation: "/leɪ əˈsaɪd/" },
-                    { word: "devote oneself to", partOfSpeech: "phr.v.", definition: "致力于；献身于", pronunciation: "/dɪˈvəʊt wʌnˈself tuː/" },
+                    { word: "swallow", partOfSpeech: "v.", definition: "吞下，咽下", pronunciation: "/ˈswɒləʊ/" },
+                    { word: "prey", partOfSpeech: "n.", definition: "猎物", pronunciation: "/preɪ/" },
+                    { word: "chew", partOfSpeech: "v.", definition: "咀嚼", pronunciation: "/tʃuː/" },
+                    { word: "digestion", partOfSpeech: "n.", definition: "消化（过程）", pronunciation: "/daɪˈdʒestʃən/" },
+                    { word: "ponder", partOfSpeech: "v.", definition: "仔细考虑，深思", pronunciation: "/ˈpɒndə(r)/" },
+                    { word: "masterpiece", partOfSpeech: "n.", definition: "杰作", pronunciation: "/ˈmɑːstəpiːs/" },
+                    { word: "digest", partOfSpeech: "v.", definition: "消化（食物）", pronunciation: "/daɪˈdʒest/" },
+                    { word: "lay aside", partOfSpeech: "phr.", definition: "把……搁置一边；储蓄", pronunciation: "/leɪ əˈsaɪd/" },
+                    { word: "devote oneself to", partOfSpeech: "phr.", definition: "致力于，献身于", pronunciation: "/dɪˈvəʊt wʌnˈself tuː/" },
                     { word: "arithmetic", partOfSpeech: "n.", definition: "算术", pronunciation: "/əˈrɪθmətɪk/" },
-                    { word: "disheartened", partOfSpeech: "adj.", definition: "灰心的，沮丧的", pronunciation: "/dɪsˈhɑːtnd/" },
+                    { word: "disheartened", partOfSpeech: "adj.", definition: "沮丧的，灰心的", pronunciation: "/dɪsˈhɑːtnd/" },
                     { word: "tiresome", partOfSpeech: "adj.", definition: "烦人的，令人厌烦的", pronunciation: "/ˈtaɪəsəm/" },
-                    { word: "at a glance", partOfSpeech: "phr.", definition: "一瞥；看一眼", pronunciation: "/æt ə ɡlɑːns/" },
-                    { word: "consequence", partOfSpeech: "n.", definition: "结果；后果；重要性", pronunciation: "/ˈkɒnsɪkwəns/" },
-                    { word: "intimately", partOfSpeech: "adv.", definition: "亲密地；密切地；熟悉地", pronunciation: "/ˈɪntɪmətli/" },
+                    { word: "at a glance", partOfSpeech: "phr.", definition: "一瞥，看一眼", pronunciation: "/æt ə ɡlɑːns/" },
+                    { word: "consequence", partOfSpeech: "n.", definition: "后果", pronunciation: "/ˈkɒnsɪkwəns/" },
+                    { word: "intimately", partOfSpeech: "adv.", definition: "亲密地；密切地", pronunciation: "/ˈɪntɪmətli/" },
                     { word: "golf", partOfSpeech: "n.", definition: "高尔夫球运动", pronunciation: "/ɡɒlf/" },
-                    { word: "politics", partOfSpeech: "n.", definition: "政治；政治学；政治活动", pronunciation: "/ˈpɒlətɪks/" },
-                    { word: "nectar", partOfSpeech: "n.", definition: "花蜜；琼浆玉液", pronunciation: "/ˈnektə(r)/" },
-                    { word: "evidence", partOfSpeech: "n.", definition: "证据；证明；迹象", pronunciation: "/ˈevɪdəns/" },
+                    { word: "politics", partOfSpeech: "n.", definition: "政治", pronunciation: "/ˈpɒlətɪks/" },
+                    { word: "necktie", partOfSpeech: "n.", definition: "领带", pronunciation: "/ˈnekgtaɪ/" },
+                    { word: "evidence", partOfSpeech: "n.", definition: "证据", pronunciation: "/ˈevɪdəns/" },
                     { word: "airline", partOfSpeech: "n.", definition: "航空公司", pronunciation: "/ˈeəlaɪn/" },
-                    { word: "memorable", partOfSpeech: "adj.", definition: "难忘的，值得纪念的", pronunciation: "/ˈmemərəbl/" },
-                    { word: "bond", partOfSpeech: "n./v.", definition: "纽带；联系；债券；结合；建立亲密关系", pronunciation: "/bɒnd/" },
-                    { word: "conclusion", partOfSpeech: "n.", definition: "结论；结局；达成", pronunciation: "/kənˈkluːʒn/" }
+                    { word: "memorable", partOfSpeech: "adj.", definition: "难忘的", pronunciation: "/ˈmemərəbl/" },
+                    { word: "bond", partOfSpeech: "n.", definition: "纽带，关系", pronunciation: "/bɒnd/" },
+                    { word: "conclusion", partOfSpeech: "n.", definition: "结论", pronunciation: "/kənˈkluːʒn/" }
                 ]
             },
             unit2: {
-                title: "第二单元：Healthy Lifestyle",
+                title: "第二单元",
                 words: [
-                    { word: "nutrition", partOfSpeech: "n.", definition: "营养；营养学", pronunciation: "/njuˈtrɪʃn/" },
-                    { word: "diet", partOfSpeech: "n./v.", definition: "日常饮食；节食；节食减肥", pronunciation: "/ˈdaɪət/" },
-                    { word: "protein", partOfSpeech: "n.", definition: "蛋白质", pronunciation: "/ˈprəʊtiːn/" },
-                    { word: "vitamin", partOfSpeech: "n.", definition: "维生素", pronunciation: "/ˈvɪtəmɪn/" },
-                    { word: "mineral", partOfSpeech: "n.", definition: "矿物质；矿物", pronunciation: "/ˈmɪnərəl/" },
-                    { word: "fibre", partOfSpeech: "n.", definition: "纤维；纤维制品", pronunciation: "/ˈfaɪbə(r)/" },
-                    { word: "carbohydrate", partOfSpeech: "n.", definition: "碳水化合物；糖类", pronunciation: "/ˌkɑːbəʊˈhaɪdreɪt/" },
-                    { word: "fat", partOfSpeech: "n./adj.", definition: "脂肪；肥肉；肥胖的", pronunciation: "/fæt/" },
-                    { word: "obesity", partOfSpeech: "n.", definition: "肥胖；肥胖症", pronunciation: "/əʊˈbiːsəti/" },
-                    { word: "obese", partOfSpeech: "adj.", definition: "肥胖的；臃肿的", pronunciation: "/əʊˈbiːs/" },
-                    { word: "diabetes", partOfSpeech: "n.", definition: "糖尿病", pronunciation: "/ˌdaɪəˈbiːtiːz/" },
-                    { word: "cholesterol", partOfSpeech: "n.", definition: "胆固醇", pronunciation: "/kəˈlestərɒl/" },
-                    { word: "immune", partOfSpeech: "adj.", definition: "有免疫力的；免疫的", pronunciation: "/ɪˈmjuːn/" },
-                    { word: "allergic", partOfSpeech: "adj.", definition: "过敏的；反感的", pronunciation: "/əˈlɜːdʒɪk/" },
-                    { word: "allergic to", partOfSpeech: "phr.", definition: "对……过敏", pronunciation: "/əˈlɜːdʒɪk tuː/" },
-                    { word: "intake", partOfSpeech: "n.", definition: "摄入量；吸收；纳入", pronunciation: "/ˈɪnteɪk/" },
-                    { word: "calorie", partOfSpeech: "n.", definition: "卡路里（热量单位）", pronunciation: "/ˈkæləri/" },
-                    { word: "digestive", partOfSpeech: "adj.", definition: "消化的；助消化的", pronunciation: "/daɪˈdʒestɪv/" },
-                    { word: "metabolism", partOfSpeech: "n.", definition: "新陈代谢", pronunciation: "/məˈtæbəlɪzəm/" },
-                    { word: "energetic", partOfSpeech: "adj.", definition: "精力充沛的；积极的", pronunciation: "/ˌenəˈdʒetɪk/" },
-                    { word: "deficiency", partOfSpeech: "n.", definition: "缺乏；不足；缺陷", pronunciation: "/dɪˈfɪʃnsi/" },
-                    { word: "supplement", partOfSpeech: "n./v.", definition: "补充物；增补；补充；增补", pronunciation: "/ˈsʌplɪmənt/" },
-                    { word: "hydrate", partOfSpeech: "v./n.", definition: "（使）水合；（使）保湿；水合物", pronunciation: "/ˈhaɪdreɪt/" },
-                    { word: "dehydration", partOfSpeech: "n.", definition: "脱水；失水", pronunciation: "/ˌdiːhaɪˈdreɪʃn/" },
-                    { word: "moderation", partOfSpeech: "n.", definition: "适度；节制；温和", pronunciation: "/ˌmɒdəˈreɪʃn/" },
-                    { word: "in moderation", partOfSpeech: "phr.", definition: "适度地；有节制地", pronunciation: "/ɪn ˌmɒdəˈreɪʃn/" },
-                    { word: "well-being", partOfSpeech: "n.", definition: "健康；幸福；安乐", pronunciation: "/ˌwel ˈbiːɪŋ/" },
-                    { word: "mental", partOfSpeech: "adj.", definition: "精神的；思想的；心理的", pronunciation: "/ˈmentl/" },
-                    { word: "psychological", partOfSpeech: "adj.", definition: "心理的；心理学的", pronunciation: "/ˌsaɪkəˈlɒdʒɪkl/" },
-                    { word: "therapy", partOfSpeech: "n.", definition: "治疗；疗法", pronunciation: "/ˈθerəpi/" },
-                    { word: "counselling", partOfSpeech: "n.", definition: "咨询；辅导", pronunciation: "/ˈkaʊnslɪŋ/" },
-                    { word: "meditation", partOfSpeech: "n.", definition: "冥想；沉思；默念", pronunciation: "/ˌmedɪˈteɪʃn/" },
-                    { word: "yoga", partOfSpeech: "n.", definition: "瑜伽；瑜伽术", pronunciation: "/ˈjəʊɡə/" },
-                    { word: "refresh", partOfSpeech: "v.", definition: "使恢复精力；使凉爽；刷新", pronunciation: "/rɪˈfreʃ/" },
-                    { word: "vigor", partOfSpeech: "n.", definition: "活力；精力；元气", pronunciation: "/ˈvɪɡə(r)/" },
-                    { word: "strain", partOfSpeech: "n./v.", definition: "压力；劳损；拉伤；拉紧", pronunciation: "/streɪn/" },
-                    { word: "relieve", partOfSpeech: "v.", definition: "减轻；缓解；解除；宽慰", pronunciation: "/rɪˈliːv/" },
-                    { word: "symptom", partOfSpeech: "n.", definition: "症状；征兆", pronunciation: "/ˈsɪmptəm/" },
-                    { word: "chronic", partOfSpeech: "adj.", definition: "慢性的；长期的；习惯性的", pronunciation: "/ˈkrɒnɪk/" },
-                    { word: "wellness", partOfSpeech: "n.", definition: "健康；良好状态", pronunciation: "/ˈwelnəs/" },
-                    { word: "wellness centre", partOfSpeech: "n.", definition: "健康中心", pronunciation: "/ˈwelnəs ˈsentə(r)/" },
-                    { word: "lifestyle", partOfSpeech: "n.", definition: "生活方式", pronunciation: "/ˈlaɪfstaɪl/" },
-                    { word: "well-balanced", partOfSpeech: "adj.", definition: "均衡的；平衡的", pronunciation: "/ˌwel ˈbælənst/" },
-                    { word: "alternative", partOfSpeech: "adj./n.", definition: "替代的；可供选择的；选择；替代品", pronunciation: "/ɔːlˈtɜːnətɪv/" },
-                    { word: "herbal", partOfSpeech: "adj.", definition: "草药的；草本的", pronunciation: "/ˈhɜːbl/" },
-                    { word: "remedy", partOfSpeech: "n./v.", definition: "疗法；补救；纠正；治疗", pronunciation: "/ˈremədi/" },
-                    { word: "massage", partOfSpeech: "n./v.", definition: "按摩；推拿；给……按摩", pronunciation: "/ˈmæsɑːʒ/" },
-                    { word: "acupuncture", partOfSpeech: "n.", definition: "针灸；针刺疗法", pronunciation: "/ˈækjupʌŋktʃə(r)/" },
-                    { word: "acupressure", partOfSpeech: "n.", definition: "指压；针压法", pronunciation: "/ˈækjupreʃə(r)/" }
+                    { word: "security", partOfSpeech: "n.", definition: "安全", pronunciation: "/sɪˈkjʊərəti/" },
+                    { word: "moderator", partOfSpeech: "n.", definition: "主持人", pronunciation: "/ˈmɒdəreɪtə(r)/" },
+                    { word: "host", partOfSpeech: "n.", definition: "主持人", pronunciation: "/həʊst/" },
+                    { word: "indrinking", partOfSpeech: "adj.", definition: "脱瘾的", pronunciation: "/ˈhʌŋɡri/" },
+                    { word: "switch on", partOfSpeech: "phr.", definition: "（用开关）开，打开", pronunciation: "/swɪtʃ ɒn/" },
+                    { word: "switch", partOfSpeech: "v.", definition: "改变，转换", pronunciation: "/swɪtʃ/" },
+                    { word: "motivate", partOfSpeech: "v.", definition: "激发，激励", pronunciation: "/ˈməʊtɪveɪt/" },
+                    { word: "occupy", partOfSpeech: "v.", definition: "占用，占有（空间）", pronunciation: "/ˈɒkjupaɪ/" },
+                    { word: "profile", partOfSpeech: "n.", definition: "概况，简介", pronunciation: "/ˈprəʊfaɪl/" },
+                    { word: "distract", partOfSpeech: "v.", definition: "分散（注意力），使分心", pronunciation: "/dɪˈstrækt/" },
+                    { word: "constantly", partOfSpeech: "adv.", definition: "持续不断地；经常地", pronunciation: "/ˈkɒnstəntli/" },
+                    { word: "towel", partOfSpeech: "n.", definition: "毛巾", pronunciation: "/ˈtaʊəl/" },
+                    { word: "throw in the towel", partOfSpeech: "phr.", definition: "认输", pronunciation: "/θrəʊ ɪn ðə taʊəl/" },
+                    { word: "access", partOfSpeech: "n.", definition: "接触的机会", pronunciation: "/ˈækses/" },
+                    { word: "rely on", partOfSpeech: "phr.", definition: "依靠，依赖", pronunciation: "/rɪˈlaɪ ɒn/" },
+                    { word: "rely", partOfSpeech: "v.", definition: "（为生活或生存而）依赖", pronunciation: "/rɪˈlaɪ/" },
+                    { word: "deadline", partOfSpeech: "n.", definition: "截止时间；最后期限", pronunciation: "/ˈdedlaɪn/" },
+                    { word: "procrastination", partOfSpeech: "n.", definition: "拖延", pronunciation: "/ˌprəʊkræstɪˈneɪʃn/" },
+                    { word: "appropriate", partOfSpeech: "adj.", definition: "恰当的；合适的", pronunciation: "/əˈprəʊpriət/" },
+                    { word: "spit", partOfSpeech: "v.", definition: "吐口水，吐痰", pronunciation: "/spɪt/" },
+                    { word: "headphones", partOfSpeech: "n.", definition: "（头戴式）耳机", pronunciation: "/ˈhedfəʊnz/" },
+                    { word: "bin", partOfSpeech: "n.", definition: "垃圾箱", pronunciation: "/bɪn/" },
+                    { word: "considerate", partOfSpeech: "adj.", definition: "替他人着想的；考虑周到的", pronunciation: "/kənˈsɪdərət/" },
+                    { word: "promote", partOfSpeech: "v.", definition: "促进，增进", pronunciation: "/prəˈməʊt/" },
+                    { word: "clarity", partOfSpeech: "n.", definition: "澄清，清楚", pronunciation: "/ˈklærəti/" },
+                    { word: "headline", partOfSpeech: "n.", definition: "媒体报道的热门话题；头条新闻", pronunciation: "/ˈhedlaɪn/" },
+                    { word: "max out", partOfSpeech: "phr.", definition: "（钱）花光；（信用卡）刷爆", pronunciation: "/mæks aʊt/" },
+                    { word: "in contrast to", partOfSpeech: "phr.", definition: "与……形成对比", pronunciation: "/ɪn ˈkɒntrɑːst tuː/" },
+                    { word: "district", partOfSpeech: "n.", definition: "地区，区域", pronunciation: "/ˈdɪstrɪkt/" },
+                    { word: "necessity", partOfSpeech: "n.", definition: "必需品", pronunciation: "/nəˈsesəti/" },
+                    { word: "toothpaste", partOfSpeech: "n.", definition: "牙膏", pronunciation: "/ˈtuːθpeɪst/" },
+                    { word: "headquarters", partOfSpeech: "n.", definition: "总部", pronunciation: "/ˌhedˈkwɔːtəz/" },
+                    { word: "precious", partOfSpeech: "adj.", definition: "一价商品（或物品）", pronunciation: "/ˈpreʃəs/" },
+                    { word: "itch", partOfSpeech: "n.", definition: "肥皂", pronunciation: "/ɪtʃ/" },
+                    { word: "unprecedentedly", partOfSpeech: "adv.", definition: "空前地，史无前例地", pronunciation: "/ʌnˈpresɪdentɪdli/" },
+                    { word: "personal finances", partOfSpeech: "phr.", definition: "（个人的）财务管理", pronunciation: "/ˈpɜːsənl faɪˈnænsɪz/" },
+                    { word: "jar", partOfSpeech: "n.", definition: "罐子，广口瓶", pronunciation: "/dʒɑː(r)/" },
+                    { word: "invest", partOfSpeech: "v.", definition: "投资", pronunciation: "/ɪnˈvest/" },
+                    { word: "lifelong", partOfSpeech: "adj.", definition: "终身的，毕生的", pronunciation: "/ˈlaɪflɒŋ/" },
+                    { word: "vision", partOfSpeech: "n.", definition: "视野，设想", pronunciation: "/ˈvɪʒn/" },
+                    { word: "likewise", partOfSpeech: "adv.", definition: "同样地，类似地", pronunciation: "/ˈlaɪkwaɪz/" },
+                    { word: "flawlessly", partOfSpeech: "adv.", definition: "完美地", pronunciation: "/ˈflɔːləsli/" },
+                    { word: "objectively", partOfSpeech: "adv.", definition: "客观地，不带偏见地", pronunciation: "/əbˈdʒektɪvli/" },
+                    { word: "equip", partOfSpeech: "v.", definition: "使有知识和技能", pronunciation: "/ɪˈkwɪp/" },
+                    { word: "nail", partOfSpeech: "n.", definition: "钉子", pronunciation: "/neɪl/" },
+                    { word: "decade", partOfSpeech: "n.", definition: "十年；十年期", pronunciation: "/ˈdekeɪd/" },
+                    { word: "legendary", partOfSpeech: "adj.", definition: "大名鼎鼎的", pronunciation: "/ˈledʒəndri/" },
+                    { word: "furniture", partOfSpeech: "n.", definition: "家具", pronunciation: "/ˈfɜːnɪtʃə(r)/" },
+                    { word: "mist", partOfSpeech: "n.", definition: "薄雾，霭", pronunciation: "/mɪst/" },
+                    { word: "brick", partOfSpeech: "n.", definition: "砖，砖块", pronunciation: "/brɪk/" },
+                    { word: "exterior", partOfSpeech: "n.", definition: "外观，外貌", pronunciation: "/ɪkˈstɪəriə(r)/" },
+                    { word: "pour over", partOfSpeech: "phr.", definition: "凝视，注视", pronunciation: "/pɔː ˈəʊvə/" },
+                    { word: "stationery", partOfSpeech: "n.", definition: "文具", pronunciation: "/ˈsteɪʃənri/" },
+                    { word: "saleswoman", partOfSpeech: "n.", definition: "女销售员", pronunciation: "/ˈseɪlzwʊmən/" },
+                    { word: "leadership", partOfSpeech: "n.", definition: "领导；领导地位", pronunciation: "/ˈliːdəʃɪp/" },
+                    { word: "organic", partOfSpeech: "adj.", definition: "有机的；绿色的", pronunciation: "/ɔːˈɡænɪk/" },
+                    { word: "nylon", partOfSpeech: "n.", definition: "尼龙", pronunciation: "/ˈnaɪlɒn/" }
                 ]
             },
             unit3: {
-                title: "第三单元：Times Change",
+                title: "第三单元",
                 words: [
-                    { word: "heritage", partOfSpeech: "n.", definition: "遗产；传统；继承物", pronunciation: "/ˈherɪtɪdʒ/" },
-                    { word: "historic", partOfSpeech: "adj.", definition: "历史的；有历史意义的；历史性的", pronunciation: "/hɪˈstɒrɪk/" },
-                    { word: "historical", partOfSpeech: "adj.", definition: "历史的；史学的；基于史实的", pronunciation: "/hɪˈstɒrɪkl/" },
-                    { word: "preserve", partOfSpeech: "v./n.", definition: "保护；保存；维护；保护区", pronunciation: "/prɪˈzɜːv/" },
-                    { word: "conservation", partOfSpeech: "n.", definition: "保护；保存；保持", pronunciation: "/ˌkɒnsəˈveɪʃn/" },
-                    { word: "renovate", partOfSpeech: "v.", definition: "修复；翻新；更新", pronunciation: "/ˈrenəveɪt/" },
-                    { word: "restoration", partOfSpeech: "n.", definition: "恢复；修复；复原；复位", pronunciation: "/ˌrestəˈreɪʃn/" },
-                    { word: "archaeology", partOfSpeech: "n.", definition: "考古学", pronunciation: "/ˌɑːkiˈɒlədʒi/" },
-                    { word: "archaeological", partOfSpeech: "adj.", definition: "考古学的；考古的", pronunciation: "/ˌɑːkiəˈlɒdʒɪkl/" },
-                    { word: "archaeologist", partOfSpeech: "n.", definition: "考古学家", pronunciation: "/ˌɑːkiˈɒlədʒɪst/" },
-                    { word: "site", partOfSpeech: "n./v.", definition: "地点；遗址；使坐落在", pronunciation: "/saɪt/" },
-                    { word: "ruin", partOfSpeech: "n./v.", definition: "废墟；毁坏；毁灭；使破产", pronunciation: "/ˈruːɪn/" },
-                    { word: "remains", partOfSpeech: "n.", definition: "遗迹；遗骸；剩余物", pronunciation: "/rɪˈmeɪnz/" },
-                    { word: "relic", partOfSpeech: "n.", definition: "遗物；遗迹；遗风", pronunciation: "/ˈrelɪk/" },
-                    { word: "artifact", partOfSpeech: "n.", definition: "人工制品；手工艺品", pronunciation: "/ˈɑːtɪfækt/" },
-                    { word: "excavate", partOfSpeech: "v.", definition: "挖掘；发掘；开凿", pronunciation: "/ˈekskəveɪt/" },
-                    { word: "excavation", partOfSpeech: "n.", definition: "挖掘；发掘；开凿", pronunciation: "/ˌekskəˈveɪʃn/" },
-                    { word: "civilisation", partOfSpeech: "n.", definition: "文明；文明社会；文化", pronunciation: "/ˌsɪvəlaɪˈzeɪʃn/" },
-                    { word: "prosperous", partOfSpeech: "adj.", definition: "繁荣的；成功的；兴旺的", pronunciation: "/ˈprɒspərəs/" },
-                    { word: "flourish", partOfSpeech: "v./n.", definition: "繁荣；兴旺；茂盛；挥舞", pronunciation: "/ˈflʌrɪʃ/" },
-                    { word: "decline", partOfSpeech: "v./n.", definition: "下降；衰退；谢绝；衰落", pronunciation: "/dɪˈklaɪn/" },
-                    { word: "descend", partOfSpeech: "v.", definition: "下降；降临；遗传", pronunciation: "/dɪˈsend/" },
-                    { word: "ancestor", partOfSpeech: "n.", definition: "祖先；祖宗；先驱", pronunciation: "/ˈænsestə(r)/" },
-                    { word: "descendant", partOfSpeech: "n.", definition: "后裔；后代；子孙", pronunciation: "/dɪˈsendənt/" },
-                    { word: "dynasty", partOfSpeech: "n.", definition: "王朝；朝代", pronunciation: "/ˈdɪnəsti/" },
-                    { word: "reign", partOfSpeech: "n./v.", definition: "统治；在位时期；统治；占优势", pronunciation: "/reɪn/" },
-                    { word: "era", partOfSpeech: "n.", definition: "时代；年代；纪元", pronunciation: "/ˈɪərə/" },
-                    { word: "epoch", partOfSpeech: "n.", definition: "时代；纪元；时期", pronunciation: "/ˈiːpɒk/" },
-                    { word: "era", partOfSpeech: "n.", definition: "时代；年代；纪元", pronunciation: "/ˈɪərə/" },
-                    { word: "transform", partOfSpeech: "v.", definition: "使改变形态；使改观；使转变", pronunciation: "/trænsˈfɔːm/" },
-                    { word: "transition", partOfSpeech: "n./v.", definition: "过渡；转变；变迁；过渡", pronunciation: "/trænˈzɪʃn/" },
-                    { word: "evolve", partOfSpeech: "v.", definition: "进化；演变；发展", pronunciation: "/iˈvɒlv/" },
-                    { word: "evolution", partOfSpeech: "n.", definition: "进化；演变；发展", pronunciation: "/ˌiːvəˈluːʃn/" },
-                    { word: "innovate", partOfSpeech: "v.", definition: "创新；改革；革新", pronunciation: "/ˈɪnəveɪt/" },
-                    { word: "innovation", partOfSpeech: "n.", definition: "创新；革新；新事物", pronunciation: "/ˌɪnəˈveɪʃn/" },
-                    { word: "revolution", partOfSpeech: "n.", definition: "革命；大变革；旋转", pronunciation: "/ˌrevəˈluːʃn/" },
-                    { word: "revolutionary", partOfSpeech: "adj./n.", definition: "革命的；革命性的；革命者", pronunciation: "/ˌrevəˈluːʃənəri/" },
-                    { word: "industrial", partOfSpeech: "adj.", definition: "工业的；产业的；工业发达的", pronunciation: "/ɪnˈdʌstriəl/" },
-                    { word: "industrialise", partOfSpeech: "v.", definition: "（使）工业化", pronunciation: "/ɪnˈdʌstriəlaɪz/" },
-                    { word: "urban", partOfSpeech: "adj.", definition: "城市的；都市的；城镇的", pronunciation: "/ˈɜːbən/" },
-                    { word: "urbanisation", partOfSpeech: "n.", definition: "城市化；都市化", pronunciation: "/ˌɜːbənaɪˈzeɪʃn/" },
-                    { word: "rural", partOfSpeech: "adj.", definition: "农村的；乡村的；田园的", pronunciation: "/ˈrʊərəl/" },
-                    { word: "migrate", partOfSpeech: "v.", definition: "迁移；迁徙；移居", pronunciation: "/maɪˈɡreɪt/" },
-                    { word: "migration", partOfSpeech: "n.", definition: "迁移；迁徙；移居", pronunciation: "/maɪˈɡreɪʃn/" },
-                    { word: "immigrate", partOfSpeech: "v.", definition: "移居入境；移民", pronunciation: "/ˈɪmɪɡreɪt/" },
-                    { word: "immigration", partOfSpeech: "n.", definition: "移民；移居入境", pronunciation: "/ˌɪmɪˈɡreɪʃn/" },
-                    { word: "emigrate", partOfSpeech: "v.", definition: "移居国外；移民", pronunciation: "/ˈemɪɡreɪt/" },
-                    { word: "emigration", partOfSpeech: "n.", definition: "移居国外；移民出境", pronunciation: "/ˌemɪˈɡreɪʃn/" },
-                    { word: "trend", partOfSpeech: "n./v.", definition: "趋势；趋向；倾向；倾向于", pronunciation: "/trend/" },
-                    { word: "tendency", partOfSpeech: "n.", definition: "倾向；趋势；癖好", pronunciation: "/ˈtendənsi/" },
-                    { word: "phenomenon", partOfSpeech: "n.", definition: "现象；杰出的人", pronunciation: "/fəˈnɒmɪnən/" },
-                    { word: "phenomena", partOfSpeech: "n.", definition: "现象（phenomenon的复数）", pronunciation: "/fəˈnɒmɪnə/" }
+                    { word: "racial", partOfSpeech: "adj.", definition: "朗姆酒", pronunciation: "/ˈreɪʃl/" },
+                    { word: "jazz", partOfSpeech: "n.", definition: "爵士乐", pronunciation: "/dʒæz/" },
+                    { word: "pop up", partOfSpeech: "phr.", definition: "突然出现，冒出来", pronunciation: "/pɒp ʌp/" },
+                    { word: "humble", partOfSpeech: "adj.", definition: "简陋的", pronunciation: "/ˈhʌmbl/" },
+                    { word: "compete", partOfSpeech: "v.", definition: "竞争", pronunciation: "/kəmˈpiːt/" },
+                    { word: "emphasise", partOfSpeech: "v.", definition: "强调", pronunciation: "/ˈemfəsaɪz/" },
+                    { word: "reconstruction", partOfSpeech: "n.", definition: "重建", pronunciation: "/ˌriːkənˈstrʌkʃn/" },
+                    { word: "underconstruction", partOfSpeech: "adj.", definition: "建设中的", pronunciation: "/ˌʌndəkənˈstrʌkʃn/" },
+                    { word: "journalist", partOfSpeech: "n.", definition: "新闻工作者；新闻记者", pronunciation: "/ˈdʒɜːnəlɪst/" },
+                    { word: "era", partOfSpeech: "n.", definition: "时代，年代", pronunciation: "/ˈɪərə/" },
+                    { word: "reform and opening up", partOfSpeech: "phr.", definition: "改革开放", pronunciation: "/rɪˈfɔːm ənd ˈəʊpnɪŋ ʌp/" },
+                    { word: "pave the way", partOfSpeech: "phr.", definition: "铺平道路；创造条件", pronunciation: "/peɪv ðə weɪ/" },
+                    { word: "socialist", partOfSpeech: "adj.", definition: "社会主义的", pronunciation: "/ˈsəʊʃəlɪst/" },
+                    { word: "alongside", partOfSpeech: "prep.", definition: "与……一起", pronunciation: "/əˌlɒŋˈsaɪd/" },
+                    { word: "initiative", partOfSpeech: "n.", definition: "倡议", pronunciation: "/ɪˈnɪʃətɪv/" },
+                    { word: "solid", partOfSpeech: "adj.", definition: "坚实的", pronunciation: "/ˈsɒlɪd/" },
+                    { word: "economic", partOfSpeech: "adj.", definition: "经济（上）的", pronunciation: "/ˌiːkəˈnɒmɪk/" },
+                    { word: "occupation", partOfSpeech: "n.", definition: "工作，职业", pronunciation: "/ˌɒkjuˈpeɪʃn/" },
+                    { word: "cafeteria", partOfSpeech: "n.", definition: "自助餐厅", pronunciation: "/ˌkæfəˈtɪəriə/" },
+                    { word: "enjoy", partOfSpeech: "n.", definition: "表情符号", pronunciation: "/ɪnˈdʒɔɪ/" },
+                    { word: "integral", partOfSpeech: "adj.", definition: "不可缺少的", pronunciation: "/ˈɪntɪɡrəl/" },
+                    { word: "component", partOfSpeech: "n.", definition: "组成部分", pronunciation: "/kəmˈpəʊnənt/" },
+                    { word: "category", partOfSpeech: "n.", definition: "类别", pronunciation: "/ˈkætəɡəri/" },
+                    { word: "expand", partOfSpeech: "v.", definition: "（使）扩大；增加", pronunciation: "/ɪkˈspænd/" },
+                    { word: "pictograph", partOfSpeech: "n.", definition: "象形图", pronunciation: "/ˈpɪktəɡrɑːf/" },
+                    { word: "emotional", partOfSpeech: "adj.", definition: "情绪（上）的；情感（上）的", pronunciation: "/ɪˈməʊʃənl/" },
+                    { word: "gesture", partOfSpeech: "n.", definition: "手势，姿势", pronunciation: "/ˈdʒestʃə(r)/" },
+                    { word: "facial", partOfSpeech: "adj.", definition: "脸上的；面部的", pronunciation: "/ˈfeɪʃl/" },
+                    { word: "textspeak", partOfSpeech: "n.", definition: "短信简写语", pronunciation: "/ˈteksts piːk/" },
+                    { word: "intention", partOfSpeech: "n.", definition: "意图，目的", pronunciation: "/ɪnˈtenʃn/" },
+                    { word: "adaptation", partOfSpeech: "n.", definition: "改编版", pronunciation: "/ˌædæpˈteɪʃn/" },
+                    { word: "accessible", partOfSpeech: "adj.", definition: "易懂的", pronunciation: "/əkˈsesəbl/" },
+                    { word: "soul", partOfSpeech: "n.", definition: "精神", pronunciation: "/səʊl/" },
+                    { word: "tendency", partOfSpeech: "n.", definition: "趋势", pronunciation: "/ˈtendənsi/" },
+                    { word: "facilitate", partOfSpeech: "v.", definition: "使便利", pronunciation: "/fəˈsɪlɪteɪt/" },
+                    { word: "educator", partOfSpeech: "n.", definition: "教育工作者", pronunciation: "/ˈedʒukeɪtə(r)/" },
+                    { word: "pictorial", partOfSpeech: "adj.", definition: "图画的", pronunciation: "/pɪkˈtɔːriəl/" },
+                    { word: "secondary", partOfSpeech: "adj.", definition: "次要的，第二位的", pronunciation: "/ˈsekəndri/" },
+                    { word: "comic", partOfSpeech: "n.", definition: "连环漫画", pronunciation: "/ˈkɒmɪk/" },
+                    { word: "costume", partOfSpeech: "n.", definition: "戏服", pronunciation: "/ˈkɒstjuːm/" },
+                    { word: "urgently", partOfSpeech: "adv.", definition: "紧急地，急迫地", pronunciation: "/ˈɜːdʒəntli/" },
+                    { word: "convincing", partOfSpeech: "adj.", definition: "有说服力的；使人信服的", pronunciation: "/kənˈvɪnsɪŋ/" },
+                    { word: "visual", partOfSpeech: "adj.", definition: "视觉的", pronunciation: "/ˈvɪʒuəl/" },
+                    { word: "session", partOfSpeech: "n.", definition: "一段时间", pronunciation: "/ˈseʃn/" },
+                    { word: "on behalf of", partOfSpeech: "phr.", definition: "代表", pronunciation: "/ɒn bɪˈhɑːf ɒv/" },
+                    { word: "herbal", partOfSpeech: "adj.", definition: "用草药（药草）制成的", pronunciation: "/ˈhɜːbl/" },
+                    { word: "mysterious", partOfSpeech: "adj.", definition: "神秘的", pronunciation: "/mɪˈstɪəriəs/" },
+                    { word: "status", partOfSpeech: "n.", definition: "地位，身份", pronunciation: "/ˈsteɪtəs/" },
+                    { word: "criterion", partOfSpeech: "n.", definition: "标准，准则", pronunciation: "/kraɪˈtɪəriən/" },
+                    { word: "prosper", partOfSpeech: "v.", definition: "兴旺，发达", pronunciation: "/ˈprɒspə(r)/" },
+                    { word: "rare", partOfSpeech: "adj.", definition: "稀有的，罕见的", pronunciation: "/reə(r)/" },
+                    { word: "biological", partOfSpeech: "adj.", definition: "生物的；与生物有关的", pronunciation: "/ˌbaɪəˈlɒdʒɪkl/" },
+                    { word: "apparently", partOfSpeech: "adv.", definition: "据说；看来，似乎", pronunciation: "/əˈpærəntli/" },
+                    { word: "vast", partOfSpeech: "adj.", definition: "巨大的；广大的", pronunciation: "/vɑːst/" },
+                    { word: "altitude", partOfSpeech: "n.", definition: "海拔（高度）", pronunciation: "/ˈæltɪtjuːd/" },
+                    { word: "variation", partOfSpeech: "n.", definition: "差异，变化", pronunciation: "/ˌveəriˈeɪʃn/" },
+                    { word: "thrive", partOfSpeech: "v.", definition: "茁壮成长", pronunciation: "/θraɪv/" },
+                    { word: "fossil", partOfSpeech: "n.", definition: "化石", pronunciation: "/ˈfɒsl/" },
+                    { word: "floral", partOfSpeech: "adj.", definition: "花的", pronunciation: "/ˈflɔːrəl/" },
+                    { word: "vertebrate", partOfSpeech: "n.", definition: "脊椎动物", pronunciation: "/ˈvɜːtɪbrət/" },
+                    { word: "behave", partOfSpeech: "v.", definition: "表现，举动", pronunciation: "/bɪˈheɪv/" },
+                    { word: "engaged", partOfSpeech: "adj.", definition: "濒临灭绝的", pronunciation: "/ɪnˈɡeɪd/" },
+                    { word: "elsewhere", partOfSpeech: "adv.", definition: "在别处", pronunciation: "/ˈelsweə(r)/" },
+                    { word: "invasion", partOfSpeech: "n.", definition: "涌入", pronunciation: "/ɪnˈveɪʒn/" },
+                    { word: "coexist", partOfSpeech: "v.", definition: "共存，共处", pronunciation: "/ˌkəʊɪɡˈzɪst/" }
                 ]
             },
             unit4: {
-                title: "第四单元：Breaking Boundaries",
+                title: "第四单元",
                 words: [
-                    { word: "boundary", partOfSpeech: "n.", definition: "边界；界限；分界线", pronunciation: "/ˈbaʊndri/" },
-                    { word: "frontier", partOfSpeech: "n.", definition: "边境；边界；前沿；新领域", pronunciation: "/ˈfrʌntɪə(r)/" },
-                    { word: "barrier", partOfSpeech: "n.", definition: "障碍；屏障；分界线", pronunciation: "/ˈbæriə(r)/" },
-                    { word: "obstacle", partOfSpeech: "n.", definition: "障碍；阻碍；妨碍", pronunciation: "/ˈɒbstəkl/" },
-                    { word: "hurdle", partOfSpeech: "n./v.", definition: "障碍；栏架；克服；跨栏", pronunciation: "/ˈhɜːdl/" },
-                    { word: "impediment", partOfSpeech: "n.", definition: "障碍；妨碍；口吃", pronunciation: "/ɪmˈpedɪmənt/" },
-                    { word: "restriction", partOfSpeech: "n.", definition: "限制；约束；限定", pronunciation: "/rɪˈstrɪkʃn/" },
-                    { word: "limitation", partOfSpeech: "n.", definition: "限制；局限；极限", pronunciation: "/ˌlɪmɪˈteɪʃn/" },
-                    { word: "constraint", partOfSpeech: "n.", definition: "限制；约束；强制", pronunciation: "/kənˈstreɪnt/" },
-                    { word: "restrict", partOfSpeech: "v.", definition: "限制；约束；限定", pronunciation: "/rɪˈstrɪkt/" },
-                    { word: "confine", partOfSpeech: "v./n.", definition: "限制；禁闭；（复数）界限；约束", pronunciation: "/kənˈfaɪn/" },
-                    { word: "restrain", partOfSpeech: "v.", definition: "抑制；控制；约束；制止", pronunciation: "/rɪˈstreɪn/" },
-                    { word: "restraint", partOfSpeech: "n.", definition: "抑制；控制；约束；克制", pronunciation: "/rɪˈstreɪnt/" },
-                    { word: "overcome", partOfSpeech: "v.", definition: "克服；战胜；胜过", pronunciation: "/ˌəʊvəˈkʌm/" },
-                    { word: "conquer", partOfSpeech: "v.", definition: "征服；战胜；攻克；克服", pronunciation: "/ˈkɒŋkə(r)/" },
-                    { word: "triumph", partOfSpeech: "n./v.", definition: "胜利；成功；战胜；获胜", pronunciation: "/ˈtraɪʌmf/" },
-                    { word: "prevail", partOfSpeech: "v.", definition: "流行；盛行；战胜；获胜", pronunciation: "/prɪˈveɪl/" },
-                    { word: "prevail over", partOfSpeech: "phr.v.", definition: "战胜；压倒；占优势", pronunciation: "/prɪˈveɪl ˈəʊvə(r)/" },
-                    { word: "dominate", partOfSpeech: "v.", definition: "支配；控制；占优势；统治", pronunciation: "/ˈdɒmɪneɪt/" },
-                    { word: "dominant", partOfSpeech: "adj.", definition: "占优势的；支配的；显性的", pronunciation: "/ˈdɒmɪnənt/" },
-                    { word: "domination", partOfSpeech: "n.", definition: "统治；支配；控制", pronunciation: "/ˌdɒmɪˈneɪʃn/" },
-                    { word: "dominion", partOfSpeech: "n.", definition: "统治权；主权；领土", pronunciation: "/dəˈmɪniən/" },
-                    { word: "conquest", partOfSpeech: "n.", definition: "征服；战利品；克服", pronunciation: "/ˈkɒŋkwest/" },
-                    { word: "breakthrough", partOfSpeech: "n.", definition: "突破；重大进展；突破性进展", pronunciation: "/ˈbreɪkθruː/" },
-                    { word: "milestone", partOfSpeech: "n.", definition: "里程碑；重大事件；重要阶段", pronunciation: "/ˈmaɪlstəʊn/" },
-                    { word: "landmark", partOfSpeech: "n./adj.", definition: "地标；里程碑；有里程碑意义的", pronunciation: "/ˈlændmɑːk/" },
-                    { word: "pioneer", partOfSpeech: "n./v.", definition: "先锋；开拓者；开创；倡导", pronunciation: "/ˌpaɪəˈnɪə(r)/" },
-                    { word: "trailblazer", partOfSpeech: "n.", definition: "开拓者；先驱；创新者", pronunciation: "/ˈtreɪlbleɪzə(r)/" },
-                    { word: "groundbreaking", partOfSpeech: "adj./n.", definition: "开创性的；突破性的；破土动工", pronunciation: "/ˈɡraʊndbreɪkɪŋ/" },
-                    { word: "innovator", partOfSpeech: "n.", definition: "创新者；改革者；发明者", pronunciation: "/ˈɪnəveɪtə(r)/" },
-                    { word: "visionary", partOfSpeech: "adj./n.", definition: "有远见的；空想的；有远见的人", pronunciation: "/ˈvɪʒənri/" },
-                    { word: "ambitious", partOfSpeech: "adj.", definition: "有雄心的；野心勃勃的；艰巨的", pronunciation: "/æmˈbɪʃəs/" },
-                    { word: "aspiration", partOfSpeech: "n.", definition: "渴望；抱负；志向；发送气音", pronunciation: "/ˌæspəˈreɪʃn/" },
-                    { word: "aspire", partOfSpeech: "v.", definition: "渴望；追求；有志于", pronunciation: "/əˈspaɪə(r)/" },
-                    { word: "strive", partOfSpeech: "v.", definition: "努力；奋斗；力争；抗争", pronunciation: "/straɪv/" },
-                    { word: "endeavour", partOfSpeech: "v./n.", definition: "努力；尽力；尝试；努力；尽力", pronunciation: "/ɪnˈdevə(r)/" },
-                    { word: "persevere", partOfSpeech: "v.", definition: "坚持；不屈不挠；锲而不舍", pronunciation: "/ˌpɜːsəˈvɪə(r)/" },
-                    { word: "perseverance", partOfSpeech: "n.", definition: "坚持不懈；不屈不挠", pronunciation: "/ˌpɜːsəˈvɪərəns/" },
-                    { word: "persistent", partOfSpeech: "adj.", definition: "执着的；坚持不懈的；持续的", pronunciation: "/pəˈsɪstənt/" },
-                    { word: "resilient", partOfSpeech: "adj.", definition: "有弹性的；能复原的；适应力强的", pronunciation: "/rɪˈzɪliənt/" },
-                    { word: "resilience", partOfSpeech: "n.", definition: "恢复力；弹力；适应力", pronunciation: "/rɪˈzɪliəns/" },
-                    { word: "tenacious", partOfSpeech: "adj.", definition: "顽强的；坚韧的；固执的", pronunciation: "/təˈneɪʃəs/" },
-                    { word: "tenacity", partOfSpeech: "n.", definition: "韧性；坚韧；固执", pronunciation: "/təˈnæsəti/" },
-                    { word: "determination", partOfSpeech: "n.", definition: "决心；果断；确定", pronunciation: "/dɪˌtɜːmɪˈneɪʃn/" },
-                    { word: "resolute", partOfSpeech: "adj.", definition: "坚决的；果断的；坚定的", pronunciation: "/ˈrezəluːt/" },
-                    { word: "resolve", partOfSpeech: "v./n.", definition: "解决；决心；分解；决心；决议", pronunciation: "/rɪˈzɒlv/" },
-                    { word: "fortitude", partOfSpeech: "n.", definition: "刚毅；坚韧；勇气", pronunciation: "/ˈfɔːtɪtjuːd/" },
-                    { word: "courageous", partOfSpeech: "adj.", definition: "勇敢的；有胆量的", pronunciation: "/kəˈreɪdʒəs/" },
-                    { word: "gallant", partOfSpeech: "adj./n.", definition: "英勇的；豪侠的；勇敢的人", pronunciation: "/ˈɡælənt/" },
-                    { word: "valiant", partOfSpeech: "adj.", definition: "英勇的；勇敢的；无畏的", pronunciation: "/ˈvæliənt/" },
-                    { word: "dauntless", partOfSpeech: "adj.", definition: "无畏的；勇敢的；不屈不挠的", pronunciation: "/ˈdɔːntləs/" },
-                    { word: "fearless", partOfSpeech: "adj.", definition: "无畏的；大胆的；不怕的", pronunciation: "/ˈfɪələs/" },
-                    { word: "intrepid", partOfSpeech: "adj.", definition: "无畏的；勇敢的；刚毅的", pronunciation: "/ɪnˈtrepɪd/" },
-                    { word: "undaunted", partOfSpeech: "adj.", definition: "无畏的；不气馁的；不屈不挠的", pronunciation: "/ˌʌnˈdɔːntɪd/" }
+                    { word: "substantial", partOfSpeech: "adj.", definition: "大量的；多的", pronunciation: "/səbˈstænʃl/" },
+                    { word: "incident", partOfSpeech: "n.", definition: "事件", pronunciation: "/ˈɪnsɪdənt/" },
+                    { word: "intervention", partOfSpeech: "n.", definition: "应该做；对付……的义务", pronunciation: "/ˌɪntəˈvenʃn/" },
+                    { word: "owe", partOfSpeech: "v.", definition: "应做；对付……的义务", pronunciation: "/əʊ/" },
+                    { word: "postscript", partOfSpeech: "n.", definition: "附言，再者", pronunciation: "/ˈpəʊstskrɪpt/" },
+                    { word: "pest", partOfSpeech: "n.", definition: "有害动物；害虫", pronunciation: "/pest/" },
+                    { word: "ecology", partOfSpeech: "n.", definition: "生态；生态学", pronunciation: "/iˈkɒlədʒi/" },
+                    { word: "dissolve", partOfSpeech: "v.", definition: "（使）溶解", pronunciation: "/dɪˈzɒlv/" },
+                    { word: "nutrient", partOfSpeech: "n.", definition: "养分，营养物", pronunciation: "/ˈnjuːtriənt/" },
+                    { word: "comparison", partOfSpeech: "n.", definition: "比较", pronunciation: "/kəmˈpærɪsn/" },
+                    { word: "visual", partOfSpeech: "adj.", definition: "视觉的", pronunciation: "/ˈvɪʒuəl/" },
+                    { word: "session", partOfSpeech: "n.", definition: "一段时间", pronunciation: "/ˈseʃn/" },
+                    { word: "on behalf of", partOfSpeech: "phr.", definition: "代表", pronunciation: "/ɒn bɪˈhɑːf ɒv/" },
+                    { word: "herbal", partOfSpeech: "adj.", definition: "用草药（药草）制成的", pronunciation: "/ˈhɜːbl/" },
+                    { word: "mysterious", partOfSpeech: "adj.", definition: "神秘的", pronunciation: "/mɪˈstɪəriəs/" },
+                    { word: "status", partOfSpeech: "n.", definition: "地位，身份", pronunciation: "/ˈsteɪtəs/" },
+                    { word: "criterion", partOfSpeech: "n.", definition: "标准，准则", pronunciation: "/kraɪˈtɪəriən/" },
+                    { word: "prosper", partOfSpeech: "v.", definition: "兴旺，发达", pronunciation: "/ˈprɒspə(r)/" },
+                    { word: "rare", partOfSpeech: "adj.", definition: "稀有的，罕见的", pronunciation: "/reə(r)/" },
+                    { word: "biological", partOfSpeech: "adj.", definition: "生物的；与生物有关的", pronunciation: "/ˌbaɪəˈlɒdʒɪkl/" },
+                    { word: "apparently", partOfSpeech: "adv.", definition: "据说；看来，似乎", pronunciation: "/əˈpærəntli/" },
+                    { word: "vast", partOfSpeech: "adj.", definition: "巨大的；广大的", pronunciation: "/vɑːst/" },
+                    { word: "altitude", partOfSpeech: "n.", definition: "海拔（高度）", pronunciation: "/ˈæltɪtjuːd/" },
+                    { word: "variation", partOfSpeech: "n.", definition: "差异，变化", pronunciation: "/ˌveəriˈeɪʃn/" },
+                    { word: "thrive", partOfSpeech: "v.", definition: "茁壮成长", pronunciation: "/θraɪv/" },
+                    { word: "fossil", partOfSpeech: "n.", definition: "化石", pronunciation: "/ˈfɒsl/" },
+                    { word: "floral", partOfSpeech: "adj.", definition: "花的", pronunciation: "/ˈflɔːrəl/" },
+                    { word: "vertebrate", partOfSpeech: "n.", definition: "脊椎动物", pronunciation: "/ˈvɜːtɪbrət/" },
+                    { word: "behave", partOfSpeech: "v.", definition: "表现，举动", pronunciation: "/bɪˈheɪv/" },
+                    { word: "engaged", partOfSpeech: "adj.", definition: "濒临灭绝的", pronunciation: "/ɪnˈɡeɪd/" },
+                    { word: "elsewhere", partOfSpeech: "adv.", definition: "在别处", pronunciation: "/ˈelsweə(r)/" },
+                    { word: "invasion", partOfSpeech: "n.", definition: "涌入", pronunciation: "/ɪnˈveɪʒn/" },
+                    { word: "coexist", partOfSpeech: "v.", definition: "共存，共处", pronunciation: "/ˌkəʊɪɡˈzɪst/" },
+                    { word: "urban", partOfSpeech: "adj.", definition: "城市的；城镇的", pronunciation: "/ˈɜːbən/" },
+                    { word: "predator", partOfSpeech: "n.", definition: "掠食动物", pronunciation: "/ˈpredətə(r)/" },
+                    { word: "newcomer", partOfSpeech: "n.", definition: "新来者，新成员", pronunciation: "/ˈnjuːkʌmə(r)/" },
+                    { word: "flourish", partOfSpeech: "v.", definition: "生长茂盛，兴盛", pronunciation: "/ˈflʌrɪʃ/" },
+                    { word: "racoon", partOfSpeech: "n.", definition: "浣熊", pronunciation: "/rəˈkuːn/" },
+                    { word: "container", partOfSpeech: "n.", definition: "容器", pronunciation: "/kənˈteɪnə(r)/" },
+                    { word: "garbage", partOfSpeech: "n.", definition: "垃圾（废物）", pronunciation: "/ˈɡɑːbɪdʒ/" },
+                    { word: "lamb", partOfSpeech: "n.", definition: "羔羊肉", pronunciation: "/læm/" },
+                    { word: "kebab", partOfSpeech: "n.", definition: "烤肉串", pronunciation: "/kɪˈbæb/" },
+                    { word: "goat", partOfSpeech: "n.", definition: "（大）葱", pronunciation: "/ɡəʊt/" },
+                    { word: "estimate", partOfSpeech: "v.", definition: "估计，估算", pronunciation: "/ˈestɪmeɪt/" },
+                    { word: "migratory", partOfSpeech: "adj.", definition: "迁徙的", pronunciation: "/ˈmaɪɡrətri/" },
+                    { word: "appreciate", partOfSpeech: "v.", definition: "欣赏；赏识", pronunciation: "/əˈpriːʃieɪt/" },
+                    { word: "crucial", partOfSpeech: "adj.", definition: "至关重要的；关键性的", pronunciation: "/ˈkruːʃl/" },
+                    { word: "restrict", partOfSpeech: "v.", definition: "限制，控制", pronunciation: "/rɪˈstrɪkt/" },
+                    { word: "hiker", partOfSpeech: "n.", definition: "徒步旅行者，远足者", pronunciation: "/ˈhaɪkə(r)/" },
+                    { word: "kit", partOfSpeech: "n.", definition: "成套工具", pronunciation: "/kɪt/" },
+                    { word: "optimistic", partOfSpeech: "adj.", definition: "乐观的；乐观主义的", pronunciation: "/ˌɒptɪˈmɪstɪk/" },
+                    { word: "clay", partOfSpeech: "n.", definition: "黏土", pronunciation: "/kleɪ/" },
+                    { word: "cave", partOfSpeech: "n.", definition: "洞穴", pronunciation: "/keɪv/" },
+                    { word: "heat wave", partOfSpeech: "phr.", definition: "酷热期；热浪期", pronunciation: "/hiːt weɪv/" },
+                    { word: "classify", partOfSpeech: "v.", definition: "分类", pronunciation: "/ˈklæsɪfaɪ/" }
                 ]
             },
             unit5: {
-                title: "第五单元：A Delicate World",
+                title: "第五单元",
                 words: [
-                    { word: "delicate", partOfSpeech: "adj.", definition: "易损的；脆弱的；微妙的；精美的", pronunciation: "/ˈdelɪkət/" },
-                    { word: "fragile", partOfSpeech: "adj.", definition: "易碎的；脆弱的；精细的；虚弱的", pronunciation: "/ˈfrædʒaɪl/" },
-                    { word: "brittle", partOfSpeech: "adj.", definition: "易碎的；脆弱的；易生气的", pronunciation: "/ˈbrɪtl/" },
-                    { word: "vulnerable", partOfSpeech: "adj.", definition: "易受伤害的；脆弱的；易受攻击的", pronunciation: "/ˈvʌlnərəbl/" },
-                    { word: "susceptible", partOfSpeech: "adj.", definition: "易受影响的；易动感情的；容许…的", pronunciation: "/səˈseptəbl/" },
-                    { word: "fragility", partOfSpeech: "n.", definition: "脆弱；易碎性；虚弱", pronunciation: "/frəˈdʒɪləti/" },
-                    { word: "vulnerability", partOfSpeech: "n.", definition: "易损性；脆弱性", pronunciation: "/ˌvʌlnərəˈbɪləti/" },
-                    { word: "fragile", partOfSpeech: "adj.", definition: "易碎的；脆弱的；精细的", pronunciation: "/ˈfrædʒaɪl/" },
-                    { word: "ecology", partOfSpeech: "n.", definition: "生态学；生态；环境适应学", pronunciation: "/iˈkɒlədʒi/" },
-                    { word: "ecological", partOfSpeech: "adj.", definition: "生态的；生态学的", pronunciation: "/ˌiːkəˈlɒdʒɪkl/" },
-                    { word: "ecosystem", partOfSpeech: "n.", definition: "生态系统", pronunciation: "/ˈiːkəʊsɪstəm/" },
-                    { word: "biosphere", partOfSpeech: "n.", definition: "生物圈；生态层", pronunciation: "/ˈbaɪəʊsfɪə(r)/" },
-                    { word: "biodiversity", partOfSpeech: "n.", definition: "生物多样性", pronunciation: "/ˌbaɪəʊdaɪˈvɜːsəti/" },
-                    { word: "habitat", partOfSpeech: "n.", definition: "栖息地；产地；住处", pronunciation: "/ˈhæbɪtæt/" },
-                    { word: "inhabit", partOfSpeech: "v.", definition: "居住于；栖息于；占据", pronunciation: "/ɪnˈhæbɪt/" },
-                    { word: "inhabitant", partOfSpeech: "n.", definition: "居民；居住者", pronunciation: "/ɪnˈhæbɪtənt/" },
-                    { word: "endangered", partOfSpeech: "adj.", definition: "濒临灭绝的；有生命危险的", pronunciation: "/ɪnˈdeɪndʒəd/" },
-                    { word: "extinct", partOfSpeech: "adj.", definition: "灭绝的；绝种的；熄灭的", pronunciation: "/ɪkˈstɪŋkt/" },
-                    { word: "extinction", partOfSpeech: "n.", definition: "灭绝；消失；消灭；废止", pronunciation: "/ɪkˈstɪŋkʃn/" },
-                    { word: "vanish", partOfSpeech: "v.", definition: "消失；绝迹；突然不见", pronunciation: "/ˈvænɪʃ/" },
-                    { word: "disappear", partOfSpeech: "v.", definition: "消失；失踪；不复存在", pronunciation: "/ˌdɪsəˈpɪə(r)/" },
-                    { word: "diminish", partOfSpeech: "v.", definition: "减少；缩小；降低；贬低", pronunciation: "/dɪˈmɪnɪʃ/" },
-                    { word: "dwindle", partOfSpeech: "v.", definition: "减少；变小；缩小", pronunciation: "/ˈdwɪndl/" },
-                    { word: "deplete", partOfSpeech: "v.", definition: "耗尽；用尽；使衰竭", pronunciation: "/dɪˈpliːt/" },
-                    { word: "depletion", partOfSpeech: "n.", definition: "消耗；损耗；用尽", pronunciation: "/dɪˈpliːʃn/" },
-                    { word: "exhaust", partOfSpeech: "v./n.", definition: "使筋疲力尽；耗尽；废气；排气管", pronunciation: "/ɪɡˈzɔːst/" },
-                    { word: "exhausted", partOfSpeech: "adj.", definition: "筋疲力尽的；耗尽的", pronunciation: "/ɪɡˈzɔːstɪd/" },
-                    { word: "exhaustive", partOfSpeech: "adj.", definition: "详尽的；彻底的；消耗的", pronunciation: "/ɪɡˈzɔːstɪv/" },
-                    { word: "scarce", partOfSpeech: "adj./adv.", definition: "缺乏的；罕见的；勉强；几乎不", pronunciation: "/skeəs/" },
-                    { word: "scarcity", partOfSpeech: "n.", definition: "不足；缺乏；稀少", pronunciation: "/ˈskeəsəti/" },
-                    { word: "rare", partOfSpeech: "adj./adv.", definition: "稀有的；稀薄的；非常；极其", pronunciation: "/reə(r)/" },
-                    { word: "rarity", partOfSpeech: "n.", definition: "罕见；稀有；珍品", pronunciation: "/ˈreərəti/" },
-                    { word: "precious", partOfSpeech: "adj.", definition: "珍贵的；宝贵的；矫揉造作的", pronunciation: "/ˈpreʃəs/" },
-                    { word: "priceless", partOfSpeech: "adj.", definition: "无价的；极珍贵的；极有趣的", pronunciation: "/ˈpraɪsləs/" },
-                    { word: "invaluable", partOfSpeech: "adj.", definition: "极宝贵的；无价的", pronunciation: "/ɪnˈvæljuəbl/" },
-                    { word: "conservation", partOfSpeech: "n.", definition: "保存；保护；避免浪费", pronunciation: "/ˌkɒnsəˈveɪʃn/" },
-                    { word: "preservation", partOfSpeech: "n.", definition: "保存；保护；维护；保留", pronunciation: "/ˌprezəˈveɪʃn/" },
-                    { word: "sustainable", partOfSpeech: "adj.", definition: "可以忍受的；足可支撑的；养得起的", pronunciation: "/səˈsteɪnəbl/" },
-                    { word: "sustainability", partOfSpeech: "n.", definition: "持续性；能维持性；永续性", pronunciation: "/səˌsteɪnəˈbɪləti/" },
-                    { word: "maintain", partOfSpeech: "v.", definition: "维持；保持；保养；坚持", pronunciation: "/meɪnˈteɪn/" },
-                    { word: "conserve", partOfSpeech: "v./n.", definition: "保存；保护；节省；果酱；蜜饯", pronunciation: "/kənˈsɜːv/" },
-                    { word: "preserve", partOfSpeech: "v./n.", definition: "保护；保存；维护；保护区", pronunciation: "/prɪˈzɜːv/" },
-                    { word: "protect", partOfSpeech: "v.", definition: "保护；防卫；警戒", pronunciation: "/prəˈtekt/" },
-                    { word: "protection", partOfSpeech: "n.", definition: "保护；防卫；护照", pronunciation: "/prəˈtekʃn/" },
-                    { word: "defend", partOfSpeech: "v.", definition: "辩护；防护；防卫；保卫", pronunciation: "/dɪˈfend/" },
-                    { word: "defence", partOfSpeech: "n.", definition: "防御；防卫；答辩；防卫工事", pronunciation: "/dɪˈfens/" },
-                    { word: "guard", partOfSpeech: "v./n.", definition: "保卫；守卫；看守；警戒；守卫", pronunciation: "/ɡɑːd/" },
-                    { word: "safeguard", partOfSpeech: "v./n.", definition: "保护；护卫；安全设施；保护措施", pronunciation: "/ˈseɪfɡɑːd/" },
-                    { word: "shield", partOfSpeech: "v./n.", definition: "保护；遮蔽；盾牌；防护物", pronunciation: "/ʃiːld/" },
-                    { word: "threaten", partOfSpeech: "v.", definition: "威胁；恐吓；预示（危险）", pronunciation: "/ˈθretn/" },
-                    { word: "threat", partOfSpeech: "n./v.", definition: "威胁；恐吓；凶兆；预示", pronunciation: "/θret/" },
-                    { word: "menace", partOfSpeech: "n./v.", definition: "威胁；恐吓；危及；使有危险", pronunciation: "/ˈmenəs/" },
-                    { word: "hazard", partOfSpeech: "n./v.", definition: "危险；冒险；赌运气；冒…的危险", pronunciation: "/ˈhæzəd/" },
-                    { word: "peril", partOfSpeech: "n./v.", definition: "危险；冒险；危及；置…于险境", pronunciation: "/ˈperəl/" },
-                    { word: "jeopardise", partOfSpeech: "v.", definition: "危及；损害；使陷入危险", pronunciation: "/ˈdʒepədaɪz/" },
-                    { word: "endanger", partOfSpeech: "v.", definition: "危及；使遭受危险", pronunciation: "/ɪnˈdeɪndʒə(r)/" },
-                    { word: "compromise", partOfSpeech: "n./v.", definition: "妥协；和解；折中；危及；损害", pronunciation: "/ˈkɒmprəmaɪz/" },
-                    { word: "pollute", partOfSpeech: "v.", definition: "污染；弄脏；玷污；败坏", pronunciation: "/pəˈluːt/" },
-                    { word: "pollution", partOfSpeech: "n.", definition: "污染；污染物；玷污；败坏", pronunciation: "/pəˈluːʃn/" },
-                    { word: "contaminate", partOfSpeech: "v.", definition: "污染；弄脏；毒害；腐蚀", pronunciation: "/kənˈtæmɪneɪt/" },
-                    { word: "contamination", partOfSpeech: "n.", definition: "污染；玷污；污染物", pronunciation: "/kənˌtæmɪˈneɪʃn/" },
-                    { word: "toxic", partOfSpeech: "adj./n.", definition: "有毒的；中毒的；有毒物质", pronunciation: "/ˈtɒksɪk/" },
-                    { word: "poisonous", partOfSpeech: "adj.", definition: "有毒的；恶意的；毒的", pronunciation: "/ˈpɔɪzənəs/" },
-                    { word: "noxious", partOfSpeech: "adj.", definition: "有害的；有毒的；败坏道德的", pronunciation: "/ˈnɒkʃəs/" },
-                    { word: "detrimental", partOfSpeech: "adj.", definition: "不利的；有害的；损害的", pronunciation: "/ˌdetrɪˈmentl/" },
-                    { word: "adverse", partOfSpeech: "adj.", definition: "不利的；相反的；敌对的", pronunciation: "/ˈædvɜːs/" },
-                    { word: "detriment", partOfSpeech: "n.", definition: "损害；伤害；不利", pronunciation: "/ˈdetrɪmənt/" }
+                    { word: "miracle", partOfSpeech: "n.", definition: "意外的幸运；奇迹", pronunciation: "/ˈmɪrəkl/" },
+                    { word: "van", partOfSpeech: "n.", definition: "小型货车", pronunciation: "/væn/" },
+                    { word: "twin", partOfSpeech: "adj.", definition: "双胞胎的", pronunciation: "/twɪn/" },
+                    { word: "ward", partOfSpeech: "n.", definition: "病房", pronunciation: "/wɔːd/" },
+                    { word: "compensate", partOfSpeech: "v.", definition: "弥补，补偿", pronunciation: "/ˈkɒmpenseɪt/" },
+                    { word: "collaborate", partOfSpeech: "v.", definition: "合作，协作", pronunciation: "/kəˈlæbəreɪt/" },
+                    { word: "realistic", partOfSpeech: "adj.", definition: "现实的", pronunciation: "/ˌriːəˈlɪstɪk/" },
+                    { word: "realise", partOfSpeech: "v.", definition: "实现", pronunciation: "/ˈriːəlaɪz/" },
+                    { word: "minority", partOfSpeech: "n.", definition: "少数派；少数", pronunciation: "/maɪˈnɒrəti/" },
+                    { word: "cat", partOfSpeech: "n.", definition: "猫", pronunciation: "/kæt/" },
+                    { word: "kind", partOfSpeech: "n.", definition: "种类（人）", pronunciation: "/kaɪnd/" },
+                    { word: "inhabited", partOfSpeech: "adj.", definition: "有人居住的", pronunciation: "/ɪnˈhæbɪtɪd/" },
+                    { word: "culture shock", partOfSpeech: "phr.", definition: "文化冲击", pronunciation: "/ˈkʌltʃə ʃɒk/" },
+                    { word: "joint", partOfSpeech: "adj.", definition: "联合的，共同的", pronunciation: "/dʒɔɪnt/" },
+                    { word: "harmonious", partOfSpeech: "adj.", definition: "和谐的，融洽的", pronunciation: "/hɑːˈməʊniəs/" },
+                    { word: "mutual", partOfSpeech: "adj.", definition: "共有的，共同的", pronunciation: "/ˈmjuːtʃuəl/" },
+                    { word: "rewarding", partOfSpeech: "adj.", definition: "值得做的，有意义的", pronunciation: "/rɪˈwɔːdɪŋ/" },
+                    { word: "mount", partOfSpeech: "v.", definition: "走上，登上", pronunciation: "/maʊnt/" },
+                    { word: "civil", partOfSpeech: "adj.", definition: "公民的，国民的", pronunciation: "/ˈsɪvl/" },
+                    { word: "civil war", partOfSpeech: "phr.", definition: "内战", pronunciation: "/ˈsɪvl wɔː/" },
+                    { word: "slave", partOfSpeech: "n.", definition: "奴隶", pronunciation: "/sleɪv/" },
+                    { word: "confederate", partOfSpeech: "adj.", definition: "南部邦联的", pronunciation: "/kənˈfedərət/" },
+                    { word: "union", partOfSpeech: "n.", definition: "联邦", pronunciation: "/ˈjuːniən/" },
+                    { word: "civilian", partOfSpeech: "adj.", definition: "平民的；百姓的", pronunciation: "/səˈvɪliən/" },
+                    { word: "division", partOfSpeech: "n.", definition: "分歧，分裂", pronunciation: "/dɪˈvɪʒn/" },
+                    { word: "bring forth", partOfSpeech: "phr.", definition: "使产生，使出现", pronunciation: "/brɪŋ fɔːθ/" },
+                    { word: "conceive", partOfSpeech: "v.", definition: "构想，设想", pronunciation: "/kənˈsiːv/" },
+                    { word: "liberty", partOfSpeech: "n.", definition: "自由", pronunciation: "/ˈlɪbəti/" },
+                    { word: "endure", partOfSpeech: "v.", definition: "持续存在", pronunciation: "/ɪnˈdjʊə(r)/" },
+                    { word: "battlefield", partOfSpeech: "n.", definition: "战场", pronunciation: "/ˈbætlfiːld/" },
+                    { word: "portion", partOfSpeech: "n.", definition: "一部分", pronunciation: "/ˈpɔːʃn/" },
+                    { word: "altogether", partOfSpeech: "adv.", definition: "完全", pronunciation: "/ˌɔːltəˈɡeðə(r)/" },
+                    { word: "hallway", partOfSpeech: "n.", definition: "中间的；半途的", pronunciation: "/ˈhɔːlweɪ/" },
+                    { word: "dramatically", partOfSpeech: "adv.", definition: "显著地", pronunciation: "/drəˈmætɪkli/" },
+                    { word: "inhabitant", partOfSpeech: "n.", definition: "栖居的动物", pronunciation: "/ɪnˈhæbɪtənt/" },
+                    { word: "penguin", partOfSpeech: "n.", definition: "企鹅", pronunciation: "/ˈpeŋɡwɪn/" },
+                    { word: "habitat", partOfSpeech: "n.", definition: "栖息地", pronunciation: "/ˈhæbɪtæt/" },
+                    { word: "veal", partOfSpeech: "n.", definition: "大崽", pronunciation: "/viːl/" },
+                    { word: "subsequently", partOfSpeech: "adv.", definition: "后来，随后", pronunciation: "/ˈsʌbsɪkwəntli/" },
+                    { word: "appetite", partOfSpeech: "n.", definition: "胃口；食欲", pronunciation: "/ˈæpɪtaɪt/" },
+                    { word: "multiply", partOfSpeech: "v.", definition: "繁殖；（使）大量增加", pronunciation: "/ˈmʌltɪplaɪ/" },
+                    { word: "vegetation", partOfSpeech: "n.", definition: "植物，草木", pronunciation: "/ˌvedʒəˈteɪʃn/" },
+                    { word: "erosion", partOfSpeech: "n.", definition: "侵蚀；腐蚀", pronunciation: "/ɪˈrəʊʒn/" },
+                    { word: "parket", partOfSpeech: "n.", definition: "长屋（小）鹰", pronunciation: "/ˈpɑːkɪt/" },
+                    { word: "chaos", partOfSpeech: "n.", definition: "大混乱；紊乱", pronunciation: "/ˈkeɪɒs/" },
+                    { word: "virus", partOfSpeech: "n.", definition: "藤", pronunciation: "/ˈvaɪrəs/" },
+                    { word: "decrease", partOfSpeech: "v.", definition: "（使）变小（使）减少", pronunciation: "/dɪˈkriːs/" },
+                    { word: "trap", partOfSpeech: "n.", definition: "夹子，陷阱", pronunciation: "/træp/" },
+                    { word: "departure", partOfSpeech: "n.", definition: "离开", pronunciation: "/dɪˈpɑːtʃə(r)/" },
+                    { word: "immunity", partOfSpeech: "n.", definition: "免疫", pronunciation: "/ɪˈmjuːnəti/" },
+                    { word: "explode", partOfSpeech: "v.", definition: "突然增加", pronunciation: "/ɪkˈspləʊd/" },
+                    { word: "collapse", partOfSpeech: "v.", definition: "倒塌；崩下", pronunciation: "/kəˈlæps/" }
                 ]
             },
             unit6: {
-                title: "第六单元：Survival",
+                title: "第六单元",
                 words: [
-                    { word: "survival", partOfSpeech: "n.", definition: "生存；幸存；幸存者", pronunciation: "/səˈvaɪvl/" },
-                    { word: "survive", partOfSpeech: "v.", definition: "生存；幸存；幸免于；比...活得长", pronunciation: "/səˈvaɪv/" },
-                    { word: "survivor", partOfSpeech: "n.", definition: "幸存者；生还者；残存物", pronunciation: "/səˈvaɪvə(r)/" },
-                    { word: "exist", partOfSpeech: "v.", definition: "存在；生存；生活；继续存在", pronunciation: "/ɪɡˈzɪst/" },
-                    { word: "existence", partOfSpeech: "n.", definition: "存在；生存；生活；存在物", pronunciation: "/ɪɡˈzɪstəns/" },
-                    { word: "subsist", partOfSpeech: "v.", definition: "存在；维持生活；供养", pronunciation: "/səbˈsɪst/" },
-                    { word: "subsistence", partOfSpeech: "n.", definition: "生存；生活；存在；生计", pronunciation: "/səbˈsɪstəns/" },
-                    { word: "subsistence level", partOfSpeech: "n.", definition: "生存水平；最低生活水平", pronunciation: "/səbˈsɪstəns ˈlevl/" },
-                    { word: "sustain", partOfSpeech: "v.", definition: "维持；支撑；承担；忍受", pronunciation: "/səˈsteɪn/" },
-                    { word: "sustenance", partOfSpeech: "n.", definition: "食物；营养；生计；支持", pronunciation: "/ˈsʌstənəns/" },
-                    { word: "maintain", partOfSpeech: "v.", definition: "维持；保持；保养；坚持", pronunciation: "/meɪnˈteɪn/" },
-                    { word: "uphold", partOfSpeech: "v.", definition: "支撑；鼓励；维持；赞成", pronunciation: "/ʌpˈhəʊld/" },
-                    { word: "endure", partOfSpeech: "v.", definition: "忍受；忍耐；持续；持久", pronunciation: "/ɪnˈdjʊə(r)/" },
-                    { word: "endurance", partOfSpeech: "n.", definition: "忍耐力；耐久性；持续时间", pronunciation: "/ɪnˈdjʊərəns/" },
-                    { word: "tolerate", partOfSpeech: "v.", definition: "忍受；默许；宽恕；容忍", pronunciation: "/ˈtɒləreɪt/" },
-                    { word: "tolerance", partOfSpeech: "n.", definition: "公差；宽容；容忍；耐力", pronunciation: "/ˈtɒlərəns/" },
-                    { word: "tolerant", partOfSpeech: "adj.", definition: "宽容的；容忍的；有耐药性的", pronunciation: "/ˈtɒlərənt/" },
-                    { word: "bear", partOfSpeech: "v./n.", definition: "忍受；承受；承担；熊；空头", pronunciation: "/beə(r)/" },
-                    { word: "stand", partOfSpeech: "v./n.", definition: "站立；忍受；位于；立场；看台", pronunciation: "/stænd/" },
-                    { word: "abide", partOfSpeech: "v.", definition: "忍受；停留；遵守；居住", pronunciation: "/əˈbaɪd/" },
-                    { word: "abide by", partOfSpeech: "phr.v.", definition: "遵守；信守；承担...的后果", pronunciation: "/əˈbaɪd baɪ/" },
-                    { word: "withstand", partOfSpeech: "v.", definition: "承受；抵住；顶住；经受住", pronunciation: "/wɪðˈstænd/" },
-                    { word: "weather", partOfSpeech: "v./n.", definition: "经受住；风化；侵蚀；天气；气象", pronunciation: "/ˈweðə(r)/" },
-                    { word: "brave", partOfSpeech: "adj./v.", definition: "勇敢的；无畏的；勇敢面对", pronunciation: "/breɪv/" },
-                    { word: "courage", partOfSpeech: "n.", definition: "勇气；胆量；魄力；肝胆", pronunciation: "/ˈkʌrɪdʒ/" },
-                    { word: "fortitude", partOfSpeech: "n.", definition: "刚毅；不屈不挠；勇气", pronunciation: "/ˈfɔːtɪtjuːd/" },
-                    { word: "valor", partOfSpeech: "n.", definition: "英勇；勇猛；勇气", pronunciation: "/ˈvælə(r)/" },
-                    { word: "gallantry", partOfSpeech: "n.", definition: "勇敢；英勇；殷勤；骑士风度", pronunciation: "/ˈɡæləntri/" },
-                    { word: "heroism", partOfSpeech: "n.", definition: "英雄主义；英勇；勇敢的行为", pronunciation: "/ˈherəʊɪzəm/" },
-                    { word: "heroic", partOfSpeech: "adj.", definition: "英雄的；英勇的；记叙英雄事迹的", pronunciation: "/həˈrəʊɪk/" },
-                    { word: "gallant", partOfSpeech: "adj./n.", definition: "英勇的；豪侠的；华丽的；勇敢的人", pronunciation: "/ˈɡælənt/" },
-                    { word: "intrepid", partOfSpeech: "adj.", definition: "无畏的；勇敢的；刚毅的", pronunciation: "/ɪnˈtrepɪd/" },
-                    { word: "undaunted", partOfSpeech: "adj.", definition: "无畏的；不气馁的；不屈不挠的", pronunciation: "/ˌʌnˈdɔːntɪd/" },
-                    { word: "fearless", partOfSpeech: "adj.", definition: "无畏的；大胆的；不怕的", pronunciation: "/ˈfɪələs/" },
-                    { word: "dauntless", partOfSpeech: "adj.", definition: "无畏的；勇敢的；不屈不挠的", pronunciation: "/ˈdɔːntləs/" },
-                    { word: "stamina", partOfSpeech: "n.", definition: "耐力；精力；持久力；雄蕊", pronunciation: "/ˈstæmɪnə/" },
-                    { word: "vigor", partOfSpeech: "n.", definition: "活力；精力；元气；气势", pronunciation: "/ˈvɪɡə(r)/" },
-                    { word: "vigorous", partOfSpeech: "adj.", definition: "有力的；精力充沛的；充满活力的", pronunciation: "/ˈvɪɡərəs/" },
-                    { word: "vitality", partOfSpeech: "n.", definition: "活力；生命力；生动性", pronunciation: "/vaɪˈtæləti/" },
-                    { word: "vim", partOfSpeech: "n.", definition: "精力；活力；精神", pronunciation: "/vɪm/" },
-                    { word: "zip", partOfSpeech: "n./v.", definition: "拉链；活力；尖啸声；拉上拉链", pronunciation: "/zɪp/" },
-                    { word: "pep", partOfSpeech: "n./v.", definition: "活力；锐气；激励；使充满活力", pronunciation: "/pep/" },
-                    { word: "pep up", partOfSpeech: "phr.v.", definition: "使振作；使活跃；激励", pronunciation: "/pep ʌp/" },
-                    { word: "resilient", partOfSpeech: "adj.", definition: "弹回的；有弹力的；能复原的", pronunciation: "/rɪˈzɪliənt/" },
-                    { word: "resilience", partOfSpeech: "n.", definition: "恢复力；弹力；顺应力", pronunciation: "/rɪˈzɪliəns/" },
-                    { word: "robust", partOfSpeech: "adj.", definition: "强健的；健康的；粗野的；坚定的", pronunciation: "/rəʊˈbʌst/" },
-                    { word: "tough", partOfSpeech: "adj./n.", definition: "艰苦的；困难的；坚强的；恶棍", pronunciation: "/tʌf/" },
-                    { word: "sturdy", partOfSpeech: "adj.", definition: "坚定的；强健的；健全的", pronunciation: "/ˈstɜːdi/" },
-                    { word: "rugged", partOfSpeech: "adj.", definition: "崎岖的；坚固的；粗犷的；强健的", pronunciation: "/ˈrʌɡɪd/" },
-                    { word: "hardy", partOfSpeech: "adj./n.", definition: "坚强的；勇敢的；耐寒的；强壮的人", pronunciation: "/ˈhɑːdi/" },
-                    { word: "stout", partOfSpeech: "adj./n.", definition: "结实的；矮胖的；勇敢的； stout啤酒", pronunciation: "/staʊt/" },
-                    { word: "stiff", partOfSpeech: "adj./adv./v./n.", definition: "僵硬的；严厉的；呆板的；僵硬地", pronunciation: "/stɪf/" },
-// 修正rigid单词的发音拼写错误 + 补全unit6剩余单词
-                    { word: "rigid", partOfSpeech: "adj.", definition: "严格的；僵硬的；死板的；刚性的", pronunciation: "/ˈrɪdʒɪd/" },
-                    { word: "flexible", partOfSpeech: "adj.", definition: "灵活的；柔韧的；易弯曲的", pronunciation: "/ˈfleksəbl/" },
-                    { word: "adaptable", partOfSpeech: "adj.", definition: "适合的；能适应的；可改编的", pronunciation: "/əˈdæptəbl/" },
-                    { word: "adapt", partOfSpeech: "v.", definition: "适应；改编；改写；使适应", pronunciation: "/əˈdæpt/" },
-                    { word: "adaptation", partOfSpeech: "n.", definition: "适应；改编；改编本；适应作用", pronunciation: "/ˌædæpˈteɪʃn/" },
-                    { word: "adjust", partOfSpeech: "v.", definition: "调整；校正；校准；适应", pronunciation: "/əˈdʒʌst/" },
-                    { word: "adjustment", partOfSpeech: "n.", definition: "调整；校正；调节；适应", pronunciation: "/əˈdʒʌstmənt/" },
-                    { word: "acclimatise", partOfSpeech: "v.", definition: "（使）适应新环境；（使）服水土", pronunciation: "/əˈklaɪmətaɪz/" },
-                    { word: "acclimatisation", partOfSpeech: "n.", definition: "适应环境；服水土；气候适应", pronunciation: "/əˌklaɪmətaɪˈzeɪʃn/" },
-                    { word: "habituate", partOfSpeech: "v.", definition: "使习惯；使适应；习惯于", pronunciation: "/həˈbɪtʃueɪt/" },
-                    { word: "habituation", partOfSpeech: "n.", definition: "习惯；适应；成瘾；习惯性", pronunciation: "/həˌbɪtʃuˈeɪʃn/" },
-                    { word: "accustom", partOfSpeech: "v.", definition: "使习惯；使适应", pronunciation: "/əˈkʌstəm/" },
-                    { word: "accustomed", partOfSpeech: "adj.", definition: "习惯的；通常的；独有的", pronunciation: "/əˈkʌstəmd/" },
-                    { word: "accustomed to", partOfSpeech: "phr.", definition: "习惯于；适应于", pronunciation: "/əˈkʌstəmd tuː/" },
-                    { word: "famine", partOfSpeech: "n.", definition: "饥荒；饥饿；奇缺", pronunciation: "/ˈfæmɪn/" },
-                    { word: "drought", partOfSpeech: "n.", definition: "干旱；缺乏", pronunciation: "/draʊt/" },
-                    { word: "flood", partOfSpeech: "n./v.", definition: "洪水；泛滥；大量；淹没；溢出", pronunciation: "/flʌd/" },
-                    { word: "disaster", partOfSpeech: "n.", definition: "灾难；灾祸；不幸；失败", pronunciation: "/dɪˈzɑːstə(r)/" },
-                    { word: "catastrophe", partOfSpeech: "n.", definition: "灾难；灾祸；横祸；惨败", pronunciation: "/kəˈtæstrəfi/" },
-                    { word: "calamity", partOfSpeech: "n.", definition: "灾难；不幸事件；祸患", pronunciation: "/kəˈlæməti/" },
-                    { word: "misfortune", partOfSpeech: "n.", definition: "不幸；灾祸；灾难", pronunciation: "/ˌmɪsˈfɔːtʃuːn/" },
-                    { word: "adversity", partOfSpeech: "n.", definition: "逆境；不幸；灾难；灾祸", pronunciation: "/ədˈvɜːsəti/" },
-                    { word: "hardship", partOfSpeech: "n.", definition: "困苦；苦难；艰难险阻", pronunciation: "/ˈhɑːdʃɪp/" },
-                    { word: "ordeal", partOfSpeech: "n.", definition: "折磨；煎熬；严峻考验", pronunciation: "/ɔːˈdiːl/" },
-                    { word: "plight", partOfSpeech: "n./v.", definition: "困境；境况；誓约；保证；宣誓", pronunciation: "/plaɪt/" },
-                    { word: "predicament", partOfSpeech: "n.", definition: "困境；窘况；状态", pronunciation: "/prɪˈdɪkəmənt/" },
-                    { word: "dilemma", partOfSpeech: "n.", definition: "困境；进退两难；窘境", pronunciation: "/dɪˈlemə/" },
-                    { word: "straits", partOfSpeech: "n.", definition: "海峡；困境；窘迫", pronunciation: "/streɪts/" },
-                    { word: "in straits", partOfSpeech: "phr.", definition: "处于困境；处境窘迫", pronunciation: "/ɪn streɪts/" },
-                    { word: "desperate", partOfSpeech: "adj.", definition: "绝望的；不顾一切的；极度渴望的", pronunciation: "/ˈdespərət/" },
-                    { word: "desperation", partOfSpeech: "n.", definition: "绝望；不顾一切；铤而走险", pronunciation: "/ˌdespəˈreɪʃn/" },
-                    { word: "hopeless", partOfSpeech: "adj.", definition: "绝望的；不可救药的；无望的", pronunciation: "/ˈhəʊpləs/" },
-                    { word: "hopeful", partOfSpeech: "adj./n.", definition: "有希望的；充满希望的；有希望的人", pronunciation: "/ˈhəʊpfl/" },
-                    { word: "despair", partOfSpeech: "n./v.", definition: "绝望；丧失信心；绝望；失望", pronunciation: "/dɪˈspeə(r)/" },
-                    { word: "perish", partOfSpeech: "v.", definition: "死亡；毁灭；腐烂；枯萎", pronunciation: "/ˈperɪʃ/" },
-                    { word: "perish from", partOfSpeech: "phr.v.", definition: "因…而死；死于", pronunciation: "/ˈperɪʃ frəm/" },
-                    { word: "starve", partOfSpeech: "v.", definition: "（使）挨饿；（使）饿死；渴望", pronunciation: "/stɑːv/" },
-                    { word: "starvation", partOfSpeech: "n.", definition: "饿死；饥饿；挨饿；绝食", pronunciation: "/stɑːˈveɪʃn/" },
-                    { word: "famished", partOfSpeech: "adj.", definition: "极饥饿的；饥饿的", pronunciation: "/ˈfæmɪʃt/" },
-                    { word: "ravenous", partOfSpeech: "adj.", definition: "贪婪的；渴望的；狼吞虎咽的", pronunciation: "/ˈrævənəs/" },
-                    { word: "famish", partOfSpeech: "v.", definition: "使挨饿；使饿死；感到饥饿", pronunciation: "/ˈfæmɪʃ/" },
-                    { word: "thirst", partOfSpeech: "n./v.", definition: "渴；口渴；渴望；渴望；口渴", pronunciation: "/θɜːst/" },
-                    { word: "thirsty", partOfSpeech: "adj.", definition: "口渴的；渴望的；干旱的", pronunciation: "/ˈθɜːsti/" },
-                    { word: "parched", partOfSpeech: "adj./v.", definition: "焦干的；极渴的；烘干；使极渴", pronunciation: "/pɑːtʃt/" },
-                    { word: "dehydrated", partOfSpeech: "adj.", definition: "脱水的；极度口渴的", pronunciation: "/ˌdiːhaɪˈdreɪtɪd/" },
-                    { word: "exhausted", partOfSpeech: "adj.", definition: "筋疲力尽的；耗尽的；用完的", pronunciation: "/ɪɡˈzɔːstɪd/" },
-                    { word: "fatigued", partOfSpeech: "adj./v.", definition: "疲乏的；疲惫的；使疲劳；使疲乏", pronunciation: "/fəˈtiːɡd/" },
-                    { word: "weary", partOfSpeech: "adj./v.", definition: "疲倦的；厌烦的；使疲倦；使厌烦", pronunciation: "/ˈwɪəri/" },
-                    { word: "fatigue", partOfSpeech: "n./v.", definition: "疲劳；疲乏；杂役；使疲劳；使心智衰弱", pronunciation: "/fəˈtiːɡ/" },
-                    { word: "exhaustion", partOfSpeech: "n.", definition: "枯竭；耗尽；疲惫不堪；筋疲力尽", pronunciation: "/ɪɡˈzɔːstʃən/" },
-                    { word: "drowsy", partOfSpeech: "adj.", definition: "昏昏欲睡的；困倦的；使人昏昏欲睡的", pronunciation: "/ˈdraʊzi/" },
-                    { word: "lethargic", partOfSpeech: "adj.", definition: "昏睡的；无生气的；懒洋洋的", pronunciation: "/ləˈθɑːdʒɪk/" },
-                    { word: "lethargy", partOfSpeech: "n.", definition: "昏睡；死气沉沉；倦怠；无精打采", pronunciation: "/ˈleθədʒi/" },
-                    { word: "sluggish", partOfSpeech: "adj./v.", definition: "缓慢的；迟钝的；懒洋洋的；偷懒", pronunciation: "/ˈslʌɡɪʃ/" },
-                    { word: "torpid", partOfSpeech: "adj.", definition: "迟钝的；迟缓的；不活泼的", pronunciation: "/ˈtɔːpɪd/" },
-                    { word: "torpor", partOfSpeech: "n.", definition: "迟钝；不活泼；麻木；蛰伏", pronunciation: "/ˈtɔːpə(r)/" },
-                    { word: "stagnant", partOfSpeech: "adj.", definition: "停滞的；不景气的；污浊的；迟钝的", pronunciation: "/ˈstæɡnənt/" },
-                    { word: "stagnation", partOfSpeech: "n.", definition: "停滞；滞止；不景气；萧条", pronunciation: "/stæɡˈneɪʃn/" }
+                    { word: "indoor", partOfSpeech: "adv.", definition: "在室内", pronunciation: "/ˈɪndɔː(r)/" },
+                    { word: "cope with", partOfSpeech: "phr.", definition: "应付", pronunciation: "/kəʊp wɪð/" },
+                    { word: "fuel", partOfSpeech: "n.", definition: "燃料", pronunciation: "/ˈfjuːəl/" },
+                    { word: "consumption", partOfSpeech: "n.", definition: "消耗量", pronunciation: "/kənˈsʌmpʃn/" },
+                    { word: "electric", partOfSpeech: "adj.", definition: "电的", pronunciation: "/ɪˈlektrɪk/" },
+                    { word: "supplement", partOfSpeech: "v.", definition: "补充，增补；辅料，辅料", pronunciation: "/ˈsʌplɪmənt/" },
+                    { word: "eliminate", partOfSpeech: "v.", definition: "消除，排除", pronunciation: "/ɪˈlɪmɪneɪt/" },
+                    { word: "firefighter", partOfSpeech: "n.", definition: "消防队员", pronunciation: "/ˈfaɪəfaɪtə(r)/" },
+                    { word: "bring...under control", partOfSpeech: "phr.", definition: "使……处于控制之下", pronunciation: "/brɪŋ ˈʌndə kənˈtrəʊl/" },
+                    { word: "blaze", partOfSpeech: "n.", definition: "烈火，大火", pronunciation: "/bleɪz/" },
+                    { word: "fierce", partOfSpeech: "adj.", definition: "恶劣的，极端的", pronunciation: "/fɪəs/" },
+                    { word: "react", partOfSpeech: "v.", definition: "（作出）反应", pronunciation: "/riˈækt/" },
+                    { word: "monthly", partOfSpeech: "adj.", definition: "每月一次的", pronunciation: "/ˈmʌnθli/" },
+                    { word: "get rid of", partOfSpeech: "phr.", definition: "摆脱，除去", pronunciation: "/ɡet rɪd ɒv/" },
+                    { word: "Mars", partOfSpeech: "n.", definition: "火星", pronunciation: "/mɑːz/" },
+                    { word: "advanced", partOfSpeech: "adj.", definition: "高级的；先进的", pronunciation: "/ədˈvɑːnst/" },
+                    { word: "wipe", partOfSpeech: "v.", definition: "擦，拭；擦", pronunciation: "/waɪp/" },
+                    { word: "wipe out", partOfSpeech: "phr.", definition: "彻底摧毁，消灭", pronunciation: "/waɪp aʊt/" },
+                    { word: "nuclear", partOfSpeech: "adj.", definition: "核武器的", pronunciation: "/ˈnjuːkliə(r)/" },
+                    { word: "terrifying", partOfSpeech: "adj.", definition: "极其可怕的；骇人听闻的", pronunciation: "/ˈterɪfaɪɪŋ/" },
+                    { word: "hostile", partOfSpeech: "adj.", definition: "（生长环境）恶劣的", pronunciation: "/ˈhɒstaɪl/" },
+                    { word: "unmanned", partOfSpeech: "adj.", definition: "无驾驶（操纵）的", pronunciation: "/ˌʌnˈmænd/" },
+                    { word: "spacescraft", partOfSpeech: "n.", definition: "航天器，宇宙飞船", pronunciation: "/ˈspeɪskrɑːft/" },
+                    { word: "orbit", partOfSpeech: "v.", definition: "环绕……运行", pronunciation: "/ˈɔːbɪt/" },
+                    { word: "stunning", partOfSpeech: "adj.", definition: "极其吸引人的", pronunciation: "/ˈstʌnɪŋ/" },
+                    { word: "agency", partOfSpeech: "n.", definition: "机构；（尤指政府的）局，部，处", pronunciation: "/ˈeɪdʒənsi/" },
+                    { word: "consist of", partOfSpeech: "phr.", definition: "由……构成", pronunciation: "/kənˈsɪst ɒv/" },
+                    { word: "in the meantime", partOfSpeech: "phr.", definition: "在此期间，与此同时", pronunciation: "/ɪn ðə ˈmiːntaɪm/" },
+                    { word: "infer", partOfSpeech: "v.", definition: "推断，推定", pronunciation: "/ɪnˈfɜː(r)/" },
+                    { word: "expose", partOfSpeech: "v.", definition: "使暴露，与此同时", pronunciation: "/ɪkˈspəʊz/" },
+                    { word: "astronaut", partOfSpeech: "n.", definition: "宇航员（航天员）", pronunciation: "/ˈæstrənɔːt/" },
+                    { word: "dust", partOfSpeech: "n.", definition: "沙土，尘土", pronunciation: "/dʌst/" },
+                    { word: "capsule", partOfSpeech: "n.", definition: "（航天）舱；太空舱", pronunciation: "/ˈkæpsjuːl/" },
+                    { word: "astronaut", partOfSpeech: "n.", definition: "（航天）舱；太空舱", pronunciation: "/ˈæstrənɔːt/" },
+                    { word: "exposure", partOfSpeech: "n.", definition: "暴露，显露", pronunciation: "/ɪkˈspəʊʒə(r)/" },
+                    { word: "trunk", partOfSpeech: "n.", definition: "树干", pronunciation: "/trʌŋk/" }
                 ]
             }
         };
@@ -657,10 +591,10 @@
         // 全局变量
         let currentUnit = null;
         let currentWords = [];
-        let currentWordIndex = 0;
-        let correctAnswers = 0;
-        let wrongWords = [];
+        let currentIndex = 0;
+        let score = 0;
         let userAnswers = [];
+        let wrongAnswers = [];
 
         // DOM元素
         const unitSelector = document.getElementById('unit-selector');
@@ -700,27 +634,17 @@
 
         // 初始化单元选择按钮
         function initUnitSelector() {
-            // 清空单元选择器
             unitSelector.innerHTML = '';
-            
-            // 为每个单元创建按钮
             for (const [unitKey, unitData] of Object.entries(wordUnits)) {
                 const unitBtn = document.createElement('button');
                 unitBtn.className = 'unit-btn';
                 unitBtn.dataset.unit = unitKey;
                 unitBtn.textContent = unitData.title;
                 
-                // 点击事件
                 unitBtn.addEventListener('click', () => {
-                    // 移除其他按钮的active状态
-                    document.querySelectorAll('.unit-btn').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    // 添加当前按钮的active状态
+                    document.querySelectorAll('.unit-btn').forEach(btn => btn.classList.remove('active'));
                     unitBtn.classList.add('active');
-                    // 设置当前单元
                     currentUnit = unitKey;
-                    // 启用开始按钮
                     startBtn.disabled = false;
                 });
                 
@@ -730,47 +654,36 @@
 
         // 开始练习
         function startQuiz() {
-            // 获取当前单元的单词并打乱顺序
             currentWords = [...wordUnits[currentUnit].words];
             shuffleArray(currentWords);
-            currentWordIndex = 0;
-            correctAnswers = 0;
-            wrongWords = [];
+            currentIndex = 0;
+            score = 0;
             userAnswers = [];
+            wrongAnswers = [];
             
-            // 更新UI
             introCard.classList.add('hidden');
             quizCard.classList.remove('hidden');
             currentUnitTitle.textContent = wordUnits[currentUnit].title;
             
-            // 加载第一个单词
             loadWord();
-            
-            // 更新进度
             updateProgress();
         }
 
         // 加载当前单词
         function loadWord() {
-            if (currentWordIndex < currentWords.length) {
-                // 获取当前单词数据
-                const wordData = currentWords[currentWordIndex];
-                
-                // 更新UI
+            if (currentIndex < currentWords.length) {
+                const wordData = currentWords[currentIndex];
                 wordDefinition.textContent = wordData.definition;
                 wordPartOfSpeech.innerHTML = `<span class="part-of-speech">${wordData.partOfSpeech}</span>`;
-                currentWord.textContent = `第 ${currentWordIndex + 1} 题 / 共 ${currentWords.length} 题`;
+                currentWord.textContent = `第 ${currentIndex + 1} 题 / 共 ${currentWords.length} 题`;
                 answerInput.value = '';
                 feedback.classList.add('hidden');
                 
-                // 设置发音
                 pronunciationText.textContent = wordData.pronunciation;
                 pronunciation.classList.remove('hidden');
                 
-                // 聚焦输入框
                 answerInput.focus();
             } else {
-                // 所有单词完成，显示结果
                 showResults();
             }
         }
@@ -778,79 +691,79 @@
         // 检查答案
         function checkAnswer() {
             const userAnswer = answerInput.value.trim().toLowerCase();
-            const correctAnswer = currentWords[currentWordIndex].word.toLowerCase();
-            const wordData = currentWords[currentWordIndex];
+            const correctAnswer = currentWords[currentIndex].word.toLowerCase();
+            const wordData = currentWords[currentIndex];
             
-            // 保存用户答案
+            const isCorrect = userAnswer === correctAnswer;
             userAnswers.push({
                 word: wordData.word,
+                partOfSpeech: wordData.partOfSpeech,
+                definition: wordData.definition,
                 userAnswer: userAnswer,
-                correct: userAnswer === correctAnswer
+                isCorrect: isCorrect
             });
             
-            // 显示反馈
             feedback.classList.remove('hidden');
             
-            if (userAnswer === correctAnswer) {
-                // 正确
-                correctAnswers++;
+            if (isCorrect) {
                 correctFeedback.classList.remove('hidden');
                 wrongFeedback.classList.add('hidden');
-                correctMessage.textContent = `正确答案是：${wordData.word} (${wordData.partOfSpeech}) ${wordData.definition}`;
+                correctMessage.textContent = `正确答案是: ${wordData.word} ${wordData.partOfSpeech}`;
+                score++;
+                correctFeedback.classList.add('animate-pulse');
+                setTimeout(() => correctFeedback.classList.remove('animate-pulse'), 1000);
                 
-                // 短暂延迟后加载下一个单词
                 setTimeout(() => {
-                    currentWordIndex++;
+                    currentIndex++;
                     loadWord();
                     updateProgress();
-                }, 1500);
+                }, 2000);
             } else {
-                // 错误
-                wrongWords.push(wordData);
                 correctFeedback.classList.add('hidden');
                 wrongFeedback.classList.remove('hidden');
-                wrongMessage.textContent = `正确答案是：${wordData.word} (${wordData.partOfSpeech}) ${wordData.definition}`;
+                wrongMessage.textContent = `正确答案是: ${wordData.word} ${wordData.partOfSpeech}，你的答案: ${userAnswer || '未作答'}`;
+                wrongAnswers.push({
+                    word: wordData.word,
+                    partOfSpeech: wordData.partOfSpeech,
+                    definition: wordData.definition,
+                    userAnswer: userAnswer
+                });
                 
-                // 添加错误动画
-                wrongFeedback.classList.add('wrong-item');
-                
-                // 禁用检查按钮，防止重复提交
                 checkBtn.disabled = true;
+                hintBtn.disabled = true;
+                
+                setTimeout(() => {
+                    currentIndex++;
+                    checkBtn.disabled = false;
+                    hintBtn.disabled = false;
+                    loadWord();
+                    updateProgress();
+                }, 2000);
             }
         }
 
         // 显示提示
         function showHint() {
-            const word = currentWords[currentWordIndex].word;
-            let hint = '';
-            
-            // 根据单词长度显示不同数量的字母作为提示
-            if (word.length <= 3) {
-                hint = word[0] + '?'.repeat(word.length - 1);
-            } else if (word.length <= 6) {
-                hint = word.substring(0, 2) + '?'.repeat(word.length - 2);
-            } else {
-                hint = word.substring(0, 3) + '?'.repeat(word.length - 3);
-            }
-            
-            // 在输入框中显示提示
+            const correctAnswer = currentWords[currentIndex].word;
+            const hint = correctAnswer.substring(0, 2);
             answerInput.value = hint;
+            answerInput.focus();
+            answerInput.setSelectionRange(hint.length, hint.length);
         }
 
-        // 跳过当前单词
+        // 跳过单词
         function skipWord() {
-            // 保存跳过的答案
-            userAnswers.push({
-                word: currentWords[currentWordIndex].word,
-                userAnswer: '',
-                correct: false
-            });
+            const skippedItem = {
+                word: currentWords[currentIndex].word,
+                partOfSpeech: currentWords[currentIndex].partOfSpeech,
+                definition: currentWords[currentIndex].definition,
+                userAnswer: '跳过',
+                isCorrect: false
+            };
+            userAnswers.push(skippedItem);
+            wrongAnswers.push(skippedItem);
             
-            // 添加到错误列表
-            wrongWords.push(currentWords[currentWordIndex]);
-            
-            // 加载下一个单词
-            currentWordIndex++;
+            currentIndex++;
             loadWord();
             updateProgress();
         }
@@ -860,82 +773,55 @@
             quizCard.classList.add('hidden');
             resultCard.classList.remove('hidden');
             
-            // 计算得分
-            const score = Math.round((correctAnswers / currentWords.length) * 100);
-            scoreDisplay.textContent = score;
+            const percentage = Math.round((score / currentWords.length) * 100);
+            scoreDisplay.textContent = percentage;
             
-            // 更新结果信息
-            resultUnit.textContent = `单元：${wordUnits[currentUnit].title}`;
-            wrongCount.textContent = `答错：${wrongWords.length} 个 | 答对：${correctAnswers} 个 | 总题数：${currentWords.length} 个`;
+            let message = '';
+            if (percentage >= 90) message = '太棒了！你对这些单词掌握得非常好！';
+            else if (percentage >= 70) message = '不错！继续努力，你会做得更好！';
+            else if (percentage >= 50) message = '还可以，但需要更多练习来巩固这些单词。';
+            else message = '加油！多花点时间记忆这些单词，你会进步的！';
             
-            // 设置结果消息
-            if (score === 100) {
-                resultMessage.textContent = '太棒了！你掌握了本单元所有单词！';
-            } else if (score >= 80) {
-                resultMessage.textContent = '非常好！继续保持，你已经掌握了大部分单词。';
-            } else if (score >= 60) {
-                resultMessage.textContent = '不错的成绩！还有一些单词需要加强记忆。';
-            } else {
-                resultMessage.textContent = '需要继续努力！建议重点复习错题集中的单词。';
-            }
+            resultMessage.textContent = message;
+            resultUnit.textContent = `单元: ${wordUnits[currentUnit].title}`;
+            wrongCount.textContent = `共 ${currentWords.length} 个单词，正确 ${score} 个，错误 ${wrongAnswers.length} 个`;
             
-            // 清空结果列表
             resultsList.innerHTML = '';
-            wrongList.innerHTML = '';
-            
-            // 生成结果列表
             userAnswers.forEach((item, index) => {
                 const resultItem = document.createElement('div');
-                resultItem.className = `flex justify-between items-center p-3 rounded-lg ${item.correct ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`;
+                resultItem.className = `p-3 rounded-lg ${item.isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`;
                 
-                const wordInfo = document.createElement('div');
-                wordInfo.innerHTML = `
-                    <span class="font-medium">${index + 1}. ${item.word}</span>
-                    <span class="text-sm text-neutral ml-2">${currentWords.find(w => w.word === item.word).definition}</span>
+                resultItem.innerHTML = `
+                    <div class="font-medium">${index + 1}. ${item.definition}</div>
+                    <div class="flex flex-wrap gap-x-4 mt-1 text-sm">
+                        <div>正确答案: <span class="font-medium">${item.word}</span> <span class="part-of-speech">${item.partOfSpeech}</span></div>
+                        <div>你的答案: <span class="font-medium">${item.userAnswer || '未作答'}</span></div>
+                    </div>
                 `;
                 
-                const answerInfo = document.createElement('div');
-                if (item.correct) {
-                    answerInfo.innerHTML = '<span class="text-secondary"><i class="fa fa-check-circle mr-1"></i>正确</span>';
-                } else {
-                    answerInfo.innerHTML = `
-                        <span class="text-red-500"><i class="fa fa-times-circle mr-1"></i>错误</span>
-                        <span class="text-sm text-neutral ml-2">你的答案：${item.userAnswer || '未作答'}</span>
-                    `;
-                }
-                
-                resultItem.appendChild(wordInfo);
-                resultItem.appendChild(answerInfo);
                 resultsList.appendChild(resultItem);
-                
-                // 如果是错误答案，添加到错题集
-                if (!item.correct) {
-                    const wrongItem = document.createElement('div');
-                    wrongItem.className = 'flex flex-col p-3 rounded-lg bg-red-50 border border-red-100';
-                    
-                    const wrongWordInfo = document.createElement('div');
-                    const wrongWordData = currentWords.find(w => w.word === item.word);
-                    wrongWordInfo.innerHTML = `
-                        <span class="font-medium">${wrongWordData.word}</span>
-                        <span class="part-of-speech inline-block mt-1">${wrongWordData.partOfSpeech}</span>
-                        <span class="text-sm text-neutral mt-1">释义：${wrongWordData.definition}</span>
-                        <span class="text-sm text-neutral mt-1">发音：${wrongWordData.pronunciation}</span>
-                    `;
-                    
-                    const wrongAnswerInfo = document.createElement('div');
-                    wrongAnswerInfo.className = 'text-sm text-red-500 mt-2';
-                    wrongAnswerInfo.innerHTML = `你的答案：${item.userAnswer || '未作答'}`;
-                    
-                    wrongItem.appendChild(wrongWordInfo);
-                    wrongItem.appendChild(wrongAnswerInfo);
-                    wrongList.appendChild(wrongItem);
-                }
             });
             
-            // 如果有错题，显示错题集
-            if (wrongWords.length > 0) {
+            // 显示错题集
+            if (wrongAnswers.length > 0) {
                 wrongListTitle.classList.remove('hidden');
                 wrongList.classList.remove('hidden');
+                wrongList.innerHTML = '';
+                
+                wrongAnswers.forEach((item, index) => {
+                    const wrongItem = document.createElement('div');
+                    wrongItem.className = `p-3 rounded-lg bg-red-50 border border-red-200 wrong-item`;
+                    
+                    wrongItem.innerHTML = `
+                        <div class="font-medium">${index + 1}. ${item.definition}</div>
+                        <div class="mt-1 text-sm">
+                            <div>正确答案: <span class="font-medium">${item.word}</span> <span class="part-of-speech">${item.partOfSpeech}</span></div>
+                            ${item.userAnswer !== '跳过' ? `<div>你的答案: <span class="font-medium">${item.userAnswer}</span></div>` : ''}
+                        </div>
+                    `;
+                    
+                    wrongList.appendChild(wrongItem);
+                });
             } else {
                 wrongListTitle.classList.add('hidden');
                 wrongList.classList.add('hidden');
@@ -944,91 +830,77 @@
 
         // 更新进度
         function updateProgress() {
-            const progress = (currentWordIndex / currentWords.length) * 100;
+            const progress = ((currentIndex / currentWords.length) * 100);
             progressBar.style.width = `${progress}%`;
-            progressText.textContent = `进度: ${currentWordIndex}/${currentWords.length}`;
+            progressText.textContent = `进度: ${currentIndex}/${currentWords.length}`;
         }
 
-        // 重新练习当前单元
+        // 重新开始测验
         function restartQuiz() {
-            resultCard.classList.add('hidden');
-            startQuiz();
+            currentIndex = 0;
+            score = 0;
+            userAnswers = [];
+            wrongAnswers = [];
+            updateQuizUI();
+            showQuizCard();
         }
 
-        // 返回单元选择页面
-        function backToUnitSelection() {
-            resultCard.classList.add('hidden');
-            introCard.classList.remove('hidden');
-            // 重置进度条
-            progressBar.style.width = '0%';
-            progressText.textContent = '进度: 0/0';
-        }
-
-        // 返回导航页（这里简单处理为刷新页面）
-        function backToNav() {
-            window.location.reload();
-        }
-
-        // 播放发音（模拟）
+        // 播放单词发音（使用Web Speech API）
         function playPronunciation() {
-            // 这里可以集成语音合成API，如Web Speech API
-            const word = currentWords[currentWordIndex].word;
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = 'en-US';
-            window.speechSynthesis.speak(utterance);
+            const word = currentWords[currentIndex].word;
             
-            // 添加播放动画效果
-            playAudio.classList.add('animate-pulse');
-            setTimeout(() => {
-                playAudio.classList.remove('animate-pulse');
-            }, 1000);
+            // 检查浏览器是否支持语音合成
+            if ('speechSynthesis' in window) {
+                // 停止任何正在播放的语音
+                window.speechSynthesis.cancel();
+                
+                // 创建新的语音实例
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US'; // 使用美式英语发音
+                utterance.rate = 0.9; // 语速稍慢
+                
+                // 播放语音
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('抱歉，你的浏览器不支持语音播放功能。');
+            }
         }
 
-        // 辅助函数：打乱数组
+        // 打乱数组顺序（Fisher-Yates算法）
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [array[i], array[j]] = [array[j], array[i]];
             }
-            return array;
         }
 
-        // 事件监听器
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 初始化单元选择器
             initUnitSelector();
             
-            // 开始按钮
+            // 事件监听
             startBtn.addEventListener('click', startQuiz);
-            
-            // 检查答案按钮
             checkBtn.addEventListener('click', checkAnswer);
-            
-            // 提示按钮
             hintBtn.addEventListener('click', showHint);
-            
-            // 跳过按钮
             skipBtn.addEventListener('click', skipWord);
-            
-            // 重新练习按钮
             restartBtn.addEventListener('click', restartQuiz);
-            
-            // 返回按钮
-            backBtn.addEventListener('click', backToUnitSelection);
-            
-            // 返回导航页按钮
-            navBackBtn.addEventListener('click', backToNav);
-            resultNavBackBtn.addEventListener('click', backToNav);
-            
-            // 播放发音按钮
-            playAudio.addEventListener('click', playPronunciation);
-            
-            // 回车键检查答案
-            answerInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    checkAnswer();
-                }
+            backBtn.addEventListener('click', () => {
+                introCard.classList.remove('hidden');
+                quizCard.classList.add('hidden');
+                resultCard.classList.add('hidden');
+                progressBar.style.width = '0%';
+                progressText.textContent = '进度: 0/0';
             });
+            
+            navBackBtn.addEventListener('click', () => window.location.href = 'indexdaohang.html');
+            resultNavBackBtn.addEventListener('click', () => window.location.href = 'indexdaohang.html');
+            
+            // 回车键提交答案
+            answerInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkAnswer();
+            });
+            
+            playAudio.addEventListener('click', playPronunciation);
         });
     </script>
 </body>
