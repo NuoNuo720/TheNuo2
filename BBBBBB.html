@@ -3081,23 +3081,130 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script>
 // ==================== Supabase 初始化 ====================
-// 替换为你的Supabase项目URL和anon key
-const SUPABASE_URL = 'https://opexjpfkzikkmluadlng.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZXhqcGZremlra21sdWFkbG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjgwMjAsImV4cCI6MjA4NTM0NDAyMH0.LErtOkcwgGvX5YeM3ds4acGyWqhZKs2BmhDRijdAkLE';
+// ============================================
+// Supabase 集成（最小化版本）
+// ============================================
 
-// 初始化Supabase客户端
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
+// 1. 检查是否已加载Supabase
+function initSupabase() {
+  if (typeof supabase === 'undefined') {
+    console.log('📡 加载Supabase SDK...');
+    
+    // 动态加载Supabase SDK
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    script.onload = function() {
+      console.log('✅ Supabase SDK 加载完成');
+      setupSupabase();
+    };
+    document.head.appendChild(script);
+  } else {
+    console.log('✅ Supabase 已加载');
+    setupSupabase();
   }
-});
+}
 
-// ==================== 用户认证函数 ====================
-async function signUp(email, password, username) {
+// 2. 设置Supabase客户端
+function setupSupabase() {
   try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 你的Supabase配置（替换为你的实际值）
+    const SUPABASE_URL = 'https://opexjpfkzikkmluadlng.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZXhqcGZremlra21sdWFkbG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjgwMjAsImV4cCI6MjA4NTM0NDAyMH0.LErtOkcwgGvX5YeM3ds4acGyWqhZKs2BmhDRijdAkLE';
+    
+    // 创建客户端（使用全局变量避免重复声明）
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      realtime: {
+        params: {
+          eventsPerSecond: 10
+        }
+      }
+    });
+    
+    console.log('✅ Supabase客户端已创建');
+    
+    // 测试连接
+    testSupabaseConnection();
+    
+    // 监听认证状态
+    setupAuthListener();
+    
+  } catch (error) {
+    console.error('❌ Supabase设置失败:', error);
+  }
+}
+
+// 3. 测试连接
+async function testSupabaseConnection() {
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('profiles')
+      .select('count')
+      .limit(1);
+    
+    if (error) throw error;
+    
+    console.log('✅ Supabase连接测试成功');
+    updateOnlineStats();
+    
+  } catch (error) {
+    console.error('❌ Supabase连接测试失败:', error);
+  }
+}
+
+// 4. 更新在线统计
+async function updateOnlineStats() {
+  try {
+    // 获取在线玩家数量
+    const { data: onlinePlayers, error: onlineError } = await window.supabaseClient
+      .from('online_players')
+      .select('id');
+    
+    if (!onlineError && onlinePlayers) {
+      const onlineCountElement = document.getElementById('onlineCount');
+      if (onlineCountElement) {
+        onlineCountElement.textContent = onlinePlayers.length;
+      }
+    }
+    
+    // 获取今日对战数
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const { data: todayGames, error: gamesError } = await window.supabaseClient
+      .from('game_sessions')
+      .select('id')
+      .gte('created_at', today.toISOString());
+    
+    if (!gamesError && todayGames) {
+      const dailyMatchesElement = document.getElementById('dailyMatches');
+      if (dailyMatchesElement) {
+        dailyMatchesElement.textContent = todayGames.length;
+      }
+    }
+    
+  } catch (error) {
+    console.error('更新统计数据失败:', error);
+  }
+}
+
+// 5. 认证监听
+function setupAuthListener() {
+  window.supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log('认证状态变更:', event);
+    
+    if (event === 'SIGNED_IN') {
+      console.log('用户已登录:', session.user.email);
+      // 可以在这里更新UI显示用户信息
+    } else if (event === 'SIGNED_OUT') {
+      console.log('用户已退出');
+    }
+  });
+}
+
+// 6. 用户认证函数（供按钮调用）
+async function handleSignUp(email, password, username) {
+  try {
+    const { data, error } = await window.supabaseClient.auth.signUp({
       email,
       password,
       options: {
@@ -3105,19 +3212,20 @@ async function signUp(email, password, username) {
       }
     });
     
-    if (authError) throw authError;
+    if (error) throw error;
     
-    alert('注册成功！请检查邮箱验证链接。');
-    return authData.user;
+    alert('注册成功！请检查邮箱验证。');
+    return data.user;
+    
   } catch (error) {
     alert('注册失败: ' + error.message);
     console.error('注册错误:', error);
   }
 }
 
-async function signIn(email, password) {
+async function handleSignIn(email, password) {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
       email,
       password
     });
@@ -3125,466 +3233,246 @@ async function signIn(email, password) {
     if (error) throw error;
     
     alert('登录成功！');
-    console.log('用户信息:', data.user);
     return data.user;
+    
   } catch (error) {
     alert('登录失败: ' + error.message);
     console.error('登录错误:', error);
   }
 }
 
-async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) console.error('退出错误:', error);
+async function handleSignOut() {
+  const { error } = await window.supabaseClient.auth.signOut();
+  if (error) {
+    console.error('退出失败:', error);
+  } else {
+    alert('已退出');
+  }
 }
 
-// ==================== 实时监听用户状态 ====================
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('认证状态变更:', event, session);
-  
-  if (event === 'SIGNED_IN') {
-    console.log('用户已登录:', session.user);
-    // 更新UI显示登录状态
-    updateUserUI(session.user);
-  } else if (event === 'SIGNED_OUT') {
-    console.log('用户已退出');
-    // 更新UI显示退出状态
-    updateUserUI(null);
-  }
-});
-
-// ==================== 获取当前用户 ====================
-async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-}
-
-// ==================== 匹配系统函数 ====================
-async function joinMatchmaking() {
-  const user = await getCurrentUser();
-  if (!user) {
-    alert('请先登录！');
-    return;
-  }
-  
+// 7. 游戏结果保存
+async function saveGameResult(gameResult) {
   try {
-    // 获取用户ELO
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('elo')
-      .eq('id', user.id)
+    // 获取当前用户
+    const { data: { user } } = await window.supabaseClient.auth.getUser();
+    
+    if (!user) {
+      console.log('用户未登录，跳过保存游戏结果');
+      return;
+    }
+    
+    // 查找当前游戏会话
+    const { data: gameSession } = await window.supabaseClient
+      .from('game_sessions')
+      .select('*')
+      .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
+      .eq('status', 'active')
       .single();
     
-    // 加入匹配队列
-    const { error } = await supabase
-      .from('matchmaking_queue')
-      .insert([{ 
-        user_id: user.id, 
-        elo: profile?.elo || 1000,
-        region: 'asia'
-      }])
-      .select();
+    if (!gameSession) {
+      console.log('未找到游戏会话，跳过保存');
+      return;
+    }
     
-    if (error) throw error;
-    
-    console.log('已加入匹配队列');
-    alert('正在寻找对手...');
-    
-    // 监听匹配结果
-    monitorMatchmaking(user.id);
-    
-  } catch (error) {
-    console.error('加入匹配失败:', error);
-    alert('加入匹配失败: ' + error.message);
-  }
-}
-
-async function cancelMatchmaking() {
-  const user = await getCurrentUser();
-  if (!user) return;
-  
-  const { error } = await supabase
-    .from('matchmaking_queue')
-    .delete()
-    .eq('user_id', user.id);
-  
-  if (error) {
-    console.error('取消匹配失败:', error);
-  } else {
-    console.log('已取消匹配');
-    alert('已取消匹配');
-  }
-}
-
-// ==================== 实时监听匹配结果 ====================
-function monitorMatchmaking(userId) {
-  // 监听matchmaking_queue表的变化
-  const channel = supabase.channel('matchmaking-changes')
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'matchmaking_queue',
-        filter: `user_id=eq.${userId}`
-      },
-      (payload) => {
-        console.log('匹配队列变化:', payload);
-        
-        if (payload.eventType === 'DELETE') {
-          // 被从队列中移除，可能已匹配成功
-          checkIfMatched(userId);
-        }
-      }
-    )
-    .subscribe();
-}
-
-async function checkIfMatched(userId) {
-  // 检查是否有等待中的游戏会话
-  const { data: waitingGame } = await supabase
-    .from('game_sessions')
-    .select('*')
-    .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
-    .eq('status', 'waiting')
-    .single();
-  
-  if (waitingGame) {
-    console.log('匹配成功！', waitingGame);
-    
-    // 确定玩家角色
-    const playerRole = waitingGame.player1_id === userId ? 
-      waitingGame.player1_role : waitingGame.player2_role;
-    
-    // 切换到游戏大厅
-    switchToLobby(waitingGame, playerRole);
-  }
-}
-
-// ==================== 游戏大厅逻辑 ====================
-async function switchToLobby(gameSession, playerRole) {
-  // 切换到你的游戏大厅场景
-  switchScene('lobbyScene');
-  
-  // 更新UI显示游戏信息
-  document.getElementById('player1Role').textContent = 
-    playerRole === 'proton' ? '质子' : '电子';
-  document.getElementById('player2Role').textContent = 
-    playerRole === 'proton' ? '电子' : '质子';
-  
-  // 获取对手信息
-  const opponentId = gameSession.player1_id === (await getCurrentUser()).id ? 
-    gameSession.player2_id : gameSession.player1_id;
-  
-  const { data: opponentProfile } = await supabase
-    .from('profiles')
-    .select('username, elo')
-    .eq('id', opponentId)
-    .single();
-  
-  if (opponentProfile) {
-    document.getElementById('player2Role').textContent += ` (${opponentProfile.username})`;
-  }
-  
-  // 监听游戏状态变化
-  monitorGameSession(gameSession.room_id);
-}
-
-// ==================== 监听游戏会话状态 ====================
-function monitorGameSession(roomId) {
-  const channel = supabase.channel(`game-session-${roomId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'game_sessions',
-        filter: `room_id=eq.${roomId}`
-      },
-      (payload) => {
-        console.log('游戏会话更新:', payload.new);
-        
-        const newStatus = payload.new.status;
-        
-        if (newStatus === 'active') {
-          // 游戏开始
-          console.log('游戏开始！');
-          startGame(payload.new);
-        } else if (newStatus === 'finished') {
-          // 游戏结束
-          console.log('游戏结束！');
-          showGameResult(payload.new);
-        }
-      }
-    )
-    .subscribe();
-}
-
-// ==================== 准备游戏 ====================
-async function toggleReady() {
-  const user = await getCurrentUser();
-  if (!user) return;
-  
-  // 这里需要你的游戏逻辑
-  // 可以更新游戏会话状态或发送准备信号
-  console.log('玩家准备状态切换');
-}
-
-// ==================== 游戏结束处理 ====================
-async function finishGame(gameResult) {
-  const user = await getCurrentUser();
-  if (!user) return;
-  
-  try {
-    // 更新游戏会话为完成状态
-    const { error } = await supabase
+    // 更新游戏结果
+    const { error } = await window.supabaseClient
       .from('game_sessions')
       .update({
         status: 'finished',
-        winner_id: gameResult.winner === 'player1' ? gameResult.player1_id : gameResult.player2_id,
-        player1_score: gameResult.player1Score,
-        player2_score: gameResult.player2Score,
-        player1_hp: gameResult.player1HP,
-        player2_hp: gameResult.player2HP,
+        winner_id: gameResult.winner === 'player1' ? gameSession.player1_id : gameSession.player2_id,
+        player1_score: gameResult.playerScore,
+        player2_score: gameResult.opponentScore,
+        player1_hp: gameResult.playerHP,
+        player2_hp: gameResult.opponentHP,
         duration: gameResult.duration,
         finished_at: new Date().toISOString()
       })
-      .eq('room_id', gameResult.roomId);
+      .eq('id', gameSession.id);
     
     if (error) throw error;
     
-    console.log('游戏结果已保存');
+    console.log('✅ 游戏结果已保存到数据库');
     
   } catch (error) {
     console.error('保存游戏结果失败:', error);
   }
 }
 
-// ==================== 获取排行榜 ====================
-async function getLeaderboard(limit = 20) {
-  try {
-    const { data, error } = await supabase
-      .from('leaderboard')
-      .select('*')
-      .limit(limit);
-    
-    if (error) throw error;
-    
-    return data;
-  } catch (error) {
-    console.error('获取排行榜失败:', error);
-    return [];
-  }
-}
-
-// ==================== 获取游戏历史 ====================
-async function getGameHistory(userId, limit = 10) {
-  try {
-    const { data, error } = await supabase
-      .from('game_history')
-      .select('*')
-      .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-    
-    if (error) throw error;
-    
-    return data;
-  } catch (error) {
-    console.error('获取游戏历史失败:', error);
-    return [];
-  }
-}
-
-// ==================== 更新UI显示用户状态 ====================
-function updateUserUI(user) {
-  const authSection = document.getElementById('authSection') || createAuthSection();
+// 8. 修改你的 endGame 函数
+// 找到你现有的 endGame 函数，在最后添加：
+function endGame(winner) {
+  // ... 你现有的 endGame 逻辑 ...
   
-  if (user) {
-    // 显示用户信息和退出按钮
-    authSection.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span>欢迎, ${user.email}</span>
-        <button onclick="signOut()" class="btn btn-secondary" style="padding: 5px 15px;">
-          退出
-        </button>
-      </div>
-    `;
-  } else {
-    // 显示登录/注册表单
-    authSection.innerHTML = `
-      <div style="display: flex; gap: 10px; align-items: center;">
-        <input id="authEmail" type="email" placeholder="邮箱" style="padding: 8px; border-radius: 6px;">
-        <input id="authPassword" type="password" placeholder="密码" style="padding: 8px; border-radius: 6px;">
-        <input id="authUsername" type="text" placeholder="用户名(注册用)" style="padding: 8px; border-radius: 6px;">
-        <button onclick="handleSignIn()" class="btn btn-primary" style="padding: 8px 15px;">
-          登录
-        </button>
-        <button onclick="handleSignUp()" class="btn btn-secondary" style="padding: 8px 15px;">
-          注册
-        </button>
-      </div>
-    `;
-  }
+  // 在保存到 localStorage 之后，也保存到数据库
+  const gameResult = {
+    winner: winner,
+    playerScore: game.playerScore,
+    opponentScore: game.opponentScore,
+    playerHP: game.players.player1 ? game.players.player1.hp : 0,
+    opponentHP: game.players.player2 ? game.players.player2.hp : 0,
+    duration: 90 - game.gameTime
+  };
+  
+  // 保存到数据库
+  saveGameResult(gameResult);
 }
 
-function createAuthSection() {
-  const section = document.createElement('div');
-  section.id = 'authSection';
-  section.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 1000;';
-  document.body.appendChild(section);
-  return section;
+// 9. 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('页面加载完成');
+  
+  // 延迟初始化Supabase，避免冲突
+  setTimeout(() => {
+    initSupabase();
+  }, 1000);
+  
+  // 每30秒更新一次在线统计
+  setInterval(updateOnlineStats, 30000);
+});
+
+// 10. 添加简单的登录/注册界面
+function showAuthDialog() {
+  const authHTML = `
+    <div id="authDialog" style="
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1e293b;
+      padding: 2rem;
+      border-radius: 12px;
+      border: 2px solid #3b82f6;
+      z-index: 10000;
+      min-width: 300px;
+    ">
+      <h3 style="color: white; margin-bottom: 1rem;">用户认证</h3>
+      
+      <div style="margin-bottom: 1rem;">
+        <input id="authEmail" type="email" placeholder="邮箱" style="
+          width: 100%;
+          padding: 0.75rem;
+          margin-bottom: 0.5rem;
+          border-radius: 6px;
+          border: 1px solid #475569;
+          background: #0f172a;
+          color: white;
+        ">
+        
+        <input id="authPassword" type="password" placeholder="密码" style="
+          width: 100%;
+          padding: 0.75rem;
+          margin-bottom: 0.5rem;
+          border-radius: 6px;
+          border: 1px solid #475569;
+          background: #0f172a;
+          color: white;
+        ">
+        
+        <input id="authUsername" type="text" placeholder="用户名（仅注册需要）" style="
+          width: 100%;
+          padding: 0.75rem;
+          margin-bottom: 1rem;
+          border-radius: 6px;
+          border: 1px solid #475569;
+          background: #0f172a;
+          color: white;
+        ">
+      </div>
+      
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+        <button onclick="performSignIn()" style="
+          flex: 1;
+          padding: 0.75rem;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+        ">登录</button>
+        
+        <button onclick="performSignUp()" style="
+          flex: 1;
+          padding: 0.75rem;
+          background: #475569;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+        ">注册</button>
+      </div>
+      
+      <button onclick="closeAuthDialog()" style="
+        width: 100%;
+        padding: 0.75rem;
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        cursor: pointer;
+      ">关闭</button>
+    </div>
+  `;
+  
+  // 移除已存在的对话框
+  const existingDialog = document.getElementById('authDialog');
+  if (existingDialog) existingDialog.remove();
+  
+  // 添加新对话框
+  document.body.insertAdjacentHTML('beforeend', authHTML);
 }
 
-// ==================== 登录/注册处理函数 ====================
-async function handleSignIn() {
-  const email = document.getElementById('authEmail')?.value;
-  const password = document.getElementById('authPassword')?.value;
+function closeAuthDialog() {
+  const dialog = document.getElementById('authDialog');
+  if (dialog) dialog.remove();
+}
+
+async function performSignIn() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
   
   if (!email || !password) {
     alert('请输入邮箱和密码');
     return;
   }
   
-  await signIn(email, password);
+  await handleSignIn(email, password);
+  closeAuthDialog();
 }
 
-async function handleSignUp() {
-  const email = document.getElementById('authEmail')?.value;
-  const password = document.getElementById('authPassword')?.value;
-  const username = document.getElementById('authUsername')?.value;
+async function performSignUp() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  const username = document.getElementById('authUsername').value;
   
   if (!email || !password || !username) {
     alert('请输入邮箱、密码和用户名');
     return;
   }
   
-  await signUp(email, password, username);
+  await handleSignUp(email, password, username);
+  closeAuthDialog();
 }
 
-// ==================== 页面加载初始化 ====================
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('页面加载完成，初始化Supabase...');
-  
-  // 检查当前用户
-  const user = await getCurrentUser();
-  updateUserUI(user);
-  
-  // 获取并显示在线玩家数量
-  updateOnlineCount();
-  
-  // 显示排行榜
-  displayLeaderboard();
-});
+// 11. 在主菜单添加认证按钮
+// 修改你的主菜单HTML，添加：
+/*
+<div class="btn-group">
+  <button id="matchBtn" class="btn btn-primary" onclick="startMatchmaking()">
+    <span>🎮</span> 开始匹配
+  </button>
+  <button class="btn btn-secondary" onclick="showAuthDialog()">
+    <span>👤</span> 登录/注册
+  </button>
+  <button id="howToPlayBtn" class="btn btn-secondary" onclick="showHowToPlay()">
+    <span>❓</span> 游戏说明
+  </button>
+</div>
+*/
 
-// ==================== 更新在线玩家数量 ====================
-async function updateOnlineCount() {
-  try {
-    const { data, error } = await supabase
-      .from('online_players')
-      .select('id', { count: 'exact' });
-    
-    if (!error && data) {
-      const countElement = document.getElementById('onlineCount');
-      if (countElement) {
-        countElement.textContent = data.length;
-      }
-    }
-  } catch (error) {
-    console.error('获取在线玩家数失败:', error);
-  }
-}
-
-// ==================== 显示排行榜 ====================
-async function displayLeaderboard() {
-  const leaderboard = await getLeaderboard(10);
-  
-  // 可以在这里将排行榜显示到页面某个位置
-  console.log('排行榜:', leaderboard);
-}
-
-// ==================== 修改你的现有函数 ====================
-// 在你的现有代码中，修改以下函数：
-
-// 1. 修改 startMatchmaking 函数：
-function startMatchmaking() {
-  console.log('🔍 开始匹配...');
-  joinMatchmaking(); // 调用Supabase版本的匹配函数
-  
-  // 保持原有的UI切换逻辑
-  switchScene('matchingScene');
-  
-  // 原有的匹配计时逻辑可以保留或移除
-  // ...
-}
-
-// 2. 修改 cancelMatchmaking 函数：
-function cancelMatchmaking() {
-  console.log('❌ 取消匹配');
-  cancelMatchmaking(); // 调用Supabase版本的取消匹配函数
-  
-  // 原有的UI切换逻辑
-  switchScene('menuScene');
-}
-
-// 3. 游戏结束后调用 finishGame：
-function endGame(winner) {
-  // ... 你的现有逻辑 ...
-  
-  // 在保存结果时调用
-  finishGame({
-    roomId: gameSession?.room_id,
-    winner: winner,
-    player1Score: game.playerScore,
-    player2Score: game.opponentScore,
-    player1HP: game.players.player1?.hp || 0,
-    player2HP: game.players.player2?.hp || 0,
-    duration: 90 - game.gameTime
-  });
-}
-
-// 4. 在游戏初始化时获取角色信息：
-async function initializeGame() {
-  // ... 你的现有逻辑 ...
-  
-  // 从数据库获取当前游戏会话
-  const user = await getCurrentUser();
-  const { data: activeGame } = await supabase
-    .from('game_sessions')
-    .select('*')
-    .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
-    .eq('status', 'active')
-    .single();
-  
-  if (activeGame) {
-    playerRole = activeGame.player1_id === user.id ? 
-      activeGame.player1_role : activeGame.player2_role;
-  }
-  
-  // ... 继续你的游戏初始化逻辑 ...
-}
-
-// ==================== 测试连接 ====================
-async function testConnection() {
-  try {
-    // 测试数据库连接
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('count')
-      .limit(1);
-    
-    if (error) throw error;
-    
-    console.log('✅ Supabase连接成功！');
-    return true;
-  } catch (error) {
-    console.error('❌ Supabase连接失败:', error);
-    return false;
-  }
-}
-
-// 页面加载时测试连接
-testConnection();
+// ============================================
+// 初始化
+// ============================================
+console.log('Supabase集成模块已加载');
 </script>
 </body>
 </html>
