@@ -1,0 +1,2930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>质子VS电子 | 量子迷宫对决</title>
+    <style>
+        /* ====== 基础重置 ====== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* 禁止页面滚动 */
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* ====== 颜色变量 ====== */
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-red: #ef4444;
+            --neon-cyan: #00f7ff;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-light: #e2e8f0;
+            --text-dim: #94a3b8;
+        }
+        
+        /* ====== 主容器 ====== */
+        #app {
+            width: 100vw;
+            height: 100vh;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+        }
+        
+        /* ====== 场景基础样式 ====== */
+        .scene {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .active {
+            display: block;
+        }
+        
+        /* ====== 1. 主菜单场景 ====== */
+        #menuScene {
+            background: linear-gradient(135deg, 
+                rgba(15, 23, 42, 0.95) 0%, 
+                rgba(30, 41, 59, 0.9) 100%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%233b82f6' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        
+        .menu-header {
+            text-align: center;
+            padding: 2rem 1rem 1rem;
+        }
+        
+        .logo {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--primary-blue), var(--primary-red));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        
+        .game-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        .game-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+        
+        /* ====== 按钮样式 ====== */
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 0.5rem;
+            min-width: 200px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), #2563eb);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--primary-red), #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        /* ====== 菜单内容 ====== */
+        .menu-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: calc(100% - 200px);
+            padding: 1rem;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .game-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin-top: 0.25rem;
+        }
+        
+        /* ====== 页脚 ====== */
+        .footer {
+            position: absolute;
+            bottom: 1rem;
+            width: 100%;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            padding: 0 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 场景1: 主菜单 -->
+        <div id="menuScene" class="scene active">
+            <div class="menu-header">
+                <div class="logo">⚛️</div>
+                <h1 class="game-title">质子VS电子</h1>
+                <p class="game-subtitle">
+                    在量子迷宫中展开微观对决！发射粒子，躲避墙壁，击败对手。
+                    实时匹配，公平竞技，体验物理战斗的乐趣。
+                </p>
+            </div>
+            
+            <div class="menu-content">
+                <div class="btn-group">
+                    <button id="matchBtn" class="btn btn-primary" onclick="startMatchmaking()">
+                        <span>🎮</span> 开始匹配
+                    </button>
+                    <button id="howToPlayBtn" class="btn btn-secondary" onclick="showHowToPlay()">
+                        <span>❓</span> 游戏说明
+                    </button>
+                </div>
+                
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <span>在线玩家</span>
+                        <span class="stat-value" id="onlineCount">128</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>今日对战</span>
+                        <span class="stat-value" id="dailyMatches">892</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>匹配速度</span>
+                        <span class="stat-value" id="matchSpeed">3.2s</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>量子迷宫对决 v1.0 | 专为实时对战设计 | 禁止屏幕滚动</p>
+            </div>
+        </div>
+        
+        <!-- 场景2: 匹配中 -->
+        <!-- 场景2: 匹配中 -->
+<div id="matchingScene" class="scene">
+    <div style="
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+    ">
+        <div style="margin-bottom: 2rem;">
+            <div style="
+                font-size: 4rem;
+                margin-bottom: 1rem;
+                animation: pulse 1.5s infinite;
+            ">🔍</div>
+            <h2 style="
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+                color: white;
+            ">寻找对手中</h2>
+            <p style="color: var(--text-dim); max-width: 400px; margin: 0 auto 2rem;">
+                正在为你寻找实力相当的对手...
+                量子网络正在扫描可用玩家。
+            </p>
+        </div>
+        
+        <div style="
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            max-width: 500px;
+            width: 100%;
+            margin-bottom: 2rem;
+        ">
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 1rem;
+                color: var(--text-dim);
+            ">
+                <span>匹配时间</span>
+                <span id="matchTimer" style="color: white; font-weight: bold;">0</span>
+            </div>
+            
+            <div style="
+                height: 8px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+                overflow: hidden;
+                margin-bottom: 1.5rem;
+            ">
+                <div id="matchProgress" style="
+                    height: 100%;
+                    width: 0%;
+                    background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
+                    border-radius: 4px;
+                    transition: width 0.3s;
+                "></div>
+            </div>
+            
+            <div style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            ">
+                <div style="
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: rgba(59, 130, 246, 0.3);
+                    animation: searchingDot 1s infinite;
+                "></div>
+                <div style="
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: rgba(59, 130, 246, 0.5);
+                    animation: searchingDot 1s infinite 0.2s;
+                "></div>
+                <div style="
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: rgba(59, 130, 246, 0.7);
+                    animation: searchingDot 1s infinite 0.4s;
+                "></div>
+            </div>
+            
+            <p id="matchStatus" style="color: var(--text-dim); font-size: 0.9rem;">
+                扫描玩家... 检查网络延迟... 优化匹配...
+            </p>
+        </div>
+        
+        <div style="
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        ">
+            <button onclick="cancelMatchmaking()" class="btn btn-danger">
+                <span>❌</span> 取消匹配
+            </button>
+        </div>
+        
+        <div style="
+            margin-top: 2rem;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            max-width: 400px;
+        ">
+            <p>💡 匹配提示：高峰时段匹配更快，保持网络稳定</p>
+        </div>
+    </div>
+</div>
+
+<!-- 场景3: 游戏大厅 -->
+<div id="lobbyScene" class="scene">
+    <div style="
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+    ">
+        <div style="margin-bottom: 2rem;">
+            <h2 style="
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+                color: white;
+            ">游戏大厅</h2>
+            <p style="color: var(--text-dim); max-width: 500px; margin: 0 auto;">
+                已找到对手！双方确认准备后，游戏将在5秒后开始。
+            </p>
+        </div>
+        
+        <div style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            width: 100%;
+            max-width: 800px;
+        ">
+            <!-- 玩家1卡片（你） -->
+            <div id="player1Card" style="
+                flex: 1;
+                min-width: 250px;
+                background: rgba(30, 41, 59, 0.9);
+                border-radius: 16px;
+                padding: 2rem;
+                border: 2px solid var(--primary-blue);
+                backdrop-filter: blur(10px);
+            ">
+                <div style="
+                    font-size: 3rem;
+                    margin-bottom: 1rem;
+                ">⚛️</div>
+                <h3 style="
+                    font-size: 1.5rem;
+                    margin-bottom: 0.5rem;
+                    color: white;
+                " id="player1Role">质子</h3>
+                <p style="color: var(--text-dim); margin-bottom: 1rem;">
+                    玩家 (你)
+                </p>
+                
+                <div style="
+                    margin: 1.5rem 0;
+                    padding: 1rem;
+                    background: rgba(59, 130, 246, 0.1);
+                    border-radius: 8px;
+                ">
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.5rem;
+                        margin-bottom: 0.5rem;
+                    ">
+                        <div id="player1StatusDot" style="
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 50%;
+                            background: #64748b;
+                        "></div>
+                        <span id="player1StatusText">未准备</span>
+                    </div>
+                    <button id="player1ReadyBtn" onclick="togglePlayerReady()" 
+                            style="
+                                padding: 0.75rem 2rem;
+                                background: var(--primary-blue);
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                width: 100%;
+                                transition: all 0.2s;
+                            "
+                            onmouseover="this.style.background='#2563eb'"
+                            onmouseout="this.style.background='var(--primary-blue)'">
+                        点击准备
+                    </button>
+                </div>
+                
+                <div style="
+                    color: var(--text-dim);
+                    font-size: 0.9rem;
+                    text-align: left;
+                    margin-top: 1.5rem;
+                ">
+                    <p>💡 角色特性：</p>
+                    <ul style="padding-left: 1rem; margin-top: 0.5rem;">
+                        <li id="player1Trait1">带正电荷</li>
+                        <li id="player1Trait2">蓝色粒子</li>
+                        <li id="player1Trait3">质量较大</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- VS 标志 -->
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 100px;
+            ">
+                <div style="
+                    font-size: 2.5rem;
+                    color: var(--text-dim);
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 1rem;
+                    border-radius: 50%;
+                ">⚡</div>
+            </div>
+            
+            <!-- 玩家2卡片（对手） -->
+            <div id="player2Card" style="
+                flex: 1;
+                min-width: 250px;
+                background: rgba(30, 41, 59, 0.9);
+                border-radius: 16px;
+                padding: 2rem;
+                border: 2px solid var(--primary-red);
+                backdrop-filter: blur(10px);
+            ">
+                <div style="
+                    font-size: 3rem;
+                    margin-bottom: 1rem;
+                ">⚡</div>
+                <h3 style="
+                    font-size: 1.5rem;
+                    margin-bottom: 0.5rem;
+                    color: white;
+                " id="player2Role">电子</h3>
+                <p style="color: var(--text-dim); margin-bottom: 1rem;">
+                    对手
+                </p>
+                
+                <div style="
+                    margin: 1.5rem 0;
+                    padding: 1rem;
+                    background: rgba(239, 68, 68, 0.1);
+                    border-radius: 8px;
+                ">
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.5rem;
+                        margin-bottom: 1rem;
+                    ">
+                        <div id="player2StatusDot" style="
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 50%;
+                            background: #64748b;
+                        "></div>
+                        <span id="player2StatusText">等待中</span>
+                    </div>
+                    <div style="
+                        padding: 0.75rem;
+                        background: rgba(239, 68, 68, 0.2);
+                        border-radius: 8px;
+                        color: var(--text-dim);
+                    ">
+                        <span id="opponentAction">等待对手准备...</span>
+                    </div>
+                </div>
+                
+                <div style="
+                    color: var(--text-dim);
+                    font-size: 0.9rem;
+                    text-align: left;
+                    margin-top: 1.5rem;
+                ">
+                    <p>💡 角色特性：</p>
+                    <ul style="padding-left: 1rem; margin-top: 0.5rem;">
+                        <li id="player2Trait1">带负电荷</li>
+                        <li id="player2Trait2">红色粒子</li>
+                        <li id="player2Trait3">质量较小</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 倒计时显示 -->
+        <div id="lobbyCountdown" style="
+            display: none;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        ">
+            <div style="
+                font-size: 1.2rem;
+                margin-bottom: 1rem;
+                color: white;
+            ">游戏即将开始</div>
+            <div id="countdownNumber" style="
+                font-size: 4rem;
+                font-weight: bold;
+                color: white;
+                animation: pulse 1s infinite;
+            ">5</div>
+        </div>
+        
+        <!-- 游戏提示 -->
+        <div style="
+            max-width: 600px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        ">
+            <h4 style="color: white; margin-bottom: 0.5rem;">🎮 游戏准备提示</h4>
+            <p style="color: var(--text-dim); font-size: 0.95rem;">
+                确认准备后无法取消。确保网络稳定，调整好设备姿势。
+                电脑玩家使用键盘控制，手机玩家使用屏幕按钮。
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ====== 动画定义 ====== */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.05); }
+    }
+    
+    @keyframes searchingDot {
+        0%, 100% { transform: scale(1); opacity: 0.3; }
+        50% { transform: scale(1.2); opacity: 1; }
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    /* ====== 匹配场景特定样式 ====== */
+    #matchProgress {
+        animation: matchProgressBar 3s ease-in-out infinite;
+    }
+    
+    @keyframes matchProgressBar {
+        0%, 100% { width: 10%; }
+        50% { width: 90%; }
+    }
+</style>
+
+<script>
+    // ==================== 游戏大厅状态变量 ====================
+    let isPlayerReady = false;
+    let isOpponentReady = false;
+    let lobbyCountdownValue = 5;
+    let lobbyCountdownInterval = null;
+    let matchStatusIndex = 0;
+    
+    const matchStatuses = [
+        "扫描在线玩家...",
+        "检查网络延迟...",
+        "优化匹配参数...",
+        "分析玩家水平...",
+        "寻找最佳对手...",
+        "量子纠缠建立中..."
+    ];
+
+    // ==================== 匹配进度更新 ====================
+    if (typeof matchInterval !== 'undefined') {
+        setInterval(() => {
+            matchStatusIndex = (matchStatusIndex + 1) % matchStatuses.length;
+            const statusElement = document.getElementById('matchStatus');
+            if (statusElement) {
+                statusElement.textContent = matchStatuses[matchStatusIndex];
+            }
+            
+            // 更新进度条宽度
+            const progressElement = document.getElementById('matchProgress');
+            if (progressElement) {
+                const progress = (matchTimer % 30) * 3.33;
+                progressElement.style.width = `${progress}%`;
+            }
+        }, 1500);
+    }
+    
+    // ==================== 游戏大厅逻辑 ====================
+    function initializeLobby() {
+        console.log('初始化游戏大厅');
+        // 清除之前的倒计时
+        if (lobbyCountdownInterval) {
+            clearInterval(lobbyCountdownInterval);
+            lobbyCountdownInterval = null;
+        };
+        // 重置状态
+        isPlayerReady = false;
+        isOpponentReady = false;
+        lobbyCountdownValue = 5;
+        
+        // 更新角色显示
+        updateRoleDisplay();
+        
+        // 更新状态显示
+        updatePlayerStatus();
+        updateOpponentStatus();
+        
+        // 隐藏倒计时
+        const countdownElement = document.getElementById('lobbyCountdown');
+        if (countdownElement) {
+            countdownElement.style.display = 'none';
+        }
+        
+        // 重置准备按钮
+        const readyBtn = document.getElementById('player1ReadyBtn');
+        if (readyBtn) {
+            readyBtn.textContent = '点击准备';
+            readyBtn.style.background = playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
+            readyBtn.onclick = togglePlayerReady;
+        }
+        
+        console.log('游戏大厅初始化完成，玩家角色:', playerRole);
+    }
+    
+    function updateRoleDisplay() {
+        const player1RoleElement = document.getElementById('player1Role');
+        const player2RoleElement = document.getElementById('player2Role');
+        
+        if (!player1RoleElement || !player2RoleElement) return;
+        
+        if (playerRole === 'proton') {
+            // 玩家是质子
+            player1RoleElement.textContent = '质子';
+            
+            const player1Card = document.getElementById('player1Card');
+            if (player1Card) {
+                player1Card.style.borderColor = 'var(--primary-blue)';
+            }
+            
+            const player1ReadyBtn = document.getElementById('player1ReadyBtn');
+            if (player1ReadyBtn) {
+                player1ReadyBtn.style.background = 'var(--primary-blue)';
+            }
+            
+            player2RoleElement.textContent = '电子';
+            
+            const player2Card = document.getElementById('player2Card');
+            if (player2Card) {
+                player2Card.style.borderColor = 'var(--primary-red)';
+            }
+            
+            // 更新特性
+            const traitElements = [
+                'player1Trait1', 'player1Trait2', 'player1Trait3',
+                'player2Trait1', 'player2Trait2', 'player2Trait3'
+            ].map(id => document.getElementById(id));
+            
+            if (traitElements[0]) traitElements[0].textContent = '带正电荷';
+            if (traitElements[1]) traitElements[1].textContent = '蓝色粒子';
+            if (traitElements[2]) traitElements[2].textContent = '质量较大';
+            if (traitElements[3]) traitElements[3].textContent = '带负电荷';
+            if (traitElements[4]) traitElements[4].textContent = '红色粒子';
+            if (traitElements[5]) traitElements[5].textContent = '质量较小';
+        } else {
+            // 玩家是电子
+            player1RoleElement.textContent = '电子';
+            
+            const player1Card = document.getElementById('player1Card');
+            if (player1Card) {
+                player1Card.style.borderColor = 'var(--primary-red)';
+            }
+            
+            const player1ReadyBtn = document.getElementById('player1ReadyBtn');
+            if (player1ReadyBtn) {
+                player1ReadyBtn.style.background = 'var(--primary-red)';
+            }
+            
+            player2RoleElement.textContent = '质子';
+            
+            const player2Card = document.getElementById('player2Card');
+            if (player2Card) {
+                player2Card.style.borderColor = 'var(--primary-blue)';
+            }
+            
+            // 更新特性
+            const traitElements = [
+                'player1Trait1', 'player1Trait2', 'player1Trait3',
+                'player2Trait1', 'player2Trait2', 'player2Trait3'
+            ].map(id => document.getElementById(id));
+            
+            if (traitElements[0]) traitElements[0].textContent = '带负电荷';
+            if (traitElements[1]) traitElements[1].textContent = '红色粒子';
+            if (traitElements[2]) traitElements[2].textContent = '质量较小';
+            if (traitElements[3]) traitElements[3].textContent = '带正电荷';
+            if (traitElements[4]) traitElements[4].textContent = '蓝色粒子';
+            if (traitElements[5]) traitElements[5].textContent = '质量较大';
+        }
+    }
+    
+    function updatePlayerStatus() {
+        const statusDot = document.getElementById('player1StatusDot');
+        const statusText = document.getElementById('player1StatusText');
+        
+        if (!statusDot || !statusText) return;
+        
+        if (isPlayerReady) {
+            statusDot.style.background = '#10b981';
+            statusText.textContent = '已准备';
+        } else {
+            statusDot.style.background = '#64748b';
+            statusText.textContent = '未准备';
+        }
+    }
+    
+    function updateOpponentStatus() {
+        const statusDot = document.getElementById('player2StatusDot');
+        const statusText = document.getElementById('player2StatusText');
+        const actionText = document.getElementById('opponentAction');
+        
+        if (!statusDot || !statusText || !actionText) return;
+        
+        if (isOpponentReady) {
+            statusDot.style.background = '#10b981';
+            statusText.textContent = '已准备';
+            actionText.textContent = '对手已准备！';
+        } else {
+            statusDot.style.background = '#64748b';
+            statusText.textContent = '未准备';
+            actionText.textContent = '等待对手准备...';
+        }
+    }
+    
+    function togglePlayerReady() {
+        console.log('切换准备状态，当前:', isPlayerReady);
+        
+        isPlayerReady = !isPlayerReady;
+        updatePlayerStatus();
+        
+        const readyBtn = document.getElementById('player1ReadyBtn');
+        if (!readyBtn) return;
+        
+        if (isPlayerReady) {
+            readyBtn.textContent = '取消准备';
+            readyBtn.style.background = '#64748b';
+            
+            console.log('玩家已准备，等待对手...');
+            
+            // 模拟对手在1-3秒后准备
+            setTimeout(() => {
+                if (!isOpponentReady) {
+                    isOpponentReady = true;
+                    updateOpponentStatus();
+                    
+                    console.log('对手已准备');
+                    
+                    // 双方都准备好后开始倒计时
+                    if (isPlayerReady && isOpponentReady) {
+                        console.log('双方准备完成，开始倒计时');
+                        startLobbyCountdown();
+                    }
+                }
+            }, Math.random() * 2000 + 1000);
+        } else {
+            readyBtn.textContent = '点击准备';
+            readyBtn.style.background = playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
+            
+            console.log('玩家取消准备');
+            
+            // 如果正在倒计时，取消它
+            if (lobbyCountdownInterval) {
+                clearInterval(lobbyCountdownInterval);
+                lobbyCountdownInterval = null;
+                
+                const countdownElement = document.getElementById('lobbyCountdown');
+                if (countdownElement) {
+                    countdownElement.style.display = 'none';
+                }
+                
+                console.log('已取消倒计时');
+            }
+        }
+    }
+    
+    function startLobbyCountdown() {
+        console.log('开始大厅倒计时');
+        
+        // 显示倒计时
+        const countdownElement = document.getElementById('lobbyCountdown');
+        const countdownNumber = document.getElementById('countdownNumber');
+        
+        if (!countdownElement || !countdownNumber) {
+            console.error('倒计时元素未找到');
+            return;
+        }
+        
+        countdownElement.style.display = 'block';
+        lobbyCountdownValue = 5;
+        countdownNumber.textContent = lobbyCountdownValue;
+        
+        // 清除之前的倒计时
+        if (lobbyCountdownInterval) {
+            clearInterval(lobbyCountdownInterval);
+        }
+        
+        // 开始倒计时
+        lobbyCountdownInterval = setInterval(() => {
+            lobbyCountdownValue--;
+            countdownNumber.textContent = lobbyCountdownValue;
+            
+            console.log('倒计时:', lobbyCountdownValue);
+            
+            if (lobbyCountdownValue <= 0) {
+                clearInterval(lobbyCountdownInterval);
+                lobbyCountdownInterval = null;
+                console.log('倒计时结束，开始游戏加载');
+                startGameLoading();
+            }
+        }, 1000);
+    }
+    
+    function startGameLoading() {
+        console.log('进入游戏加载...');
+        switchScene('loadingScene');
+        initializeLoading(); // 调用新的加载初始化函数
+    }
+</script>
+        
+        <!-- 场景4: 加载中 -->
+<div id="loadingScene" class="scene">
+    <div style="
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, 
+            rgba(15, 23, 42, 0.98) 0%, 
+            rgba(30, 41, 59, 0.95) 100%);
+    ">
+        <div style="margin-bottom: 3rem;">
+            <div style="
+                font-size: 4rem;
+                margin-bottom: 1rem;
+                animation: spin 2s linear infinite;
+            ">⚙️</div>
+            <h2 style="
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+                color: white;
+            ">量子战场生成中</h2>
+            <p style="color: var(--text-dim); max-width: 400px; margin: 0 auto;">
+                正在创建迷宫，初始化粒子系统，请稍候...
+            </p>
+        </div>
+        
+        <div style="
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 2rem;
+        ">
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+                color: var(--text-dim);
+            ">
+                <span id="loadingStep">初始化游戏引擎</span>
+                <span id="loadingPercent">0%</span>
+            </div>
+            
+            <div style="
+                height: 12px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                overflow: hidden;
+                margin-bottom: 2rem;
+            ">
+                <div id="loadingBar" style="
+                    height: 100%;
+                    width: 0%;
+                    background: linear-gradient(90deg, 
+                        var(--primary-blue), 
+                        var(--neon-cyan),
+                        var(--primary-red));
+                    border-radius: 6px;
+                    transition: width 0.5s ease-out;
+                "></div>
+            </div>
+            
+            <div style="
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+                margin-bottom: 2rem;
+            ">
+                <div style="
+                    padding: 1rem;
+                    background: rgba(59, 130, 246, 0.1);
+                    border-radius: 8px;
+                    border: 1px solid rgba(59, 130, 246, 0.3);
+                ">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🧱</div>
+                    <div style="font-size: 0.9rem; color: var(--text-dim);">迷宫生成</div>
+                </div>
+                <div style="
+                    padding: 1rem;
+                    background: rgba(0, 247, 255, 0.1);
+                    border-radius: 8px;
+                    border: 1px solid rgba(0, 247, 255, 0.3);
+                ">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
+                    <div style="font-size: 0.9rem; color: var(--text-dim);">粒子系统</div>
+                </div>
+                <div style="
+                    padding: 1rem;
+                    background: rgba(239, 68, 68, 0.1);
+                    border-radius: 8px;
+                    border: 1px solid rgba(239, 68, 68, 0.3);
+                ">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
+                    <div style="font-size: 0.9rem; color: var(--text-dim);">碰撞检测</div>
+                </div>
+                <div style="
+                    padding: 1rem;
+                    background: rgba(139, 92, 246, 0.1);
+                    border-radius: 8px;
+                    border: 1px solid rgba(139, 92, 246, 0.3);
+                ">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🌐</div>
+                    <div style="font-size: 0.9rem; color: var(--text-dim);">网络同步</div>
+                </div>
+            </div>
+            
+            <div id="loadingTips" style="
+                color: var(--text-dim);
+                font-size: 0.9rem;
+                max-width: 400px;
+                margin: 0 auto;
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                border-left: 3px solid var(--primary-blue);
+            ">
+                <p>💡 提示：游戏完全在浏览器中运行，无需下载额外插件</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 场景5: 游戏中 -->
+<div id="gameScene" class="scene">
+    <!-- 游戏画布容器 -->
+    <div style="
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+    ">
+        <!-- 游戏画布 -->
+        <canvas id="gameCanvas" style="
+            display: block;
+            background: #000;
+        "></canvas>
+        
+        <!-- 游戏UI覆盖层 -->
+        <div id="gameUI" style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            pointer-events: none;
+            z-index: 100;
+        ">
+            <!-- 顶部状态栏 -->
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                flex-wrap: wrap;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            ">
+                <!-- 左：玩家信息 -->
+                <div style="
+                    background: rgba(15, 23, 42, 0.85);
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 12px;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(59, 130, 246, 0.5);
+                    min-width: 200px;
+                    pointer-events: auto;
+                ">
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        margin-bottom: 0.5rem;
+                    ">
+                        <div style="
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 50%;
+                            background: var(--primary-blue);
+                        "></div>
+                        <span style="color: white; font-weight: 600;" id="playerName">
+                            {{playerRole === 'proton' ? '质子' : '电子'}}
+                        </span>
+                        <span style="
+                            background: rgba(59, 130, 246, 0.2);
+                            color: var(--primary-blue);
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 4px;
+                            font-size: 0.8rem;
+                        ">你</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 0.25rem;
+                            font-size: 0.9rem;
+                            color: var(--text-dim);
+                        ">
+                            <span>生命值</span>
+                            <span id="playerHP">100</span>
+                        </div>
+                        <div style="
+                            height: 8px;
+                            background: rgba(255, 255, 255, 0.1);
+                            border-radius: 4px;
+                            overflow: hidden;
+                        ">
+                            <div id="playerHealthBar" style="
+                                height: 100%;
+                                width: 100%;
+                                background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
+                                border-radius: 4px;
+                                transition: width 0.3s;
+                            "></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 中：游戏状态 -->
+                <div style="
+                    background: rgba(15, 23, 42, 0.85);
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 12px;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    text-align: center;
+                    pointer-events: auto;
+                ">
+                    <div style="
+                        font-size: 1.5rem;
+                        font-weight: bold;
+                        color: white;
+                        margin-bottom: 0.25rem;
+                    " id="gameTimer">90</div>
+                    <div style="
+                        font-size: 0.9rem;
+                        color: var(--text-dim);
+                    ">剩余时间</div>
+                    
+                    <div style="
+                        margin-top: 0.75rem;
+                        padding-top: 0.75rem;
+                        border-top: 1px solid rgba(255, 255, 255, 0.1);
+                    ">
+                        <div style="
+                            display: flex;
+                            justify-content: center;
+                            gap: 2rem;
+                            color: white;
+                            font-weight: 600;
+                        ">
+                            <span id="playerScore">0</span>
+                            <span style="color: var(--text-dim);">:</span>
+                            <span id="opponentScore">0</span>
+                        </div>
+                        <div style="
+                            font-size: 0.8rem;
+                            color: var(--text-dim);
+                        ">分数</div>
+                    </div>
+                </div>
+                
+                <!-- 右：对手信息 -->
+                <div style="
+                    background: rgba(15, 23, 42, 0.85);
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 12px;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(239, 68, 68, 0.5);
+                    min-width: 200px;
+                    pointer-events: auto;
+                ">
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        margin-bottom: 0.5rem;
+                        justify-content: flex-end;
+                    ">
+                        <span style="
+                            background: rgba(239, 68, 68, 0.2);
+                            color: var(--primary-red);
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 4px;
+                            font-size: 0.8rem;
+                        ">对手</span>
+                        <span style="color: white; font-weight: 600;" id="opponentName">
+                            {{playerRole === 'proton' ? '电子' : '质子'}}
+                        </span>
+                        <div style="
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 50%;
+                            background: var(--primary-red);
+                        "></div>
+                    </div>
+                    
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 0.25rem;
+                            font-size: 0.9rem;
+                            color: var(--text-dim);
+                        ">
+                            <span>生命值</span>
+                            <span id="opponentHP">100</span>
+                        </div>
+                        <div style="
+                            height: 8px;
+                            background: rgba(255, 255, 255, 0.1);
+                            border-radius: 4px;
+                            overflow: hidden;
+                        ">
+                            <div id="opponentHealthBar" style="
+                                height: 100%;
+                                width: 100%;
+                                background: linear-gradient(90deg, var(--primary-red), #f87171);
+                                border-radius: 4px;
+                                transition: width 0.3s;
+                            "></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 小地图 -->
+            <div style="
+                position: absolute;
+                bottom: 120px;
+                left: 20px;
+                background: rgba(0, 0, 0, 0.7);
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 8px;
+                padding: 8px;
+                width: 150px;
+                height: 150px;
+                pointer-events: auto;
+            ">
+                <canvas id="miniMapCanvas" width="134" height="134"></canvas>
+            </div>
+            
+            <!-- 游戏提示 -->
+            <div style="
+                position: absolute;
+                bottom: 120px;
+                right: 20px;
+                background: rgba(15, 23, 42, 0.85);
+                padding: 1rem;
+                border-radius: 12px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                max-width: 250px;
+                pointer-events: auto;
+            ">
+                <div style="
+                    font-size: 0.9rem;
+                    color: white;
+                    margin-bottom: 0.5rem;
+                ">🎮 控制说明</div>
+                <div style="
+                    font-size: 0.8rem;
+                    color: var(--text-dim);
+                    line-height: 1.4;
+                ">
+                    <div>🖱️ 电脑: WASD移动，空格攻击</div>
+                    <div>📱 手机: 使用下方按钮</div>
+                    <div>🎯 目标: 发射粒子击中对手</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 手机控制按钮 -->
+        <div id="mobileControls" style="
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem;
+            display: none;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 90;
+        ">
+            <!-- 移动控制区 -->
+            <div style="
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+                gap: 10px;
+                width: 180px;
+                height: 180px;
+                pointer-events: auto;
+            ">
+                <div style="grid-column: 2; grid-row: 1;">
+                    <button class="mobile-btn" data-action="up">
+                        <span>↑</span>
+                    </button>
+                </div>
+                <div style="grid-column: 1; grid-row: 2;">
+                    <button class="mobile-btn" data-action="left">
+                        <span>←</span>
+                    </button>
+                </div>
+                <div style="grid-column: 2; grid-row: 2;">
+                    <button class="mobile-btn" data-action="stop">
+                        <span>●</span>
+                    </button>
+                </div>
+                <div style="grid-column: 3; grid-row: 2;">
+                    <button class="mobile-btn" data-action="right">
+                        <span>→</span>
+                    </button>
+                </div>
+                <div style="grid-column: 2; grid-row: 3;">
+                    <button class="mobile-btn" data-action="down">
+                        <span>↓</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 攻击控制区 -->
+            <div style="
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+                pointer-events: auto;
+            ">
+                <button class="mobile-btn attack-btn" data-action="shoot" style="
+                    width: 100px;
+                    height: 100px;
+                    font-size: 2.5rem;
+                ">
+                    <span>⚡</span>
+                </button>
+                <div style="
+                    color: white;
+                    font-size: 0.9rem;
+                    background: rgba(239, 68, 68, 0.3);
+                    padding: 0.5rem 1rem;
+                    border-radius: 20px;
+                ">
+                    发射粒子
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+    /* ====== 游戏界面特定样式 ====== */
+    .mobile-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.1s;
+        user-select: none;
+        touch-action: manipulation;
+    }
+    
+    .mobile-btn:active {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(0.95);
+    }
+    
+    .attack-btn {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.5);
+    }
+    
+    .attack-btn:active {
+        background: rgba(239, 68, 68, 0.3);
+    }
+    
+    /* 触摸设备样式 */
+    @media (hover: none) and (pointer: coarse) {
+        #mobileControls {
+            display: flex !important;
+        }
+        
+        .mobile-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 1.8rem;
+        }
+    }
+</style>
+
+<script>
+    // ==================== 游戏引擎变量 ====================
+    let game = {
+        canvas: null,
+        ctx: null,
+        miniMapCanvas: null,
+        miniMapCtx: null,
+        width: 0,
+        height: 0,
+        
+        // 游戏状态
+        players: {
+            player1: null,
+            player2: null
+        },
+        projectiles: [],
+        maze: [],
+        mazeCols: 0,
+        mazeRows: 0,
+        cellSize: 40,
+        
+        // 输入控制
+        keys: {},
+        touchControls: {},
+        
+        // 游戏计时
+        gameTime: 90,
+        gameTimer: null,
+        lastUpdateTime: 0,
+        
+        // 游戏状态
+        isGameActive: false,
+        playerScore: 0,
+        opponentScore: 0
+    };
+    
+    // ==================== 加载界面逻辑 ====================
+    let loadingProgress = 0;
+    const loadingSteps = [
+        "初始化游戏引擎",
+        "生成量子迷宫",
+        "加载粒子系统",
+        "设置碰撞检测",
+        "建立网络连接",
+        "准备渲染器",
+        "最后优化"
+    ];
+    let currentStep = 0;
+    
+    function initializeLoading() {
+        console.log('开始游戏加载');
+        loadingProgress = 0;
+        currentStep = 0;
+        
+        // 更新加载步骤
+        updateLoadingStep();
+        
+        // 模拟加载过程
+        const loadingInterval = setInterval(() => {
+            loadingProgress += Math.random() * 15 + 5;
+            
+            if (loadingProgress >= 100) {
+                loadingProgress = 100;
+                clearInterval(loadingInterval);
+                
+                // 加载完成，进入游戏
+                setTimeout(() => {
+                    switchScene('gameScene');
+                    initializeGame();
+                }, 500);
+            }
+            
+            // 更新UI
+            document.getElementById('loadingBar').style.width = `${loadingProgress}%`;
+            document.getElementById('loadingPercent').textContent = `${Math.floor(loadingProgress)}%`;
+            
+            // 更新加载步骤
+            if (loadingProgress > (currentStep + 1) * (100 / loadingSteps.length)) {
+                currentStep = Math.min(currentStep + 1, loadingSteps.length - 1);
+                updateLoadingStep();
+            }
+            
+            // 随机显示提示
+            if (Math.random() > 0.7) {
+                updateLoadingTip();
+            }
+            
+        }, 200);
+    }
+    
+    function updateLoadingStep() {
+        const stepElement = document.getElementById('loadingStep');
+        if (stepElement && currentStep < loadingSteps.length) {
+            stepElement.textContent = loadingSteps[currentStep];
+        }
+    }
+    
+    function updateLoadingTip() {
+        const tips = [
+            "💡 迷宫是随机生成的，每局都不同",
+            "⚡ 粒子碰到墙壁会反弹3次",
+            "🎯 击中敌人造成25点伤害",
+            "🕹️ 手机玩家使用屏幕按钮控制",
+            "🔋 保持网络稳定以获得最佳体验",
+            "🏆 胜利可获得积分，失败也会获得少量积分"
+        ];
+        
+        const tipsElement = document.getElementById('loadingTips');
+        if (tipsElement) {
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            tipsElement.innerHTML = `<p>${randomTip}</p>`;
+        }
+    }
+    
+    // ==================== 游戏初始化 ====================
+    function initializeGame() {
+        console.log('🔥 1. initializeGame 开始');
+    
+        try {
+            console.log('初始化游戏，玩家角色:', playerRole);
+        
+            // 初始化画布
+            game.canvas = document.getElementById('gameCanvas');
+            game.ctx = game.canvas.getContext('2d');
+            console.log('✅ 画布初始化完成');
+        
+            game.miniMapCanvas = document.getElementById('miniMapCanvas');
+            game.miniMapCtx = game.miniMapCanvas.getContext('2d');
+            console.log('✅ 小地图画布初始化完成');
+        
+            // 设置画布尺寸
+            resizeGameCanvas();
+            window.addEventListener('resize', resizeGameCanvas);
+            console.log('✅ 画布尺寸设置完成');
+        
+            // 初始化输入控制
+            initializeInputControls();
+            console.log('✅ 输入控制初始化完成');
+        
+            // 生成迷宫
+            generateMaze();
+            console.log('✅ 迷宫生成完成');
+        
+            // 初始化玩家
+            initializePlayers();
+            console.log('✅ 玩家初始化完成');
+        
+            // 初始化游戏计时器
+            game.gameTime = 90;
+            document.getElementById('gameTimer').textContent = game.gameTime;
+            console.log('✅ 游戏计时器设置完成');
+        
+            // 更新玩家名称显示
+            updatePlayerDisplay();
+            console.log('✅ 玩家显示更新完成');
+        
+            // 显示移动控制（如果是移动设备）
+            checkMobileControls();
+            console.log('✅ 移动控制检查完成');
+        
+            // ========== 关键部分 ==========
+            console.log('🚀 准备启动游戏循环...');
+            game.isGameActive = true;
+            game.lastUpdateTime = Date.now();
+        
+            console.log('🎬 调用 requestAnimationFrame');
+            initializeGame();
+            console.log('✅ requestAnimationFrame 已调用');
+            // ========== 关键部分结束 ==========
+        
+            // 开始游戏倒计时
+            startGameTimer();
+            console.log('✅ 游戏计时器启动');
+        
+        } catch (error) {
+            console.error('❌ initializeGame 出错:', error);
+            console.error('错误堆栈:', error.stack);
+        }
+    
+        console.log('🎮 initializeGame 函数执行完毕');
+}
+    
+    function resizeGameCanvas() {
+        game.width = window.innerWidth;
+        game.height = window.innerHeight;
+        game.canvas.width = game.width;
+        game.canvas.height = game.height;
+        
+        // 重新计算迷宫尺寸
+        game.mazeCols = Math.floor(game.width / game.cellSize);
+        game.mazeRows = Math.floor(game.height / game.cellSize);
+    }
+    
+    function initializeInputControls() {
+        // 键盘控制
+        window.addEventListener('keydown', (e) => {
+            game.keys[e.key.toLowerCase()] = true;
+            
+            // 防止空格键滚动页面
+            if (e.key === ' ') {
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            game.keys[e.key.toLowerCase()] = false;
+        });
+        
+        // 触摸控制
+        const mobileButtons = document.querySelectorAll('.mobile-btn');
+        mobileButtons.forEach(btn => {
+            const action = btn.getAttribute('data-action');
+            
+            // 触摸开始
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                game.touchControls[action] = true;
+                btn.style.background = action === 'shoot' ? 
+                    'rgba(239, 68, 68, 0.3)' : 
+                    'rgba(255, 255, 255, 0.25)';
+            });
+            
+            // 触摸结束
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                game.touchControls[action] = false;
+                btn.style.background = action === 'shoot' ? 
+                    'rgba(239, 68, 68, 0.2)' : 
+                    'rgba(255, 255, 255, 0.15)';
+            });
+            
+            // 鼠标控制（用于测试）
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                game.touchControls[action] = true;
+                btn.style.background = action === 'shoot' ? 
+                    'rgba(239, 68, 68, 0.3)' : 
+                    'rgba(255, 255, 255, 0.25)';
+            });
+            
+            btn.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                game.touchControls[action] = false;
+                btn.style.background = action === 'shoot' ? 
+                    'rgba(239, 68, 68, 0.2)' : 
+                    'rgba(255, 255, 255, 0.15)';
+            });
+            
+            btn.addEventListener('mouseleave', (e) => {
+                game.touchControls[action] = false;
+                btn.style.background = action === 'shoot' ? 
+                    'rgba(239, 68, 68, 0.2)' : 
+                    'rgba(255, 255, 255, 0.15)';
+            });
+        });
+        
+        // 防止右键菜单
+        game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+    
+    function generateMaze() {
+        console.log('生成迷宫中...');
+        
+        game.mazeCols = Math.floor(game.width / game.cellSize);
+        game.mazeRows = Math.floor(game.height / game.cellSize);
+        
+        // 初始化迷宫数组
+        game.maze = [];
+        for (let y = 0; y < game.mazeRows; y++) {
+            game.maze[y] = [];
+            for (let x = 0; x < game.mazeCols; x++) {
+                // 边界是墙壁
+                if (x === 0 || x === game.mazeCols - 1 || 
+                    y === 0 || y === game.mazeRows - 1) {
+                    game.maze[y][x] = 1;
+                } else {
+                    // 随机生成墙壁（25%的概率）
+                    game.maze[y][x] = Math.random() < 0.25 ? 1 : 0;
+                }
+            }
+        }
+        
+        // 确保起点和终点是空的
+        const startX = Math.floor(game.mazeCols * 0.2);
+        const startY = Math.floor(game.mazeRows * 0.5);
+        const endX = Math.floor(game.mazeCols * 0.8);
+        const endY = Math.floor(game.mazeRows * 0.5);
+        
+        // 清理起点和终点区域
+        for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++) {
+                const x = startX + dx;
+                const y = startY + dy;
+                if (x >= 0 && x < game.mazeCols && y >= 0 && y < game.mazeRows) {
+                    game.maze[y][x] = 0;
+                }
+                
+                const x2 = endX + dx;
+                const y2 = endY + dy;
+                if (x2 >= 0 && x2 < game.mazeCols && y2 >= 0 && y2 < game.mazeRows) {
+                    game.maze[y2][x2] = 0;
+                }
+            }
+        }
+        
+        console.log(`迷宫生成完成: ${game.mazeCols}x${game.mazeRows}`);
+    }
+    
+    function initializePlayers() {
+        // 找到起始位置
+        const startX = Math.floor(game.mazeCols * 0.2) * game.cellSize + game.cellSize / 2;
+        const startY = Math.floor(game.mazeRows * 0.5) * game.cellSize + game.cellSize / 2;
+        const endX = Math.floor(game.mazeCols * 0.8) * game.cellSize + game.cellSize / 2;
+        const endY = Math.floor(game.mazeRows * 0.5) * game.cellSize + game.cellSize / 2;
+        
+        // 根据玩家角色设置玩家位置
+        if (playerRole === 'proton') {
+            // 玩家是质子（蓝色），在左侧
+            game.players.player1 = {
+                x: startX,
+                y: startY,
+                radius: 16,
+                color: '#3b82f6',
+                hp: 100,
+                maxHp: 100,
+                speed: 5,
+                direction: 0,
+                lastShot: 0,
+                shotCooldown: 500, // 0.5秒冷却
+                score: 0
+            };
+            
+            // 对手是电子（红色），在右侧
+            game.players.player2 = {
+                x: endX,
+                y: endY,
+                radius: 16,
+                color: '#ef4444',
+                hp: 100,
+                maxHp: 100,
+                speed: 5,
+                direction: Math.PI,
+                isAI: true, // 对手是AI（暂时）
+                aiDirectionChangeTime: 0,
+                score: 0
+            };
+        } else {
+            // 玩家是电子（红色），在右侧
+            game.players.player1 = {
+                x: endX,
+                y: endY,
+                radius: 16,
+                color: '#ef4444',
+                hp: 100,
+                maxHp: 100,
+                speed: 5,
+                direction: Math.PI,
+                lastShot: 0,
+                shotCooldown: 500,
+                score: 0
+            };
+            
+            // 对手是质子（蓝色），在左侧
+            game.players.player2 = {
+                x: startX,
+                y: startY,
+                radius: 16,
+                color: '#3b82f6',
+                hp: 100,
+                maxHp: 100,
+                speed: 5,
+                direction: 0,
+                isAI: true,
+                aiDirectionChangeTime: 0,
+                score: 0
+            };
+        }
+        
+        console.log('玩家初始化完成');
+    }
+    
+    function updatePlayerDisplay() {
+        // 更新玩家名称
+        const playerNameElement = document.getElementById('playerName');
+        const opponentNameElement = document.getElementById('opponentName');
+        
+        if (playerNameElement) {
+            playerNameElement.textContent = playerRole === 'proton' ? '质子' : '电子';
+        }
+        
+        if (opponentNameElement) {
+            opponentNameElement.textContent = playerRole === 'proton' ? '电子' : '质子';
+        }
+        
+        // 更新血量显示
+        updateHealthBars();
+    }
+    
+    function checkMobileControls() {
+        // 检测是否为移动设备
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const mobileControls = document.getElementById('mobileControls');
+        
+        if (isMobile && mobileControls) {
+            mobileControls.style.display = 'flex';
+        }
+    }
+    
+
+</script>
+<script>
+    // ==================== 游戏核心逻辑 ====================
+    
+    function gameLoop() {
+        console.log('🔄 游戏循环运行中...'); // 临时添加，看是否持续输出
+        if (!game.isGameActive) {
+            console.log('⏸️ 游戏未激活，停止循环');
+            return;
+        }
+        
+        const currentTime = Date.now();
+        const deltaTime = currentTime - game.lastUpdateTime;
+        
+        // 更新游戏状态
+        updateGame(deltaTime);
+        
+        // 渲染游戏
+        renderGame();
+        
+        // 继续循环
+        game.lastUpdateTime = currentTime;
+        requestAnimationFrame(gameLoop);
+    }
+    
+    function updateGame(deltaTime) {
+        // 更新玩家
+        updatePlayer(game.players.player1, true); // 玩家
+        updatePlayer(game.players.player2, false); // 对手（AI）
+        
+        // 更新子弹
+        updateProjectiles(deltaTime);
+        
+        // 检查碰撞
+        checkCollisions();
+        
+        // 更新AI对手
+        if (game.players.player2.isAI) {
+            updateAI(game.players.player2, deltaTime);
+        }
+    }
+    
+    function updatePlayer(player, isControlled) {
+        if (!player || player.hp <= 0) return;
+        
+        let dx = 0, dy = 0;
+        
+        if (isControlled) {
+            // 玩家控制
+            if (game.keys['w'] || game.keys['arrowup'] || game.touchControls['up']) dy = -1;
+            if (game.keys['s'] || game.keys['arrowdown'] || game.touchControls['down']) dy = 1;
+            if (game.keys['a'] || game.keys['arrowleft'] || game.touchControls['left']) dx = -1;
+            if (game.keys['d'] || game.keys['arrowright'] || game.touchControls['right']) dx = 1;
+            
+            // 停止按钮
+            if (game.touchControls['stop']) {
+                dx = 0;
+                dy = 0;
+            }
+            
+            // 射击控制
+            const currentTime = Date.now();
+            if ((game.keys[' '] || game.touchControls['shoot']) && 
+                currentTime - player.lastShot > player.shotCooldown) {
+                shootProjectile(player);
+                player.lastShot = currentTime;
+            }
+        }
+        
+        // 归一化对角线移动
+        if (dx !== 0 && dy !== 0) {
+            dx *= 0.7071;
+            dy *= 0.7071;
+        }
+        
+        // 计算新位置
+        const newX = player.x + dx * player.speed;
+        const newY = player.y + dy * player.speed;
+        
+        // 检查墙壁碰撞
+        if (!checkWallCollision(newX, player.y, player.radius)) {
+            player.x = newX;
+        }
+        if (!checkWallCollision(player.x, newY, player.radius)) {
+            player.y = newY;
+        }
+        
+        // 更新方向
+        if (dx !== 0 || dy !== 0) {
+            player.direction = Math.atan2(dy, dx);
+        }
+        
+        // 限制在屏幕内
+        player.x = Math.max(player.radius, Math.min(game.width - player.radius, player.x));
+        player.y = Math.max(player.radius, Math.min(game.height - player.radius, player.y));
+    }
+    
+    function updateAI(aiPlayer, deltaTime) {
+        if (!aiPlayer || aiPlayer.hp <= 0) return;
+        
+        const currentTime = Date.now();
+        
+        // 每2秒改变一次方向
+        if (currentTime - aiPlayer.aiDirectionChangeTime > 2000) {
+            aiPlayer.direction = Math.random() * Math.PI * 2;
+            aiPlayer.aiDirectionChangeTime = currentTime;
+        }
+        
+        // 移动AI
+        const aiDx = Math.cos(aiPlayer.direction);
+        const aiDy = Math.sin(aiPlayer.direction);
+        
+        const newAiX = aiPlayer.x + aiDx * aiPlayer.speed * 0.5; // AI速度较慢
+        const newAiY = aiPlayer.y + aiDy * aiPlayer.speed * 0.5;
+        
+        if (!checkWallCollision(newAiX, aiPlayer.y, aiPlayer.radius)) {
+            aiPlayer.x = newAiX;
+        }
+        if (!checkWallCollision(aiPlayer.x, newAiY, aiPlayer.radius)) {
+            aiPlayer.y = newAiY;
+        }
+        
+        // AI随机射击
+        if (Math.random() < 0.02 && currentTime - aiPlayer.lastShot > aiPlayer.shotCooldown) {
+            shootProjectile(aiPlayer);
+            aiPlayer.lastShot = currentTime;
+        }
+    }
+    
+    function checkWallCollision(x, y, radius) {
+        const cellX = Math.floor(x / game.cellSize);
+        const cellY = Math.floor(y / game.cellSize);
+        
+        // 检查周围9个格子
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const checkX = cellX + dx;
+                const checkY = cellY + dy;
+                
+                if (checkX >= 0 && checkX < game.mazeCols &&
+                    checkY >= 0 && checkY < game.mazeRows &&
+                    game.maze[checkY][checkX] === 1) {
+                    
+                    // 计算墙壁边界
+                    const wallLeft = checkX * game.cellSize;
+                    const wallRight = wallLeft + game.cellSize;
+                    const wallTop = checkY * game.cellSize;
+                    const wallBottom = wallTop + game.cellSize;
+                    
+                    // 找到最近的点
+                    const closestX = Math.max(wallLeft, Math.min(x, wallRight));
+                    const closestY = Math.max(wallTop, Math.min(y, wallBottom));
+                    
+                    // 计算距离
+                    const distance = Math.sqrt(
+                        Math.pow(x - closestX, 2) + Math.pow(y - closestY, 2)
+                    );
+                    
+                    if (distance < radius) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    function shootProjectile(shooter) {
+        const projectile = {
+            x: shooter.x,
+            y: shooter.y,
+            radius: 6,
+            color: shooter.color,
+            speed: 8,
+            direction: shooter.direction,
+            dx: Math.cos(shooter.direction) * 8, // 直接计算速度分量
+            dy: Math.sin(shooter.direction) * 8,
+            owner: shooter === game.players.player1 ? 'player1' : 'player2',
+            bounceCount: 3,
+            lifeTime: 5000 // 5秒后消失,
+            active: true // 添加激活状态
+        };
+        
+        game.projectiles.push(projectile);
+        
+        // 播放射击音效（模拟）
+        playSound('shoot');
+    }
+    
+    function updateProjectiles(deltaTime) {
+        for (let i = game.projectiles.length - 1; i >= 0; i--) {
+            const p = game.projectiles[i];
+            
+            // 更新位置
+            p.x += p.dx || 0;
+            p.y += p.dy || 0;
+             // 备用方法：使用速度和方向
+            if (typeof p.dx === 'undefined') {
+                p.x += Math.cos(p.direction) * p.speed;
+                p.y += Math.sin(p.direction) * p.speed;
+            }
+            // 减少寿命
+            p.lifeTime -= deltaTime;
+            if (p.lifeTime <= 0) {
+                game.projectiles.splice(i, 1);
+                continue;
+            }
+            
+            // 检查墙壁碰撞和反弹
+            if (checkWallCollision(p.x, p.y, p.radius)) {
+                // 计算反弹角度
+                const normal = getWallNormal(p.x, p.y);
+                if (normal) {
+                    // 反射公式: R = V - 2*(V·N)*N
+                    const dot = Math.cos(p.direction) * normal.x + Math.sin(p.direction) * normal.y;
+                    p.direction = Math.atan2(
+                        Math.sin(p.direction) - 2 * dot * normal.y,
+                        Math.cos(p.direction) - 2 * dot * normal.x
+                    );
+                    
+                    p.bounceCount--;
+                    
+                    // 播放反弹音效
+                    playSound('bounce');
+                }
+                
+                if (p.bounceCount <= 0) {
+                    game.projectiles.splice(i, 1);
+                    continue;
+                }
+            }
+            
+            // 检查是否飞出屏幕
+            if (p.x < -100 || p.x > game.width + 100 || 
+                p.y < -100 || p.y > game.height + 100) {
+                game.projectiles.splice(i, 1);
+            }
+        }
+    }
+    
+    function getWallNormal(x, y) {
+        const cellX = Math.floor(x / game.cellSize);
+        const cellY = Math.floor(y / game.cellSize);
+        
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const checkX = cellX + dx;
+                const checkY = cellY + dy;
+                
+                if (checkX >= 0 && checkX < game.mazeCols &&
+                    checkY >= 0 && checkY < game.mazeRows &&
+                    game.maze[checkY][checkX] === 1) {
+                    
+                    const wallCenterX = (checkX + 0.5) * game.cellSize;
+                    const wallCenterY = (checkY + 0.5) * game.cellSize;
+                    
+                    const dxToCenter = x - wallCenterX;
+                    const dyToCenter = y - wallCenterY;
+                    
+                    // 计算法线（从墙壁中心指向碰撞点）
+                    const distance = Math.sqrt(dxToCenter * dxToCenter + dyToCenter * dyToCenter);
+                    
+                    return {
+                        x: dxToCenter / distance,
+                        y: dyToCenter / distance
+                    };
+                }
+            }
+        }
+        return null;
+    }
+    
+    function checkCollisions() {
+        // 检查子弹与玩家的碰撞
+        for (let i = game.projectiles.length - 1; i >= 0; i--) {
+            const p = game.projectiles[i];
+            
+            for (const [playerKey, player] of Object.entries(game.players)) {
+                if (p.owner !== playerKey && player && player.hp > 0) {
+                    const distance = Math.sqrt(
+                        Math.pow(p.x - player.x, 2) + Math.pow(p.y - player.y, 2)
+                    );
+                    
+                    if (distance < p.radius + player.radius) {
+                        // 击中玩家
+                        player.hp -= 25;
+                        
+                        // 更新分数
+                        if (p.owner === 'player1') {
+                            game.players.player1.score += 10;
+                            game.playerScore = game.players.player1.score;
+                        } else {
+                            game.players.player2.score += 10;
+                            game.opponentScore = game.players.player2.score;
+                        }
+                        
+                        // 更新UI
+                        updateHealthBars();
+                        updateScores();
+                        
+                        // 移除子弹
+                        game.projectiles.splice(i, 1);
+                        
+                        // 播放击中音效
+                        playSound('hit');
+                        
+                        // 检查游戏结束
+                        if (player.hp <= 0) {
+                            player.hp = 0;
+                            endGame(p.owner === 'player1' ? 'player1' : 'player2');
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    function updateHealthBars() {
+        const playerHealthBar = document.getElementById('playerHealthBar');
+        const opponentHealthBar = document.getElementById('opponentHealthBar');
+        const playerHP = document.getElementById('playerHP');
+        const opponentHP = document.getElementById('opponentHP');
+        
+        if (playerHealthBar && game.players.player1) {
+            const percent = (game.players.player1.hp / game.players.player1.maxHp) * 100;
+            playerHealthBar.style.width = `${percent}%`;
+            playerHP.textContent = game.players.player1.hp;
+        }
+        
+        if (opponentHealthBar && game.players.player2) {
+            const percent = (game.players.player2.hp / game.players.player2.maxHp) * 100;
+            opponentHealthBar.style.width = `${percent}%`;
+            opponentHP.textContent = game.players.player2.hp;
+        }
+    }
+    
+    function updateScores() {
+        const playerScoreElement = document.getElementById('playerScore');
+        const opponentScoreElement = document.getElementById('opponentScore');
+        
+        if (playerScoreElement) {
+            playerScoreElement.textContent = game.playerScore;
+        }
+        
+        if (opponentScoreElement) {
+            opponentScoreElement.textContent = game.opponentScore;
+        }
+    }
+    
+    // ==================== 游戏渲染 ====================
+    
+    function renderGame() {
+        // 清空画布
+        game.ctx.fillStyle = '#000';
+        game.ctx.fillRect(0, 0, game.width, game.height);
+        
+        // 绘制迷宫
+        drawMaze();
+        
+        // 绘制玩家
+        drawPlayer(game.players.player1);
+        drawPlayer(game.players.player2);
+        
+        // 绘制子弹
+        drawProjectiles();
+        
+        // 绘制小地图
+        drawMiniMap();
+        
+        // 绘制方向指示器
+        drawDirectionIndicators();
+    }
+    
+    function drawMaze() {
+        game.ctx.fillStyle = '#334155';
+        
+        for (let y = 0; y < game.mazeRows; y++) {
+            for (let x = 0; x < game.mazeCols; x++) {
+                if (game.maze[y][x] === 1) {
+                    game.ctx.fillRect(
+                        x * game.cellSize,
+                        y * game.cellSize,
+                        game.cellSize,
+                        game.cellSize
+                    );
+                    
+                    // 墙壁边框
+                    game.ctx.strokeStyle = '#475569';
+                    game.ctx.lineWidth = 2;
+                    game.ctx.strokeRect(
+                        x * game.cellSize,
+                        y * game.cellSize,
+                        game.cellSize,
+                        game.cellSize
+                    );
+                }
+            }
+        }
+    }
+    
+    function drawPlayer(player) {
+        if (!player || player.hp <= 0) return;
+        
+        // 玩家主体
+        game.ctx.fillStyle = player.color;
+        game.ctx.beginPath();
+        game.ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+        game.ctx.fill();
+        
+        // 玩家边框
+        game.ctx.strokeStyle = '#ffffff';
+        game.ctx.lineWidth = 2;
+        game.ctx.beginPath();
+        game.ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+        game.ctx.stroke();
+        
+        // 血量环
+        const hpPercent = player.hp / player.maxHp;
+        game.ctx.strokeStyle = hpPercent > 0.5 ? '#10b981' : hpPercent > 0.25 ? '#f59e0b' : '#ef4444';
+        game.ctx.lineWidth = 3;
+        game.ctx.beginPath();
+        game.ctx.arc(player.x, player.y, player.radius + 3, -Math.PI/2, -Math.PI/2 + Math.PI * 2 * hpPercent);
+        game.ctx.stroke();
+        
+        // 角色标识
+        game.ctx.fillStyle = '#ffffff';
+        game.ctx.font = 'bold 14px Arial';
+        game.ctx.textAlign = 'center';
+        game.ctx.textBaseline = 'middle';
+        game.ctx.fillText(
+            player === game.players.player1 ? (playerRole === 'proton' ? 'P+' : 'E-') : 
+            (playerRole === 'proton' ? 'E-' : 'P+'),
+            player.x,
+            player.y
+        );
+    }
+    
+    function drawProjectiles() {
+        game.projectiles.forEach(p => {
+            // 子弹主体
+            game.ctx.fillStyle = p.color;
+            game.ctx.beginPath();
+            game.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            game.ctx.fill();
+            
+            // 子弹光晕
+            const gradient = game.ctx.createRadialGradient(
+                p.x, p.y, 0,
+                p.x, p.y, p.radius * 2
+            );
+            gradient.addColorStop(0, `${p.color}80`);
+            gradient.addColorStop(1, `${p.color}00`);
+            
+            game.ctx.fillStyle = gradient;
+            game.ctx.beginPath();
+            game.ctx.arc(p.x, p.y, p.radius * 2, 0, Math.PI * 2);
+            game.ctx.fill();
+            
+            // 子弹轨迹
+            game.ctx.strokeStyle = `${p.color}40`;
+            game.ctx.lineWidth = 1;
+            game.ctx.beginPath();
+            game.ctx.moveTo(p.x - Math.cos(p.direction) * 10, p.y - Math.sin(p.direction) * 10);
+            game.ctx.lineTo(p.x, p.y);
+            game.ctx.stroke();
+        });
+    }
+    
+    function drawDirectionIndicators() {
+        // 绘制玩家方向指示器
+        drawDirectionIndicator(game.players.player1, '#3b82f6');
+        drawDirectionIndicator(game.players.player2, '#ef4444');
+    }
+    
+    function drawDirectionIndicator(player, color) {
+        if (!player || player.hp <= 0) return;
+        
+        game.ctx.strokeStyle = color;
+        game.ctx.lineWidth = 3;
+        game.ctx.beginPath();
+        game.ctx.moveTo(player.x, player.y);
+        game.ctx.lineTo(
+            player.x + Math.cos(player.direction) * (player.radius + 15),
+            player.y + Math.sin(player.direction) * (player.radius + 15)
+        );
+        game.ctx.stroke();
+        
+        // 箭头头
+        game.ctx.fillStyle = color;
+        game.ctx.beginPath();
+        game.ctx.arc(
+            player.x + Math.cos(player.direction) * (player.radius + 15),
+            player.y + Math.sin(player.direction) * (player.radius + 15),
+            4, 0, Math.PI * 2
+        );
+        game.ctx.fill();
+    }
+    
+    function drawMiniMap() {
+        const miniMap = game.miniMapCtx;
+        const size = game.miniMapCanvas.width;
+        
+        // 清空小地图
+        miniMap.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        miniMap.fillRect(0, 0, size, size);
+        
+        // 计算缩放比例
+        const scaleX = size / game.width;
+        const scaleY = size / game.height;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // 绘制迷宫
+        miniMap.fillStyle = '#475569';
+        for (let y = 0; y < game.mazeRows; y++) {
+            for (let x = 0; x < game.mazeCols; x++) {
+                if (game.maze[y][x] === 1) {
+                    miniMap.fillRect(
+                        x * game.cellSize * scale,
+                        y * game.cellSize * scale,
+                        game.cellSize * scale,
+                        game.cellSize * scale
+                    );
+                }
+            }
+        }
+        
+        // 绘制玩家
+        if (game.players.player1 && game.players.player1.hp > 0) {
+            miniMap.fillStyle = game.players.player1.color;
+            miniMap.beginPath();
+            miniMap.arc(
+                game.players.player1.x * scale,
+                game.players.player1.y * scale,
+                3, 0, Math.PI * 2
+            );
+            miniMap.fill();
+        }
+        
+        if (game.players.player2 && game.players.player2.hp > 0) {
+            miniMap.fillStyle = game.players.player2.color;
+            miniMap.beginPath();
+            miniMap.arc(
+                game.players.player2.x * scale,
+                game.players.player2.y * scale,
+                3, 0, Math.PI * 2
+            );
+            miniMap.fill();
+        }
+        
+        // 绘制小地图边框
+        miniMap.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        miniMap.lineWidth = 2;
+        miniMap.strokeRect(0, 0, size, size);
+    }
+    
+    // ==================== 游戏计时器 ====================
+    
+    function startGameTimer() {
+        if (game.gameTimer) clearInterval(game.gameTimer);
+        
+        game.gameTimer = setInterval(() => {
+            game.gameTime--;
+            document.getElementById('gameTimer').textContent = game.gameTime;
+            
+            if (game.gameTime <= 0) {
+                clearInterval(game.gameTimer);
+                endGame('timeout');
+            }
+        }, 1000);
+    }
+    
+    // ==================== 音效系统 ====================
+    
+    function playSound(type) {
+        // 这里可以使用Web Audio API添加真实音效
+        // 现在先用控制台日志模拟
+        const sounds = {
+            shoot: '🔫 射击音效',
+            bounce: '↪️ 反弹音效',
+            hit: '💥 击中音效',
+            win: '🏆 胜利音效',
+            lose: '💀 失败音效'
+        };
+        
+        console.log(sounds[type] || '🔊 音效播放');
+    }
+    
+    // ==================== 游戏结束逻辑 ====================
+    
+    function endGame(winner) {
+        game.isGameActive = false;
+        
+        if (game.gameTimer) {
+            clearInterval(game.gameTimer);
+            game.gameTimer = null;
+        }
+        
+        // 计算胜利者
+        let gameResult = {
+            winner: winner,
+            playerScore: game.playerScore,
+            opponentScore: game.opponentScore,
+            playerHP: game.players.player1 ? game.players.player1.hp : 0,
+            opponentHP: game.players.player2 ? game.players.player2.hp : 0,
+            timeLeft: game.gameTime
+        };
+        
+        // 保存结果
+        localStorage.setItem('lastGameResult', JSON.stringify(gameResult));
+        
+        // 显示游戏结束界面
+        setTimeout(() => {
+            switchScene('gameOverScene');
+            showGameResult(gameResult);
+        }, 1000);
+    }
+    
+    // ==================== 游戏结束界面 ====================
+</script>
+
+<!-- 场景6: 游戏结束 -->
+<div id="gameOverScene" class="scene">
+    <div style="
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, 
+            rgba(15, 23, 42, 0.95) 0%, 
+            rgba(30, 41, 59, 0.9) 100%);
+    ">
+        <div id="resultContent" style="
+            max-width: 600px;
+            width: 100%;
+        ">
+            <!-- 结果内容将通过JavaScript动态生成 -->
+        </div>
+        
+        <div style="
+            margin-top: 3rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        ">
+            <button id="playAgainBtn" class="btn btn-primary" onclick="playAgain()">
+                <span>🔄</span> 再玩一次
+            </button>
+            <button id="backToMenuBtn" class="btn btn-secondary" onclick="backToMenu()">
+                <span>🏠</span> 返回主菜单
+            </button>
+            <button id="shareResultBtn" class="btn btn-secondary" onclick="shareResult()">
+                <span>📤</span> 分享结果
+            </button>
+        </div>
+        
+        <div style="
+            margin-top: 2rem;
+            max-width: 500px;
+            width: 100%;
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            ">
+                <h4 style="color: white; margin-bottom: 0.75rem;">📊 游戏统计</h4>
+                <div style="
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1rem;
+                    text-align: left;
+                ">
+                    <div>
+                        <div style="color: var(--text-dim); font-size: 0.9rem;">总分数</div>
+                        <div style="color: white; font-size: 1.5rem; font-weight: bold;" id="totalScore">0</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-dim); font-size: 0.9rem;">剩余时间</div>
+                        <div style="color: white; font-size: 1.5rem; font-weight: bold;" id="timeLeft">0s</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-dim); font-size: 0.9rem;">准确率</div>
+                        <div style="color: white; font-size: 1.5rem; font-weight: bold;" id="accuracy">0%</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-dim); font-size: 0.9rem;">获得积分</div>
+                        <div style="color: #10b981; font-size: 1.5rem; font-weight: bold;" id="pointsEarned">+0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== 游戏结果展示 ====================
+    
+    function showGameResult(result) {
+        const resultContent = document.getElementById('resultContent');
+        if (!resultContent) return;
+        
+        let title = '';
+        let message = '';
+        let icon = '';
+        let color = '';
+        
+        // 判断胜负
+        if (result.winner === 'player1') {
+            title = '🏆 胜利！';
+            message = '你击败了对手！量子霸权属于你！';
+            icon = '🎉';
+            color = '#10b981';
+        } else if (result.winner === 'player2') {
+            title = '💀 失败';
+            message = '你被对手击败了，继续努力！';
+            icon = '😢';
+            color = '#ef4444';
+        } else if (result.winner === 'timeout') {
+            title = '⏱️ 平局！';
+            message = '时间到！根据剩余血量判定...';
+            icon = '🤝';
+            color = '#f59e0b';
+            
+            // 根据血量判断胜负
+            if (result.playerHP > result.opponentHP) {
+                title = '🏆 险胜！';
+                message = '时间到！你以血量优势获胜！';
+                icon = '🎯';
+                color = '#10b981';
+                result.winner = 'player1';
+            } else if (result.playerHP < result.opponentHP) {
+                title = '💀 惜败';
+                message = '时间到！对手以血量优势获胜。';
+                icon = '😔';
+                color = '#ef4444';
+                result.winner = 'player2';
+            }
+        }
+        
+        // 计算统计数据
+        const totalScore = result.playerScore + result.opponentScore;
+        const playerAccuracy = totalScore > 0 ? Math.round((result.playerScore / totalScore) * 100) : 0;
+        
+        // 计算获得积分
+        let pointsEarned = 0;
+        if (result.winner === 'player1') {
+            pointsEarned = 25 + Math.floor(result.playerScore / 10);
+        } else if (result.winner === 'player2') {
+            pointsEarned = 5 + Math.floor(result.playerScore / 20);
+        } else {
+            pointsEarned = 10 + Math.floor(result.playerScore / 15);
+        }
+        
+        // 更新统计显示
+        document.getElementById('totalScore').textContent = totalScore;
+        document.getElementById('timeLeft').textContent = `${result.timeLeft}s`;
+        document.getElementById('accuracy').textContent = `${playerAccuracy}%`;
+        document.getElementById('pointsEarned').textContent = `+${pointsEarned}`;
+        
+        // 保存积分到本地存储
+        savePoints(pointsEarned);
+        
+        // 生成结果HTML
+        resultContent.innerHTML = `
+            <div style="
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 20px;
+                padding: 3rem 2rem;
+                border: 3px solid ${color};
+                margin-bottom: 2rem;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            ">
+                <div style="
+                    font-size: 5rem;
+                    margin-bottom: 1rem;
+                    animation: float 2s ease-in-out infinite;
+                ">${icon}</div>
+                
+                <h1 style="
+                    font-size: 3rem;
+                    margin-bottom: 1rem;
+                    color: ${color};
+                ">${title}</h1>
+                
+                <p style="
+                    color: var(--text-dim);
+                    font-size: 1.1rem;
+                    margin-bottom: 2rem;
+                    max-width: 400px;
+                    margin-left: auto;
+                    margin-right: auto;
+                ">${message}</p>
+                
+                <div style="
+                    display: flex;
+                    justify-content: center;
+                    gap: 3rem;
+                    margin: 2rem 0;
+                    flex-wrap: wrap;
+                ">
+                    <div style="text-align: center;">
+                        <div style="
+                            font-size: 2.5rem;
+                            color: ${playerRole === 'proton' ? '#3b82f6' : '#ef4444'};
+                            font-weight: bold;
+                        ">${result.playerScore}</div>
+                        <div style="
+                            color: var(--text-dim);
+                            margin-top: 0.5rem;
+                        ">你的分数</div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <div style="
+                            font-size: 2.5rem;
+                            color: ${playerRole === 'proton' ? '#ef4444' : '#3b82f6'};
+                            font-weight: bold;
+                        ">${result.opponentScore}</div>
+                        <div style="
+                            color: var(--text-dim);
+                            margin-top: 0.5rem;
+                        ">对手分数</div>
+                    </div>
+                </div>
+                
+                <div style="
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 12px;
+                    padding: 1.5rem;
+                    margin-top: 2rem;
+                ">
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 1rem;
+                    ">
+                        <span style="color: var(--text-dim);">角色</span>
+                        <span style="color: white; font-weight: bold;">
+                            ${playerRole === 'proton' ? '质子 (蓝色)' : '电子 (红色)'}
+                        </span>
+                    </div>
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 1rem;
+                    ">
+                        <span style="color: var(--text-dim);">剩余血量</span>
+                        <span style="color: white; font-weight: bold;">${result.playerHP} / 100</span>
+                    </div>
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                    ">
+                        <span style="color: var(--text-dim);">游戏时长</span>
+                        <span style="color: white; font-weight: bold;">${90 - result.timeLeft} 秒</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 播放相应音效
+        if (result.winner === 'player1') {
+            playSound('win');
+        } else {
+            playSound('lose');
+        }
+    }
+    
+    function savePoints(points) {
+        try {
+            // 从本地存储获取现有积分
+            let totalPoints = localStorage.getItem('gamePoints');
+            totalPoints = totalPoints ? parseInt(totalPoints) : 0;
+            
+            // 添加新积分
+            totalPoints += points;
+            
+            // 保存回本地存储
+            localStorage.setItem('gamePoints', totalPoints);
+            
+            // 保存游戏历史
+            const gameHistory = JSON.parse(localStorage.getItem('gameHistory') || '[]');
+            gameHistory.push({
+                date: new Date().toISOString(),
+                points: points,
+                role: playerRole,
+                result: game.players.player1.hp > 0 ? 'win' : 'lose'
+            });
+            
+            // 只保留最近10场游戏
+            if (gameHistory.length > 10) {
+                gameHistory.shift();
+            }
+            
+            localStorage.setItem('gameHistory', JSON.stringify(gameHistory));
+            
+            console.log(`获得 ${points} 积分，总积分: ${totalPoints}`);
+            
+        } catch (error) {
+            console.error('保存积分时出错:', error);
+        }
+    }
+    
+    // ==================== 游戏结束操作 ====================
+    
+    function playAgain() {
+        // 重置游戏状态
+        resetGame();
+        
+        // 重新开始匹配
+        startMatchmaking();
+    }
+    
+    function backToMenu() {
+        // 重置游戏状态
+        resetGame();
+        
+        // 返回主菜单
+        switchScene('menuScene');
+    }
+    
+    function shareResult() {
+        const result = JSON.parse(localStorage.getItem('lastGameResult') || '{}');
+        
+        let shareText = '';
+        if (result.winner === 'player1') {
+            shareText = `🏆 我在《质子VS电子》中获胜！\n`;
+        } else if (result.winner === 'player2') {
+            shareText = `💪 我在《质子VS电子》中努力对战！\n`;
+        } else {
+            shareText = `⚡ 我在《质子VS电子》中打成平局！\n`;
+        }
+        
+        shareText += `得分: ${result.playerScore} - ${result.opponentScore}\n`;
+        shareText += `剩余血量: ${result.playerHP}/100\n`;
+        shareText += `游戏时长: ${90 - result.timeLeft}秒\n`;
+        shareText += `\n来挑战我吧！`;
+        
+        // 尝试使用Web Share API
+        if (navigator.share) {
+            navigator.share({
+                title: '质子VS电子 - 游戏结果',
+                text: shareText,
+                url: window.location.href
+            }).catch(console.error);
+        } else {
+            // 复制到剪贴板
+            navigator.clipboard.writeText(shareText).then(() => {
+                alert('结果已复制到剪贴板！\n\n' + shareText);
+            }).catch(() => {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = shareText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('结果已复制到剪贴板！');
+            });
+        }
+    }
+    
+    function resetGame() {
+        // 停止游戏循环
+        game.isGameActive = false;
+        
+        // 清除计时器
+        if (game.gameTimer) {
+            clearInterval(game.gameTimer);
+            game.gameTimer = null;
+        }
+        
+        // 重置游戏状态
+        game.players = {
+            player1: null,
+            player2: null
+        };
+        game.projectiles = [];
+        game.playerScore = 0;
+        game.opponentScore = 0;
+        game.gameTime = 90;
+        
+        // 重置输入
+        game.keys = {};
+        game.touchControls = {};
+        
+        console.log('游戏已重置');
+    }
+    
+    // ==================== 动画定义 ====================
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 5px currentColor); }
+            50% { filter: drop-shadow(0 0 20px currentColor); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+
+
+
+    <script>
+        // ==================== 游戏状态管理 ====================
+        const GameState = {
+            MENU: 'menu',
+            MATCHING: 'matching',
+            LOBBY: 'lobby',
+            LOADING: 'loading',
+            PLAYING: 'playing',
+            GAME_OVER: 'game_over'
+        };
+        
+        let currentState = GameState.MENU;
+        let playerRole = null; // 'proton' 或 'electron'
+        let matchTimer = 0;
+        let matchInterval = null;
+        
+        // ==================== 场景切换 ====================
+        function switchScene(sceneId) {
+            // 隐藏所有场景
+            document.querySelectorAll('.scene').forEach(scene => {
+                scene.classList.remove('active');
+            });
+            
+            // 显示目标场景
+            const targetScene = document.getElementById(sceneId);
+            if (targetScene) {
+                targetScene.classList.add('active');
+            }
+            
+            // 更新状态
+            currentState = sceneId.replace('Scene', '').toUpperCase();
+            console.log(`切换到场景: ${sceneId}, 状态: ${currentState}`);
+        }
+        
+        // ==================== 匹配系统 ====================
+        function startMatchmaking() {
+            switchScene('matchingScene');
+            
+            // 初始化匹配计时
+            matchTimer = 0;
+            document.getElementById('matchTimer').textContent = '0';
+            
+            // 开始匹配计时器
+            matchInterval = setInterval(() => {
+                matchTimer++;
+                document.getElementById('matchTimer').textContent = matchTimer;
+                
+                // 模拟匹配成功（3-6秒）
+                if (matchTimer >= Math.floor(Math.random() * 4 + 3)) {
+                    clearInterval(matchInterval);
+                    matchFound();
+                }
+            }, 1000);
+        }
+        
+        function cancelMatchmaking() {
+            clearInterval(matchInterval);
+            switchScene('menuScene');
+        }
+        
+        function matchFound() {
+            // 随机分配角色
+            playerRole = Math.random() < 0.5 ? 'proton' : 'electron';
+            console.log(`分配角色: ${playerRole}`);
+            
+            // 进入游戏大厅
+            setTimeout(() => {
+                switchScene('lobbyScene');
+                initializeLobby();
+            }, 1000);
+        }
+        
+        // ==================== 游戏说明 ====================
+        function showHowToPlay() {
+            alert(`🎮 【游戏说明】\n\n🏃【移动控制】\n• 电脑: WASD 或 方向键\n• 手机: 屏幕虚拟按钮\n\n⚡【攻击控制】\n• 电脑: 空格键\n• 手机: 发射按钮\n\n🎯【游戏规则】\n1. 扮演质子(蓝)或电子(红)\n2. 在迷宫中移动并发射粒子\n3. 粒子碰到墙壁会反弹\n4. 击中敌人造成25点伤害\n5. 先击败对手或时间结束得分高者获胜\n\n⏱️【时间限制】\n• 每局90秒\n• 超时按剩余血量判断胜负\n\n🚫【注意事项】\n• 屏幕锁定，无法滚动\n• 需要双方都确认准备\n• 实时匹配，公平对战`);
+        }
+        
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('游戏初始化完成');
+            
+            // 模拟在线玩家数更新
+            setInterval(() => {
+                const onlineCount = document.getElementById('onlineCount');
+                const current = parseInt(onlineCount.textContent);
+                const change = Math.floor(Math.random() * 11) - 5; // -5 到 +5
+                onlineCount.textContent = Math.max(100, current + change);
+            }, 5000);
+        });
+    </script>
+
+
+</body>
+</html>
