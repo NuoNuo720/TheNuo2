@@ -1371,111 +1371,39 @@ function switchScene(sceneId) {
     console.log(`✅ 当前状态: ${currentState}`);
 }
 
-// ==================== 修复匹配系统 ====================
-  
-// 开始匹配
-async startMatchmaking() {
-  console.log('🔍 开始匹配真人玩家...');
-  
-  // 设置匹配状态
-  this.isMatching = true;
-  
-  // 更新匹配状态显示
-  this.updateMatchState('开始匹配...');
-  
-  try {
-    // 先创建访客资料
-    await this.createGuestProfile();
+// ==================== 匹配系统 ====================
+function startMatchmaking() {
+    console.log('🔍 开始匹配真人对手...');
     
-    // 加入匹配队列
-    const { error } = await this.supabase
-      .from('matchmaking_queue')
-      .upsert({
-        user_id: this.playerId,
-        elo: 1000,
-        region: 'asia',
-        client_id: this.clientId,
-        player_data: {
-          username: this.getPlayerName(),
-          client_id: this.clientId
-        },
-        connection_status: 'waiting',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
+    // 切换到匹配场景
+    switchScene('matchingScene');
     
-    if (error) throw error;
-    
-    console.log('✅ 已加入匹配队列');
-    this.updateMatchState('已加入队列，等待对手...');
-    
-    // 立即检查是否已经有游戏会话
-    const hasExistingSession = await this.checkForExistingSession();
-    if (hasExistingSession) {
-      return; // 如果已有会话，直接进入大厅
+    // 显示调试信息
+    const debugInfo = document.getElementById('matchDebugInfo');
+    if (debugInfo) {
+        debugInfo.style.display = 'block';
     }
     
-    // 开始匹配循环
-    this.matchmakingLoop();
-    
-  } catch (error) {
-    console.error('加入匹配失败:', error);
-    this.isMatching = false;
-    this.updateMatchState('匹配失败: ' + error.message);
-  }
-},
-// 检查是否有现有的游戏会话
-async checkForExistingSession() {
-  try {
-    const { data: existingSession, error } = await this.supabase
-      .from('game_sessions')
-      .select('*')
-      .or(`player1_id.eq.${this.playerId},player2_id.eq.${this.playerId}`)
-      .in('status', ['waiting', 'active'])
-      .maybeSingle();
-    
-    if (error) {
-      console.log('检查游戏会话错误:', error.message);
-      return false;
+    // 如果已经初始化过，直接开始匹配
+    if (window.MultiplayerGame && window.MultiplayerGame.supabase) {
+        console.log('使用已有的连接开始匹配');
+        window.MultiplayerGame.startMatchmaking();
+    } else {
+        // 初始化多人游戏系统
+        console.log('初始化多人游戏系统...');
+        if (!window.MultiplayerGame) {
+            alert('多人游戏系统未加载，请刷新页面重试');
+            return;
+        }
+        window.MultiplayerGame.init().then(() => {
+            window.MultiplayerGame.startMatchmaking();
+        }).catch(error => {
+            console.error('初始化失败:', error);
+            alert('多人游戏系统初始化失败，请刷新页面重试');
+        });
     }
-    
-    if (existingSession) {
-      console.log('✅ 发现已有的游戏会话!', existingSession);
-      
-      // 从匹配队列中移除自己
-      await this.supabase
-        .from('matchmaking_queue')
-        .delete()
-        .eq('user_id', this.playerId);
-      
-      // 设置游戏信息
-      this.currentRoom = existingSession.room_id;
-      this.mazeSeed = existingSession.maze_seed || Date.now();
-      this.opponentId = existingSession.player1_id === this.playerId ? 
-        existingSession.player2_id : existingSession.player1_id;
-      this.playerRole = existingSession.player1_id === this.playerId ? 
-        existingSession.player1_role : existingSession.player2_role;
-      
-      // 保存玩家角色到全局变量
-      window.playerRole = this.playerRole;
-      
-      if (existingSession.status === 'waiting') {
-        // 进入游戏大厅
-        this.enterLobby(existingSession);
-      } else if (existingSession.status === 'active') {
-        // 直接进入游戏
-        this.enterActiveGame(existingSession);
-      }
-      
-      return true;
-    }
-    
-    return false;
-    
-  } catch (error) {
-    console.error('检查游戏会话失败:', error);
-    return false;
-  }
-},
+}
+
 function cancelMatchmaking() {
     console.log('❌ 取消匹配');
     
@@ -3385,102 +3313,65 @@ const MultiplayerGame = {
     }
   },
   
-// 匹配循环
-async matchmakingLoop() {
-  console.log('开始匹配循环...');
-  let matchAttempts = 0;
-  const maxAttempts = 30;
-  
-  const matchInterval = setInterval(async () => {
-    matchAttempts++;
+  // 匹配循环
+  async matchmakingLoop() {
+    console.log('开始匹配循环...');
+    let matchAttempts = 0;
+    const maxAttempts = 30; // 最多尝试30秒
     
-    // 更新匹配UI
-    this.updateMatchmakingUI(matchAttempts);
-    
-    try {
-      // 双重检查：先检查游戏会话，再检查队列
-      const hasExistingSession = await this.checkForExistingSession();
-      if (hasExistingSession) {
-        clearInterval(matchInterval);
-        return;
-      }
+    const matchInterval = setInterval(async () => {
+      matchAttempts++;
       
-      // 如果没有现有的游戏会话，尝试创建
-      await this.tryMatchPlayers();
+      // 更新匹配UI
+      this.updateMatchmakingUI(matchAttempts);
       
-      if (matchAttempts >= maxAttempts) {
-        clearInterval(matchInterval);
-        console.log('⏰ 匹配超时');
-        this.updateMatchState('匹配超时');
-        alert('匹配超时，没有找到合适的对手');
+      try {
+        // 1. 先检查是否有正在等待的对手
+        const { data: waitingPlayers, error: queueError } = await this.supabase
+          .from('matchmaking_queue')
+          .select('user_id, client_id, player_data')
+          .neq('user_id', this.playerId)
+          .eq('connection_status', 'waiting')
+          .order('created_at', { ascending: true })
+          .limit(1);
         
-        // 取消匹配
-        await this.cancelMatchmaking();
-        switchScene('menuScene');
-      } else {
-        this.updateMatchState(`等待匹配... (${matchAttempts}/${maxAttempts})`);
+        if (queueError) {
+          console.log('检查匹配队列错误:', queueError.message);
+          this.updateMatchState('检查队列错误');
+        }
+        
+        if (waitingPlayers && waitingPlayers.length > 0) {
+          console.log('🎯 找到等待的对手:', waitingPlayers[0]);
+          this.updateMatchState('找到对手，创建游戏...');
+          
+          // 找到对手，创建游戏
+          const opponent = waitingPlayers[0];
+          
+          // 停止匹配循环
+          clearInterval(matchInterval);
+          
+          // 创建游戏会话
+          await this.createGameSession(opponent.user_id);
+          
+        } else if (matchAttempts >= maxAttempts) {
+          clearInterval(matchInterval);
+          console.log('⏰ 匹配超时');
+          this.updateMatchState('匹配超时');
+          alert('匹配超时，没有找到合适的对手');
+          
+          // 取消匹配
+          await this.cancelMatchmaking();
+          switchScene('menuScene');
+        } else {
+          this.updateMatchState(`等待对手... (${matchAttempts}/${maxAttempts})`);
+        }
+        
+      } catch (error) {
+        console.error('匹配检查错误:', error);
+        this.updateMatchState('匹配错误: ' + error.message);
       }
-      
-    } catch (error) {
-      console.error('匹配检查错误:', error);
-      this.updateMatchState('匹配错误: ' + error.message);
-    }
-  }, 1000);
-},
-// 尝试匹配玩家
-async tryMatchPlayers() {
-  try {
-    // 检查是否有等待的对手
-    const { data: waitingPlayers, error } = await this.supabase
-      .from('matchmaking_queue')
-      .select('user_id, client_id, player_data')
-      .neq('user_id', this.playerId)
-      .eq('connection_status', 'waiting')
-      .order('created_at', { ascending: true })
-      .limit(1);
-    
-    if (error) throw error;
-    
-    if (waitingPlayers && waitingPlayers.length > 0) {
-      console.log('🎯 找到等待的对手:', waitingPlayers[0]);
-      this.updateMatchState('找到对手，创建游戏...');
-      
-      // 创建游戏会话
-      await this.createGameSession(waitingPlayers[0].user_id);
-    }
-    
-  } catch (error) {
-    console.error('尝试匹配失败:', error);
-    // 不抛出错误，让匹配循环继续
-  }
-},
-// 尝试创建游戏
-async tryCreateGame() {
-  try {
-    // 检查是否有等待的对手
-    const { data: waitingPlayers, error: queueError } = await this.supabase
-      .from('matchmaking_queue')
-      .select('user_id, client_id, player_data')
-      .neq('user_id', this.playerId)
-      .eq('connection_status', 'waiting')
-      .order('created_at', { ascending: true })
-      .limit(1);
-    
-    if (queueError) throw queueError;
-    
-    if (waitingPlayers && waitingPlayers.length > 0) {
-      console.log('🎯 找到等待的对手:', waitingPlayers[0]);
-      this.updateMatchState('找到对手，创建游戏...');
-      
-      // 创建游戏会话
-      await this.createGameSession(waitingPlayers[0].user_id);
-    }
-    
-  } catch (error) {
-    console.error('尝试创建游戏失败:', error);
-    // 不抛出错误，让匹配循环继续
-  }
-},
+    }, 1000); // 每秒检查一次
+  },
   
   // 创建游戏会话
   async createGameSession(opponentId) {
