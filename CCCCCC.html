@@ -3058,7 +3058,7 @@ const MultiplayerGame = {
   playerRole: null,
   mazeSeed: null,
   opponentId: null,
-  
+  isMatching: false,
   // 连接状态
   isConnected: false,
   isInitialized: false,
@@ -3169,61 +3169,39 @@ const MultiplayerGame = {
   
   // 开始匹配
   async startMatchmaking() {
-    console.log('🔍 开始匹配真人玩家...');
+  console.log('🔍 开始匹配真人玩家...');
+  
+  // 设置匹配状态
+  this.isMatching = true;
+  
+  try {
+    // 加入匹配队列
+    const { error } = await this.supabase
+      .from('matchmaking_queue')
+      .upsert({
+        user_id: this.playerId,
+        elo: 1000,
+        region: 'asia',
+        client_id: this.clientId,
+        player_data: {
+          username: this.getPlayerName(),
+          client_id: this.clientId
+        },
+        connection_status: 'waiting'
+      }, { onConflict: 'user_id' });
     
-    try {
-      // 首先创建访客资料
-      await this.createGuestProfile();
-      
-      // 加入匹配队列
-      const { error } = await this.supabase
-        .from('matchmaking_queue')
-        .upsert({
-          user_id: this.playerId,
-          elo: 1000,
-          region: 'asia',
-          client_id: this.clientId,
-          player_data: {
-            username: this.getPlayerName(),
-            client_id: this.clientId
-          },
-          connection_status: 'online',
-          created_at: new Date().toISOString()
-        }, { 
-          onConflict: 'user_id',
-          ignoreDuplicates: false 
-        });
-      
-      if (error) {
-        console.error('Supabase 错误详情:', error);
-        throw error;
-      }
-      
-      console.log('✅ 已加入匹配队列');
-      
-      // 开始匹配循环
-      this.matchmakingLoop();
-      
-    } catch (error) {
-      console.error('加入匹配失败:', error);
-      
-      // 显示更详细的错误信息
-      let errorMessage = '匹配失败';
-      if (error.message) {
-        errorMessage += ': ' + error.message;
-      }
-      if (error.code) {
-        errorMessage += ' (错误代码: ' + error.code + ')';
-      }
-      
-      alert(errorMessage);
-      
-      // 返回主菜单
-      setTimeout(() => {
-        switchScene('menuScene');
-      }, 2000);
-    }
-  },
+    if (error) throw error;
+    
+    console.log('✅ 已加入匹配队列');
+    
+    // 开始匹配循环
+    this.matchmakingLoop();
+    
+  } catch (error) {
+    console.error('加入匹配失败:', error);
+    this.isMatching = false;
+  }
+},
   
   // 创建访客资料
   async createGuestProfile() {
@@ -3340,20 +3318,22 @@ const MultiplayerGame = {
   
   // 取消匹配
   async cancelMatchmaking() {
-    try {
-      await this.supabase
-        .from('matchmaking_queue')
-        .delete()
-        .eq('user_id', this.playerId);
-      
-      console.log('✅ 已取消匹配');
-      switchScene('menuScene');
-      
-    } catch (error) {
-      console.error('取消匹配失败:', error);
-      switchScene('menuScene');
-    }
-  },
+  try {
+    this.isMatching = false;
+    
+    await this.supabase
+      .from('matchmaking_queue')
+      .delete()
+      .eq('user_id', this.playerId);
+    
+    console.log('✅ 已取消匹配');
+    switchScene('menuScene');
+    
+  } catch (error) {
+    console.error('取消匹配失败:', error);
+    switchScene('menuScene');
+  }
+},
   
   // 进入游戏大厅
   async enterLobby(gameSession) {
@@ -3749,22 +3729,28 @@ const MultiplayerGame = {
   // ==================== 工具函数 ====================
   
   // 启动心跳
+  // 在 MultiplayerGame 对象中修改
   startHeartbeat() {
+  // 先清除旧的心跳
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+  
     this.heartbeatInterval = setInterval(async () => {
       try {
-        // 更新玩家在线状态
-        if (this.supabase) {
-          await this.supabase
-            .from('matchmaking_queue')
-            .upsert({
-              user_id: this.playerId,
-              client_id: this.clientId,
-              connection_status: 'online',
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id' });
-        }
+        // 只有在匹配中或游戏中有房间时才发送心跳
+        if (this.currentRoom || this.isMatching) {
+          await this.supabase.rpc('update_player_heartbeat', {
+            p_player_id: this.playerId,
+            p_client_id: this.clientId,
+            p_room_id: this.currentRoom
+          });
         
-        this.isConnected = true;
+          this.isConnected = true;
+        } else {
+          // 不在匹配或游戏中，不发心跳
+          this.isConnected = false;
+        }
       } catch (error) {
         console.error('心跳失败:', error);
         this.isConnected = false;
