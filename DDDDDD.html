@@ -4,29 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>质子VS电子 | 量子迷宫对决</title>
-    <!-- 强制横屏提示 -->
-    <style>
-        /* 竖屏提示 */
-        @media (orientation: portrait) {
-            body::before {
-                content: "请将设备旋转至横屏以获得最佳游戏体验";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-                z-index: 9999;
-                padding: 2rem;
-                text-align: center;
-            }
-        }
-    </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ====== 基础重置 ====== */
@@ -56,6 +33,24 @@
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%) rotate(90deg);
+            }
+            
+            body::before {
+                content: "请将设备旋转至横屏以获得最佳游戏体验";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                z-index: 9999;
+                padding: 2rem;
+                text-align: center;
             }
         }
         
@@ -182,24 +177,6 @@
             background: rgba(59, 130, 246, 0.1);
         }
         
-        .btn-primary, .btn-danger {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-primary::after, .btn-danger::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.3s, height 0.3s;
-        }
-        
         /* ====== 菜单内容 ====== */
         .menu-content {
             display: flex;
@@ -270,22 +247,11 @@
             50% { transform: translateY(-10px); }
         }
         
-        @keyframes matchProgressBar {
-            0%, 100% { width: 10%; }
-            50% { width: 90%; }
-        }
-        
         @keyframes glow {
             0%, 100% { filter: drop-shadow(0 0 5px currentColor); }
             50% { filter: drop-shadow(0 0 20px currentColor); }
         }
         
-        @keyframes slideIn {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        /* ====== 新增动画 ====== */
         @keyframes textGlow {
             from {
                 text-shadow: 0 0 10px rgba(59, 130, 246, 0.5),
@@ -297,16 +263,37 @@
                              0 0 60px rgba(59, 130, 246, 0.3);
             }
         }
-
-        @keyframes modulePulse {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
-            }
-            100% {
-                transform: scale(1.05);
-                box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-            }
+        
+        /* ====== 移动按钮样式 ====== */
+        .mobile-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .mobile-btn:active {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(0.95);
+        }
+        
+        .attack-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+        
+        .attack-btn:active {
+            background: rgba(239, 68, 68, 0.3);
         }
     </style>
 </head>
@@ -359,9 +346,7 @@
 
         <!-- 场景2: 匹配中 -->
         <div id="matchingScene" class="scene">
-            <!-- 匹配界面保持不变 -->
             <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
-                <!-- 内容同原版 -->
                 <div style="margin-bottom: 2rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">🔍</div>
                     <h2 style="font-size: 2rem; margin-bottom: 0.5rem; color: white;">寻找对手中</h2>
@@ -401,9 +386,7 @@
 
         <!-- 场景3: 游戏大厅 -->
         <div id="lobbyScene" class="scene">
-            <!-- 大厅界面保持不变 -->
             <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
-                <!-- 内容同原版 -->
                 <div style="margin-bottom: 2rem;">
                     <h2 style="font-size: 2rem; margin-bottom: 0.5rem; color: white;">游戏大厅</h2>
                     <p style="color: var(--text-dim); max-width: 500px; margin: 0 auto;">
@@ -463,7 +446,6 @@
 
         <!-- 场景4: 加载中 -->
         <div id="loadingScene" class="scene">
-            <!-- 加载界面保持不变 -->
             <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%);">
                 <div style="margin-bottom: 3rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem; animation: spin 2s linear infinite;">⚙️</div>
@@ -488,7 +470,6 @@
 
         <!-- 场景5: 游戏中 -->
         <div id="gameScene" class="scene">
-            <!-- 游戏画布容器（重新设计为相机跟随） -->
             <div id="gameContainer" style="position: relative; width: 100%; height: 100%; overflow: hidden; background: #000;">
                 <!-- 游戏画布 -->
                 <canvas id="gameCanvas" style="display: block; background: #000;"></canvas>
@@ -551,38 +532,38 @@
                         </div>
                     </div>
                     
-                    <!-- 调试信息（仅开发时显示） -->
+                    <!-- 调试信息 -->
                     <div id="debugInfo" style="position: absolute; top: 120px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px; font-size: 12px; display: none;">
                         相机位置: <span id="cameraPos">0,0</span>
                     </div>
                 </div>
                 
-                <!-- 手机控制按钮（重新设计为横屏布局） -->
+                <!-- 手机控制按钮 -->
                 <div id="mobileControls" style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 1rem; display: none; justify-content: space-between; align-items: flex-end; pointer-events: none; z-index: 90;">
                     <!-- 左：移动控制 -->
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 8px; width: 150px; height: 150px; pointer-events: auto;">
                         <div style="grid-column: 2; grid-row: 1;">
-                            <button class="mobile-btn" data-action="up" style="width: 50px; height: 50px;">
+                            <button class="mobile-btn" data-action="up">
                                 <span>↑</span>
                             </button>
                         </div>
                         <div style="grid-column: 1; grid-row: 2;">
-                            <button class="mobile-btn" data-action="left" style="width: 50px; height: 50px;">
+                            <button class="mobile-btn" data-action="left">
                                 <span>←</span>
                             </button>
                         </div>
                         <div style="grid-column: 2; grid-row: 2;">
-                            <button class="mobile-btn" data-action="stop" style="width: 50px; height: 50px;">
+                            <button class="mobile-btn" data-action="stop">
                                 <span>●</span>
                             </button>
                         </div>
                         <div style="grid-column: 3; grid-row: 2;">
-                            <button class="mobile-btn" data-action="right" style="width: 50px; height: 50px;">
+                            <button class="mobile-btn" data-action="right">
                                 <span>→</span>
                             </button>
                         </div>
                         <div style="grid-column: 2; grid-row: 3;">
-                            <button class="mobile-btn" data-action="down" style="width: 50px; height: 50px;">
+                            <button class="mobile-btn" data-action="down">
                                 <span>↓</span>
                             </button>
                         </div>
@@ -603,7 +584,6 @@
 
         <!-- 场景6: 游戏结束 -->
         <div id="gameOverScene" class="scene">
-            <!-- 游戏结束界面保持不变 -->
             <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);">
                 <div id="resultContent" style="max-width: 600px; width: 100%;"></div>
                 
@@ -621,6 +601,7 @@
             </div>
         </div>
     </div>
+
 <script>
 // ==================== 第一部分：全局错误捕获和基础状态 ====================
 
@@ -795,926 +776,6 @@ function switchScene(sceneId) {
     currentState = sceneId.replace('Scene', '').toUpperCase();
     console.log(`✅ 当前状态: ${currentState}`);
 }
-
-// ==================== 匹配系统 ====================
-function startMatchmaking() {
-    console.log('🔍 开始匹配真人对手...');
-    
-    // 切换到匹配场景
-    switchScene('matchingScene');
-    
-    // 如果已经初始化过，直接开始匹配
-    if (window.MultiplayerGame && window.MultiplayerGame.supabase) {
-        console.log('使用已有的连接开始匹配');
-        window.MultiplayerGame.startMatchmaking();
-    } else {
-        // 初始化多人游戏系统
-        console.log('初始化多人游戏系统...');
-        if (!window.MultiplayerGame) {
-            alert('多人游戏系统未加载，请刷新页面重试');
-            return;
-        }
-        window.MultiplayerGame.init().then(() => {
-            window.MultiplayerGame.startMatchmaking();
-        }).catch(error => {
-            console.error('初始化失败:', error);
-            alert('多人游戏系统初始化失败，请刷新页面重试');
-        });
-    }
-}
-
-function cancelMatchmaking() {
-    console.log('❌ 取消匹配');
-    
-    if (window.MultiplayerGame && window.MultiplayerGame.cancelMatchmaking) {
-        window.MultiplayerGame.cancelMatchmaking();
-    } else {
-        switchScene('menuScene');
-    }
-}
-
-// ==================== 游戏说明 ====================
-function showHowToPlay() {
-    alert(`🎮 【游戏说明】\n\n🏃【移动控制】\n• 电脑: WASD 或 方向键\n• 手机: 屏幕虚拟按钮\n\n⚡【攻击控制】\n• 电脑: 空格键\n• 手机: 发射按钮\n\n🎯【游戏规则】\n1. 扮演质子(蓝)或电子(红)\n2. 在迷宫中移动并发射粒子\n3. 粒子碰到墙壁会反弹\n4. 击中敌人造成25点伤害\n5. 先击败对手或时间结束得分高者获胜\n\n📱【手机模式】\n• 自动横屏显示\n• 相机跟随玩家移动\n• 触摸按钮控制\n\n🚫【注意事项】\n• 屏幕锁定，无法滚动\n• 需要双方都确认准备\n• 实时匹配，公平对战`);
-}
-
-// ==================== 第二部分：游戏大厅状态变量 ====================
-let isPlayerReady = false;
-let isOpponentReady = false;
-let lobbyCountdownValue = 5;
-let lobbyCountdownInterval = null;
-
-// ==================== 游戏大厅逻辑 ====================
-function initializeLobby() {
-    console.log('🎪 初始化游戏大厅');
-    
-    // 清除之前的倒计时
-    if (lobbyCountdownInterval) {
-        clearInterval(lobbyCountdownInterval);
-        lobbyCountdownInterval = null;
-    }
-    
-    // 重置状态
-    isPlayerReady = false;
-    isOpponentReady = false;
-    lobbyCountdownValue = 5;
-    
-    // 更新状态显示
-    updatePlayerStatus();
-    
-    // 隐藏倒计时
-    const countdownElement = document.getElementById('lobbyCountdown');
-    if (countdownElement) {
-        countdownElement.style.display = 'none';
-    }
-    
-    // 重置准备按钮
-    const readyBtn = document.getElementById('player1ReadyBtn');
-    if (readyBtn) {
-        readyBtn.textContent = '点击准备';
-        readyBtn.style.background = playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
-        readyBtn.onclick = togglePlayerReady;
-    }
-    
-    console.log('✅ 游戏大厅初始化完成，玩家角色:', playerRole);
-}
-
-function updatePlayerStatus() {
-    const statusDot = document.getElementById('player1StatusDot');
-    const statusText = document.getElementById('player1StatusText');
-    
-    if (!statusDot || !statusText) return;
-    
-    if (isPlayerReady) {
-        statusDot.style.background = '#10b981';
-        statusText.textContent = '已准备';
-    } else {
-        statusDot.style.background = '#64748b';
-        statusText.textContent = '未准备';
-    }
-}
-
-function updateOpponentStatus() {
-    const statusDot = document.getElementById('player2StatusDot');
-    const statusText = document.getElementById('player2StatusText');
-    const actionText = document.getElementById('opponentAction');
-    
-    if (!statusDot || !statusText || !actionText) return;
-    
-    if (isOpponentReady) {
-        statusDot.style.background = '#10b981';
-        statusText.textContent = '已准备';
-        actionText.textContent = '对手已准备！';
-    } else {
-        statusDot.style.background = '#64748b';
-        statusText.textContent = '未准备';
-        actionText.textContent = '等待对手准备...';
-    }
-}
-
-function togglePlayerReady() {
-    console.log('🔄 切换准备状态，当前:', isPlayerReady);
-    
-    // 如果是多人游戏模式，使用多人游戏的准备逻辑
-    if (window.MultiplayerGame && window.MultiplayerGame.currentRoom) {
-        const readyBtn = document.getElementById('player1ReadyBtn');
-        if (!readyBtn) return;
-        
-        const isReady = readyBtn.textContent === '点击准备';
-        
-        if (isReady) {
-            readyBtn.textContent = '取消准备';
-            readyBtn.style.background = '#64748b';
-            isPlayerReady = true;
-            updatePlayerStatus();
-            
-            // 发送准备状态
-            window.MultiplayerGame.sendPlayerReady(true);
-        } else {
-            readyBtn.textContent = '点击准备';
-            readyBtn.style.background = playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
-            isPlayerReady = false;
-            updatePlayerStatus();
-            
-            // 发送取消准备状态
-            window.MultiplayerGame.sendPlayerReady(false);
-        }
-    } else {
-        // 单人游戏模式（测试用）
-        isPlayerReady = !isPlayerReady;
-        updatePlayerStatus();
-        
-        const readyBtn = document.getElementById('player1ReadyBtn');
-        if (!readyBtn) return;
-        
-        if (isPlayerReady) {
-            readyBtn.textContent = '取消准备';
-            readyBtn.style.background = '#64748b';
-            
-            console.log('✅ 玩家已准备，等待对手...');
-            
-            // 模拟对手在1-3秒后准备
-            setTimeout(() => {
-                if (!isOpponentReady) {
-                    isOpponentReady = true;
-                    updateOpponentStatus();
-                    
-                    console.log('✅ 对手已准备');
-                    
-                    // 双方都准备好后开始倒计时
-                    if (isPlayerReady && isOpponentReady) {
-                        console.log('🚀 双方准备完成，开始倒计时');
-                        startLobbyCountdown();
-                    }
-                }
-            }, Math.random() * 2000 + 1000);
-        } else {
-            readyBtn.textContent = '点击准备';
-            readyBtn.style.background = playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
-            
-            console.log('❌ 玩家取消准备');
-            
-            // 如果正在倒计时，取消它
-            if (lobbyCountdownInterval) {
-                clearInterval(lobbyCountdownInterval);
-                lobbyCountdownInterval = null;
-                
-                const countdownElement = document.getElementById('lobbyCountdown');
-                if (countdownElement) {
-                    countdownElement.style.display = 'none';
-                }
-                
-                console.log('⏹️ 已取消倒计时');
-            }
-        }
-    }
-}
-
-function startLobbyCountdown() {
-    console.log('⏱️ 开始大厅倒计时');
-    
-    // 显示倒计时
-    const countdownElement = document.getElementById('lobbyCountdown');
-    const countdownNumber = document.getElementById('countdownNumber');
-    
-    if (!countdownElement || !countdownNumber) {
-        console.error('❌ 倒计时元素未找到');
-        return;
-    }
-    
-    countdownElement.style.display = 'block';
-    lobbyCountdownValue = 5;
-    countdownNumber.textContent = lobbyCountdownValue;
-    
-    // 清除之前的倒计时
-    if (lobbyCountdownInterval) {
-        clearInterval(lobbyCountdownInterval);
-    }
-    
-    // 开始倒计时
-    lobbyCountdownInterval = setInterval(() => {
-        lobbyCountdownValue--;
-        countdownNumber.textContent = lobbyCountdownValue;
-        
-        console.log('⏱️ 倒计时:', lobbyCountdownValue);
-        
-        if (lobbyCountdownValue <= 0) {
-            clearInterval(lobbyCountdownInterval);
-            lobbyCountdownInterval = null;
-            console.log('✅ 倒计时结束，开始游戏加载');
-            startGameLoading();
-        }
-    }, 1000);
-}
-
-function startGameLoading() {
-    console.log('🔧 进入游戏加载...');
-    switchScene('loadingScene');
-    
-    // 模拟加载过程
-    let loadProgress = 0;
-    const loadingInterval = setInterval(() => {
-        loadProgress += 10;
-        const loadingBar = document.getElementById('loadingBar');
-        const loadingPercent = document.getElementById('loadingPercent');
-        
-        if (loadingBar) loadingBar.style.width = `${loadProgress}%`;
-        if (loadingPercent) loadingPercent.textContent = `${loadProgress}%`;
-        
-        if (loadProgress >= 100) {
-            clearInterval(loadingInterval);
-            console.log('✅ 加载完成，准备初始化游戏');
-            
-            // 延迟一小段时间确保UI更新
-            setTimeout(() => {
-                console.log('🚀 调用 initializeGame');
-                initializeGame();
-            }, 300);
-        }
-    }, 100);
-}
-
-// ==================== 游戏初始化 ====================
-function initializeGame() {
-    console.log('🎮 ==================== initializeGame 开始 ====================');
-    
-    try {
-        // 1. 确保切换到游戏场景
-        console.log('🔄 切换到游戏场景');
-        switchScene('gameScene');
-        
-        // 2. 初始化画布
-        console.log('🎨 初始化画布...');
-        game.canvas = document.getElementById('gameCanvas');
-        if (!game.canvas) {
-            throw new Error('找不到 gameCanvas 元素');
-        }
-        
-        game.ctx = game.canvas.getContext('2d');
-        if (!game.ctx) {
-            throw new Error('无法获取画布上下文');
-        }
-        console.log('✅ 画布上下文获取成功');
-        
-        // 3. 设置画布尺寸
-        console.log('📐 设置画布尺寸...');
-        resizeGameCanvas();
-        
-        // 4. 初始化相机系统
-        console.log('📷 初始化相机系统...');
-        initializeCamera();
-        
-        // 5. 生成迷宫
-        console.log('🧱 生成迷宫...');
-        generateMaze();
-        
-        // 6. 初始化玩家
-        console.log('👥 初始化玩家...');
-        initializePlayers();
-        
-        // 7. 更新UI显示
-        console.log('📱 更新UI...');
-        updatePlayerDisplay();
-        
-        // 8. 设置游戏状态
-        console.log('⚙️ 设置游戏状态...');
-        game.isGameActive = true;
-        game.lastUpdateTime = Date.now();
-        game.playerScore = 0;
-        game.opponentScore = 0;
-        game.gameTime = 90;
-        
-        // 9. 重置所有控制状态
-        game.keys = {};
-        game.touchControls = {};
-        game.projectiles = [];
-        
-        // 10. 初始化输入控制
-        console.log('🎮 初始化输入控制...');
-        initializeInputControls();
-        
-        // 11. 启动游戏计时器
-        console.log('⏱️ 启动游戏计时器...');
-        startGameTimer();
-        
-        // 12. 显示移动控制（如果是移动设备）
-        checkMobileControls();
-        
-        // 13. 启动游戏循环
-        console.log('🚀 启动游戏循环...');
-        console.log('📊 当前游戏状态:', {
-            isGameActive: game.isGameActive,
-            isMultiplayer: game.isMultiplayer,
-            players: Object.keys(game.players).length
-        });
-        
-        // 强制启动游戏循环
-        requestAnimationFrame(function() {
-            console.log('🎬 requestAnimationFrame 回调执行');
-            gameLoop();
-        });
-        
-        console.log('✅ initializeGame 执行完成');
-        
-    } catch (error) {
-        console.error('❌ initializeGame 出错:', error);
-        console.error('错误堆栈:', error.stack);
-        
-        // 显示错误信息
-        alert('游戏初始化失败: ' + error.message + '\n请检查控制台查看详情');
-    }
-}
-
-function resizeGameCanvas() {
-    game.width = window.innerWidth;
-    game.height = window.innerHeight;
-    game.canvas.width = game.width;
-    game.canvas.height = game.height;
-    
-    console.log(`📏 画布尺寸: ${game.width}x${game.height}`);
-}
-
-function generateMaze() {
-    console.log('🧱 生成迷宫中...');
-    
-    // 使用世界尺寸计算迷宫
-    const worldWidth = game.camera.worldWidth;
-    const worldHeight = game.camera.worldHeight;
-    
-    game.mazeCols = Math.floor(worldWidth / game.cellSize);
-    game.mazeRows = Math.floor(worldHeight / game.cellSize);
-    
-    // 如果有种子，使用种子
-    if (game.mazeSeed) {
-        Math.seedrandom(game.mazeSeed.toString());
-        console.log('使用迷宫种子:', game.mazeSeed);
-    }
-    
-    // 初始化迷宫数组
-    game.maze = [];
-    for (let y = 0; y < game.mazeRows; y++) {
-        game.maze[y] = [];
-        for (let x = 0; x < game.mazeCols; x++) {
-            // 边界是墙壁
-            if (x === 0 || x === game.mazeCols - 1 || 
-                y === 0 || y === game.mazeRows - 1) {
-                game.maze[y][x] = 1;
-            } else {
-                // 随机生成墙壁（20%的概率）
-                game.maze[y][x] = Math.random() < 0.2 ? 1 : 0;
-            }
-        }
-    }
-    
-    // 确保玩家出生区域是空的
-    const safeRegions = [
-        // 玩家1区域（左上区域）
-        { x: Math.floor(game.mazeCols * 0.2), y: Math.floor(game.mazeRows * 0.2), radius: 5 },
-        // 玩家2区域（右下区域）
-        { x: Math.floor(game.mazeCols * 0.8), y: Math.floor(game.mazeRows * 0.8), radius: 5 }
-    ];
-    
-    safeRegions.forEach(region => {
-        for (let dy = -region.radius; dy <= region.radius; dy++) {
-            for (let dx = -region.radius; dx <= region.radius; dx++) {
-                const x = region.x + dx;
-                const y = region.y + dy;
-                if (x >= 0 && x < game.mazeCols && y >= 0 && y < game.mazeRows) {
-                    game.maze[y][x] = 0;
-                }
-            }
-        }
-    });
-    
-    // 确保有一些通路连接两个区域
-    createPath(safeRegions[0], safeRegions[1]);
-    
-    console.log(`✅ 迷宫生成完成: ${game.mazeCols}x${game.mazeRows} 在世界中`);
-}
-
-function createPath(start, end) {
-    let x = start.x;
-    let y = start.y;
-    
-    // 随机走到终点
-    while (Math.abs(x - end.x) > 5 || Math.abs(y - end.y) > 5) {
-        // 清理当前位置
-        for (let dy = -2; dy <= 2; dy++) {
-            for (let dx = -2; dx <= 2; dx++) {
-                const checkX = x + dx;
-                const checkY = y + dy;
-                if (checkX >= 0 && checkX < game.mazeCols && 
-                    checkY >= 0 && checkY < game.mazeRows) {
-                    game.maze[checkY][checkX] = 0;
-                }
-            }
-        }
-        
-        // 随机向终点移动
-        if (Math.random() < 0.5) {
-            x += x < end.x ? 1 : -1;
-        } else {
-            y += y < end.y ? 1 : -1;
-        }
-    }
-}
-
-function initializePlayers() {
-    console.log('👥 初始化玩家...');
-    
-    // 计算玩家起始位置（在世界坐标中）
-    const worldWidth = game.camera.worldWidth;
-    const worldHeight = game.camera.worldHeight;
-    
-    // 玩家1起始位置（左上区域）
-    const player1X = Math.floor(worldWidth * 0.2) + game.cellSize / 2;
-    const player1Y = Math.floor(worldHeight * 0.2) + game.cellSize / 2;
-    
-    // 玩家2起始位置（右下区域）
-    const player2X = Math.floor(worldWidth * 0.8) + game.cellSize / 2;
-    const player2Y = Math.floor(worldHeight * 0.8) + game.cellSize / 2;
-    
-    console.log(`📍 玩家1位置: (${player1X}, ${player1Y})`);
-    console.log(`📍 玩家2位置: (${player2X}, ${player2Y})`);
-    
-    // 确定角色分配
-    if (!playerRole) {
-        // 如果没有指定角色，随机分配
-        playerRole = Math.random() < 0.5 ? 'proton' : 'electron';
-        console.log('随机分配角色:', playerRole);
-    }
-    
-    // 根据玩家角色设置玩家位置和颜色
-    if (playerRole === 'proton') {
-        // 玩家是质子（蓝色）
-        game.players.player1 = {
-            x: player1X,
-            y: player1Y,
-            radius: 16,
-            color: '#3b82f6',
-            hp: 100,
-            maxHp: 100,
-            speed: 5,
-            direction: 0,
-            lastShot: 0,
-            shotCooldown: 500,
-            score: 0,
-            isLocalPlayer: true,
-            isAI: false
-        };
-        
-        // 对手是电子（红色）
-        game.players.player2 = {
-            x: player2X,
-            y: player2Y,
-            radius: 16,
-            color: '#ef4444',
-            hp: 100,
-            maxHp: 100,
-            speed: 5,
-            direction: Math.PI,
-            isLocalPlayer: false,
-            // 如果是多人游戏，对手不是AI；否则是AI
-            isAI: !game.isMultiplayer,
-            aiDirectionChangeTime: 0,
-            score: 0
-        };
-    } else {
-        // 玩家是电子（红色）
-        game.players.player1 = {
-            x: player2X,
-            y: player2Y,
-            radius: 16,
-            color: '#ef4444',
-            hp: 100,
-            maxHp: 100,
-            speed: 5,
-            direction: Math.PI,
-            lastShot: 0,
-            shotCooldown: 500,
-            score: 0,
-            isLocalPlayer: true,
-            isAI: false
-        };
-        
-        // 对手是质子（蓝色）
-        game.players.player2 = {
-            x: player1X,
-            y: player1Y,
-            radius: 16,
-            color: '#3b82f6',
-            hp: 100,
-            maxHp: 100,
-            speed: 5,
-            direction: 0,
-            isLocalPlayer: false,
-            isAI: !game.isMultiplayer,
-            aiDirectionChangeTime: 0,
-            score: 0
-        };
-    }
-    
-    // 如果是多人游戏，设置连接状态
-    if (game.isMultiplayer) {
-        game.isConnectedToOpponent = true;
-        console.log('🔗 多人游戏模式：对手是真人');
-    } else {
-        console.log('🤖 单人游戏模式：对手是AI');
-    }
-    
-    console.log('✅ 玩家初始化完成');
-}
-
-function updatePlayerDisplay() {
-    console.log('📱 更新玩家显示...');
-    
-    // 更新玩家名称
-    const playerNameElement = document.getElementById('playerName');
-    const opponentNameElement = document.getElementById('opponentName');
-    
-    if (playerNameElement) {
-        playerNameElement.textContent = playerRole === 'proton' ? '质子' : '电子';
-    }
-    
-    if (opponentNameElement) {
-        opponentNameElement.textContent = playerRole === 'proton' ? '电子' : '质子';
-    }
-    
-    // 更新血量显示
-    updateHealthBars();
-    updateScores();
-    
-    console.log('✅ 玩家显示更新完成');
-}
-
-function checkMobileControls() {
-    // 检测是否为移动设备
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const mobileControls = document.getElementById('mobileControls');
-    
-    if (isMobile && mobileControls) {
-        mobileControls.style.display = 'flex';
-        game.isMobile = true;
-        console.log('📱 移动控制已启用，横屏模式');
-    } else {
-        game.isMobile = false;
-        console.log('💻 桌面设备，使用键盘控制');
-    }
-}
-
-// ==================== 第三部分：输入控制 ====================
-function initializeInputControls() {
-    console.log('🎮 初始化输入控制...');
-    
-    // 键盘控制
-    window.addEventListener('keydown', (e) => {
-        const key = e.key.toLowerCase();
-        game.keys[key] = true;
-        
-        // 防止空格键滚动页面
-        if (e.key === ' ') {
-            e.preventDefault();
-        }
-        
-        // 调试：显示按下的键
-        if (key === ' ' && game.isGameActive) {
-            console.log('🔫 空格键按下，尝试发射');
-        }
-    });
-    
-    window.addEventListener('keyup', (e) => {
-        const key = e.key.toLowerCase();
-        game.keys[key] = false;
-    });
-    
-    // 触摸控制
-    const mobileButtons = document.querySelectorAll('.mobile-btn');
-    mobileButtons.forEach(btn => {
-        const action = btn.getAttribute('data-action');
-        
-        // 触摸开始
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            game.touchControls[action] = true;
-            btn.style.transform = 'scale(0.95)';
-            btn.style.background = action === 'shoot' ? 
-                'rgba(239, 68, 68, 0.3)' : 
-                'rgba(255, 255, 255, 0.25)';
-        });
-        
-        // 触摸结束
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            game.touchControls[action] = false;
-            btn.style.transform = 'scale(1)';
-            btn.style.background = action === 'shoot' ? 
-                'rgba(239, 68, 68, 0.2)' : 
-                'rgba(255, 255, 255, 0.15)';
-        });
-        
-        // 鼠标控制（用于测试）
-        btn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            game.touchControls[action] = true;
-            btn.style.transform = 'scale(0.95)';
-            btn.style.background = action === 'shoot' ? 
-                'rgba(239, 68, 68, 0.3)' : 
-                'rgba(255, 255, 255, 0.25)';
-        });
-        
-        btn.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            game.touchControls[action] = false;
-            btn.style.transform = 'scale(1)';
-            btn.style.background = action === 'shoot' ? 
-                'rgba(239, 68, 68, 0.2)' : 
-                'rgba(255, 255, 255, 0.15)';
-        });
-        
-        btn.addEventListener('mouseleave', (e) => {
-            game.touchControls[action] = false;
-            btn.style.transform = 'scale(1)';
-            btn.style.background = action === 'shoot' ? 
-                'rgba(239, 68, 68, 0.2)' : 
-                'rgba(255, 255, 255, 0.15)';
-        });
-    });
-    
-    // 防止右键菜单
-    if (game.canvas) {
-        game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    }
-    
-    // 添加移动设备样式
-    const style = document.createElement('style');
-    style.textContent = `
-        .mobile-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.1s;
-            user-select: none;
-            touch-action: manipulation;
-        }
-        
-        .mobile-btn:active {
-            background: rgba(255, 255, 255, 0.25);
-            transform: scale(0.95);
-        }
-        
-        .attack-btn {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.5);
-        }
-        
-        .attack-btn:active {
-            background: rgba(239, 68, 68, 0.3);
-        }
-        
-        /* 横屏优化 */
-        @media (orientation: landscape) {
-            #mobileControls {
-                padding-bottom: 2rem;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-    
-    console.log('✅ 输入控制初始化完成');
-}
-
-// ==================== 游戏循环 ====================
-let loopFrameCount = 0;
-
-function gameLoop() {
-    loopFrameCount++;
-    
-    if (!game.isGameActive) {
-        console.log('⏸️ 游戏未激活，停止循环');
-        return;
-    }
-    
-    try {
-        const currentTime = Date.now();
-        const deltaTime = currentTime - (game.lastUpdateTime || currentTime);
-        
-        // 每隔120帧输出一次调试信息
-        if (loopFrameCount % 120 === 0) {
-            console.log(`🔁 gameLoop 运行中，帧: ${loopFrameCount}, 粒子: ${game.projectiles.length}`);
-        }
-        
-        // 更新游戏状态
-        updateGame(deltaTime);
-        
-        // 更新相机（跟随本地玩家）
-        if (game.players.player1 && game.players.player1.isLocalPlayer) {
-            updateCamera(game.players.player1);
-        }
-        
-        // 渲染游戏
-        renderGame();
-        
-        // 继续循环
-        game.lastUpdateTime = currentTime;
-        requestAnimationFrame(gameLoop);
-        
-    } catch (error) {
-        console.error('❌ gameLoop 出错:', error);
-        console.error('错误堆栈:', error.stack);
-        
-        // 尝试重启游戏循环
-        setTimeout(() => {
-            console.log('🔄 尝试重启游戏循环...');
-            gameLoop();
-        }, 1000);
-    }
-}
-</script>
-<script>
-// ==================== 游戏更新逻辑 ====================
-function updateGame(deltaTime) {
-    // 更新玩家
-    updatePlayer(game.players.player1, true); // 本地玩家
-    updatePlayer(game.players.player2, false); // 对手
-    
-    // 更新子弹
-    updateProjectiles(deltaTime);
-    
-    // 检查碰撞
-    checkCollisions();
-    
-    // 更新AI对手（如果是AI模式）
-    if (game.players.player2 && game.players.player2.isAI && !game.isMultiplayer) {
-        updateAI(game.players.player2, deltaTime);
-    }
-}
-
-function updatePlayer(player, isControlled) {
-    if (!player || player.hp <= 0) return;
-    
-    let dx = 0, dy = 0;
-    
-    if (isControlled && player.isLocalPlayer) {
-        // 本地玩家控制
-        if (game.keys['w'] || game.keys['arrowup'] || game.touchControls['up']) dy = -1;
-        if (game.keys['s'] || game.keys['arrowdown'] || game.touchControls['down']) dy = 1;
-        if (game.keys['a'] || game.keys['arrowleft'] || game.touchControls['left']) dx = -1;
-        if (game.keys['d'] || game.keys['arrowright'] || game.touchControls['right']) dx = 1;
-        
-        // 停止按钮
-        if (game.touchControls['stop']) {
-            dx = 0;
-            dy = 0;
-        }
-        
-        // 射击控制
-        const currentTime = Date.now();
-        if ((game.keys[' '] || game.touchControls['shoot']) && 
-            currentTime - player.lastShot > player.shotCooldown) {
-            shootProjectile(player);
-            player.lastShot = currentTime;
-            
-            // 如果是多人游戏，发送射击动作
-            if (game.isMultiplayer && window.MultiplayerGame) {
-                window.MultiplayerGame.sendShootAction(player);
-            }
-        }
-        
-        // 如果是多人游戏，发送移动动作
-        if (game.isMultiplayer && window.MultiplayerGame && (dx !== 0 || dy !== 0)) {
-            window.MultiplayerGame.sendMoveAction(player);
-        }
-    }
-    
-    // 归一化对角线移动
-    if (dx !== 0 && dy !== 0) {
-        dx *= 0.7071;
-        dy *= 0.7071;
-    }
-    
-    // 计算新位置
-    const newX = player.x + dx * player.speed;
-    const newY = player.y + dy * player.speed;
-    
-    // 检查墙壁碰撞
-    if (!checkWallCollision(newX, player.y, player.radius)) {
-        player.x = newX;
-    }
-    if (!checkWallCollision(player.x, newY, player.radius)) {
-        player.y = newY;
-    }
-    
-    // 更新方向
-    if (dx !== 0 || dy !== 0) {
-        player.direction = Math.atan2(dy, dx);
-    }
-    
-    // 限制在世界范围内
-    const worldWidth = game.camera.worldWidth;
-    const worldHeight = game.camera.worldHeight;
-    player.x = Math.max(player.radius, Math.min(worldWidth - player.radius, player.x));
-    player.y = Math.max(player.radius, Math.min(worldHeight - player.radius, player.y));
-}
-
-function updateAI(aiPlayer, deltaTime) {
-    if (!aiPlayer || aiPlayer.hp <= 0) return;
-    
-    const currentTime = Date.now();
-    
-    // 每2秒改变一次方向
-    if (currentTime - aiPlayer.aiDirectionChangeTime > 2000) {
-        aiPlayer.direction = Math.random() * Math.PI * 2;
-        aiPlayer.aiDirectionChangeTime = currentTime;
-    }
-    
-    // 移动AI
-    const aiDx = Math.cos(aiPlayer.direction);
-    const aiDy = Math.sin(aiPlayer.direction);
-    
-    const newAiX = aiPlayer.x + aiDx * aiPlayer.speed * 0.7; // AI速度适中
-    const newAiY = aiPlayer.y + aiDy * aiPlayer.speed * 0.7;
-    
-    if (!checkWallCollision(newAiX, aiPlayer.y, aiPlayer.radius)) {
-        aiPlayer.x = newAiX;
-    }
-    if (!checkWallCollision(aiPlayer.x, newAiY, aiPlayer.radius)) {
-        aiPlayer.y = newAiY;
-    }
-    
-    // AI随机射击
-    if (Math.random() < 0.015 && currentTime - aiPlayer.lastShot > aiPlayer.shotCooldown) {
-        shootProjectile(aiPlayer);
-        aiPlayer.lastShot = currentTime;
-    }
-}
-
-function checkWallCollision(x, y, radius) {
-    // 转换为网格坐标
-    const cellX = Math.floor(x / game.cellSize);
-    const cellY = Math.floor(y / game.cellSize);
-    
-    // 检查周围9个格子
-    for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-            const checkX = cellX + dx;
-            const checkY = cellY + dy;
-            
-            if (checkX >= 0 && checkX < game.mazeCols &&
-                checkY >= 0 && checkY < game.mazeRows &&
-                game.maze[checkY][checkX] === 1) {
-                
-                // 计算墙壁边界
-                const wallLeft = checkX * game.cellSize;
-                const wallRight = wallLeft + game.cellSize;
-                const wallTop = checkY * game.cellSize;
-                const wallBottom = wallTop + game.cellSize;
-                
-                // 找到最近的点
-                const closestX = Math.max(wallLeft, Math.min(x, wallRight));
-                const closestY = Math.max(wallTop, Math.min(y, wallBottom));
-                
-                // 计算距离
-                const distance = Math.sqrt(
-                    Math.pow(x - closestX, 2) + Math.pow(y - closestY, 2)
-                );
-                
-                if (distance < radius) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
 // ==================== 粒子系统 ====================
 function shootProjectile(shooter) {
     console.log('🔫 发射粒子，发射者:', shooter === game.players.player1 ? '玩家' : '对手');
@@ -1917,7 +978,7 @@ function updateScores() {
     }
 }
 
-// ==================== 第四部分：游戏渲染 ====================
+// ==================== 游戏渲染 ====================
 function renderGame() {
     if (!game.ctx || !game.canvas) {
         console.error('❌ 无法渲染：画布上下文不存在');
@@ -2507,903 +1568,1072 @@ function resetGame() {
     
     console.log('✅ 游戏已重置');
 }
-</script>
 <script>
-// ==================== 第五部分：多人实时对战系统（修复版）完整代码 ====================
+// ==================== 多人实时对战系统（修复版） ====================
 
-const SUPABASE_CONFIG = {
-  url: 'https://hxvpzskevjxkjmnsorcu.supabase.co',
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4dnB6c2tldmp4a2ptbnNvcmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MTAyNjgsImV4cCI6MjA4NTM4NjI2OH0.pZRITqs0y2HK2NbOPY8PjAxGniq16hGHBWvgm7VtO2E'
-};
+// Supabase配置（确保只定义一次）
+if (!window.SUPABASE_CONFIG) {
+    window.SUPABASE_CONFIG = {
+        url: 'https://hxvpzskevjxkjmnsorcu.supabase.co',
+        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4dnB6c2tldmp4a2ptbnNvcmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MTAyNjgsImV4cCI6MjA4NTM4NjI2OH0.pZRITqs0y2HK2NbOPY8PjAxGniq16hGHBWvgm7VtO2E'
+    };
+}
 
 // 清理旧的 localStorage ID
 function cleanupOldIds() {
-  const oldPlayerId = localStorage.getItem('player_id');
-  const oldClientId = localStorage.getItem('multiplayer_client_id');
-  
-  if (oldPlayerId && oldPlayerId.startsWith('player_')) {
-    localStorage.removeItem('player_id');
-    console.log('清理旧的 player_id:', oldPlayerId);
-  }
-  
-  if (oldClientId && oldClientId.startsWith('client_')) {
-    localStorage.removeItem('multiplayer_client_id');
-    console.log('清理旧的 client_id:', oldClientId);
-  }
+    const oldPlayerId = localStorage.getItem('player_id');
+    const oldClientId = localStorage.getItem('multiplayer_client_id');
+    
+    if (oldPlayerId && oldPlayerId.startsWith('player_')) {
+        localStorage.removeItem('player_id');
+        console.log('清理旧的 player_id:', oldPlayerId);
+    }
+    
+    if (oldClientId && oldClientId.startsWith('client_')) {
+        localStorage.removeItem('multiplayer_client_id');
+        console.log('清理旧的 client_id:', oldClientId);
+    }
 }
 
 // 生成UUID函数
 function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0.8);
-    return v.toString(16);
-  });
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0.8);
+        return v.toString(16);
+    });
+}
+
+// 生成简单ID（用于房间）
+function generateSimpleId() {
+    return Math.random().toString(36).substr(2, 9);
 }
 
 const MultiplayerGame = {
-  supabase: null,
-  playerId: null,
-  clientId: null,
-  currentRoom: null,
-  playerRole: null,
-  mazeSeed: null,
-  opponentId: null,
-  opponentName: null,
-  isMatching: false,
-  
-  // 连接状态
-  isConnected: false,
-  isInitialized: false,
-  heartbeatInterval: null,
-  initializationPromise: null,
-  
-  // 游戏状态同步
-  isPlayerReady: false,
-  opponentReady: false,
-  
-  // 初始化
-  async init() {
-    console.log('🎮 初始化多人游戏系统');
+    supabase: null,
+    playerId: null,
+    clientId: null,
+    currentRoom: null,
+    playerRole: null,
+    mazeSeed: null,
+    opponentId: null,
+    opponentName: null,
+    isMatching: false,
     
-    // 避免重复初始化
-    if (this.isInitialized && this.supabase) {
-      console.log('多人游戏系统已初始化，跳过重复初始化');
-      return Promise.resolve();
-    }
+    // 连接状态
+    isConnected: false,
+    isInitialized: false,
+    heartbeatInterval: null,
+    initializationPromise: null,
     
-    // 如果有正在进行的初始化，返回该Promise
-    if (this.initializationPromise) {
-      console.log('正在初始化中，等待完成...');
-      return this.initializationPromise;
-    }
+    // 游戏状态同步
+    isPlayerReady: false,
+    opponentReady: false,
     
-    this.initializationPromise = (async () => {
-      try {
-        // 清理旧的ID
-        cleanupOldIds();
+    // 初始化
+    async init() {
+        console.log('🎮 初始化多人游戏系统');
         
-        // 检查Supabase SDK是否已加载
-        if (!window.supabase) {
-          await this.loadSupabaseSDK();
+        // 避免重复初始化
+        if (this.isInitialized && this.supabase) {
+            console.log('多人游戏系统已初始化，跳过重复初始化');
+            return Promise.resolve();
         }
         
-        // 初始化Supabase客户端
-        this.supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
-          realtime: {
-            params: { eventsPerSecond: 20 }
-          }
+        // 如果有正在进行的初始化，返回该Promise
+        if (this.initializationPromise) {
+            console.log('正在初始化中，等待完成...');
+            return this.initializationPromise;
+        }
+        
+        this.initializationPromise = (async () => {
+            try {
+                // 清理旧的ID
+                cleanupOldIds();
+                
+                // 检查Supabase SDK是否已加载
+                if (!window.supabase) {
+                    await this.loadSupabaseSDK();
+                }
+                
+                // 初始化Supabase客户端
+                this.supabase = window.supabase.createClient(
+                    SUPABASE_CONFIG.url,
+                    SUPABASE_CONFIG.anonKey,
+                    {
+                        realtime: {
+                            params: { eventsPerSecond: 20 }
+                        }
+                    }
+                );
+                
+                // 生成客户端ID
+                this.clientId = generateUUID();
+                console.log('客户端ID:', this.clientId);
+                localStorage.setItem('multiplayer_client_id', this.clientId);
+                
+                // 设置玩家ID（访客模式）
+                this.playerId = this.getPlayerId();
+                
+                // 创建访客资料
+                await this.createGuestProfile();
+                
+                // 启动心跳（简化版，不依赖存储过程）
+                this.startSimpleHeartbeat();
+                
+                this.isInitialized = true;
+                this.isConnected = true;
+                console.log('✅ 多人游戏系统初始化完成');
+                
+                return true;
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                this.initializationPromise = null;
+                throw error;
+            }
+        })();
+        
+        return this.initializationPromise;
+    },
+    
+    // 获取玩家ID（访客模式）
+    getPlayerId() {
+        let playerId = localStorage.getItem('player_id');
+        if (!playerId) {
+            playerId = 'player_' + generateSimpleId();
+            localStorage.setItem('player_id', playerId);
+        }
+        return playerId;
+    },
+    
+    // 获取玩家名称
+    getPlayerName() {
+        return '玩家_' + this.playerId.substr(-6);
+    },
+    
+    // 创建访客资料（简化版）
+    async createGuestProfile() {
+        try {
+            // 尝试插入，忽略重复错误
+            const { error } = await this.supabase
+                .from('profiles')
+                .upsert({
+                    id: this.playerId,
+                    username: this.getPlayerName(),
+                    elo: 1000,
+                    created_at: new Date().toISOString()
+                }, { 
+                    onConflict: 'id'
+                });
+            
+            if (error) throw error;
+            console.log('访客资料创建/更新成功');
+        } catch (error) {
+            // 忽略错误，继续
+            console.log('创建访客资料:', error.message);
+        }
+    },
+    
+    // 加载SDK
+    loadSupabaseSDK() {
+        return new Promise((resolve, reject) => {
+            if (window.supabase) {
+                resolve();
+                return;
+            }
+            
+            // 检查是否已加载
+            const existingScript = document.querySelector('script[src*="supabase-js"]');
+            if (existingScript) {
+                existingScript.onload = resolve;
+                existingScript.onerror = reject;
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+            script.onload = () => {
+                console.log('Supabase SDK加载成功');
+                resolve();
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
         });
-        
-        // 生成客户端ID
-        this.clientId = generateUUID();
-        console.log('客户端ID:', this.clientId);
-        localStorage.setItem('multiplayer_client_id', this.clientId);
-        
-        // 设置玩家ID（访客模式）
-        this.playerId = this.getPlayerId();
-        
-        // 创建访客资料
-        await this.createGuestProfile();
-        
-        // 启动心跳（简化版，不依赖存储过程）
-        this.startSimpleHeartbeat();
-        
-        this.isInitialized = true;
-        this.isConnected = true;
-        console.log('✅ 多人游戏系统初始化完成');
-        
-        return true;
-        
-      } catch (error) {
-        console.error('初始化失败:', error);
-        this.initializationPromise = null;
-        throw error;
-      }
-    })();
+    },
     
-    return this.initializationPromise;
-  },
-  
-  // 获取玩家ID（访客模式）
-  getPlayerId() {
-    let playerId = localStorage.getItem('player_id');
-    if (!playerId) {
-      playerId = 'player_' + generateUUID();
-      localStorage.setItem('player_id', playerId);
-    }
-    return playerId;
-  },
-  
-  // 获取玩家名称
-  getPlayerName() {
-    return '玩家_' + this.playerId.substr(-6);
-  },
-  
-  // 创建访客资料（简化版）
-  async createGuestProfile() {
-    try {
-      // 尝试插入，忽略重复错误
-      await this.supabase
-        .from('profiles')
-        .upsert({
-          id: this.playerId,
-          username: this.getPlayerName(),
-          elo: 1000,
-          created_at: new Date().toISOString()
-        }, { 
-          onConflict: 'id',
-          ignoreDuplicates: false 
-        });
-      
-      console.log('访客资料创建/更新成功');
-    } catch (error) {
-      // 忽略错误，继续
-      console.log('创建访客资料:', error.message);
-    }
-  },
-  
-  // 加载SDK
-  loadSupabaseSDK() {
-    return new Promise((resolve, reject) => {
-      if (window.supabase) {
-        resolve();
-        return;
-      }
-      
-      // 检查是否已加载
-      const existingScript = document.querySelector('script[src*="supabase-js"]');
-      if (existingScript) {
-        existingScript.onload = resolve;
-        existingScript.onerror = reject;
-        return;
-      }
-      
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-      script.onload = () => {
-        console.log('Supabase SDK加载成功');
-        resolve();
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  },
-  
-  // ==================== 匹配系统 ====================
-  
-  // 开始匹配
-  async startMatchmaking() {
-    console.log('🔍 开始匹配真人玩家...');
+    // ==================== 匹配系统 ====================
     
-    this.isMatching = true;
-    
-    try {
-      // 先确保已初始化
-      if (!this.isInitialized) {
-        await this.init();
-      }
-      
-      // 更新UI
-      this.updateMatchmakingUI(1);
-      
-      // 寻找可用的游戏房间
-      const { data: availableRooms, error: roomsError } = await this.supabase
-        .from('game_sessions')
-        .select('*')
-        .eq('status', 'waiting')
-        .limit(1);
-      
-      if (roomsError) throw roomsError;
-      
-      let roomId = null;
-      let playerNumber = 1;
-      
-      if (availableRooms && availableRooms.length > 0) {
-        // 加入现有房间
-        const room = availableRooms[0];
-        roomId = room.room_id;
-        playerNumber = 2;
+    // 开始匹配
+    async startMatchmaking() {
+        console.log('🔍 开始匹配真人玩家...');
         
-        // 更新房间信息
-        await this.supabase
-          .from('game_sessions')
-          .update({
-            player2_id: this.playerId,
-            player2_role: 'electron', // 加入者总是电子
-            updated_at: new Date().toISOString()
-          })
-          .eq('room_id', roomId);
+        this.isMatching = true;
         
-        // 设置对手信息
-        this.opponentId = room.player1_id;
-        this.opponentName = '玩家_' + this.opponentId.substr(-6);
-        this.playerRole = 'electron'; // 加入者是电子
-        this.mazeSeed = room.maze_seed;
+        try {
+            // 先确保已初始化
+            if (!this.isInitialized) {
+                await this.init();
+            }
+            
+            // 更新UI
+            this.updateMatchmakingUI(1);
+            
+            // 寻找等待中的房间（最多等待30秒）
+            console.log('寻找可用的游戏房间...');
+            const { data: availableRooms, error: roomsError } = await this.supabase
+                .from('game_sessions')
+                .select('*')
+                .eq('status', 'waiting')
+                .is('player2_id', null) // 确保房间只有一个人
+                .limit(1);
+            
+            if (roomsError) {
+                console.error('查询房间失败:', roomsError);
+                throw roomsError;
+            }
+            
+            console.log('可用房间:', availableRooms);
+            
+            let roomId = null;
+            let isRoomCreator = true;
+            
+            if (availableRooms && availableRooms.length > 0) {
+                // 加入现有房间
+                const room = availableRooms[0];
+                roomId = room.room_id;
+                isRoomCreator = false;
+                
+                console.log('加入现有房间:', roomId);
+                
+                // 更新房间信息
+                const { error: updateError } = await this.supabase
+                    .from('game_sessions')
+                    .update({
+                        player2_id: this.playerId,
+                        player2_role: 'electron',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('room_id', roomId);
+                
+                if (updateError) {
+                    console.error('更新房间失败:', updateError);
+                    throw updateError;
+                }
+                
+                // 设置对手信息
+                this.opponentId = room.player1_id;
+                this.opponentName = '玩家_' + (this.opponentId ? this.opponentId.substr(-6) : '未知');
+                this.playerRole = 'electron'; // 加入者是电子
+                this.mazeSeed = room.maze_seed || Date.now();
+                
+            } else {
+                // 创建新房间
+                roomId = 'room_' + Date.now() + '_' + generateSimpleId();
+                isRoomCreator = true;
+                
+                // 生成迷宫种子
+                this.mazeSeed = Date.now();
+                
+                console.log('创建新房间:', roomId);
+                
+                // 创建游戏会话
+                const { error: insertError } = await this.supabase
+                    .from('game_sessions')
+                    .insert({
+                        room_id: roomId,
+                        player1_id: this.playerId,
+                        player1_role: 'proton', // 房主总是质子
+                        maze_seed: this.mazeSeed,
+                        status: 'waiting',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+                
+                if (insertError) {
+                    console.error('创建房间失败:', insertError);
+                    throw insertError;
+                }
+                
+                this.playerRole = 'proton';
+            }
+            
+            this.currentRoom = roomId;
+            
+            // 保存玩家角色到全局变量
+            window.playerRole = this.playerRole;
+            if (window.game) {
+                window.game.isMultiplayer = true;
+                window.game.mazeSeed = this.mazeSeed;
+            }
+            
+            console.log(`✅ 匹配成功！房间: ${roomId}, 角色: ${this.playerRole}, ${isRoomCreator ? '房主' : '加入者'}`);
+            
+            // 立即进入游戏大厅
+            setTimeout(() => {
+                this.enterLobby();
+            }, 500);
+            
+        } catch (error) {
+            console.error('匹配失败:', error);
+            this.isMatching = false;
+            
+            // 提供更友好的错误信息
+            let errorMessage = '匹配失败，请稍后重试';
+            if (error.message.includes('network') || error.message.includes('fetch')) {
+                errorMessage = '网络连接失败，请检查网络后重试';
+            } else if (error.message.includes('game_sessions')) {
+                errorMessage = '数据库错误，请确保表结构正确';
+            }
+            
+            alert(errorMessage);
+            switchScene('menuScene');
+        }
+    },
+    
+    // 更新匹配UI
+    updateMatchmakingUI(attempts) {
+        const timerElement = document.getElementById('matchTimer');
+        const progressElement = document.getElementById('matchProgress');
+        const statusElement = document.getElementById('matchStatus');
         
-      } else {
-        // 创建新房间
-        roomId = 'room_' + generateUUID().replace(/-/g, '');
-        playerNumber = 1;
+        if (timerElement) {
+            timerElement.textContent = attempts;
+        }
         
-        // 生成迷宫种子
-        this.mazeSeed = Date.now();
+        if (progressElement) {
+            const progressPercent = Math.min(100, (attempts / 30) * 100);
+            progressElement.style.width = `${progressPercent}%`;
+        }
         
-        // 创建游戏会话
-        await this.supabase
-          .from('game_sessions')
-          .insert({
-            room_id: roomId,
-            player1_id: this.playerId,
-            player1_role: 'proton', // 房主总是质子
-            maze_seed: this.mazeSeed,
-            status: 'waiting',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
+        if (statusElement) {
+            const statuses = [
+                "扫描在线玩家...",
+                "检查网络延迟...",
+                "优化匹配参数...",
+                "寻找最佳对手...",
+                "量子纠缠建立中..."
+            ];
+            statusElement.textContent = statuses[attempts % statuses.length];
+        }
+    },
+    
+    // 取消匹配
+    async cancelMatchmaking() {
+        try {
+            this.isMatching = false;
+            
+            if (this.currentRoom) {
+                // 清理游戏会话
+                const { error } = await this.supabase
+                    .from('game_sessions')
+                    .delete()
+                    .eq('room_id', this.currentRoom);
+                
+                if (error) {
+                    console.error('删除房间失败:', error);
+                }
+            }
+            
+            console.log('✅ 已取消匹配');
+            switchScene('menuScene');
+            
+        } catch (error) {
+            console.error('取消匹配失败:', error);
+            switchScene('menuScene');
+        }
+    },
+    
+    // ==================== 游戏大厅 ====================
+    
+    // 进入游戏大厅
+    async enterLobby() {
+        console.log('🎪 进入游戏大厅，房间:', this.currentRoom);
         
-        this.playerRole = 'proton';
-      }
-      
-      this.currentRoom = roomId;
-      
-      // 保存玩家角色到全局变量
-      window.playerRole = this.playerRole;
-      game.isMultiplayer = true;
-      game.mazeSeed = this.mazeSeed;
-      
-      console.log(`✅ 匹配成功！房间: ${roomId}, 玩家${playerNumber}, 角色: ${this.playerRole}`);
-      
-      // 进入游戏大厅
-      setTimeout(() => {
-        this.enterLobby();
-      }, 500);
-      
-    } catch (error) {
-      console.error('匹配失败:', error);
-      this.isMatching = false;
-      alert('匹配失败: ' + error.message);
-      switchScene('menuScene');
-    }
-  },
-  
-  // 更新匹配UI
-  updateMatchmakingUI(attempts) {
-    const timerElement = document.getElementById('matchTimer');
-    const progressElement = document.getElementById('matchProgress');
-    const statusElement = document.getElementById('matchStatus');
+        // 切换到大厅场景
+        switchScene('lobbyScene');
+        
+        // 强制设置玩家角色
+        if (window.playerRole !== this.playerRole) {
+            window.playerRole = this.playerRole;
+            console.log('🔄 设置玩家角色:', window.playerRole);
+        }
+        
+        // 立即更新UI显示
+        this.updateLobbyUI();
+        
+        // 更新角色显示
+        this.updateRoleDisplay();
+        
+        // 初始化原有的游戏大厅
+        if (typeof initializeLobby === 'function') {
+            initializeLobby();
+        }
+        
+        // 监听对手加入和准备状态
+        this.setupLobbyListeners();
+        
+        // 获取房间信息
+        await this.fetchRoomInfo();
+    },
     
-    if (timerElement) {
-      timerElement.textContent = attempts;
-    }
+    // 获取房间信息
+    async fetchRoomInfo() {
+        try {
+            const { data: session, error } = await this.supabase
+                .from('game_sessions')
+                .select('*')
+                .eq('room_id', this.currentRoom)
+                .single();
+            
+            if (error) {
+                console.error('获取房间信息失败:', error);
+                return;
+            }
+            
+            console.log('房间详细信息:', session);
+            
+            // 如果有对手，更新对手信息
+            if (session.player2_id && !this.opponentId) {
+                this.opponentId = session.player2_id;
+                this.opponentName = '玩家_' + this.opponentId.substr(-6);
+                
+                // 更新对手UI
+                const opponentAction = document.getElementById('opponentAction');
+                if (opponentAction) {
+                    opponentAction.textContent = '对手已加入！';
+                }
+                
+                console.log('✅ 对手已加入:', this.opponentName);
+            }
+            
+            // 检查对手准备状态
+            if (session.player1_id === this.playerId) {
+                this.opponentReady = session.player2_ready || false;
+            } else {
+                this.opponentReady = session.player1_ready || false;
+            }
+            
+            this.updateOpponentReadyUI(this.opponentReady);
+            
+        } catch (error) {
+            console.log('获取房间信息:', error.message);
+        }
+    },
     
-    if (progressElement) {
-      const progressPercent = Math.min(100, (attempts / 30) * 100);
-      progressElement.style.width = `${progressPercent}%`;
-    }
-    
-    if (statusElement) {
-      const statuses = [
-        "扫描在线玩家...",
-        "检查网络延迟...",
-        "优化匹配参数...",
-        "寻找最佳对手...",
-        "量子纠缠建立中..."
-      ];
-      statusElement.textContent = statuses[attempts % statuses.length];
-    }
-  },
-  
-  // 取消匹配
-  async cancelMatchmaking() {
-    try {
-      this.isMatching = false;
-      
-      if (this.currentRoom) {
-        // 清理游戏会话
-        await this.supabase
-          .from('game_sessions')
-          .delete()
-          .eq('room_id', this.currentRoom);
-      }
-      
-      console.log('✅ 已取消匹配');
-      switchScene('menuScene');
-      
-    } catch (error) {
-      console.error('取消匹配失败:', error);
-      switchScene('menuScene');
-    }
-  },
-  
-  // ==================== 游戏大厅 ====================
-  
-  // 进入游戏大厅
-  async enterLobby() {
-    console.log('🎪 进入游戏大厅，房间:', this.currentRoom);
-    
-    // 切换到大厅场景
-    switchScene('lobbyScene');
-    
-    // 更新UI显示
-    this.updateLobbyUI();
-    
-    // 监听对手加入和准备状态
-    this.setupLobbyListeners();
-    
-    // 初始化原有的游戏大厅
-    if (typeof initializeLobby === 'function') {
-      initializeLobby();
-    }
-    
-    // 强制设置玩家角色
-    if (window.playerRole !== this.playerRole) {
-      window.playerRole = this.playerRole;
-      console.log('🔄 强制更新玩家角色:', window.playerRole);
-    }
+    // 更新大厅UI
+    updateLobbyUI() {
+        const player1RoleElement = document.getElementById('player1Role');
+        const player2RoleElement = document.getElementById('player2Role');
+        const player1Card = document.getElementById('player1Card');
+        const player2Card = document.getElementById('player2Card');
+        const readyBtn = document.getElementById('player1ReadyBtn');
+        
+        if (player1RoleElement) {
+            player1RoleElement.textContent = this.playerRole === 'proton' ? '质子 (你)' : '电子 (你)';
+        }
+        
+        if (player2RoleElement) {
+            player2RoleElement.textContent = this.playerRole === 'proton' ? '电子 (对手)' : '质子 (对手)';
+        }
+        
+        // 更新卡片颜色
+        if (player1Card) {
+            player1Card.style.borderColor = this.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
+        }
+        
+        if (player2Card) {
+            player2Card.style.borderColor = this.playerRole === 'proton' ? 'var(--primary-red)' : 'var(--primary-blue)';
+        }
+        
+        // 更新准备按钮颜色
+        if (readyBtn) {
+            readyBtn.style.background = this.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
+            readyBtn.disabled = false;
+        }
+        
+        console.log('🎨 大厅UI更新完成，玩家角色:', this.playerRole);
+    },
     
     // 更新角色显示
-    this.updateRoleDisplay();
-  },
-  
-  // 更新大厅UI
-  updateLobbyUI() {
-    const player1RoleElement = document.getElementById('player1Role');
-    const player2RoleElement = document.getElementById('player2Role');
-    const player1Card = document.getElementById('player1Card');
-    const player2Card = document.getElementById('player2Card');
-    
-    if (player1RoleElement) {
-      player1RoleElement.textContent = this.playerRole === 'proton' ? '质子 (你)' : '电子 (你)';
-    }
-    
-    if (player2RoleElement) {
-      player2RoleElement.textContent = this.playerRole === 'proton' ? '电子 (对手)' : '质子 (对手)';
-    }
-    
-    // 更新卡片颜色
-    if (player1Card) {
-      player1Card.style.borderColor = this.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
-    }
-    
-    if (player2Card) {
-      player2Card.style.borderColor = this.playerRole === 'proton' ? 'var(--primary-red)' : 'var(--primary-blue)';
-    }
-    
-    // 更新准备按钮颜色
-    const readyBtn = document.getElementById('player1ReadyBtn');
-    if (readyBtn) {
-      readyBtn.style.background = this.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
-    }
-  },
-  
-  // 更新角色显示
-  updateRoleDisplay() {
-    // 更新全局玩家角色显示
-    const playerNameElement = document.getElementById('playerName');
-    const opponentNameElement = document.getElementById('opponentName');
-    
-    if (playerNameElement) {
-      playerNameElement.textContent = this.playerRole === 'proton' ? '质子' : '电子';
-    }
-    
-    if (opponentNameElement) {
-      opponentNameElement.textContent = this.playerRole === 'proton' ? '电子' : '质子';
-    }
-    
-    console.log('🎭 角色分配:', {
-      玩家: this.playerRole,
-      对手: this.playerRole === 'proton' ? 'electron' : 'proton'
-    });
-  },
-  
-  // 设置大厅监听器
-  setupLobbyListeners() {
-    // 监听游戏会话更新
-    this.supabase
-      .channel(`lobby:${this.currentRoom}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'game_sessions',
-        filter: `room_id=eq.${this.currentRoom}`
-      }, (payload) => {
-        console.log('游戏会话更新:', payload.new);
-        this.handleLobbyUpdate(payload.new);
-      })
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'game_actions',
-        filter: `room_id=eq.${this.currentRoom}`
-      }, (payload) => {
-        console.log('游戏动作:', payload.new);
-        this.handleGameAction(payload.new);
-      })
-      .subscribe();
-  },
-  
-  // 处理大厅更新
-  handleLobbyUpdate(sessionData) {
-    // 更新对手信息
-    if (sessionData.player2_id && !this.opponentId) {
-      this.opponentId = sessionData.player2_id;
-      this.opponentName = '玩家_' + this.opponentId.substr(-6);
-      
-      // 更新对手UI
-      const opponentAction = document.getElementById('opponentAction');
-      if (opponentAction) {
-        opponentAction.textContent = '对手已加入！';
-      }
-      
-      console.log('✅ 对手加入:', this.opponentName);
-    }
-    
-    // 检查双方是否都准备
-    if (sessionData.player1_ready && sessionData.player2_ready) {
-      console.log('🚀 双方准备完成，开始游戏！');
-      this.startGame();
-    }
-  },
-  
-  // 发送玩家准备状态
-  async sendPlayerReady(isReady) {
-    this.isPlayerReady = isReady;
-    
-    try {
-      // 确定是玩家1还是玩家2
-      const { data: session, error } = await this.supabase
-        .from('game_sessions')
-        .select('player1_id, player2_id')
-        .eq('room_id', this.currentRoom)
-        .single();
-      
-      if (error) throw error;
-      
-      const updateField = session.player1_id === this.playerId ? 
-        'player1_ready' : 'player2_ready';
-      
-      // 更新游戏会话
-      await this.supabase
-        .from('game_sessions')
-        .update({
-          [updateField]: isReady,
-          updated_at: new Date().toISOString()
-        })
-        .eq('room_id', this.currentRoom);
-      
-      console.log('准备状态已发送:', isReady, '字段:', updateField);
-      
-      // 同时发送游戏动作
-      await this.sendGameAction('player_ready', { ready: isReady });
-      
-    } catch (error) {
-      console.error('发送准备状态失败:', error);
-    }
-  },
-  
-  // 发送游戏动作
-  async sendGameAction(actionType, actionData) {
-    try {
-      await this.supabase
-        .from('game_actions')
-        .insert({
-          room_id: this.currentRoom,
-          player_id: this.playerId,
-          action_type: actionType,
-          action_data: actionData,
-          created_at: new Date().toISOString()
+    updateRoleDisplay() {
+        // 更新全局玩家角色显示
+        const playerNameElement = document.getElementById('playerName');
+        const opponentNameElement = document.getElementById('opponentName');
+        
+        if (playerNameElement) {
+            playerNameElement.textContent = this.playerRole === 'proton' ? '质子' : '电子';
+        }
+        
+        if (opponentNameElement) {
+            opponentNameElement.textContent = this.playerRole === 'proton' ? '电子' : '质子';
+        }
+        
+        // 强制更新游戏大厅的角色显示
+        const player1RoleElement = document.getElementById('player1Role');
+        const player2RoleElement = document.getElementById('player2Role');
+        
+        if (player1RoleElement) {
+            player1RoleElement.textContent = this.playerRole === 'proton' ? '质子 (你)' : '电子 (你)';
+        }
+        
+        if (player2RoleElement) {
+            player2RoleElement.textContent = this.playerRole === 'proton' ? '电子 (对手)' : '质子 (对手)';
+        }
+        
+        console.log('🎭 角色分配完成:', {
+            玩家: this.playerRole,
+            对手: this.playerRole === 'proton' ? 'electron' : 'proton'
         });
-    } catch (error) {
-      console.error('发送游戏动作失败:', error);
-    }
-  },
-  
-  // 处理游戏动作
-  handleGameAction(action) {
-    // 忽略自己的动作
-    if (action.player_id === this.playerId) return;
+    },
     
-    switch (action.action_type) {
-      case 'player_ready':
-        this.opponentReady = action.action_data.ready;
+    // 设置大厅监听器
+    setupLobbyListeners() {
+        console.log('设置大厅监听器，房间:', this.currentRoom);
+        
+        // 监听游戏会话更新
+        this.supabase
+            .channel(`lobby:${this.currentRoom}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'game_sessions',
+                filter: `room_id=eq.${this.currentRoom}`
+            }, (payload) => {
+                console.log('游戏会话更新:', payload.new);
+                this.handleLobbyUpdate(payload.new);
+            })
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'game_actions',
+                filter: `room_id=eq.${this.currentRoom}`
+            }, (payload) => {
+                console.log('游戏动作:', payload.new);
+                this.handleGameAction(payload.new);
+            })
+            .subscribe();
+    },
+    
+    // 处理大厅更新
+    handleLobbyUpdate(sessionData) {
+        // 更新对手信息
+        if (sessionData.player2_id && !this.opponentId) {
+            this.opponentId = sessionData.player2_id;
+            this.opponentName = '玩家_' + this.opponentId.substr(-6);
+            
+            // 更新对手UI
+            const opponentAction = document.getElementById('opponentAction');
+            if (opponentAction) {
+                opponentAction.textContent = '对手已加入！';
+            }
+            
+            console.log('✅ 对手加入:', this.opponentName);
+        }
+        
+        // 更新对手准备状态
+        if (sessionData.player1_id === this.playerId) {
+            this.opponentReady = sessionData.player2_ready || false;
+        } else {
+            this.opponentReady = sessionData.player1_ready || false;
+        }
+        
         this.updateOpponentReadyUI(this.opponentReady);
-        break;
         
-      case 'player_move':
-        if (game.players.player2 && game.isGameActive) {
-          this.updateOpponentPosition(action.action_data);
+        // 检查双方是否都准备
+        if (sessionData.player1_ready && sessionData.player2_ready) {
+            console.log('🚀 双方准备完成，开始游戏！');
+            this.startGame();
         }
-        break;
+    },
+    
+    // 发送玩家准备状态
+    async sendPlayerReady(isReady) {
+        this.isPlayerReady = isReady;
         
-      case 'player_shoot':
-        if (game.isGameActive) {
-          this.createOpponentProjectile(action.action_data);
+        try {
+            console.log('发送准备状态:', isReady, '房间:', this.currentRoom);
+            
+            // 先获取当前房间信息
+            const { data: session, error: fetchError } = await this.supabase
+                .from('game_sessions')
+                .select('player1_id, player2_id')
+                .eq('room_id', this.currentRoom)
+                .single();
+            
+            if (fetchError) {
+                console.error('获取房间信息失败:', fetchError);
+                throw fetchError;
+            }
+            
+            console.log('房间信息:', session);
+            
+            // 确定是玩家1还是玩家2
+            let updateField = '';
+            if (session.player1_id === this.playerId) {
+                updateField = 'player1_ready';
+            } else if (session.player2_id === this.playerId) {
+                updateField = 'player2_ready';
+            } else {
+                throw new Error('玩家不在该房间中');
+            }
+            
+            // 更新准备状态
+            const { error: updateError } = await this.supabase
+                .from('game_sessions')
+                .update({
+                    [updateField]: isReady,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('room_id', this.currentRoom);
+            
+            if (updateError) throw updateError;
+            
+            console.log('准备状态已发送:', isReady, '字段:', updateField);
+            
+            // 同时发送游戏动作
+            await this.sendGameAction('player_ready', { ready: isReady });
+            
+        } catch (error) {
+            console.error('发送准备状态失败:', error);
+            alert('准备状态发送失败，请重试');
         }
-        break;
-        
-      case 'game_start':
-        console.log('收到游戏开始指令');
-        this.startGame();
-        break;
-        
-      case 'game_over':
-        console.log('收到游戏结束指令');
-        if (game.isGameActive) {
-          endGame(action.action_data.winner);
+    },
+    
+    // 发送游戏动作
+    async sendGameAction(actionType, actionData) {
+        try {
+            const { error } = await this.supabase
+                .from('game_actions')
+                .insert({
+                    room_id: this.currentRoom,
+                    player_id: this.playerId,
+                    action_type: actionType,
+                    action_data: actionData,
+                    created_at: new Date().toISOString()
+                });
+            
+            if (error) throw error;
+            console.log('游戏动作已发送:', actionType);
+            
+        } catch (error) {
+            console.error('发送游戏动作失败:', error);
         }
-        break;
-    }
-  },
-  
-  // 更新对手准备UI
-  updateOpponentReadyUI(isReady) {
-    const statusDot = document.getElementById('player2StatusDot');
-    const statusText = document.getElementById('player2StatusText');
-    const actionText = document.getElementById('opponentAction');
+    },
     
-    if (statusDot && statusText && actionText) {
-      if (isReady) {
-        statusDot.style.background = '#10b981';
-        statusText.textContent = '已准备';
-        actionText.textContent = '对手已准备！';
-      } else {
-        statusDot.style.background = '#64748b';
-        statusText.textContent = '未准备';
-        actionText.textContent = '等待对手准备...';
-      }
-    }
-  },
-  
-  // ==================== 游戏开始 ====================
-  
-  async startGame() {
-    console.log('🎮 开始多人游戏');
-    
-    try {
-      // 更新游戏会话状态
-      await this.supabase
-        .from('game_sessions')
-        .update({ 
-          status: 'active',
-          started_at: new Date().toISOString()
-        })
-        .eq('room_id', this.currentRoom);
-      
-      // 发送游戏开始动作
-      await this.sendGameAction('game_start', { time: Date.now() });
-      
-      // 切换到加载场景
-      switchScene('loadingScene');
-      
-      // 模拟加载
-      setTimeout(() => {
-        // 设置游戏为多人模式
-        game.isMultiplayer = true;
-        game.isConnectedToOpponent = true;
+    // 处理游戏动作
+    handleGameAction(action) {
+        // 忽略自己的动作
+        if (action.player_id === this.playerId) return;
         
-        // 初始化游戏
-        if (typeof initializeGame === 'function') {
-          initializeGame();
+        console.log('处理对手动作:', action.action_type, action.action_data);
+        
+        switch (action.action_type) {
+            case 'player_ready':
+                this.opponentReady = action.action_data.ready;
+                this.updateOpponentReadyUI(this.opponentReady);
+                break;
+                
+            case 'player_move':
+                if (window.game && window.game.players && window.game.players.player2 && window.game.isGameActive) {
+                    this.updateOpponentPosition(action.action_data);
+                }
+                break;
+                
+            case 'player_shoot':
+                if (window.game && window.game.isGameActive) {
+                    this.createOpponentProjectile(action.action_data);
+                }
+                break;
+                
+            case 'game_start':
+                console.log('收到游戏开始指令');
+                this.startGame();
+                break;
+                
+            case 'game_over':
+                console.log('收到游戏结束指令');
+                if (window.game && window.game.isGameActive) {
+                    window.endGame(action.action_data.winner);
+                }
+                break;
+        }
+    },
+    
+    // 更新对手准备UI
+    updateOpponentReadyUI(isReady) {
+        const statusDot = document.getElementById('player2StatusDot');
+        const statusText = document.getElementById('player2StatusText');
+        const actionText = document.getElementById('opponentAction');
+        
+        if (statusDot && statusText && actionText) {
+            if (isReady) {
+                statusDot.style.background = '#10b981';
+                statusText.textContent = '已准备';
+                actionText.textContent = '对手已准备！';
+            } else {
+                statusDot.style.background = '#64748b';
+                statusText.textContent = '未准备';
+                actionText.textContent = '等待对手准备...';
+            }
+        }
+    },
+    
+    // ==================== 游戏开始 ====================
+    
+    async startGame() {
+        console.log('🎮 开始多人游戏');
+        
+        try {
+            // 更新游戏会话状态
+            const { error: updateError } = await this.supabase
+                .from('game_sessions')
+                .update({ 
+                    status: 'active',
+                    started_at: new Date().toISOString()
+                })
+                .eq('room_id', this.currentRoom);
+            
+            if (updateError) throw updateError;
+            
+            // 发送游戏开始动作
+            await this.sendGameAction('game_start', { time: Date.now() });
+            
+            // 切换到加载场景
+            switchScene('loadingScene');
+            
+            // 模拟加载
+            setTimeout(() => {
+                // 设置游戏为多人模式
+                if (window.game) {
+                    window.game.isMultiplayer = true;
+                    window.game.isConnectedToOpponent = true;
+                }
+                
+                // 初始化游戏
+                if (typeof initializeGame === 'function') {
+                    initializeGame();
+                }
+                
+                // 开始游戏同步
+                this.startGameSync();
+                
+            }, 1500);
+            
+        } catch (error) {
+            console.error('开始游戏失败:', error);
+        }
+    },
+    
+    // ==================== 游戏同步 ====================
+    
+    startGameSync() {
+        console.log('🔄 开始游戏状态同步');
+        
+        // 监听游戏动作
+        this.setupGameListeners();
+        
+        // 开始发送玩家动作
+        this.startSendingPlayerActions();
+    },
+    
+    setupGameListeners() {
+        console.log('设置游戏监听器，房间:', this.currentRoom);
+        
+        // 监听游戏动作
+        this.supabase
+            .channel(`game:${this.currentRoom}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'game_actions',
+                filter: `room_id=eq.${this.currentRoom}`
+            }, (payload) => {
+                this.handleGameAction(payload.new);
+            })
+            .subscribe();
+    },
+    
+    startSendingPlayerActions() {
+        console.log('📤 开始发送玩家动作');
+        
+        // 定期发送位置更新
+        let lastPositionUpdate = 0;
+        const positionInterval = setInterval(() => {
+            if (!window.game || !window.game.isGameActive) {
+                clearInterval(positionInterval);
+                return;
+            }
+            
+            const player = window.game.players?.player1;
+            if (player && player.isLocalPlayer) {
+                const currentTime = Date.now();
+                
+                // 每200ms发送一次位置，或者当位置变化较大时
+                if (currentTime - lastPositionUpdate > 200) {
+                    this.sendPlayerPosition(player);
+                    lastPositionUpdate = currentTime;
+                }
+            }
+        }, 200);
+    },
+    
+    // 发送玩家位置
+    async sendPlayerPosition(player) {
+        await this.sendGameAction('player_move', {
+            x: player.x,
+            y: player.y,
+            direction: player.direction,
+            timestamp: Date.now()
+        });
+    },
+    
+    // 发送射击动作
+    async sendShootAction(player) {
+        await this.sendGameAction('player_shoot', {
+            x: player.x,
+            y: player.y,
+            direction: player.direction,
+            timestamp: Date.now()
+        });
+    },
+    
+    // 发送击中事件
+    async sendHitAction(target, projectile) {
+        await this.sendGameAction('player_hit', {
+            target: target,
+            damage: 25,
+            projectile_id: projectile.id,
+            timestamp: Date.now()
+        });
+    },
+    
+    // 发送游戏结束
+    async sendGameOver(winner) {
+        await this.sendGameAction('game_over', {
+            winner: winner,
+            timestamp: Date.now()
+        });
+    },
+    
+    // ==================== 处理对手动作 ====================
+    
+    updateOpponentPosition(positionData) {
+        if (!window.game || !window.game.players || !window.game.players.player2 || !window.game.isGameActive) return;
+        
+        // 插值平滑移动
+        const targetX = positionData.x;
+        const targetY = positionData.y;
+        
+        // 简单的插值
+        window.game.players.player2.x += (targetX - window.game.players.player2.x) * 0.3;
+        window.game.players.player2.y += (targetY - window.game.players.player2.y) * 0.3;
+        window.game.players.player2.direction = positionData.direction;
+        
+        // 标记为真人对手，不是AI
+        window.game.players.player2.isAI = false;
+        window.game.players.player2.isLocalPlayer = false;
+    },
+    
+    createOpponentProjectile(projectileData) {
+        if (!window.game || !window.game.isGameActive) return;
+        
+        // 创建对手的子弹
+        const projectile = {
+            id: Date.now() + Math.random(),
+            x: projectileData.x,
+            y: projectileData.y,
+            radius: 6,
+            color: this.playerRole === 'proton' ? '#ef4444' : '#3b82f6',
+            speed: 8,
+            direction: projectileData.direction,
+            dx: Math.cos(projectileData.direction) * 8,
+            dy: Math.sin(projectileData.direction) * 8,
+            owner: 'player2',
+            shooterId: 'player2',
+            bounceCount: 3,
+            lifeTime: 5000,
+            active: true
+        };
+        
+        window.game.projectiles.push(projectile);
+        console.log('🎯 创建对手子弹');
+    },
+    
+    // ==================== 心跳系统（简化版） ====================
+    
+    startSimpleHeartbeat() {
+        console.log('💓 启动简化心跳');
+        
+        this.heartbeatInterval = setInterval(async () => {
+            try {
+                // 简单的心跳：更新最后在线时间
+                await this.supabase
+                    .from('profiles')
+                    .update({ 
+                        last_online: new Date().toISOString(),
+                        client_id: this.clientId
+                    })
+                    .eq('id', this.playerId);
+                
+                this.isConnected = true;
+                
+            } catch (error) {
+                console.log('心跳失败:', error.message);
+                this.isConnected = false;
+            }
+        }, 30000); // 每30秒一次
+    },
+    
+    // ==================== 工具函数 ====================
+    
+    // 清理资源
+    cleanup() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
         }
         
-        // 开始游戏同步
-        this.startGameSync();
-        
-      }, 1500);
-      
-    } catch (error) {
-      console.error('开始游戏失败:', error);
-    }
-  },
-  
-  // ==================== 游戏同步 ====================
-  
-  startGameSync() {
-    console.log('🔄 开始游戏状态同步');
-    
-    // 监听游戏动作
-    this.setupGameListeners();
-    
-    // 开始发送玩家动作
-    this.startSendingPlayerActions();
-  },
-  
-  setupGameListeners() {
-    // 监听游戏动作
-    this.supabase
-      .channel(`game:${this.currentRoom}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'game_actions',
-        filter: `room_id=eq.${this.currentRoom}`
-      }, (payload) => {
-        this.handleGameAction(payload.new);
-      })
-      .subscribe();
-  },
-  
-  startSendingPlayerActions() {
-    console.log('📤 开始发送玩家动作');
-    
-    // 定期发送位置更新
-    let lastPositionUpdate = 0;
-    const positionInterval = setInterval(() => {
-      if (!game.isGameActive) {
-        clearInterval(positionInterval);
-        return;
-      }
-      
-      const player = game.players.player1;
-      if (player && player.isLocalPlayer) {
-        const currentTime = Date.now();
-        
-        // 每200ms发送一次位置，或者当位置变化较大时
-        if (currentTime - lastPositionUpdate > 200) {
-          this.sendPlayerPosition(player);
-          lastPositionUpdate = currentTime;
+        if (this.supabase) {
+            this.supabase.removeAllChannels();
         }
-      }
-    }, 200);
-  },
-  
-  // 发送玩家位置
-  async sendPlayerPosition(player) {
-    await this.sendGameAction('player_move', {
-      x: player.x,
-      y: player.y,
-      direction: player.direction,
-      timestamp: Date.now()
-    });
-  },
-  
-  // 发送射击动作
-  async sendShootAction(player) {
-    await this.sendGameAction('player_shoot', {
-      x: player.x,
-      y: player.y,
-      direction: player.direction,
-      timestamp: Date.now()
-    });
-  },
-  
-  // 发送击中事件
-  async sendHitAction(target, projectile) {
-    await this.sendGameAction('player_hit', {
-      target: target,
-      damage: 25,
-      projectile_id: projectile.id,
-      timestamp: Date.now()
-    });
-  },
-  
-  // 发送游戏结束
-  async sendGameOver(winner) {
-    await this.sendGameAction('game_over', {
-      winner: winner,
-      timestamp: Date.now()
-    });
-  },
-  
-  // ==================== 处理对手动作 ====================
-  
-  updateOpponentPosition(positionData) {
-    if (!game.players.player2 || !game.isGameActive) return;
-    
-    // 插值平滑移动
-    const targetX = positionData.x;
-    const targetY = positionData.y;
-    
-    // 简单的插值
-    game.players.player2.x += (targetX - game.players.player2.x) * 0.3;
-    game.players.player2.y += (targetY - game.players.player2.y) * 0.3;
-    game.players.player2.direction = positionData.direction;
-    
-    // 标记为真人对手，不是AI
-    game.players.player2.isAI = false;
-    game.players.player2.isLocalPlayer = false;
-  },
-  
-  createOpponentProjectile(projectileData) {
-    if (!game.isGameActive) return;
-    
-    // 创建对手的子弹
-    const projectile = {
-      id: Date.now() + Math.random(),
-      x: projectileData.x,
-      y: projectileData.y,
-      radius: 6,
-      color: this.playerRole === 'proton' ? '#ef4444' : '#3b82f6',
-      speed: 8,
-      direction: projectileData.direction,
-      dx: Math.cos(projectileData.direction) * 8,
-      dy: Math.sin(projectileData.direction) * 8,
-      owner: 'player2',
-      shooterId: 'player2',
-      bounceCount: 3,
-      lifeTime: 5000,
-      active: true
-    };
-    
-    game.projectiles.push(projectile);
-    console.log('🎯 创建对手子弹');
-  },
-  
-  // ==================== 心跳系统（简化版） ====================
-  
-  startSimpleHeartbeat() {
-    console.log('💓 启动简化心跳');
-    
-    this.heartbeatInterval = setInterval(async () => {
-      try {
-        // 简单的心跳：更新最后在线时间
-        await this.supabase
-          .from('profiles')
-          .update({ 
-            last_online: new Date().toISOString(),
-            client_id: this.clientId
-          })
-          .eq('id', this.playerId);
         
-        this.isConnected = true;
-        
-      } catch (error) {
-        console.log('心跳失败:', error.message);
         this.isConnected = false;
-      }
-    }, 30000); // 每30秒一次
-  },
-  
-  // ==================== 工具函数 ====================
-  
-  // 清理资源
-  cleanup() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
+        this.isInitialized = false;
+        this.initializationPromise = null;
     }
-    
-    if (this.supabase) {
-      this.supabase.removeAllChannels();
-    }
-    
-    this.isConnected = false;
-    this.isInitialized = false;
-    this.initializationPromise = null;
-  }
 };
 
 // 全局暴露
 window.MultiplayerGame = MultiplayerGame;
 
-// ==================== 页面加载初始化 ====================
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('✅ DOM加载完成');
-  
-  // 清理旧的ID
-  cleanupOldIds();
-  
-  // 初始化 MultiplayerGame 对象到全局
-  if (!window.MultiplayerGame) {
-    window.MultiplayerGame = MultiplayerGame;
-  }
-  
-  // 模拟在线玩家数更新
-  setInterval(() => {
-    const onlineCount = document.getElementById('onlineCount');
-    const dailyMatches = document.getElementById('dailyMatches');
-    const matchSpeed = document.getElementById('matchSpeed');
-    
-    if (onlineCount) {
-      const current = parseInt(onlineCount.textContent);
-      const change = Math.floor(Math.random() * 11) - 5;
-      onlineCount.textContent = Math.max(100, current + change);
-    }
-    
-    if (dailyMatches) {
-      const current = parseInt(dailyMatches.textContent);
-      dailyMatches.textContent = current + Math.floor(Math.random() * 10);
-    }
-    
-  }, 5000);
-  
-  console.log('🎮 游戏初始化完成，可以开始游戏！');
-});
-
 // ==================== 测试连接函数 ====================
 async function testMultiplayerConnection() {
-  try {
-    if (!window.MultiplayerGame.supabase) {
-      await window.MultiplayerGame.init();
+    try {
+        if (!window.MultiplayerGame.supabase) {
+            await window.MultiplayerGame.init();
+        }
+        
+        // 测试连接
+        const { data, error } = await window.MultiplayerGame.supabase
+            .from('profiles')
+            .select('count')
+            .limit(1);
+        
+        if (error) throw error;
+        
+        alert('✅ 多人游戏连接测试成功！\n可以开始匹配真人玩家了。');
+        
+    } catch (error) {
+        alert('❌ 连接测试失败: ' + error.message);
     }
-    
-    // 测试连接
-    const { data, error } = await window.MultiplayerGame.supabase
-      .from('profiles')
-      .select('count')
-      .limit(1);
-    
-    if (error) throw error;
-    
-    alert('✅ 多人游戏连接测试成功！\n可以开始匹配真人玩家了。');
-    
-  } catch (error) {
-    alert('❌ 连接测试失败: ' + error.message);
-  }
 }
 
 // ==================== 重写原有的togglePlayerReady以支持多人游戏 ====================
 const originalTogglePlayerReady = window.togglePlayerReady;
 window.togglePlayerReady = function() {
-  // 检查是否在多人游戏大厅
-  if (window.MultiplayerGame && window.MultiplayerGame.currentRoom) {
-    const readyBtn = document.getElementById('player1ReadyBtn');
-    if (!readyBtn) return;
-    
-    const isReady = readyBtn.textContent === '点击准备';
-    
-    if (isReady) {
-      readyBtn.textContent = '取消准备';
-      readyBtn.style.background = '#64748b';
-      
-      // 发送准备状态
-      window.MultiplayerGame.sendPlayerReady(true);
+    // 检查是否在多人游戏大厅
+    if (window.MultiplayerGame && window.MultiplayerGame.currentRoom) {
+        const readyBtn = document.getElementById('player1ReadyBtn');
+        if (!readyBtn) return;
+        
+        const isReady = readyBtn.textContent === '点击准备';
+        
+        if (isReady) {
+            readyBtn.textContent = '取消准备';
+            readyBtn.style.background = '#64748b';
+            
+            // 发送准备状态
+            window.MultiplayerGame.sendPlayerReady(true);
+        } else {
+            readyBtn.textContent = '点击准备';
+            readyBtn.style.background = window.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
+            
+            // 发送取消准备状态
+            window.MultiplayerGame.sendPlayerReady(false);
+        }
     } else {
-      readyBtn.textContent = '点击准备';
-      readyBtn.style.background = window.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
-      
-      // 发送取消准备状态
-      window.MultiplayerGame.sendPlayerReady(false);
+        // 单人游戏模式，调用原有函数
+        originalTogglePlayerReady();
     }
-  } else {
-    // 单人游戏模式，调用原有函数
-    originalTogglePlayerReady();
-  }
 };
+
+// ==================== 修复initializeLobby函数 ====================
+const originalInitializeLobby = window.initializeLobby;
+window.initializeLobby = function() {
+    if (originalInitializeLobby) {
+        originalInitializeLobby();
+    }
+    
+    // 强制设置玩家角色
+    if (window.MultiplayerGame && window.MultiplayerGame.playerRole) {
+        window.playerRole = window.MultiplayerGame.playerRole;
+        console.log('🔄 在initializeLobby中设置玩家角色:', window.playerRole);
+    }
+    
+    // 更新准备按钮颜色
+    const readyBtn = document.getElementById('player1ReadyBtn');
+    if (readyBtn && window.playerRole) {
+        readyBtn.style.background = window.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
+    }
+};
+
+// ==================== 页面加载初始化 ====================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM加载完成');
+    
+    // 清理旧的ID
+    cleanupOldIds();
+    
+    // 初始化 MultiplayerGame 对象到全局
+    if (!window.MultiplayerGame) {
+        window.MultiplayerGame = MultiplayerGame;
+    }
+    
+    // 模拟在线玩家数更新
+    setInterval(() => {
+        const onlineCount = document.getElementById('onlineCount');
+        const dailyMatches = document.getElementById('dailyMatches');
+        const matchSpeed = document.getElementById('matchSpeed');
+        
+        if (onlineCount) {
+            const current = parseInt(onlineCount.textContent);
+            const change = Math.floor(Math.random() * 11) - 5;
+            onlineCount.textContent = Math.max(100, current + change);
+        }
+        
+        if (dailyMatches) {
+            const current = parseInt(dailyMatches.textContent);
+            dailyMatches.textContent = current + Math.floor(Math.random() * 10);
+        }
+        
+    }, 5000);
+    
+    console.log('🎮 游戏初始化完成，可以开始游戏！');
+});
 
 // ==================== 窗口大小变化处理 ====================
 window.addEventListener('resize', function() {
-  if (game.canvas && game.isGameActive) {
-    resizeGameCanvas();
-    initializeCamera();
-  }
+    if (game.canvas && game.isGameActive) {
+        resizeGameCanvas();
+        initializeCamera();
+    }
 });
 
 // ==================== 页面可见性处理 ====================
 document.addEventListener('visibilitychange', function() {
-  if (document.hidden) {
-    console.log('⏸️ 页面隐藏，暂停游戏更新');
-    // 可以在这里暂停游戏循环
-  } else {
-    console.log('▶️ 页面恢复，继续游戏');
-    // 恢复游戏循环
-  }
+    if (document.hidden) {
+        console.log('⏸️ 页面隐藏，暂停游戏更新');
+        // 可以在这里暂停游戏循环
+    } else {
+        console.log('▶️ 页面恢复，继续游戏');
+        // 恢复游戏循环
+    }
 });
 
 // ==================== 防止浏览器后退 ====================
 history.pushState(null, null, location.href);
 window.onpopstate = function(event) {
-  history.go(1);
+    history.go(1);
 };
 </script>
 </body>
