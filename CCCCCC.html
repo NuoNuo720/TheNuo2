@@ -3356,6 +3356,13 @@ const MultiplayerGame = {
     
     // 设置玩家角色
     window.playerRole = this.playerRole;
+    console.log('🎮 设置玩家角色:', window.playerRole);
+
+    // 并且更新原有的角色显示
+    const playerNameElement = document.getElementById('playerName');
+    if (playerNameElement) {
+        playerNameElement.textContent = this.playerRole === 'proton' ? '质子' : '电子';
+    }
   },
   
   // 更新大厅UI
