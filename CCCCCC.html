@@ -1351,32 +1351,128 @@ function switchScene(sceneId) {
 }
 
 // ==================== 匹配系统 ====================
-function startMatchmaking() {
-    console.log('🔍 开始匹配真人对手...');
+async startMatchmaking() {
+  console.log('🔍 开始匹配真人玩家...');
+  
+  // 切换到匹配场景
+  switchScene('matchingScene');
+  
+  // 如果已经初始化过，直接开始匹配
+  if (this.supabase) {
+    console.log('使用已有的连接开始匹配');
     
-    // 切换到匹配场景
-    switchScene('matchingScene');
+    // 1. 先设置游戏会话监听器
+    this.setupGameSessionListener();
     
-    // 如果已经初始化过，直接开始匹配
-    if (window.MultiplayerGame && window.MultiplayerGame.supabase) {
-        console.log('使用已有的连接开始匹配');
-        window.MultiplayerGame.startMatchmaking();
-    } else {
-        // 初始化多人游戏系统
-        console.log('初始化多人游戏系统...');
-        if (!window.MultiplayerGame) {
-            alert('多人游戏系统未加载，请刷新页面重试');
-            return;
+    // 2. 然后加入匹配队列
+    this.startMatchmakingInternal();
+  } else {
+    // 初始化多人游戏系统
+    console.log('初始化多人游戏系统...');
+    this.init().then(() => {
+      // 1. 先设置游戏会话监听器
+      this.setupGameSessionListener();
+      
+      // 2. 然后加入匹配队列
+      this.startMatchmakingInternal();
+    }).catch(error => {
+      console.error('初始化失败:', error);
+      alert('多人游戏系统初始化失败，请刷新页面重试');
+    });
+  }
+},
+// 新增内部匹配函数
+async startMatchmakingInternal() {
+  console.log('加入匹配队列...');
+  this.isMatching = true;
+  
+  try {
+    const { error } = await this.supabase
+      .from('matchmaking_queue')
+      .upsert({
+        user_id: this.playerId,
+        elo: 1000,
+        region: 'asia',
+        client_id: this.clientId,
+        player_data: {
+          username: this.getPlayerName(),
+          client_id: this.clientId
+        },
+        connection_status: 'waiting'
+      }, { onConflict: 'user_id' });
+    
+    if (error) throw error;
+    
+    console.log('✅ 已加入匹配队列');
+    
+    // 启动匹配循环（作为备份）
+    this.matchmakingLoop();
+    
+  } catch (error) {
+    console.error('加入匹配失败:', error);
+    this.isMatching = false;
+  }
+},
+// 添加这个方法到 MultiplayerGame 对象
+setupGameSessionListener() {
+  console.log('🎮 设置游戏会话监听器...');
+  
+  // 先移除旧的监听器（避免重复）
+  if (this.gameSessionChannel) {
+    this.supabase.removeChannel(this.gameSessionChannel);
+  }
+  
+  // 创建新的监听器
+  this.gameSessionChannel = this.supabase
+    .channel('game-session-listener')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'game_sessions'
+    }, (payload) => {
+      console.log('📨 收到游戏会话创建通知:', payload.new);
+      
+      const newSession = payload.new;
+      const myId = this.playerId;
+      
+      // 检查这个游戏会话是否包含当前玩家
+      if (newSession.player1_id === myId || newSession.player2_id === myId) {
+        console.log('✅ 这是我匹配到的游戏!', newSession);
+        
+        // 停止匹配循环
+        if (this.matchLoopInterval) {
+          clearInterval(this.matchLoopInterval);
+          this.matchLoopInterval = null;
         }
-        window.MultiplayerGame.init().then(() => {
-            window.MultiplayerGame.startMatchmaking();
-        }).catch(error => {
-            console.error('初始化失败:', error);
-            alert('多人游戏系统初始化失败，请刷新页面重试');
-        });
-    }
-}
-
+        
+        // 停止心跳（匹配中状态）
+        this.isMatching = false;
+        
+        // 设置游戏信息
+        this.currentRoom = newSession.room_id;
+        this.mazeSeed = newSession.maze_seed || Date.now();
+        this.opponentId = newSession.player1_id === myId ? 
+          newSession.player2_id : newSession.player1_id;
+        this.playerRole = newSession.player1_id === myId ? 
+          newSession.player1_role : newSession.player2_role;
+        
+        // 保存到全局变量
+        window.playerRole = this.playerRole;
+        
+        console.log('🎪 进入游戏大厅...');
+        
+        // 延迟一点确保UI切换完成
+        setTimeout(() => {
+          this.enterLobby(newSession);
+        }, 300);
+      }
+    })
+    .subscribe((status) => {
+      console.log('游戏会话监听器状态:', status);
+    });
+    
+  console.log('✅ 游戏会话监听器已设置');
+},
 function cancelMatchmaking() {
     console.log('❌ 取消匹配');
     
