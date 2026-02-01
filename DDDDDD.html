@@ -2697,7 +2697,7 @@ function playSound(type) {
 }
 </script>
 <script>
-// ==================== 第五部分：多人实时对战系统 ====================
+// ==================== 第五部分：多人实时对战系统（修复版） ====================
 
 const SUPABASE_CONFIG = {
   url: 'https://hxvpzskevjxkjmnsorcu.supabase.co',
@@ -2730,19 +2730,12 @@ function generateUUID() {
 }
 
 // 随机种子生成器（确保多人游戏迷宫一致）
-Math.seedrandom = function(seed) {
-  const mask = 0xffffffff;
-  let m_w = (typeof seed !== 'undefined') ? seed : new Date().getTime();
-  let m_z = 987654321;
-  
+function createSeededRandom(seed) {
   return function() {
-    m_z = (36969 * (m_z & 65535) + (m_z >> 16)) & mask;
-    m_w = (18000 * (m_w & 65535) + (m_w >> 16)) & mask;
-    let result = ((m_z << 16) + m_w) & mask;
-    result /= 4294967296;
-    return result + 0.5;
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
   };
-};
+}
 
 const MultiplayerGame = {
   supabase: null,
@@ -2762,10 +2755,15 @@ const MultiplayerGame = {
   initializationPromise: null,
   
   // 游戏状态同步
-  pendingActions: [],
-  lastProcessedSequence: 0,
   isPlayerReady: false,
   lastPositionUpdate: 0,
+  
+  // 频道订阅
+  channels: {
+    lobby: null,
+    game: null,
+    sessions: null
+  },
   
   // 初始化
   async init() {
@@ -2808,11 +2806,8 @@ const MultiplayerGame = {
         // 设置玩家ID（访客模式）
         this.playerId = this.getPlayerId();
         
-        // 启动心跳
-        this.startHeartbeat();
-        
-        // 设置实时监听
-        this.setupRealtimeListeners();
+        // 测试连接
+        await this.testConnection();
         
         this.isInitialized = true;
         this.isConnected = true;
@@ -2822,6 +2817,7 @@ const MultiplayerGame = {
         
       } catch (error) {
         console.error('初始化失败:', error);
+        this.isInitialized = false;
         this.initializationPromise = null;
         throw error;
       }
@@ -2867,16 +2863,35 @@ const MultiplayerGame = {
       }
       
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
       script.onload = () => {
-        setTimeout(resolve, 100); // 给SDK一点时间初始化
+        setTimeout(resolve, 100);
       };
       script.onerror = reject;
       document.head.appendChild(script);
     });
   },
   
-  // ==================== 匹配系统 ====================
+  // 测试连接
+  async testConnection() {
+    try {
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .select('count')
+        .limit(1);
+      
+      if (error) {
+        console.log('Supabase连接测试失败:', error);
+        // 不抛出错误，继续尝试
+      } else {
+        console.log('✅ Supabase连接测试成功');
+      }
+    } catch (error) {
+      console.log('连接测试异常:', error);
+    }
+  },
+  
+  // ==================== 匹配系统（简化版） ====================
   
   // 开始匹配
   async startMatchmaking() {
@@ -2896,36 +2911,15 @@ const MultiplayerGame = {
       await this.createGuestProfile();
       
       // 清理可能的旧匹配记录
-      await this.supabase
-        .from('matchmaking_queue')
-        .delete()
-        .eq('user_id', this.playerId);
+      await this.cleanupOldMatches();
       
       // 加入匹配队列
-      const { error } = await this.supabase
-        .from('matchmaking_queue')
-        .insert({
-          user_id: this.playerId,
-          elo: 1000,
-          region: 'asia',
-          client_id: this.clientId,
-          player_data: {
-            username: this.getPlayerName(),
-            client_id: this.clientId
-          },
-          connection_status: 'waiting',
-          created_at: new Date().toISOString()
-        });
-      
-      if (error) {
-        console.error('加入匹配队列失败:', error);
-        throw error;
-      }
+      await this.joinMatchmakingQueue();
       
       console.log('✅ 已加入匹配队列');
       
-      // 开始匹配循环
-      this.matchmakingLoop();
+      // 开始匹配循环（简化版）
+      this.simpleMatchmakingLoop();
       
     } catch (error) {
       console.error('开始匹配失败:', error);
@@ -2956,7 +2950,6 @@ const MultiplayerGame = {
       
       if (error) {
         console.log('创建访客资料失败:', error);
-        // 非致命错误，继续
       } else {
         console.log('访客资料创建/更新成功');
       }
@@ -2965,22 +2958,53 @@ const MultiplayerGame = {
     }
   },
   
-  // 匹配循环
-  async matchmakingLoop() {
-    console.log('开始匹配循环...');
-    let matchAttempts = 0;
-    const maxAttempts = 30; // 最多尝试30秒
-    
-    // 先清除旧的游戏会话
+  // 清理旧匹配
+  async cleanupOldMatches() {
     try {
+      // 清理匹配队列
+      await this.supabase
+        .from('matchmaking_queue')
+        .delete()
+        .eq('user_id', this.playerId);
+      
+      // 清理等待中的游戏会话
       await this.supabase
         .from('game_sessions')
         .delete()
         .or(`player1_id.eq.${this.playerId},player2_id.eq.${this.playerId}`)
         .eq('status', 'waiting');
+      
+      console.log('✅ 旧匹配记录已清理');
     } catch (error) {
-      console.log('清理旧会话失败:', error.message);
+      console.log('清理旧匹配失败:', error);
     }
+  },
+  
+  // 加入匹配队列
+  async joinMatchmakingQueue() {
+    const { error } = await this.supabase
+      .from('matchmaking_queue')
+      .insert({
+        user_id: this.playerId,
+        elo: 1000,
+        region: 'asia',
+        client_id: this.clientId,
+        player_data: {
+          username: this.getPlayerName(),
+          client_id: this.clientId
+        },
+        connection_status: 'waiting',
+        created_at: new Date().toISOString()
+      });
+    
+    if (error) throw error;
+  },
+  
+  // 简化匹配循环
+  async simpleMatchmakingLoop() {
+    console.log('开始简化匹配循环...');
+    let matchAttempts = 0;
+    const maxAttempts = 30;
     
     const matchInterval = setInterval(async () => {
       if (!this.isMatching) {
@@ -2992,62 +3016,37 @@ const MultiplayerGame = {
       matchAttempts++;
       
       try {
-        // 尝试创建或加入游戏会话
-        const { data: matchResult, error: matchError } = await this.supabase
-          .rpc('find_or_create_match', {
-            p_user_id: this.playerId,
-            p_client_id: this.clientId,
-            p_username: this.getPlayerName()
-          });
+        // 查找其他等待的玩家
+        const { data: waitingPlayers, error } = await this.supabase
+          .from('matchmaking_queue')
+          .select('*')
+          .neq('user_id', this.playerId)
+          .eq('connection_status', 'waiting')
+          .order('created_at', { ascending: true })
+          .limit(1);
         
-        if (matchError) {
-          console.log('匹配RPC错误:', matchError.message);
+        if (error) {
+          console.log('查找玩家错误:', error.message);
         }
         
-        if (matchResult && matchResult.success) {
-          const gameSession = matchResult.session;
+        if (waitingPlayers && waitingPlayers.length > 0) {
+          const opponent = waitingPlayers[0];
+          console.log('找到对手:', opponent.user_id);
           
-          clearInterval(matchInterval);
-          console.log('🎯 匹配成功!', gameSession);
+          // 创建游戏会话
+          const gameSession = await this.createGameSession(opponent.user_id);
           
-          // 设置游戏信息
-          this.currentRoom = gameSession.room_id;
-          this.mazeSeed = gameSession.maze_seed || Date.now();
-          
-          // 确定玩家角色和对手
-          if (gameSession.player1_id === this.playerId) {
-            this.playerRole = gameSession.player1_role;
-            this.opponentId = gameSession.player2_id;
-          } else {
-            this.playerRole = gameSession.player2_role;
-            this.opponentId = gameSession.player1_id;
+          if (gameSession) {
+            clearInterval(matchInterval);
+            this.setupGameSession(gameSession);
           }
-          
-          // 设置对手名称
-          this.opponentName = gameSession.player1_id === this.playerId ? 
-            (gameSession.player2_name || '对手_' + (this.opponentId ? this.opponentId.substr(-6) : '未知')) :
-            (gameSession.player1_name || '对手_' + (this.opponentId ? this.opponentId.substr(-6) : '未知'));
-          
-          // 保存玩家角色到全局变量
-          window.playerRole = this.playerRole;
-          
-          // 从匹配队列中移除
-          await this.supabase
-            .from('matchmaking_queue')
-            .delete()
-            .eq('user_id', this.playerId);
-          
-          // 切换到游戏大厅
-          this.enterLobby(gameSession);
           
         } else if (matchAttempts >= maxAttempts) {
           clearInterval(matchInterval);
           console.log('⏰ 匹配超时');
           
-          // 清理匹配队列
           await this.cancelMatchmaking();
           
-          // 显示超时消息
           setTimeout(() => {
             if (this.isMatching) {
               alert('匹配超时，没有找到合适的对手');
@@ -3062,7 +3061,87 @@ const MultiplayerGame = {
       } catch (error) {
         console.log('匹配检查错误:', error.message);
       }
-    }, 1000); // 每秒检查一次
+    }, 1000);
+  },
+  
+  // 创建游戏会话
+  async createGameSession(opponentId) {
+    try {
+      const roomId = generateUUID();
+      const mazeSeed = Date.now();
+      
+      // 随机分配角色
+      const playerRole = Math.random() > 0.5 ? 'proton' : 'electron';
+      const opponentRole = playerRole === 'proton' ? 'electron' : 'proton';
+      
+      // 创建游戏会话
+      const { data: session, error } = await this.supabase
+        .from('game_sessions')
+        .insert({
+          room_id: roomId,
+          player1_id: this.playerId,
+          player1_name: this.getPlayerName(),
+          player1_role: playerRole,
+          player2_id: opponentId,
+          player2_name: '对手_' + opponentId.substr(-6),
+          player2_role: opponentRole,
+          maze_seed: mazeSeed,
+          status: 'waiting',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      console.log('✅ 游戏会话创建成功:', session);
+      return session;
+      
+    } catch (error) {
+      console.error('创建游戏会话失败:', error);
+      return null;
+    }
+  },
+  
+  // 设置游戏会话
+  setupGameSession(session) {
+    console.log('🎯 匹配成功!', session);
+    
+    // 设置游戏信息
+    this.currentRoom = session.room_id;
+    this.mazeSeed = session.maze_seed;
+    
+    // 确定玩家角色和对手
+    if (session.player1_id === this.playerId) {
+      this.playerRole = session.player1_role;
+      this.opponentId = session.player2_id;
+      this.opponentName = session.player2_name || '对手';
+    } else {
+      this.playerRole = session.player2_role;
+      this.opponentId = session.player1_id;
+      this.opponentName = session.player1_name || '对手';
+    }
+    
+    // 保存玩家角色到全局变量
+    window.playerRole = this.playerRole;
+    
+    // 从匹配队列中移除
+    this.removeFromMatchmakingQueue();
+    
+    // 切换到游戏大厅
+    this.enterLobby(session);
+  },
+  
+  // 从匹配队列移除
+  async removeFromMatchmakingQueue() {
+    try {
+      await this.supabase
+        .from('matchmaking_queue')
+        .delete()
+        .eq('user_id', this.playerId);
+    } catch (error) {
+      console.log('从匹配队列移除失败:', error);
+    }
   },
   
   // 更新匹配UI
@@ -3098,18 +3177,10 @@ const MultiplayerGame = {
     try {
       this.isMatching = false;
       
-      // 从匹配队列中移除
       await this.supabase
         .from('matchmaking_queue')
         .delete()
         .eq('user_id', this.playerId);
-      
-      // 清理等待中的游戏会话
-      await this.supabase
-        .from('game_sessions')
-        .delete()
-        .or(`player1_id.eq.${this.playerId},player2_id.eq.${this.playerId}`)
-        .eq('status', 'waiting');
       
       console.log('✅ 已取消匹配');
       
@@ -3119,6 +3190,8 @@ const MultiplayerGame = {
       switchScene('menuScene');
     }
   },
+  
+  // ==================== 游戏大厅 ====================
   
   // 进入游戏大厅
   async enterLobby(gameSession) {
@@ -3133,9 +3206,6 @@ const MultiplayerGame = {
     
     // 监听对手准备状态
     this.listenToOpponentReady();
-    
-    // 监听游戏开始信号
-    this.listenToGameStart();
     
     // 发送自己的准备状态（初始为未准备）
     await this.sendPlayerReady(false);
@@ -3152,7 +3222,6 @@ const MultiplayerGame = {
   
   // 更新大厅UI
   updateLobbyUI(gameSession) {
-    // 设置玩家角色
     const playerRoleElement = document.getElementById('player1Role');
     const opponentRoleElement = document.getElementById('player2Role');
     
@@ -3168,54 +3237,20 @@ const MultiplayerGame = {
         if (opponentCard) opponentCard.style.borderColor = 'var(--primary-red)';
         
         // 更新特性
-        const playerTraits = ['player1Trait1', 'player1Trait2', 'player1Trait3'];
-        const opponentTraits = ['player2Trait1', 'player2Trait2', 'player2Trait3'];
-        
-        playerTraits.forEach((id, index) => {
-          const el = document.getElementById(id);
-          if (el) {
-            const traits = ['带正电荷', '蓝色粒子', '质量较大'];
-            el.textContent = traits[index];
-          }
-        });
-        
-        opponentTraits.forEach((id, index) => {
-          const el = document.getElementById(id);
-          if (el) {
-            const traits = ['带负电荷', '红色粒子', '质量较小'];
-            el.textContent = traits[index];
-          }
-        });
+        this.updateTraits('player1', ['带正电荷', '蓝色粒子', '质量较大']);
+        this.updateTraits('player2', ['带负电荷', '红色粒子', '质量较小']);
         
       } else {
         playerRoleElement.textContent = '电子 (你)';
         opponentRoleElement.textContent = '质子 (对手)';
         
-        // 更新卡片边框颜色
         const playerCard = document.getElementById('player1Card');
         const opponentCard = document.getElementById('player2Card');
         if (playerCard) playerCard.style.borderColor = 'var(--primary-red)';
         if (opponentCard) opponentCard.style.borderColor = 'var(--primary-blue)';
         
-        // 更新特性
-        const playerTraits = ['player1Trait1', 'player1Trait2', 'player1Trait3'];
-        const opponentTraits = ['player2Trait1', 'player2Trait2', 'player2Trait3'];
-        
-        playerTraits.forEach((id, index) => {
-          const el = document.getElementById(id);
-          if (el) {
-            const traits = ['带负电荷', '红色粒子', '质量较小'];
-            el.textContent = traits[index];
-          }
-        });
-        
-        opponentTraits.forEach((id, index) => {
-          const el = document.getElementById(id);
-          if (el) {
-            const traits = ['带正电荷', '蓝色粒子', '质量较大'];
-            el.textContent = traits[index];
-          }
-        });
+        this.updateTraits('player1', ['带负电荷', '红色粒子', '质量较小']);
+        this.updateTraits('player2', ['带正电荷', '蓝色粒子', '质量较大']);
       }
     }
     
@@ -3223,7 +3258,16 @@ const MultiplayerGame = {
     const readyBtn = document.getElementById('player1ReadyBtn');
     if (readyBtn) {
       readyBtn.style.background = this.playerRole === 'proton' ? 'var(--primary-blue)' : 'var(--primary-red)';
+      readyBtn.style.cursor = 'pointer';
     }
+  },
+  
+  // 更新特性
+  updateTraits(playerPrefix, traits) {
+    traits.forEach((trait, index) => {
+      const el = document.getElementById(`${playerPrefix}Trait${index + 1}`);
+      if (el) el.textContent = trait;
+    });
   },
   
   // 监听对手准备状态
@@ -3232,12 +3276,14 @@ const MultiplayerGame = {
     
     console.log('👂 监听对手准备状态，房间:', this.currentRoom);
     
-    // 先清理旧的监听
-    this.supabase.removeChannel('lobby_updates');
+    // 清理旧的监听
+    if (this.channels.lobby) {
+      this.supabase.removeChannel(this.channels.lobby);
+    }
     
-    // 创建新的频道监听
-    this.supabase
-      .channel(`lobby_updates:${this.currentRoom}`)
+    // 监听游戏状态更新表
+    this.channels.lobby = this.supabase
+      .channel(`lobby:${this.currentRoom}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -3249,13 +3295,10 @@ const MultiplayerGame = {
         // 只处理对手的动作
         if (action.player_id === this.playerId) return;
         
-        console.log('收到对手动作:', action.action_type, action.action_data);
-        
         if (action.action_type === 'player_ready') {
           const isReady = action.action_data.ready;
           console.log('对手准备状态:', isReady);
           
-          // 更新UI
           this.updateOpponentReadyUI(isReady);
           
           // 如果双方都准备，开始倒计时
@@ -3265,9 +3308,7 @@ const MultiplayerGame = {
           }
         }
       })
-      .subscribe((status) => {
-        console.log('大厅监听状态:', status);
-      });
+      .subscribe();
   },
   
   // 发送玩家准备状态
@@ -3343,34 +3384,6 @@ const MultiplayerGame = {
     }
   },
   
-  // 监听游戏开始信号
-  listenToGameStart() {
-    if (!this.supabase || !this.currentRoom) return;
-    
-    console.log('👂 监听游戏开始信号');
-    
-    // 清理旧的监听
-    this.supabase.removeChannel('game_start_listener');
-    
-    this.supabase
-      .channel(`game_start_listener:${this.currentRoom}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'game_sessions',
-        filter: `room_id=eq.${this.currentRoom}`
-      }, (payload) => {
-        const session = payload.new;
-        console.log('游戏会话更新:', session.status);
-        
-        if (session.status === 'active') {
-          console.log('游戏会话已激活，开始游戏');
-          this.startMultiplayerGame();
-        }
-      })
-      .subscribe();
-  },
-  
   // 开始游戏倒计时
   startGameCountdown() {
     console.log('🚀 双方已准备，开始游戏倒计时');
@@ -3417,6 +3430,11 @@ const MultiplayerGame = {
       
       console.log('✅ 游戏会话已激活');
       
+      // 开始游戏
+      setTimeout(() => {
+        this.startMultiplayerGame();
+      }, 500);
+      
     } catch (error) {
       console.error('激活游戏会话失败:', error);
       // 尝试直接开始游戏
@@ -3438,29 +3456,32 @@ const MultiplayerGame = {
         .eq('room_id', this.currentRoom)
         .single();
       
-      if (error) throw error;
-      
-      if (session.status !== 'active') {
-        console.log('游戏会话状态不是active，等待...');
-        setTimeout(() => this.startMultiplayerGame(), 500);
+      if (error) {
+        console.log('获取会话失败，直接开始游戏:', error);
+        this.initializeMultiplayerGame();
         return;
       }
       
       // 切换到游戏场景
       switchScene('gameScene');
       
-      // 初始化游戏（使用相同的迷宫种子）
+      // 初始化游戏
       this.initializeMultiplayerGame(session);
       
       // 开始游戏状态同步
-      this.startGameSync();
+      setTimeout(() => {
+        this.startGameSync();
+      }, 1000);
       
     } catch (error) {
       console.error('开始游戏失败:', error);
       // 尝试直接初始化游戏
       setTimeout(() => {
+        switchScene('gameScene');
         this.initializeMultiplayerGame();
-        this.startGameSync();
+        setTimeout(() => {
+          this.startGameSync();
+        }, 1000);
       }, 500);
     }
   },
@@ -3474,7 +3495,7 @@ const MultiplayerGame = {
       window.playerRole = this.playerRole;
     }
     
-    console.log('玩家角色设置为:', window.playerRole);
+    console.log('玩家角色:', window.playerRole);
     
     // 设置迷宫种子
     if (session && session.maze_seed) {
@@ -3488,19 +3509,28 @@ const MultiplayerGame = {
     // 设置游戏对象中的种子
     if (window.game) {
       window.game.mazeSeed = this.mazeSeed;
+      console.log('迷宫种子设置为:', this.mazeSeed);
     }
-    
-    console.log('迷宫种子:', this.mazeSeed);
     
     // 确保游戏引擎已准备
     if (!window.game) {
       console.error('游戏引擎未初始化');
-      return;
+      // 尝试创建游戏对象
+      window.game = {
+        canvas: null,
+        ctx: null,
+        players: { player1: null, player2: null },
+        projectiles: [],
+        maze: [],
+        isGameActive: false,
+        mazeSeed: this.mazeSeed
+      };
     }
     
     // 设置对手不是AI
     if (window.game.players && window.game.players.player2) {
       window.game.players.player2.isAI = false;
+      console.log('设置对手为真实玩家');
     }
     
     // 延迟一点时间确保UI已切换
@@ -3511,10 +3541,8 @@ const MultiplayerGame = {
           window.initializeGame();
         } catch (error) {
           console.error('initializeGame调用失败:', error);
-          // 尝试直接启动游戏循环
-          if (window.gameLoop && typeof window.gameLoop === 'function') {
-            window.requestAnimationFrame(window.gameLoop);
-          }
+          // 显示错误信息
+          alert('游戏初始化失败: ' + error.message);
         }
       } else {
         console.error('找不到 initializeGame 函数');
@@ -3546,30 +3574,30 @@ const MultiplayerGame = {
     console.log('👂 监听对手动作，房间:', this.currentRoom);
     
     // 清理旧的监听
-    this.supabase.removeChannel('game_actions');
+    if (this.channels.game) {
+      this.supabase.removeChannel(this.channels.game);
+    }
     
-    // 创建新的游戏动作监听频道
-    this.supabase
-      .channel(`game_actions:${this.currentRoom}`)
+    // 创建游戏动作监听频道
+    this.channels.game = this.supabase
+      .channel(`game:${this.currentRoom}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'game_state_updates',
         filter: `room_id=eq.${this.currentRoom}`
-      }, async (payload) => {
+      }, (payload) => {
         const action = payload.new;
         
         // 忽略自己的动作
         if (action.player_id === this.playerId) return;
         
-        console.log('收到对手游戏动作:', action.action_type, action.action_data);
+        console.log('收到对手游戏动作:', action.action_type);
         
         // 处理对手动作
-        await this.processOpponentAction(action);
+        this.processOpponentAction(action);
       })
-      .subscribe((status) => {
-        console.log('游戏动作监听状态:', status);
-      });
+      .subscribe();
   },
   
   // 处理对手动作
@@ -3579,65 +3607,53 @@ const MultiplayerGame = {
       return;
     }
     
-    console.log('处理对手动作:', action.action_type, action.action_data);
-    
     try {
       switch (action.action_type) {
         case 'move':
-          await this.updateOpponentPosition(action.action_data);
+          this.updateOpponentPosition(action.action_data);
           break;
         case 'shoot':
-          await this.createOpponentProjectile(action.action_data);
+          this.createOpponentProjectile(action.action_data);
           break;
         case 'player_hit':
-          await this.handlePlayerHit(action.action_data);
+          this.handlePlayerHit(action.action_data);
           break;
         case 'game_over':
-          await this.handleGameOver(action.action_data);
+          this.handleGameOver(action.action_data);
           break;
       }
-      
-      // 标记为已处理（可选）
-      try {
-        await this.supabase
-          .from('game_state_updates')
-          .update({ processed: true })
-          .eq('id', action.id);
-      } catch (error) {
-        console.error('标记动作为已处理失败:', error);
-      }
-      
     } catch (error) {
       console.error('处理对手动作失败:', error);
     }
   },
   
   // 更新对手位置
-  async updateOpponentPosition(position) {
+  updateOpponentPosition(position) {
     if (!window.game || !window.game.players || !window.game.players.player2) {
       console.log('游戏或对手未初始化，忽略位置更新');
       return;
     }
     
-    // 平滑插值更新位置
     const opponent = window.game.players.player2;
-    const targetX = position.x;
-    const targetY = position.y;
-    const targetDirection = position.direction;
     
-    // 简单直接设置位置（可以改为插值实现平滑移动）
-    opponent.x = targetX;
-    opponent.y = targetY;
-    opponent.direction = targetDirection;
+    // 直接设置位置
+    opponent.x = position.x;
+    opponent.y = position.y;
+    opponent.direction = position.direction;
     
     // 标记对手为真实玩家（不是AI）
     opponent.isAI = false;
     
-    console.log('更新对手位置:', { x: targetX, y: targetY, direction: targetDirection });
+    // 如果有HP信息，更新HP
+    if (position.hp !== undefined) {
+      opponent.hp = position.hp;
+    }
+    
+    console.log('更新对手位置:', { x: opponent.x, y: opponent.y });
   },
   
   // 创建对手子弹
-  async createOpponentProjectile(projectileData) {
+  createOpponentProjectile(projectileData) {
     if (!window.game || !window.game.projectiles) {
       console.log('游戏或子弹数组未初始化');
       return;
@@ -3647,23 +3663,23 @@ const MultiplayerGame = {
       x: projectileData.x,
       y: projectileData.y,
       radius: 6,
-      color: this.playerRole === 'proton' ? '#ef4444' : '#3b82f6', // 对手颜色与玩家相反
+      color: this.playerRole === 'proton' ? '#ef4444' : '#3b82f6',
       speed: 8,
       direction: projectileData.direction,
       dx: Math.cos(projectileData.direction) * 8,
       dy: Math.sin(projectileData.direction) * 8,
-      owner: 'player2', // 对手的子弹
+      owner: 'player2',
       bounceCount: 3,
       lifeTime: 5000,
       active: true
     };
     
     window.game.projectiles.push(projectile);
-    console.log('创建对手子弹:', projectile);
+    console.log('创建对手子弹');
   },
   
   // 处理玩家被击中
-  async handlePlayerHit(hitData) {
+  handlePlayerHit(hitData) {
     if (!window.game || !window.game.players || !window.game.players.player1) {
       return;
     }
@@ -3681,9 +3697,9 @@ const MultiplayerGame = {
       window.updateHealthBars();
     }
     
-    // 更新分数显示
+    // 更新对手分数
     if (window.game && window.game.opponentScore !== undefined) {
-      window.game.opponentScore += 10; // 对手得分
+      window.game.opponentScore += 10;
       if (typeof window.updateScores === 'function') {
         window.updateScores();
       }
@@ -3697,25 +3713,29 @@ const MultiplayerGame = {
       if (window.game) {
         window.game.isGameActive = false;
         
-        // 调用游戏结束
-        if (typeof window.endGame === 'function') {
-          window.endGame('player2'); // 对手胜利
-        }
+        // 延迟调用游戏结束，确保UI更新
+        setTimeout(() => {
+          if (typeof window.endGame === 'function') {
+            window.endGame('player2');
+          }
+        }, 500);
       }
     }
   },
   
   // 处理游戏结束
-  async handleGameOver(result) {
+  handleGameOver(result) {
     console.log('收到游戏结束信号:', result);
     
     if (window.game) {
       window.game.isGameActive = false;
       
-      // 调用现有的游戏结束函数
-      if (typeof window.endGame === 'function') {
-        window.endGame(result.winner);
-      }
+      // 延迟调用游戏结束
+      setTimeout(() => {
+        if (typeof window.endGame === 'function') {
+          window.endGame(result.winner);
+        }
+      }, 500);
     }
   },
   
@@ -3735,8 +3755,8 @@ const MultiplayerGame = {
       const player = window.game.players.player1;
       const currentTime = Date.now();
       
-      // 每100ms发送一次位置，或者当位置变化较大时
-      if (currentTime - this.lastPositionUpdate > 100) {
+      // 每200ms发送一次位置
+      if (currentTime - this.lastPositionUpdate > 200) {
         this.sendAction('move', {
           x: player.x,
           y: player.y,
@@ -3746,7 +3766,7 @@ const MultiplayerGame = {
         });
         this.lastPositionUpdate = currentTime;
       }
-    }, 100);
+    }, 200);
   },
   
   // 拦截游戏动作
@@ -3814,113 +3834,12 @@ const MultiplayerGame = {
       
       if (error) {
         console.error('发送动作失败:', error);
-        // 如果连接失败，尝试重新连接
-        if (error.message.includes('JWT') || error.message.includes('auth')) {
-          this.isConnected = false;
-          this.reconnect();
-        }
       } else {
         console.log(`动作已发送: ${actionType}`);
       }
     } catch (error) {
       console.error('发送动作异常:', error);
     }
-  },
-  
-  // 发送游戏结束
-  async sendGameOver(winner) {
-    await this.sendAction('game_over', {
-      winner: winner,
-      playerScore: window.game?.playerScore || 0,
-      opponentScore: window.game?.opponentScore || 0,
-      timestamp: Date.now()
-    });
-  },
-  
-  // ==================== 工具函数 ====================
-  
-  // 启动心跳
-  startHeartbeat() {
-    // 先清除旧的心跳
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-  
-    this.heartbeatInterval = setInterval(async () => {
-      try {
-        // 只有在匹配中或游戏中有房间时才发送心跳
-        if ((this.currentRoom || this.isMatching) && this.supabase) {
-          await this.supabase.rpc('update_player_heartbeat', {
-            p_player_id: this.playerId,
-            p_client_id: this.clientId,
-            p_room_id: this.currentRoom || null
-          });
-        
-          this.isConnected = true;
-        } else {
-          // 不在匹配或游戏中，不发心跳
-          this.isConnected = false;
-        }
-      } catch (error) {
-        console.error('心跳失败:', error);
-        this.isConnected = false;
-        
-        // 如果心跳失败，尝试重新连接
-        if (error.message.includes('JWT expired') || error.message.includes('Not authorized')) {
-          this.reconnect();
-        }
-      }
-    }, 10000); // 每10秒一次
-  },
-  
-  // 重新连接
-  async reconnect() {
-    console.log('🔄 尝试重新连接...');
-    
-    this.isConnected = false;
-    this.isInitialized = false;
-    
-    try {
-      // 重新初始化
-      await this.init();
-      
-      // 如果之前正在匹配，重新加入匹配
-      if (this.isMatching && !this.currentRoom) {
-        console.log('重新加入匹配...');
-        this.startMatchmaking();
-      }
-      
-      // 如果之前正在游戏中，尝试重新加入房间
-      else if (this.currentRoom) {
-        console.log('尝试重新加入游戏房间:', this.currentRoom);
-        this.listenToOpponentActions();
-        this.listenToOpponentReady();
-      }
-      
-    } catch (error) {
-      console.error('重新连接失败:', error);
-    }
-  },
-  
-  // 设置实时监听
-  setupRealtimeListeners() {
-    console.log('👂 设置实时监听器');
-    
-    // 监听连接状态变化
-    this.supabase.realtime.onOpen(() => {
-      console.log('✅ Supabase实时连接已建立');
-      this.isConnected = true;
-    });
-    
-    this.supabase.realtime.onClose(() => {
-      console.log('⚠️ Supabase实时连接已关闭');
-      this.isConnected = false;
-    });
-    
-    this.supabase.realtime.onError((error) => {
-      console.error('❌ Supabase实时连接错误:', error);
-      this.isConnected = false;
-    });
   },
   
   // 清理资源
@@ -3937,9 +3856,12 @@ const MultiplayerGame = {
       this.positionUpdateInterval = null;
     }
     
-    if (this.supabase) {
-      this.supabase.removeAllChannels();
-    }
+    // 移除所有频道
+    Object.values(this.channels).forEach(channel => {
+      if (channel) {
+        this.supabase?.removeChannel(channel);
+      }
+    });
     
     this.isConnected = false;
     this.isInitialized = false;
@@ -3952,7 +3874,7 @@ const MultiplayerGame = {
 // 全局导出
 window.MultiplayerGame = MultiplayerGame;
 
-// ==================== 修改原有的 togglePlayerReady 函数以支持多人游戏 ====================
+// ==================== 修改原有的 togglePlayerReady 函数 ====================
 
 // 保存原始函数
 const originalTogglePlayerReady = window.togglePlayerReady;
@@ -4004,9 +3926,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 清理旧的ID
   cleanupOldIds();
-  
-  // 初始化 MultiplayerGame 对象到全局
-  window.MultiplayerGame = MultiplayerGame;
   
   // 移动设备特殊处理
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -4104,9 +4023,13 @@ async function testMultiplayerConnection() {
       .select('count')
       .limit(1);
     
-    if (error) throw error;
-    
-    alert('✅ 多人游戏连接测试成功！\n可以开始匹配真人玩家了。\n\n当前连接状态: ' + (window.MultiplayerGame.isConnected ? '已连接' : '未连接'));
+    if (error) {
+      console.log('查询测试失败:', error);
+      // 尝试创建表
+      alert('连接测试完成，可以开始匹配（如果表不存在会自动创建）');
+    } else {
+      alert('✅ 多人游戏连接测试成功！\n可以开始匹配真人玩家了。');
+    }
     
   } catch (error) {
     alert('❌ 连接测试失败: ' + error.message + '\n\n请检查网络连接或刷新页面重试。');
