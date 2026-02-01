@@ -2912,7 +2912,27 @@ const MultiplayerGame = {
     
     return playerId;
 },
-  
+  // 获取玩家名称
+getPlayerName() {
+    // 如果有存储的用户名，使用它
+    const savedName = localStorage.getItem('player_name');
+    if (savedName) {
+        return savedName;
+    }
+    
+    // 生成随机玩家名称
+    const adjectives = ['量子', '质子', '电子', '光子', '中子', '原子', '核子', '波粒'];
+    const nouns = ['战士', '猎手', '法师', '游侠', '骑士', '学者', '使者', '先锋'];
+    
+    const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomNum = Math.floor(Math.random() * 999);
+    
+    const playerName = `${randomAdj}${randomNoun}${randomNum}`;
+    localStorage.setItem('player_name', playerName);
+    
+    return playerName;
+},
   // 加载SDK
   loadSupabaseSDK() {
     return new Promise((resolve, reject) => {
@@ -3003,11 +3023,12 @@ const MultiplayerGame = {
   // 创建访客资料
   async createGuestProfile() {
     try {
+      const playerName = this.getPlayerName(); // 使用 this.getPlayerName()
       const { error } = await this.supabase
         .from('profiles')
         .upsert({
           id: this.playerId,
-          username: this.getPlayerName(),
+          username:playerName,
           elo: 1000,
           total_games: 0,
           wins: 0,
@@ -3053,24 +3074,39 @@ const MultiplayerGame = {
   },
   
   // 加入匹配队列
-  async joinMatchmakingQueue() {
-    const { error } = await this.supabase
-      .from('matchmaking_queue')
-      .insert({
-        user_id: this.playerId,
-        elo: 1000,
-        region: 'asia',
-        client_id: this.clientId,
-        player_data: {
-          username: this.getPlayerName(),
-          client_id: this.clientId
-        },
-        connection_status: 'waiting',
-        created_at: new Date().toISOString()
-      });
-    
-    if (error) throw error;
-  },
+  // 加入匹配队列
+async joinMatchmakingQueue() {
+    try {
+        const playerName = this.getPlayerName(); // 使用 this.getPlayerName()
+        
+        const { error } = await this.supabase
+            .from('matchmaking_queue')
+            .insert({
+                user_id: this.playerId,
+                elo: 1000,
+                region: 'asia',
+                client_id: this.clientId,
+                player_data: {
+                    username: playerName,  // 使用获取到的玩家名称
+                    client_id: this.clientId
+                },
+                connection_status: 'waiting',
+                matched_with: null,
+                created_at: new Date().toISOString()
+            });
+        
+        if (error) {
+            console.error('加入匹配队列失败:', error);
+            throw error;
+        }
+        
+        console.log('✅ 成功加入匹配队列');
+        
+    } catch (error) {
+        console.error('加入队列异常:', error);
+        throw error;
+    }
+},
   
   // 简化匹配循环 - 修复版
 async simpleMatchmakingLoop() {
