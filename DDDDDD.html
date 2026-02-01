@@ -478,7 +478,8 @@
     </style>
 </head>
 <body>
-    <!-- 横屏提示 -->
+    <!-- 横屏提示 -->📱
+    <!-- 修改 #orientationWarning 的内容，添加按钮 -->
     <div id="orientationWarning">
         <div style="font-size: 4rem; margin-bottom: 2rem;">📱</div>
         <h1 style="font-size: 2rem; margin-bottom: 1rem; color: #3b82f6;">请将设备横屏放置</h1>
@@ -487,6 +488,22 @@
             <br><br>
             游戏需要更大的视野范围来显示完整的迷宫和对手。
         </p>
+    
+        <!-- 添加手动继续按钮 -->
+        <button onclick="forceLandscape()" style="
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        ">
+            📱 我已横屏，继续游戏
+        </button>
+    
         <div style="margin-top: 3rem; animation: spin 2s infinite;">
             <div style="font-size: 3rem;">↻</div>
         </div>
@@ -1448,6 +1465,59 @@ function checkOrientation() {
         }
     }
 }
+// 强制横屏函数（手动继续）
+function forceLandscape() {
+    const warning = document.getElementById('orientationWarning');
+    const app = document.getElementById('app');
+    
+    console.log('🔧 强制横屏模式启用');
+    
+    if (warning) {
+        warning.style.display = 'none';
+        warning.classList.remove('show'); // 同时移除CSS类
+    }
+    if (app) {
+        app.style.display = 'block';
+    }
+    
+    // 标记为强制横屏
+    window.isForcedLandscape = true;
+    
+    // 初始化游戏尺寸
+    if (window.game && window.game.canvas) {
+        resizeGameCanvas();
+    }
+}
+// 修改checkOrientation函数，考虑强制横屏标记
+window.checkOrientation = function() {
+    const warning = document.getElementById('orientationWarning');
+    const app = document.getElementById('app');
+    
+    if (!warning || !app) return;
+    
+    // 如果用户已经强制横屏，不再检查
+    if (window.isForcedLandscape === true) {
+        warning.style.display = 'none';
+        warning.classList.remove('show');
+        app.style.display = 'block';
+        return;
+    }
+    
+    const isPortrait = window.innerHeight > window.innerWidth;
+    
+    if (isPortrait) {
+        warning.classList.add('show');
+        app.style.display = 'none';
+    } else {
+        warning.classList.remove('show');
+        app.style.display = 'block';
+        
+        // 重新调整游戏画布尺寸
+        if (window.game && window.game.canvas) {
+            resizeGameCanvas();
+        }
+    }
+};
 
 // 监听方向变化
 window.addEventListener('resize', checkOrientation);
