@@ -3070,70 +3070,138 @@ const MultiplayerGame = {
     if (error) throw error;
   },
   
-  // 简化匹配循环
-  async simpleMatchmakingLoop() {
+  // 简化匹配循环 - 修复版
+async simpleMatchmakingLoop() {
     console.log('开始简化匹配循环...');
     let matchAttempts = 0;
     const maxAttempts = 30;
     
     const matchInterval = setInterval(async () => {
-      if (!this.isMatching) {
-        clearInterval(matchInterval);
-        console.log('匹配已取消');
-        return;
-      }
-      
-      matchAttempts++;
-      
-      try {
-        // 查找其他等待的玩家
-        const { data: waitingPlayers, error } = await this.supabase
-          .from('matchmaking_queue')
-          .select('*')
-          .neq('user_id', this.playerId)
-          .eq('connection_status', 'waiting')
-          .order('created_at', { ascending: true })
-          .limit(1);
-        
-        if (error) {
-          console.log('查找玩家错误:', error.message);
-        }
-        
-        if (waitingPlayers && waitingPlayers.length > 0) {
-          const opponent = waitingPlayers[0];
-          console.log('找到对手:', opponent.user_id);
-          
-          // 创建游戏会话
-          const gameSession = await this.createGameSession(opponent.user_id);
-          
-          if (gameSession) {
+        if (!this.isMatching) {
             clearInterval(matchInterval);
-            this.setupGameSession(gameSession);
-          }
-          
-        } else if (matchAttempts >= maxAttempts) {
-          clearInterval(matchInterval);
-          console.log('⏰ 匹配超时');
-          
-          await this.cancelMatchmaking();
-          
-          setTimeout(() => {
-            if (this.isMatching) {
-              alert('匹配超时，没有找到合适的对手');
-              switchScene('menuScene');
-            }
-          }, 100);
+            console.log('匹配已取消');
+            return;
         }
         
-        // 更新匹配UI
-        this.updateMatchmakingUI(matchAttempts);
+        matchAttempts++;
         
-      } catch (error) {
-        console.log('匹配检查错误:', error.message);
-      }
+        try {
+            // 1. 首先获取自己的匹配信息，确保在队列中
+            const { data: myQueueEntry, error: myError } = await this.supabase
+                .from('matchmaking_queue')
+                .select('*')
+                .eq('user_id', this.playerId)
+                .single();
+            
+            if (myError || !myQueueEntry) {
+                console.log('未找到自己的匹配队列项，重新加入');
+                await this.joinMatchmakingQueue();
+            }
+            
+            // 2. 查找对手 - 修改逻辑：不排除自己，但要排除已配对的房间
+            const { data: waitingPlayers, error } = await this.supabase
+                .from('matchmaking_queue')
+                .select('*')
+                .neq('user_id', this.playerId)
+                .eq('connection_status', 'waiting')
+                .order('created_at', { ascending: true })
+                .limit(1);
+            
+            if (error) {
+                console.log('查找玩家错误:', error.message);
+            }
+            
+            if (waitingPlayers && waitingPlayers.length > 0) {
+                const opponent = waitingPlayers[0];
+                console.log('找到对手:', opponent.user_id);
+                
+                // 3. 立即更新自己的状态为匹配中，防止被其他人匹配
+                await this.supabase
+                    .from('matchmaking_queue')
+                    .update({ 
+                        connection_status: 'matching',
+                        matched_with: opponent.user_id
+                    })
+                    .eq('user_id', this.playerId);
+                
+                // 4. 检查对手是否也在匹配我（防止冲突）
+                const { data: opponentUpdated } = await this.supabase
+                    .from('matchmaking_queue')
+                    .select('*')
+                    .eq('user_id', opponent.user_id)
+                    .eq('matched_with', this.playerId)
+                    .maybeSingle();
+                
+                if (opponentUpdated) {
+                    // 双方互相匹配成功！
+                    console.log('✅ 双方匹配成功！');
+                    clearInterval(matchInterval);
+                    
+                    // 创建游戏会话
+                    const gameSession = await this.createGameSession(opponent.user_id);
+                    
+                    if (gameSession) {
+                        this.setupGameSession(gameSession);
+                    } else {
+                        // 创建失败，重置状态
+                        await this.resetMatchmakingStatus();
+                    }
+                } else {
+                    // 等待对方确认
+                    console.log('等待对手确认匹配...');
+                    
+                    // 设置超时，如果5秒内对方没确认，重置状态
+                    setTimeout(async () => {
+                        const { data: checkAgain } = await this.supabase
+                            .from('matchmaking_queue')
+                            .select('*')
+                            .eq('user_id', opponent.user_id)
+                            .eq('matched_with', this.playerId)
+                            .maybeSingle();
+                        
+                        if (!checkAgain) {
+                            console.log('对手未确认，重置匹配状态');
+                            await this.resetMatchmakingStatus();
+                        }
+                    }, 5000);
+                }
+                
+            } else if (matchAttempts >= maxAttempts) {
+                clearInterval(matchInterval);
+                console.log('⏰ 匹配超时');
+                
+                await this.cancelMatchmaking();
+                
+                setTimeout(() => {
+                    if (this.isMatching) {
+                        alert('匹配超时，没有找到合适的对手');
+                        switchScene('menuScene');
+                    }
+                }, 100);
+            }
+            
+            // 更新匹配UI
+            this.updateMatchmakingUI(matchAttempts);
+            
+        } catch (error) {
+            console.log('匹配检查错误:', error.message);
+        }
     }, 1000);
-  },
-  
+},
+  // 重置匹配状态
+async resetMatchmakingStatus() {
+    try {
+        await this.supabase
+            .from('matchmaking_queue')
+            .update({ 
+                connection_status: 'waiting',
+                matched_with: null
+            })
+            .eq('user_id', this.playerId);
+    } catch (error) {
+        console.log('重置匹配状态失败:', error);
+    }
+},
   // 创建游戏会话
   async createGameSession(opponentId) {
     try {
