@@ -2900,16 +2900,18 @@ const MultiplayerGame = {
   getPlayerId() {
     let playerId = localStorage.getItem('player_id');
     if (!playerId) {
-      playerId = 'player_' + generateUUID();
-      localStorage.setItem('player_id', playerId);
+        // 生成标准 UUID（不要加 'player_' 前缀）
+        playerId = this.generateUUID();
+        localStorage.setItem('player_id', playerId);
     }
+    
+    // 确保没有 'player_' 前缀
+    if (playerId.startsWith('player_')) {
+        playerId = playerId.replace('player_', '');
+    }
+    
     return playerId;
-  },
-  
-  // 获取玩家名称
-  getPlayerName() {
-    return '玩家_' + this.playerId.substr(-6);
-  },
+},
   
   // 加载SDK
   loadSupabaseSDK() {
