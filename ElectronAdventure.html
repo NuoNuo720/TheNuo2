@@ -352,7 +352,7 @@
     </style>
     
     <!-- 导入Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script></script>
 </head>
 <body>
     <div id="gameContainer">
@@ -422,7 +422,40 @@
     </div>
 
     <script type="module">
-        import { supabase, getOrCreatePlayer, getRanking, updatePlayerStats, saveGameRecord } from './js/supabase.js'
+        // 动态导入，确保顺序正确
+let supabase, getOrCreatePlayer, getRanking, updatePlayerStats, saveGameRecord
+let MatchSystem, Game
+
+async function loadModules() {
+    try {
+        // 先加载Supabase模块
+        const supabaseModule = await import('./js/supabase.js')
+        supabase = supabaseModule.supabase
+        getOrCreatePlayer = supabaseModule.getOrCreatePlayer
+        getRanking = supabaseModule.getRanking
+        updatePlayerStats = supabaseModule.updatePlayerStats
+        saveGameRecord = supabaseModule.saveGameRecord
+        
+        // 再加载其他模块
+        const matchModule = await import('./js/match.js')
+        MatchSystem = matchModule.MatchSystem
+        
+        const gameModule = await import('./js/game.js')
+        Game = gameModule.Game
+        
+        console.log('所有模块加载成功')
+        
+        // 初始化排行榜
+        updateRanking()
+        
+    } catch (error) {
+        console.error('模块加载失败:', error)
+        document.getElementById('rankingList').innerHTML = '<li style="color: red;">加载失败，请刷新</li>'
+    }
+}
+
+// 开始加载模块
+loadModules()
         import { MatchSystem } from './js/match.js'
         import { Game } from './js/game.js'
 
